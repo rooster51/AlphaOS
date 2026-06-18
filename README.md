@@ -35,7 +35,7 @@ The MVP intentionally does not support automated trade execution.
 python -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements.txt
-streamlit run app.py
+streamlit run streamlit_app.py
 ```
 
 If Supabase secrets are not configured, use the demo session in the sidebar. Demo data is stored in the Streamlit session only.
@@ -52,16 +52,15 @@ The app uses row-level security policies so each authenticated user can access o
 
 ## GitHub Setup
 
-1. Create a new GitHub repository.
-2. Commit and push this project.
-3. Do not commit `.streamlit/secrets.toml`.
-4. Keep `.streamlit/secrets.toml.example` as the template for required secrets.
+1. Keep source in this GitHub repository.
+2. Do not commit `.streamlit/secrets.toml`.
+3. Keep `.streamlit/secrets.toml.example` as the template for required secrets.
 
 ## Streamlit Community Cloud Deployment
 
 1. Go to Streamlit Community Cloud.
-2. Create a new app from the GitHub repository.
-3. Set the main file path to `app.py`.
+2. Create a new app from this GitHub repository.
+3. Set the main file path to `streamlit_app.py`.
 4. Add secrets in App settings:
 
 ```toml
@@ -75,9 +74,8 @@ The deployed app is browser-based and usable from desktop and phone browsers.
 
 ## Architecture Notes
 
-- `app.py` is the main dashboard entrypoint.
+- `streamlit_app.py` is the main dashboard entrypoint.
 - `pages/` contains Streamlit multipage routes.
 - `modules/` contains server-side Python logic for auth, data access, metrics, mock market data, and shared UI.
 - `supabase/schema.sql` contains database tables, row-level security, and update triggers.
 - API keys belong in Streamlit secrets, never in source control.
-
