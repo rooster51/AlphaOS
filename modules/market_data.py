@@ -4,6 +4,7 @@ import pandas as pd
 
 from modules.mock_market import get_market_pulse, get_mock_price_history
 from modules.public_data import (
+    can_access_public_portfolio,
     get_public_portfolio,
     get_public_price_history,
     get_public_quotes,
@@ -46,8 +47,8 @@ def price_history(symbol: str) -> tuple[pd.DataFrame, str]:
     return get_mock_price_history(symbol), "Mock fallback"
 
 
-def brokerage_positions() -> tuple[list[dict], dict, str]:
-    if has_public_config():
+def brokerage_positions(user: dict | None) -> tuple[list[dict], dict, str]:
+    if has_public_config() and can_access_public_portfolio(user):
         try:
             portfolio = get_public_portfolio()
             return portfolio["positions"], portfolio, "Public.com Live"
