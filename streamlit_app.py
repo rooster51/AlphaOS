@@ -2,8 +2,8 @@ import streamlit as st
 
 from modules.auth import get_current_user, sign_in_form, sign_out_button
 from modules.data import get_account_snapshot, get_watchlist
+from modules.market_data import brokerage_positions, market_pulse
 from modules.metrics import compute_trade_metrics
-from modules.mock_market import get_market_pulse
 from modules.ui import (
     configure_page,
     empty_state,
@@ -39,9 +39,12 @@ if not user:
 snapshot = get_account_snapshot(user_id=user.get("id") if user else None)
 trades = snapshot.get("trades", [])
 positions = snapshot.get("open_positions", [])
+public_positions, public_portfolio, position_source = brokerage_positions()
+if position_source == "Public.com Live":
+    positions = public_positions
 watchlist = get_watchlist(user_id=user.get("id") if user else None)
 metrics = compute_trade_metrics(trades)
-pulse = get_market_pulse()
+pulse, pulse_source = market_pulse()
 
 st.subheader("Dashboard")
 
@@ -60,6 +63,8 @@ st.divider()
 left, right = st.columns([1.35, 1])
 with left:
     st.markdown("#### Open Positions")
+    if position_source == "Public.com Live":
+        st.caption("Public.com Live")
     if positions:
         st.dataframe(positions, use_container_width=True, hide_index=True)
     else:
@@ -67,8 +72,9 @@ with left:
 
 with right:
     st.markdown("#### Market Pulse")
+    st.caption(pulse_source)
     for item in pulse[:4]:
-        st.write(f"**{item['symbol']}** · {item['signal']} · Score {item['score']}")
+        st.write(f"**{item['symbol']}** - {item['signal']} - Score {item['score']}")
 
 st.divider()
 
@@ -77,3 +83,4 @@ if watchlist:
     st.dataframe(watchlist, use_container_width=True, hide_index=True)
 else:
     empty_state("No watchlist symbols.", "Use Settings to add the markets you want to follow.")
+
