@@ -39,7 +39,7 @@ if not user:
 snapshot = get_account_snapshot(user_id=user.get("id") if user else None)
 trades = snapshot.get("trades", [])
 positions = snapshot.get("open_positions", [])
-public_positions, public_portfolio, position_source = brokerage_positions()
+public_positions, public_portfolio, position_source = brokerage_positions(user)
 if position_source == "Public.com Live":
     positions = public_positions
 watchlist = get_watchlist(user_id=user.get("id") if user else None)
