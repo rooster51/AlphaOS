@@ -10,6 +10,16 @@ def has_public_config() -> bool:
     return bool(st.secrets.get("PUBLIC_API_SECRET"))
 
 
+def can_access_public_portfolio(user: dict | None) -> bool:
+    owner_email = st.secrets.get("PUBLIC_OWNER_EMAIL")
+    user_email = user.get("email") if user else None
+    return bool(
+        owner_email
+        and user_email
+        and owner_email.strip().casefold() == user_email.strip().casefold()
+    )
+
+
 @st.cache_resource
 def _public_context() -> tuple[Any, str]:
     from public_api_sdk import ApiKeyAuthConfig, PublicApiClient
