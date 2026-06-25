@@ -1,13 +1,14 @@
 import streamlit as st
 
-from modules.mock_market import get_scanner_results
+from modules.market_data import scanner_results
 from modules.ui import configure_page, page_header
 
 
 configure_page("Scanner")
-page_header("Scanner", "Mock setup scanner with scoring placeholders.")
+page_header("Scanner", "Setup scanner with live quote context when connected.")
 
-results = get_scanner_results()
+results, source = scanner_results()
+st.caption(f"Data source: {source}")
 
 min_score = st.slider("Minimum score", 0, 100, 65, 5)
 risk = st.multiselect("Risk", sorted(results["Risk"].unique()), default=sorted(results["Risk"].unique()))
@@ -15,4 +16,4 @@ risk = st.multiselect("Risk", sorted(results["Risk"].unique()), default=sorted(r
 filtered = results[(results["Score"] >= min_score) & (results["Risk"].isin(risk))]
 st.dataframe(filtered, use_container_width=True, hide_index=True)
 
-st.caption("Scores are placeholders until market data and strategy models are connected.")
+st.caption("Scores remain research placeholders; prices and one-day changes are live when Public is connected.")
