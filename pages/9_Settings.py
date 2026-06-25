@@ -2,6 +2,12 @@ import streamlit as st
 
 from modules.auth import get_current_user, sign_in_form, sign_out_button
 from modules.data import add_watchlist_symbol, get_user_settings, get_watchlist, save_user_settings
+from modules.public_data import (
+    can_access_public_portfolio,
+    get_public_account_summaries,
+    has_public_config,
+    test_public_connection,
+)
 from modules.supabase_client import has_supabase_config
 from modules.ui import configure_page, page_header
 
@@ -23,6 +29,24 @@ if has_supabase_config():
     st.success("Supabase secrets detected.")
 else:
     st.warning("Supabase secrets are not configured. Demo session storage is browser-session only.")
+
+st.subheader("Public.com")
+if has_public_config():
+    ok, message = test_public_connection()
+    if ok:
+        st.success(message)
+    else:
+        st.warning(message)
+
+    if can_access_public_portfolio(user):
+        try:
+            accounts = get_public_account_summaries()
+            st.dataframe(accounts, use_container_width=True, hide_index=True)
+            st.caption("If the selected account is not your brokerage account, set PUBLIC_ACCOUNT_NUMBER to the brokerage account_id above in Streamlit secrets.")
+        except Exception:
+            st.warning("Public account list is unavailable. Check your Public API secret.")
+else:
+    st.warning("Public.com secret is not configured.")
 
 st.subheader("Trading Preferences")
 settings = get_user_settings(user_id=user.get("id") if user else None)
