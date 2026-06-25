@@ -20,6 +20,60 @@ def can_access_public_portfolio(user: dict | None) -> bool:
     )
 
 
+def _select_account(accounts: list[Any], preferred: str | None) -> Any:
+    if preferred:
+        preferred = preferred.strip()
+        match = next(
+            (
+                account
+                for account in accounts
+                if str(getattr(account, "account_id", "")).strip() == preferred
+                or str(getattr(account, "account_number", "")).strip() == preferred
+            ),
+            None,
+        )
+        if match is None:
+            raise RuntimeError("PUBLIC_ACCOUNT_NUMBER is not available for this key.")
+        return match
+
+    scored = sorted(
+        accounts,
+        key=_account_selection_score,
+        reverse=True,
+    )
+    return scored[0]
+
+
+def _account_field(account: Any, field: str) -> str:
+    value = getattr(account, field, "")
+    value = getattr(value, "value", value)
+    return str(value or "")
+
+
+def _account_search_text(account: Any) -> str:
+    fields = (
+        "account_type",
+        "account_sub_type",
+        "account_name",
+        "nickname",
+        "name",
+        "display_name",
+    )
+    return " ".join(_account_field(account, field) for field in fields).casefold()
+
+
+def _account_selection_score(account: Any) -> int:
+    text = _account_search_text(account)
+    score = 0
+    if "broker" in text:
+        score += 50
+    if "individual" in text or "cash" in text or "margin" in text:
+        score += 20
+    if "ira" in text or "retirement" in text or "roth" in text or "traditional" in text:
+        score -= 100
+    return score
+
+
 @st.cache_resource
 def _public_context() -> tuple[Any, str]:
     from public_api_sdk import ApiKeyAuthConfig, PublicApiClient
@@ -34,9 +88,44 @@ def _public_context() -> tuple[Any, str]:
     if not accounts:
         raise RuntimeError("No Public brokerage account is available for this key.")
 
-    preferred = st.secrets.get("PUBLIC_ACCOUNT_NUMBER")
-    account_id = preferred or accounts[0].account_id
-    return client, account_id
+    account = _select_account(accounts, st.secrets.get("PUBLIC_ACCOUNT_NUMBER"))
+    return client, account.account_id
+
+
+def _mask_account_id(account_id: str) -> str:
+    account_id = str(account_id)
+    return f"...{account_id[-4:]}" if len(account_id) > 4 else account_id
+
+
+@st.cache_data(ttl=60, show_spinner=False)
+def get_public_account_summaries() -> list[dict]:
+    from public_api_sdk import ApiKeyAuthConfig, PublicApiClient
+
+    client = PublicApiClient(
+        ApiKeyAuthConfig(
+            api_secret_key=st.secrets["PUBLIC_API_SECRET"],
+            validity_minutes=60,
+        )
+    )
+    accounts = client.get_accounts().accounts
+    selected = _select_account(accounts, st.secrets.get("PUBLIC_ACCOUNT_NUMBER"))
+    selected_id = str(getattr(selected, "account_id", ""))
+    rows = []
+    for account in accounts:
+        account_id = str(getattr(account, "account_id", ""))
+        rows.append(
+            {
+                "selected": account_id == selected_id,
+                "account_id": account_id,
+                "ending": _mask_account_id(account_id),
+                "account_type": _account_field(account, "account_type"),
+                "account_sub_type": _account_field(account, "account_sub_type"),
+                "name": _account_field(account, "account_name")
+                or _account_field(account, "nickname")
+                or _account_field(account, "name"),
+            }
+        )
+    return rows
 
 
 def _as_float(value: Any) -> float | None:
@@ -140,4 +229,3 @@ def test_public_connection() -> tuple[bool, str]:
         return True, f"Connected to Public account ending in {account_id[-4:]}."
     except Exception:
         return False, "Public authentication failed. Check or regenerate the secret key."
-
