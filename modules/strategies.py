@@ -89,6 +89,16 @@ def strategy_ideas(
             ]
         )
     elif outlook == "Bearish":
+        if horizon in {"Intermediate (2-6 months)", "Long term (6+ months)"}:
+            ideas.append(
+                {
+                    "vehicle": "LEAPS",
+                    "strategy": "Buy LEAPS Put",
+                    "structure": "Buy an in-the-money put with 12+ months to expiration.",
+                    "fit": "Capital-efficient long-term bearish exposure.",
+                    "risk": "Premium can expire worthless; affected by volatility and time decay.",
+                }
+            )
         ideas.extend(
             [
                 {
@@ -192,4 +202,46 @@ def strategy_ideas(
         if idea["strategy"] not in seen:
             seen.add(idea["strategy"])
             unique.append(idea)
-    return unique[:5]
+    return unique[:6]
+
+
+def primary_strategy_idea(
+    outlook: str,
+    volatility: str,
+    risk_tolerance: str,
+    objective: str,
+    horizon: str,
+) -> tuple[dict, list[dict]]:
+    ideas = strategy_ideas(
+        outlook,
+        volatility,
+        risk_tolerance,
+        objective,
+        horizon,
+    )
+
+    if objective == "Income":
+        preferred = "Covered Call" if outlook != "Bearish" else "Bear Call Credit Spread"
+    elif outlook == "Bullish":
+        if horizon == "Long term (6+ months)":
+            preferred = "Buy Stock / ETF" if risk_tolerance == "Conservative" else "Buy LEAPS Call"
+        elif volatility == "High":
+            preferred = "Bull Put Credit Spread"
+        else:
+            preferred = "Bull Call Debit Spread"
+    elif outlook == "Bearish":
+        if horizon == "Long term (6+ months)" and risk_tolerance != "Conservative":
+            preferred = "Buy LEAPS Put"
+        else:
+            preferred = "Bear Put Debit Spread"
+    elif outlook == "Neutral":
+        preferred = "Butterfly Spread" if risk_tolerance == "Conservative" else "Iron Condor"
+    else:
+        preferred = "Long Straddle" if volatility == "Low" else "Long Strangle"
+
+    primary = next(
+        (idea for idea in ideas if idea["strategy"] == preferred),
+        ideas[0],
+    )
+    alternatives = [idea for idea in ideas if idea["strategy"] != primary["strategy"]]
+    return primary, alternatives
