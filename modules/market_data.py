@@ -162,6 +162,55 @@ def price_history(symbol: str) -> tuple[pd.DataFrame, str]:
     return _empty_history(), "Public.com unavailable"
 
 
+def symbol_analysis(symbol: str) -> tuple[dict | None, str]:
+    symbol = symbol.strip().upper()
+    if not symbol:
+        return None, "Enter a symbol"
+    if not has_public_config():
+        return None, "Public.com not configured"
+
+    try:
+        history = get_public_price_history(symbol)
+        metrics = _history_metrics(history)
+        if metrics is None:
+            return None, "Insufficient Public historical data"
+
+        quotes = get_public_quotes((symbol,))
+        quote = quotes[0] if quotes else {}
+        last = quote.get("last") or metrics["last"]
+        metrics = {**metrics, "last": last}
+        score = _trend_score(metrics)
+        outlook = "Bullish" if score >= 58 else "Bearish" if score <= 42 else "Neutral"
+        volatility = (
+            "High"
+            if metrics["atr_pct"] >= 3.5
+            else "Low"
+            if metrics["atr_pct"] <= 1.5
+            else "Normal"
+        )
+        return (
+            {
+                "symbol": symbol,
+                "last": last,
+                "change_pct": quote.get("change_pct"),
+                "return_5d": round(metrics["return_5d"], 2),
+                "return_20d": round(metrics["return_20d"], 2),
+                "atr_pct": round(metrics["atr_pct"], 2),
+                "volume_ratio": (
+                    round(metrics["volume_ratio"], 2)
+                    if metrics["volume_ratio"] is not None
+                    else None
+                ),
+                "trend_score": score,
+                "outlook": outlook,
+                "volatility": volatility,
+            },
+            "Public.com live + historical",
+        )
+    except Exception:
+        return None, "Public.com unavailable"
+
+
 def brokerage_positions(user: dict | None) -> tuple[list[dict], dict, str]:
     if has_public_config() and can_access_public_portfolio(user):
         try:
