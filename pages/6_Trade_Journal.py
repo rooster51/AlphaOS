@@ -22,11 +22,16 @@ with st.expander("Strategy ideas", expanded=False):
     idea_volatility = i2.selectbox("Implied volatility", ["Normal", "High", "Low"])
     idea_risk = i3.selectbox("Risk tolerance", ["Conservative", "Moderate", "Aggressive"])
     idea_objective = i4.selectbox("Objective", ["Directional", "Income", "Hedging"])
+    idea_horizon = st.selectbox(
+        "Time horizon",
+        ["Swing (2-8 weeks)", "Intermediate (2-6 months)", "Long term (6+ months)"],
+    )
     ideas = strategy_ideas(
         idea_outlook,
         idea_volatility,
         idea_risk,
         idea_objective,
+        idea_horizon,
     )
     st.dataframe(ideas, use_container_width=True, hide_index=True)
     st.caption("Educational research ideas only. Review liquidity, assignment, expiration, and maximum-loss risks before entering any options trade.")
