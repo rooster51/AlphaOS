@@ -12,7 +12,9 @@ STRATEGY_GROUPS = {
     ],
     "Single Option": [
         "Long Call",
+        "LEAPS Call",
         "Long Put",
+        "LEAPS Put",
         "Covered Call",
         "Cash-Secured Put",
     ],
@@ -44,21 +46,45 @@ def strategy_ideas(
     volatility: str,
     risk_tolerance: str,
     objective: str,
+    horizon: str = "Swing (2-8 weeks)",
 ) -> list[dict]:
     ideas: list[dict] = []
 
     if outlook == "Bullish":
+        ideas.append(
+            {
+                "vehicle": "Stock",
+                "strategy": "Buy Stock / ETF",
+                "structure": "Buy shares and define an invalidation level.",
+                "fit": "Direct bullish exposure without option expiration.",
+                "risk": "Full share downside; size with a planned exit.",
+            }
+        )
+        if horizon in {"Intermediate (2-6 months)", "Long term (6+ months)"}:
+            ideas.append(
+                {
+                    "vehicle": "LEAPS",
+                    "strategy": "Buy LEAPS Call",
+                    "structure": "Buy an in-the-money call with 12+ months to expiration.",
+                    "fit": "Capital-efficient long-term bullish exposure.",
+                    "risk": "Premium can expire worthless; affected by volatility and time decay.",
+                }
+            )
         ideas.extend(
             [
                 {
+                    "vehicle": "Spread",
                     "strategy": "Bull Call Debit Spread",
                     "structure": "Buy a call and sell a higher-strike call.",
                     "fit": "Defined-risk bullish exposure with a capped reward.",
+                    "risk": "Maximum loss is the net debit paid.",
                 },
                 {
+                    "vehicle": "Spread",
                     "strategy": "Bull Put Credit Spread",
                     "structure": "Sell a put and buy a lower-strike protective put.",
                     "fit": "Defined-risk premium strategy when the bullish thesis is moderate.",
+                    "risk": "Maximum loss is spread width minus credit received.",
                 },
             ]
         )
@@ -66,14 +92,18 @@ def strategy_ideas(
         ideas.extend(
             [
                 {
+                    "vehicle": "Spread",
                     "strategy": "Bear Put Debit Spread",
                     "structure": "Buy a put and sell a lower-strike put.",
                     "fit": "Defined-risk bearish exposure with a capped reward.",
+                    "risk": "Maximum loss is the net debit paid.",
                 },
                 {
+                    "vehicle": "Spread",
                     "strategy": "Bear Call Credit Spread",
                     "structure": "Sell a call and buy a higher-strike protective call.",
                     "fit": "Defined-risk premium strategy when the bearish thesis is moderate.",
+                    "risk": "Maximum loss is spread width minus credit received.",
                 },
             ]
         )
@@ -81,14 +111,18 @@ def strategy_ideas(
         ideas.extend(
             [
                 {
+                    "vehicle": "Spread",
                     "strategy": "Iron Condor",
                     "structure": "Combine a put credit spread and a call credit spread.",
                     "fit": "Range-based, defined-risk premium strategy.",
+                    "risk": "Maximum loss is the wider wing width minus credit received.",
                 },
                 {
+                    "vehicle": "Spread",
                     "strategy": "Butterfly Spread",
                     "structure": "Use three strikes to create a narrow, defined-risk payoff.",
                     "fit": "Targeted neutral thesis with limited risk.",
+                    "risk": "Maximum loss is typically the net debit paid.",
                 },
             ]
         )
@@ -96,14 +130,18 @@ def strategy_ideas(
         ideas.extend(
             [
                 {
+                    "vehicle": "Options",
                     "strategy": "Long Straddle",
                     "structure": "Buy a call and put at the same strike and expiration.",
                     "fit": "Directional uncertainty with an expectation of a large move.",
+                    "risk": "Maximum loss is both premiums paid.",
                 },
                 {
+                    "vehicle": "Options",
                     "strategy": "Long Strangle",
                     "structure": "Buy an out-of-the-money call and put.",
                     "fit": "Lower-cost volatility exposure that requires a larger move.",
+                    "risk": "Maximum loss is both premiums paid.",
                 },
             ]
         )
@@ -111,26 +149,32 @@ def strategy_ideas(
     if volatility == "High":
         ideas.append(
             {
+                "vehicle": "Spread",
                 "strategy": "Defined-Risk Credit Spread",
                 "structure": "Sell premium with a protective long option.",
                 "fit": "Uses defined risk while evaluating elevated option premium.",
+                "risk": "Maximum loss depends on spread width and credit.",
             }
         )
     elif volatility == "Low":
         ideas.append(
             {
+                "vehicle": "Spread",
                 "strategy": "Calendar Spread",
                 "structure": "Sell a near-term option and buy a later-dated option.",
                 "fit": "Time-spread structure for studying term and volatility differences.",
+                "risk": "Maximum loss is generally the net debit paid.",
             }
         )
 
     if objective == "Income":
         ideas.append(
             {
+                "vehicle": "Stock + Option",
                 "strategy": "Covered Call",
                 "structure": "Hold shares and sell a call against them.",
                 "fit": "Income-oriented overlay that caps some upside.",
+                "risk": "Share downside remains; assignment can occur.",
             }
         )
 
@@ -148,4 +192,4 @@ def strategy_ideas(
         if idea["strategy"] not in seen:
             seen.add(idea["strategy"])
             unique.append(idea)
-    return unique[:4]
+    return unique[:5]
