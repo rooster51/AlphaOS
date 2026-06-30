@@ -1,22 +1,24 @@
 import plotly.express as px
 import streamlit as st
 
-from modules.market_data import market_pulse, price_history
-from modules.mock_market import SYMBOLS
-from modules.ui import configure_page, page_header
+from modules.market_data import MARKET_SYMBOLS, market_pulse, price_history
+from modules.ui import configure_page, empty_state, page_header
 
 
 configure_page("Market Pulse")
-page_header("Market Pulse", "Live pricing with placeholder trend scores.")
+page_header("Market Pulse", "Live trend context calculated from Public market data.")
 
-symbol = st.selectbox("Symbol", SYMBOLS, index=0)
+symbol = st.selectbox("Symbol", MARKET_SYMBOLS, index=0)
 history, history_source = price_history(symbol)
 pulse, pulse_source = market_pulse()
 
-if history_source == "Public.com Live" and pulse_source == "Public.com Live":
-    st.success("Data source: Public.com Live")
-else:
-    st.warning("Public data is unavailable. Showing mock fallback data.")
+st.caption(f"Data sources: {pulse_source}; {history_source}")
+if history.empty or not pulse:
+    empty_state(
+        "Live market data is unavailable.",
+        "Check the Public API key and marketdata scope in Settings.",
+    )
+    st.stop()
 
 cols = st.columns(3)
 for col, item in zip(cols, pulse[:3]):
@@ -33,5 +35,4 @@ st.plotly_chart(
 )
 
 st.dataframe(pulse, use_container_width=True, hide_index=True)
-st.caption("Trend signals and scores remain placeholders; prices and changes are live when Public is connected.")
-
+st.caption("Score uses 5-day and 20-day returns plus position relative to the 20-day moving average.")
