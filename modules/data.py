@@ -152,6 +152,57 @@ def add_trade(trade: dict, user_id: str | None = None) -> None:
     _session_table("trades", DEMO_TRADES).insert(0, trade)
 
 
+def save_daily_pnl_snapshot(
+    user_id: str | None,
+    equity: float,
+    unrealized_pnl: float,
+) -> bool:
+    row = {
+        "snapshot_date": str(date.today()),
+        "realized_pnl": 0.0,
+        "unrealized_pnl": round(float(unrealized_pnl), 2),
+        "equity": round(float(equity), 2),
+    }
+    supabase = get_supabase()
+    if supabase and user_id and user_id != "demo-user":
+        try:
+            row["user_id"] = user_id
+            (
+                supabase.table("daily_pnl_snapshots")
+                .upsert(row, on_conflict="user_id,snapshot_date")
+                .execute()
+            )
+            return True
+        except Exception:
+            return False
+
+    snapshots = _session_table("pnl_snapshots", [])
+    snapshots[:] = [
+        item
+        for item in snapshots
+        if item.get("snapshot_date") != row["snapshot_date"]
+    ]
+    snapshots.append(row)
+    return True
+
+
+def get_daily_pnl_snapshots(user_id: str | None = None) -> list[dict]:
+    supabase = get_supabase()
+    if supabase and user_id and user_id != "demo-user":
+        try:
+            return (
+                supabase.table("daily_pnl_snapshots")
+                .select("*")
+                .eq("user_id", user_id)
+                .order("snapshot_date")
+                .execute()
+                .data
+            )
+        except Exception:
+            return []
+    return _session_table("pnl_snapshots", [])
+
+
 def add_watchlist_symbol(symbol: str, notes: str, user_id: str | None = None) -> None:
     row = {"symbol": symbol.upper(), "notes": notes, "score": 50}
     supabase = get_supabase()
