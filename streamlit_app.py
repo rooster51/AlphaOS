@@ -75,6 +75,8 @@ with right:
     st.caption(pulse_source)
     for item in pulse[:4]:
         st.write(f"**{item['symbol']}** - {item['signal']} - Score {item['score']}")
+    if not pulse:
+        empty_state("Live market pulse is unavailable.")
 
 st.divider()
 
@@ -83,4 +85,3 @@ if watchlist:
     st.dataframe(watchlist, use_container_width=True, hide_index=True)
 else:
     empty_state("No watchlist symbols.", "Use Settings to add the markets you want to follow.")
-
