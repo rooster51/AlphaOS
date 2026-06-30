@@ -19,7 +19,7 @@ def page_header(title: str, subtitle: str | None = None) -> None:
 
 
 def render_nav_hint() -> None:
-    st.caption("Use the pages menu to move through Dashboard, Journal, P&L, Scanner, Quant Lab, and Settings.")
+    st.caption("Use the pages menu for Strategy Suggestions, Journal, P&L, Scanner, Quant Lab, and Settings.")
 
 
 def require_auth_notice() -> None:
