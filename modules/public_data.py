@@ -187,6 +187,88 @@ def get_public_price_history(symbol: str) -> pd.DataFrame:
     )
 
 
+@st.cache_data(ttl=300, show_spinner=False)
+def get_public_option_expirations(symbol: str) -> list[str]:
+    from public_api_sdk import (
+        InstrumentType,
+        OptionExpirationsRequest,
+        OrderInstrument,
+    )
+
+    client, account_id = _public_context()
+    response = client.get_option_expirations(
+        OptionExpirationsRequest(
+            instrument=OrderInstrument(
+                symbol=symbol.strip().upper(),
+                type=InstrumentType.EQUITY,
+            )
+        ),
+        account_id=account_id,
+    )
+    return sorted(str(expiration)[:10] for expiration in response.expirations)
+
+
+def _option_quote_row(quote: Any, option_type: str) -> dict | None:
+    details = quote.option_details
+    if details is None or details.strike_price is None:
+        return None
+    greeks = details.greeks
+    bid = _as_float(quote.bid)
+    ask = _as_float(quote.ask)
+    mid = _as_float(details.mid_price)
+    if mid is None and bid is not None and ask is not None:
+        mid = (bid + ask) / 2
+    return {
+        "contract": quote.instrument.symbol,
+        "type": option_type,
+        "strike": _as_float(details.strike_price),
+        "bid": bid,
+        "ask": ask,
+        "mid": mid,
+        "delta": _as_float(greeks.delta if greeks else None),
+        "iv": _as_float(greeks.implied_volatility if greeks else None),
+        "volume": quote.volume,
+        "open_interest": quote.open_interest,
+    }
+
+
+@st.cache_data(ttl=30, show_spinner=False)
+def get_public_option_chain(symbol: str, expiration: str) -> dict:
+    from public_api_sdk import (
+        InstrumentType,
+        OptionChainRequest,
+        OrderInstrument,
+    )
+
+    client, account_id = _public_context()
+    response = client.get_option_chain(
+        OptionChainRequest(
+            instrument=OrderInstrument(
+                symbol=symbol.strip().upper(),
+                type=InstrumentType.EQUITY,
+            ),
+            expiration_date=expiration,
+        ),
+        account_id=account_id,
+    )
+    calls = [
+        row
+        for quote in response.calls
+        if (row := _option_quote_row(quote, "Call")) is not None
+    ]
+    puts = [
+        row
+        for quote in response.puts
+        if (row := _option_quote_row(quote, "Put")) is not None
+    ]
+    return {
+        "symbol": response.base_symbol,
+        "expiration": expiration,
+        "calls": calls,
+        "puts": puts,
+    }
+
+
 @st.cache_data(ttl=30, show_spinner=False)
 def get_public_portfolio() -> dict:
     client, account_id = _public_context()
