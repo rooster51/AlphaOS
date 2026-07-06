@@ -78,8 +78,8 @@ with right:
     if not pulse:
         empty_state("Live market pulse is unavailable.")
     st.page_link(
-        "pages/5_Budget_Strategy_Selector.py",
-        label="Open Strategy Suggestions",
+        "pages/5_Strategy_Selector.py",
+        label="Open Strategy Selector",
     )
 
 st.divider()
