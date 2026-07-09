@@ -144,7 +144,7 @@ def _credit_leg_pair(
     contracts: list[dict],
     underlying: float,
     kind: str,
-    width_pct: float,
+    target_width: float,
     target_delta: float,
 ) -> dict | None:
     short = _pick_short(contracts, underlying, kind, target_delta)
@@ -153,7 +153,7 @@ def _credit_leg_pair(
     long = _pick_protection(
         contracts,
         float(short["strike"]),
-        underlying * width_pct,
+        target_width,
         kind,
     )
     if long is None:
@@ -179,26 +179,31 @@ def build_income_spread(
     underlying: float,
     outlook: str,
     bucket: str,
+    spread_width: float | None = None,
     as_of: date | None = None,
 ) -> dict | None:
     as_of = as_of or date.today()
     expiration = datetime.strptime(chain["expiration"][:10], "%Y-%m-%d").date()
     dte = (expiration - as_of).days
-    width_pct = BUCKET_WIDTH_PCT[bucket]
+    target_width = (
+        float(spread_width)
+        if spread_width is not None and float(spread_width) > 0
+        else underlying * BUCKET_WIDTH_PCT[bucket]
+    )
     target_delta = 0.20 if bucket == "Day Trade" else 0.25
 
     put_pair = _credit_leg_pair(
         chain.get("puts", []),
         underlying,
         "put",
-        width_pct,
+        target_width,
         target_delta,
     )
     call_pair = _credit_leg_pair(
         chain.get("calls", []),
         underlying,
         "call",
-        width_pct,
+        target_width,
         target_delta,
     )
 
@@ -276,6 +281,8 @@ def build_income_spread(
         "expiration_note": expiration_note,
         "dte": dte,
         "net_credit": credit,
+        "target_width": round(target_width, 2),
+        "actual_width": round(max_width, 2),
         "max_profit": round(credit * 100, 2),
         "max_loss": max_loss,
         "breakeven": breakeven,
