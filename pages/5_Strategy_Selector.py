@@ -31,6 +31,8 @@ def load_spread_into_journal(symbol: str, spread: dict) -> None:
         "legs": spread["legs"],
         "notes": (
             f"{spread['bucket']} income candidate; "
+            f"target width ${spread['target_width']:,.2f}; "
+            f"actual width ${spread['actual_width']:,.2f}; "
             f"estimated max profit ${spread['max_profit']:,.2f}; "
             f"estimated max loss ${spread['max_loss']:,.2f}; "
             f"breakeven {spread['breakeven']}."
@@ -167,14 +169,20 @@ with trade_tab:
 
 with income_tab:
     with st.form("income_options_form"):
-        i1, i2 = st.columns(2)
+        i1, i2, i3 = st.columns(3)
         income_symbol = i1.text_input(
             "Income ticker",
             value="SPY",
+            help="Works with optionable ETFs/stocks such as SPY, QQQ, DIA, IWM, and index symbols such as SPX when supported by Public.",
         ).strip().upper()
         spread_bias = i2.selectbox(
             "Spread bias",
             ["Auto from trend", "Bullish", "Neutral", "Bearish"],
+        )
+        width_choice = i3.selectbox(
+            "Spread width",
+            ["Auto", "$1 wide", "$2 wide", "$3 wide", "$5 wide", "$10 wide"],
+            index=2,
         )
         income_submitted = st.form_submit_button(
             "Build Income Spreads",
@@ -186,6 +194,10 @@ with income_tab:
         st.session_state["income_options_request"] = {
             "symbol": income_symbol,
             "bias": spread_bias,
+            "width": None
+            if width_choice == "Auto"
+            else float(width_choice.replace("$", "").replace(" wide", "")),
+            "width_label": width_choice,
         }
 
     income_request = st.session_state.get("income_options_request")
@@ -220,6 +232,7 @@ with income_tab:
                         float(analysis["last"]),
                         outlook,
                         bucket,
+                        spread_width=income_request["width"],
                     )
             except Exception:
                 candidates = {}
@@ -237,6 +250,10 @@ with income_tab:
             header_metrics[3].metric(
                 "Realized Volatility",
                 analysis["volatility"],
+            )
+            st.caption(
+                f"Requested width: {income_request.get('width_label', 'Auto')}. "
+                "If the exact strike width is not listed, AlphaOS uses the nearest available protection leg."
             )
 
             if not candidates or not any(candidates.values()):
@@ -270,14 +287,18 @@ with income_tab:
                             f"${spread['net_credit']:,.2f}",
                         )
                         spread_metrics[1].metric(
+                            "Actual Width",
+                            f"${spread['actual_width']:,.2f}",
+                        )
+                        spread_metrics[2].metric(
                             "Max Profit",
                             f"${spread['max_profit']:,.2f}",
                         )
-                        spread_metrics[2].metric(
+                        spread_metrics[3].metric(
                             "Max Loss",
                             f"${spread['max_loss']:,.2f}",
                         )
-                        spread_metrics[3].metric(
+                        st.metric(
                             "Breakeven",
                             spread["breakeven"],
                         )
