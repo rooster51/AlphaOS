@@ -8,8 +8,19 @@ from modules.ui import configure_page, empty_state, page_header
 configure_page("Flow & Rotation")
 page_header("Flow & Rotation", "Sector ETF leadership calculated from Public historical data.")
 
-rotation, source = rotation_table()
+if st.button("Run Rotation Scan", type="primary", use_container_width=True):
+    with st.spinner("Calculating sector rotation..."):
+        st.session_state["rotation_table_view"] = rotation_table()
+
+rotation, source = st.session_state.get(
+    "rotation_table_view",
+    (None, "Not loaded"),
+)
 st.caption(f"Data source: {source}")
+
+if rotation is None:
+    empty_state("Rotation scan is ready.", "Click Run Rotation Scan to load live data.")
+    st.stop()
 
 if rotation.empty:
     empty_state(
