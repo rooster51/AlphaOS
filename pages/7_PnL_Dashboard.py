@@ -25,15 +25,23 @@ user = get_current_user()
 user_id = user.get("id") if user else None
 snapshot = get_account_snapshot(user_id=user_id)
 trades = snapshot["trades"]
-positions, portfolio, position_source = brokerage_positions(user)
 
 brokerage_tab, journal_tab = st.tabs(["Brokerage Account", "Trade Journal"])
 
 with brokerage_tab:
+    if st.button("Refresh Live Brokerage P&L", type="primary", use_container_width=True):
+        with st.spinner("Loading Public brokerage data..."):
+            st.session_state["brokerage_pnl_snapshot"] = brokerage_positions(user)
+
+    positions, portfolio, position_source = st.session_state.get(
+        "brokerage_pnl_snapshot",
+        ([], {}, "Not loaded"),
+    )
+
     if position_source != "Public.com Live":
         empty_state(
             "Live brokerage P&L is unavailable.",
-            "Sign in with the owner account and verify the Public connection in Settings.",
+            "Click Refresh Live Brokerage P&L after signing in with the owner account.",
         )
     else:
         unrealized_pnl = sum(
