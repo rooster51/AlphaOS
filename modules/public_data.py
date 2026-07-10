@@ -6,6 +6,20 @@ import pandas as pd
 import streamlit as st
 
 
+INDEX_SYMBOLS = {"SPX", "NDX", "RUT", "DJX", "VIX"}
+SYMBOL_ALIASES = {
+    "^SPX": "SPX",
+    "$SPX": "SPX",
+    "SPX.X": "SPX",
+    "^NDX": "NDX",
+    "$NDX": "NDX",
+    "^RUT": "RUT",
+    "$RUT": "RUT",
+    "^VIX": "VIX",
+    "$VIX": "VIX",
+}
+
+
 def has_public_config() -> bool:
     return bool(st.secrets.get("PUBLIC_API_SECRET"))
 
@@ -132,13 +146,32 @@ def _as_float(value: Any) -> float | None:
     return float(value) if value is not None else None
 
 
+def _normalize_public_symbol(symbol: str) -> str:
+    clean = symbol.strip().upper()
+    return SYMBOL_ALIASES.get(clean, clean)
+
+
+def _instrument_type_for_symbol(instrument_type: Any, symbol: str) -> Any:
+    if _normalize_public_symbol(symbol) in INDEX_SYMBOLS:
+        return getattr(instrument_type, "INDEX", instrument_type.EQUITY)
+    return instrument_type.EQUITY
+
+
+def _order_instrument(order_instrument: Any, instrument_type: Any, symbol: str) -> Any:
+    normalized = _normalize_public_symbol(symbol)
+    return order_instrument(
+        symbol=normalized,
+        type=_instrument_type_for_symbol(instrument_type, normalized),
+    )
+
+
 @st.cache_data(ttl=30, show_spinner=False)
 def get_public_quotes(symbols: tuple[str, ...]) -> list[dict]:
     from public_api_sdk import InstrumentType, OrderInstrument
 
     client, account_id = _public_context()
     instruments = [
-        OrderInstrument(symbol=symbol.upper(), type=InstrumentType.EQUITY)
+        _order_instrument(OrderInstrument, InstrumentType, symbol)
         for symbol in symbols
     ]
     quotes = client.get_quotes(instruments, account_id=account_id)
@@ -168,7 +201,7 @@ def get_public_price_history(symbol: str) -> pd.DataFrame:
 
     client, _ = _public_context()
     response = client.get_bars(
-        symbol.upper(),
+        _normalize_public_symbol(symbol),
         BarPeriod.QUARTER,
         aggregation=BarAggregation.ONE_DAY,
     )
@@ -198,10 +231,7 @@ def get_public_option_expirations(symbol: str) -> list[str]:
     client, account_id = _public_context()
     response = client.get_option_expirations(
         OptionExpirationsRequest(
-            instrument=OrderInstrument(
-                symbol=symbol.strip().upper(),
-                type=InstrumentType.EQUITY,
-            )
+            instrument=_order_instrument(OrderInstrument, InstrumentType, symbol)
         ),
         account_id=account_id,
     )
@@ -228,7 +258,7 @@ def _option_quote_row(quote: Any, option_type: str) -> dict | None:
         "delta": _as_float(greeks.delta if greeks else None),
         "iv": _as_float(greeks.implied_volatility if greeks else None),
         "volume": quote.volume,
-        "open_interest": quote.open_interest,
+        "open_interest": getattr(quote, "open_interest", None),
     }
 
 
@@ -243,10 +273,7 @@ def get_public_option_chain(symbol: str, expiration: str) -> dict:
     client, account_id = _public_context()
     response = client.get_option_chain(
         OptionChainRequest(
-            instrument=OrderInstrument(
-                symbol=symbol.strip().upper(),
-                type=InstrumentType.EQUITY,
-            ),
+            instrument=_order_instrument(OrderInstrument, InstrumentType, symbol),
             expiration_date=expiration,
         ),
         account_id=account_id,
@@ -262,7 +289,7 @@ def get_public_option_chain(symbol: str, expiration: str) -> dict:
         if (row := _option_quote_row(quote, "Put")) is not None
     ]
     return {
-        "symbol": response.base_symbol,
+        "symbol": getattr(response, "base_symbol", _normalize_public_symbol(symbol)),
         "expiration": expiration,
         "calls": calls,
         "puts": puts,
