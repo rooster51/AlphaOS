@@ -170,13 +170,43 @@ def symbol_analysis(symbol: str) -> tuple[dict | None, str]:
         return None, "Public.com not configured"
 
     try:
-        history = get_public_price_history(symbol)
-        metrics = _history_metrics(history)
-        if metrics is None:
-            return None, "Insufficient Public historical data"
-
         quotes = get_public_quotes((symbol,))
         quote = quotes[0] if quotes else {}
+        history = get_public_price_history(symbol)
+        metrics = _history_metrics(history)
+        if metrics is None and quote.get("last") is None:
+            return None, "Insufficient Public historical data"
+
+        if metrics is None:
+            last = quote["last"]
+            metrics = {
+                "last": last,
+                "return_5d": 0.0,
+                "return_20d": 0.0,
+                "atr_pct": 0.0,
+                "volume_ratio": None,
+                "sma_20": last,
+                "prior_20d_high": last,
+            }
+            score = 50
+            outlook = "Neutral"
+            volatility = "Normal"
+            return (
+                {
+                    "symbol": symbol,
+                    "last": last,
+                    "change_pct": quote.get("change_pct"),
+                    "return_5d": 0.0,
+                    "return_20d": 0.0,
+                    "atr_pct": 0.0,
+                    "volume_ratio": None,
+                    "trend_score": score,
+                    "outlook": outlook,
+                    "volatility": volatility,
+                },
+                "Public.com live quote",
+            )
+
         last = quote.get("last") or metrics["last"]
         metrics = {**metrics, "last": last}
         score = _trend_score(metrics)
