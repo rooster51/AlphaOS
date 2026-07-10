@@ -172,8 +172,11 @@ def symbol_analysis(symbol: str) -> tuple[dict | None, str]:
     try:
         quotes = get_public_quotes((symbol,))
         quote = quotes[0] if quotes else {}
-        history = get_public_price_history(symbol)
-        metrics = _history_metrics(history)
+        try:
+            history = get_public_price_history(symbol)
+            metrics = _history_metrics(history)
+        except Exception:
+            metrics = None
         if metrics is None and quote.get("last") is None:
             return None, "Insufficient Public historical data"
 
