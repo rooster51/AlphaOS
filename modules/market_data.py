@@ -150,6 +150,41 @@ def market_pulse() -> tuple[list[dict], str]:
         return [], "Public.com unavailable"
 
 
+def dashboard_pulse() -> tuple[list[dict], str]:
+    if not has_public_config():
+        return [], "Public.com not configured"
+
+    symbols = tuple(MARKET_SYMBOLS[:4])
+    try:
+        rows = []
+        for quote in get_public_quotes(symbols):
+            change_pct = quote.get("change_pct")
+            signal = (
+                "Positive"
+                if change_pct is not None and change_pct > 0
+                else "Negative"
+                if change_pct is not None and change_pct < 0
+                else "Flat"
+            )
+            score = (
+                _clamp_score(50 + (float(change_pct) * 5))
+                if change_pct is not None
+                else 50
+            )
+            rows.append(
+                {
+                    "symbol": quote["symbol"],
+                    "last": quote.get("last"),
+                    "change": change_pct,
+                    "signal": signal,
+                    "score": score,
+                }
+            )
+        return rows, "Public.com live quotes"
+    except Exception:
+        return [], "Public.com unavailable"
+
+
 def price_history(symbol: str) -> tuple[pd.DataFrame, str]:
     if not has_public_config():
         return _empty_history(), "Public.com not configured"
