@@ -7,8 +7,19 @@ from modules.ui import configure_page, empty_state, page_header
 configure_page("Scanner")
 page_header("Scanner", "Research setups calculated from Public live and historical data.")
 
-results, source = scanner_results()
+if st.button("Run Scanner", type="primary", use_container_width=True):
+    with st.spinner("Scanning symbols..."):
+        st.session_state["scanner_results_view"] = scanner_results()
+
+results, source = st.session_state.get(
+    "scanner_results_view",
+    (None, "Not loaded"),
+)
 st.caption(f"Data source: {source}")
+
+if results is None:
+    empty_state("Scanner is ready.", "Click Run Scanner to load live setups.")
+    st.stop()
 
 if results.empty:
     empty_state(
