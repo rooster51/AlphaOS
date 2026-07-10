@@ -2,7 +2,7 @@ import streamlit as st
 
 from modules.auth import get_current_user, sign_in_form, sign_out_button
 from modules.data import get_account_snapshot, get_watchlist
-from modules.market_data import brokerage_positions, market_pulse
+from modules.market_data import dashboard_pulse
 from modules.metrics import compute_trade_metrics
 from modules.ui import (
     configure_page,
@@ -42,12 +42,9 @@ if not user:
 snapshot = get_account_snapshot(user_id=user.get("id") if user else None)
 trades = snapshot.get("trades", [])
 positions = snapshot.get("open_positions", [])
-public_positions, public_portfolio, position_source = brokerage_positions(user)
-if position_source == "Public.com Live":
-    positions = public_positions
 watchlist = get_watchlist(user_id=user.get("id") if user else None)
 metrics = compute_trade_metrics(trades)
-pulse, pulse_source = market_pulse()
+pulse, pulse_source = dashboard_pulse()
 
 st.subheader("Dashboard")
 
@@ -66,8 +63,7 @@ st.divider()
 left, right = st.columns([1.35, 1])
 with left:
     st.markdown("#### Open Positions")
-    if position_source == "Public.com Live":
-        st.caption("Public.com Live")
+    st.caption("Manual journal positions. Use P&L Dashboard for live brokerage positions.")
     if positions:
         st.dataframe(positions, use_container_width=True, hide_index=True)
     else:
