@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import date, timedelta
+from uuid import uuid4
 
 import pandas as pd
 import streamlit as st
@@ -144,12 +145,41 @@ def save_user_settings(settings: dict, user_id: str | None = None) -> None:
 
 
 def add_trade(trade: dict, user_id: str | None = None) -> None:
+    if "id" not in trade:
+        trade["id"] = str(uuid4())
     supabase = get_supabase()
     if supabase and user_id and user_id != "demo-user":
         trade["user_id"] = user_id
         supabase.table("trades").insert(trade).execute()
         return
     _session_table("trades", DEMO_TRADES).insert(0, trade)
+
+
+def update_trade(
+    trade_id: str | None,
+    updates: dict,
+    user_id: str | None = None,
+    session_index: int | None = None,
+) -> None:
+    supabase = get_supabase()
+    if supabase and user_id and user_id != "demo-user" and trade_id:
+        (
+            supabase.table("trades")
+            .update(updates)
+            .eq("id", trade_id)
+            .eq("user_id", user_id)
+            .execute()
+        )
+        return
+
+    trades = _session_table("trades", DEMO_TRADES)
+    if trade_id:
+        for index, trade in enumerate(trades):
+            if str(trade.get("id")) == str(trade_id):
+                trades[index] = {**trade, **updates}
+                return
+    if session_index is not None and 0 <= session_index < len(trades):
+        trades[session_index] = {**trades[session_index], **updates}
 
 
 def save_daily_pnl_snapshot(
