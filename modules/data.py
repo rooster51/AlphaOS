@@ -182,6 +182,32 @@ def update_trade(
         trades[session_index] = {**trades[session_index], **updates}
 
 
+def delete_trade(
+    trade_id: str | None,
+    user_id: str | None = None,
+    session_index: int | None = None,
+) -> None:
+    supabase = get_supabase()
+    if supabase and user_id and user_id != "demo-user" and trade_id:
+        (
+            supabase.table("trades")
+            .delete()
+            .eq("id", trade_id)
+            .eq("user_id", user_id)
+            .execute()
+        )
+        return
+
+    trades = _session_table("trades", DEMO_TRADES)
+    if trade_id:
+        for index, trade in enumerate(trades):
+            if str(trade.get("id")) == str(trade_id):
+                del trades[index]
+                return
+    if session_index is not None and 0 <= session_index < len(trades):
+        del trades[session_index]
+
+
 def save_daily_pnl_snapshot(
     user_id: str | None,
     equity: float,
