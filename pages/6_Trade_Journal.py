@@ -3,7 +3,13 @@ from datetime import date
 import streamlit as st
 
 from modules.auth import get_current_user
-from modules.data import add_trade, get_account_snapshot, trades_dataframe, update_trade
+from modules.data import (
+    add_trade,
+    delete_trade,
+    get_account_snapshot,
+    trades_dataframe,
+    update_trade,
+)
 from modules.strategies import strategies_for_instrument, strategy_ideas
 from modules.ui import configure_page, empty_state, page_header
 
@@ -45,6 +51,18 @@ def _load_close_trade(trade: dict, session_index: int | None = None) -> None:
         if key.startswith("journal_") and key not in {"journal_close_draft"}:
             del st.session_state[key]
 
+    st.rerun()
+
+
+def _delete_trade_selection(trade: dict, user_id: str | None) -> None:
+    delete_trade(
+        trade.get("id"),
+        user_id=user_id,
+        session_index=trade.get("_session_index"),
+    )
+    st.session_state.pop("journal_close_draft", None)
+    st.session_state.pop("journal_delete_confirm", None)
+    st.success("Trade deleted.")
     st.rerun()
 
 
@@ -97,6 +115,40 @@ with st.expander("Open Journal Trades", expanded=bool(open_trades) and not draft
                 use_container_width=True,
             ):
                 _load_close_trade(trade, trade.get("_session_index"))
+
+all_trades_for_delete = [
+    {**trade, "_session_index": index}
+    for index, trade in enumerate(snapshot.get("trades", []))
+]
+with st.expander("Delete Journal Trades", expanded=False):
+    if not all_trades_for_delete:
+        empty_state("No saved trades to delete.")
+    else:
+        delete_labels = [
+            f"{index + 1}. {_trade_label(trade)} | {trade.get('status', 'Unknown')}"
+            for index, trade in enumerate(all_trades_for_delete)
+        ]
+        selected_delete_index = st.selectbox(
+            "Trade to delete",
+            range(len(all_trades_for_delete)),
+            format_func=lambda index: delete_labels[index],
+            key="journal_delete_trade_index",
+        )
+        selected_trade = all_trades_for_delete[selected_delete_index]
+        st.warning(
+            "Deleting a trade permanently removes it from the journal and P&L calculations."
+        )
+        confirm_delete = st.checkbox(
+            f"Confirm delete {_trade_label(selected_trade)}",
+            key="journal_delete_confirm",
+        )
+        if st.button(
+            "Delete Selected Trade",
+            disabled=not confirm_delete,
+            type="primary",
+            use_container_width=True,
+        ):
+            _delete_trade_selection(selected_trade, user_id)
 
 with st.expander("Strategy ideas", expanded=False):
     i1, i2, i3 = st.columns(3)
