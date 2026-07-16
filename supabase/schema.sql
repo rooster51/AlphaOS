@@ -7,10 +7,26 @@ create table if not exists public.user_settings (
   default_account_size numeric(14, 2) default 0,
   default_risk_pct numeric(6, 3) default 1.0,
   timezone text default 'America/New_York',
+  max_trades_per_day integer default 3,
+  max_daily_loss_pct numeric(6, 3) default 2.0,
+  cooldown_after_losses integer default 2,
+  cooldown_minutes integer default 60,
+  min_backtest_win_rate numeric(6, 3) default 50.0,
+  max_reversal_warnings integer default 1,
+  require_pretrade_checklist boolean default true,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   unique(user_id)
 );
+
+alter table public.user_settings
+  add column if not exists max_trades_per_day integer default 3,
+  add column if not exists max_daily_loss_pct numeric(6, 3) default 2.0,
+  add column if not exists cooldown_after_losses integer default 2,
+  add column if not exists cooldown_minutes integer default 60,
+  add column if not exists min_backtest_win_rate numeric(6, 3) default 50.0,
+  add column if not exists max_reversal_warnings integer default 1,
+  add column if not exists require_pretrade_checklist boolean default true;
 
 create table if not exists public.watchlist (
   id uuid primary key default gen_random_uuid(),
