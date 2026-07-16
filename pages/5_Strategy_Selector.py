@@ -1,11 +1,14 @@
 import streamlit as st
 
+from modules.auth import get_current_user
+from modules.data import get_account_snapshot, get_user_settings
 from modules.market_data import price_history, symbol_analysis
 from modules.options_income import build_income_spread, select_expiration_buckets
 from modules.public_data import (
     get_public_option_chain,
     get_public_option_expirations,
 )
+from modules.risk_guardrails import discipline_status
 from modules.signal_quality import backtest_signal, reversal_diagnostics
 from modules.strategies import primary_strategy_idea
 from modules.ui import configure_page, empty_state, page_header
@@ -47,6 +50,11 @@ page_header(
     "Strategy Selector",
     "Symbol-driven stock and options research using Public market data.",
 )
+
+user = get_current_user()
+user_id = user.get("id") if user else None
+settings = get_user_settings(user_id=user_id)
+snapshot = get_account_snapshot(user_id=user_id)
 
 trade_tab, income_tab = st.tabs(["Trade Suggestion", "Income Options"])
 
@@ -155,6 +163,49 @@ with trade_tab:
                         analysis["outlook"],
                         hold_days=hold_map.get(request["horizon"], 5),
                     )
+                    discipline = discipline_status(
+                        snapshot.get("trades", []),
+                        settings,
+                        reversal_checks=checks,
+                        backtest=backtest,
+                    )
+                    if discipline["status"] == "Blocked":
+                        st.error("Trade blocked by your discipline guardrails.")
+                    elif discipline["status"] == "Caution":
+                        st.warning("Trade requires caution under your discipline guardrails.")
+                    else:
+                        st.success("Discipline guardrails are clear.")
+
+                    d_cols = st.columns(4)
+                    d_cols[0].metric("Trades Today", discipline["trades_today"])
+                    d_cols[1].metric(
+                        "Realized Today",
+                        f"${discipline['realized_today']:,.2f}",
+                    )
+                    d_cols[2].metric(
+                        "Daily Loss Limit",
+                        f"${discipline['daily_loss_limit']:,.2f}",
+                    )
+                    d_cols[3].metric(
+                        "Consecutive Losses",
+                        discipline["consecutive_losses"],
+                    )
+                    for blocker in discipline["blockers"]:
+                        st.error(blocker)
+                    for warning in discipline["warnings"]:
+                        st.warning(warning)
+
+                    if discipline["guardrails"]["require_pretrade_checklist"]:
+                        st.markdown("#### Pre-Trade Checklist")
+                        c1, c2, c3 = st.columns(3)
+                        planned_exit = c1.checkbox("Invalidation is defined")
+                        sized_correctly = c2.checkbox("Size fits risk limit")
+                        not_revenge = c3.checkbox("Not revenge trading")
+                        if not all([planned_exit, sized_correctly, not_revenge]):
+                            st.info(
+                                "Checklist incomplete. Treat this as a stand-down until every box is true."
+                            )
+
                     bt_cols = st.columns(5)
                     bt_cols[0].metric("Signals Tested", backtest["trades"])
                     bt_cols[1].metric("Win Rate", f"{backtest['win_rate']:.1f}%")
