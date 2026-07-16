@@ -1,11 +1,12 @@
 import streamlit as st
 
-from modules.market_data import symbol_analysis
+from modules.market_data import price_history, symbol_analysis
 from modules.options_income import build_income_spread, select_expiration_buckets
 from modules.public_data import (
     get_public_option_chain,
     get_public_option_expirations,
 )
+from modules.signal_quality import backtest_signal, reversal_diagnostics
 from modules.strategies import primary_strategy_idea
 from modules.ui import configure_page, empty_state, page_header
 
@@ -130,6 +131,53 @@ with trade_tab:
 
             st.subheader("Alternatives")
             st.dataframe(alternatives, use_container_width=True, hide_index=True)
+
+            with st.expander("Reversal Risk & Signal Backtest", expanded=True):
+                history, history_source = price_history(request["symbol"])
+                st.caption(f"Backtest source: {history_source}")
+                if history.empty:
+                    empty_state(
+                        "Signal diagnostics are unavailable.",
+                        "Historical bars are required for reversal checks and backtesting.",
+                    )
+                else:
+                    checks = reversal_diagnostics(history, analysis["outlook"])
+                    st.dataframe(checks, use_container_width=True, hide_index=True)
+
+                    hold_map = {
+                        "Day trade (same day)": 1,
+                        "Swing (2-8 weeks)": 5,
+                        "Intermediate (2-6 months)": 20,
+                        "Long term (6+ months)": 60,
+                    }
+                    backtest = backtest_signal(
+                        history,
+                        analysis["outlook"],
+                        hold_days=hold_map.get(request["horizon"], 5),
+                    )
+                    bt_cols = st.columns(5)
+                    bt_cols[0].metric("Signals Tested", backtest["trades"])
+                    bt_cols[1].metric("Win Rate", f"{backtest['win_rate']:.1f}%")
+                    bt_cols[2].metric(
+                        "Avg Return",
+                        f"{backtest['average_return']:+.2f}%",
+                    )
+                    bt_cols[3].metric("Profit Factor", backtest["profit_factor"])
+                    bt_cols[4].metric("Worst Trade", f"{backtest['max_loss']:+.2f}%")
+                    if backtest["results"].empty:
+                        empty_state(
+                            "No matching historical signals were found.",
+                            "Treat the current signal as unproven until more context is available.",
+                        )
+                    else:
+                        st.dataframe(
+                            backtest["results"].head(20),
+                            use_container_width=True,
+                            hide_index=True,
+                        )
+                st.caption(
+                    "Backtests are simple historical signal studies, not fill-aware execution simulations. Use them as context, not a guarantee."
+                )
 
             st.subheader("Risk Budget")
             b1, b2, b3 = st.columns(3)
