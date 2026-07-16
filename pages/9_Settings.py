@@ -2,12 +2,7 @@ import streamlit as st
 
 from modules.auth import get_current_user, sign_in_form, sign_out_button
 from modules.data import add_watchlist_symbol, get_user_settings, get_watchlist, save_user_settings
-from modules.public_data import (
-    can_access_public_portfolio,
-    get_public_account_summaries,
-    has_public_config,
-    test_public_connection,
-)
+from modules.risk_guardrails import normalize_guardrails
 from modules.supabase_client import has_supabase_config
 from modules.ui import configure_page, page_header
 
@@ -30,26 +25,9 @@ if has_supabase_config():
 else:
     st.warning("Supabase secrets are not configured. Demo session storage is browser-session only.")
 
-st.subheader("Public.com")
-if has_public_config():
-    ok, message = test_public_connection()
-    if ok:
-        st.success(message)
-    else:
-        st.warning(message)
-
-    if can_access_public_portfolio(user):
-        try:
-            accounts = get_public_account_summaries()
-            st.dataframe(accounts, use_container_width=True, hide_index=True)
-            st.caption("If the selected account is not your brokerage account, set PUBLIC_ACCOUNT_NUMBER to the brokerage account_id above in Streamlit secrets.")
-        except Exception:
-            st.warning("Public account list is unavailable. Check your Public API secret.")
-else:
-    st.warning("Public.com secret is not configured.")
-
 st.subheader("Trading Preferences")
 settings = get_user_settings(user_id=user.get("id") if user else None)
+guardrails = normalize_guardrails(settings)
 with st.form("settings_form"):
     display_name = st.text_input("Display name", value=settings.get("display_name") or "")
     default_account_size = st.number_input(
@@ -66,6 +44,51 @@ with st.form("settings_form"):
         step=0.1,
     )
     timezone = st.text_input("Timezone", value=settings.get("timezone") or "America/New_York")
+    st.markdown("#### Discipline Guardrails")
+    r1, r2, r3 = st.columns(3)
+    max_trades_per_day = r1.number_input(
+        "Max trades per day",
+        min_value=0,
+        value=guardrails["max_trades_per_day"],
+        step=1,
+    )
+    max_daily_loss_pct = r2.number_input(
+        "Max daily loss (%)",
+        min_value=0.0,
+        max_value=100.0,
+        value=guardrails["max_daily_loss_pct"],
+        step=0.25,
+    )
+    cooldown_after_losses = r3.number_input(
+        "Cooldown after losses",
+        min_value=0,
+        value=guardrails["cooldown_after_losses"],
+        step=1,
+    )
+    r4, r5, r6 = st.columns(3)
+    cooldown_minutes = r4.number_input(
+        "Cooldown minutes",
+        min_value=0,
+        value=guardrails["cooldown_minutes"],
+        step=15,
+    )
+    min_backtest_win_rate = r5.number_input(
+        "Minimum backtest win rate (%)",
+        min_value=0.0,
+        max_value=100.0,
+        value=guardrails["min_backtest_win_rate"],
+        step=1.0,
+    )
+    max_reversal_warnings = r6.number_input(
+        "Allowed reversal warnings",
+        min_value=0,
+        value=guardrails["max_reversal_warnings"],
+        step=1,
+    )
+    require_pretrade_checklist = st.checkbox(
+        "Require pre-trade checklist before considering a setup clear",
+        value=guardrails["require_pretrade_checklist"],
+    )
     settings_submitted = st.form_submit_button("Save settings")
 
 if settings_submitted:
@@ -75,6 +98,13 @@ if settings_submitted:
             "default_account_size": default_account_size,
             "default_risk_pct": default_risk_pct,
             "timezone": timezone,
+            "max_trades_per_day": max_trades_per_day,
+            "max_daily_loss_pct": max_daily_loss_pct,
+            "cooldown_after_losses": cooldown_after_losses,
+            "cooldown_minutes": cooldown_minutes,
+            "min_backtest_win_rate": min_backtest_win_rate,
+            "max_reversal_warnings": max_reversal_warnings,
+            "require_pretrade_checklist": require_pretrade_checklist,
         },
         user_id=user.get("id") if user else None,
     )
