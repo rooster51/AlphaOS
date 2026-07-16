@@ -61,6 +61,13 @@ DEMO_SETTINGS = {
     "default_account_size": 10000.0,
     "default_risk_pct": 1.0,
     "timezone": "America/New_York",
+    "max_trades_per_day": 3,
+    "max_daily_loss_pct": 2.0,
+    "cooldown_after_losses": 2,
+    "cooldown_minutes": 60,
+    "min_backtest_win_rate": 50.0,
+    "max_reversal_warnings": 1,
+    "require_pretrade_checklist": True,
 }
 
 
