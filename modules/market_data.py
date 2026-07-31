@@ -106,6 +106,29 @@ def _trend_score(metrics: dict) -> int:
     )
 
 
+def _day_trend_score(
+    metrics: dict,
+    quote: dict,
+    market_change_pct: float | None = None,
+) -> int:
+    quote_change = quote.get("change_pct")
+    quote_change = float(quote_change) if quote_change is not None else 0.0
+    market_change = float(market_change_pct) if market_change_pct is not None else 0.0
+    volume_ratio = metrics.get("volume_ratio")
+    volume_bonus = 0.0
+    if volume_ratio is not None:
+        volume_bonus = min(8.0, max(-4.0, (float(volume_ratio) - 1.0) * 8.0))
+    above_average = 4 if metrics["last"] >= metrics["sma_20"] else -4
+    return _clamp_score(
+        50
+        + (quote_change * 12)
+        + (market_change * 8)
+        + (metrics["return_5d"] * 0.75)
+        + above_average
+        + volume_bonus
+    )
+
+
 def _trend_signal(score: int) -> str:
     if score >= 70:
         return "Strong uptrend"
@@ -116,6 +139,25 @@ def _trend_signal(score: int) -> str:
     if score <= 42:
         return "Weakening"
     return "Neutral"
+
+
+def _outlook_from_score(score: int) -> str:
+    if score >= 56:
+        return "Bullish"
+    if score <= 44:
+        return "Bearish"
+    return "Neutral"
+
+
+def _market_change(quotes: dict[str, dict]) -> float | None:
+    values = [
+        float(quotes[symbol]["change_pct"])
+        for symbol in ("SPY", "QQQ")
+        if symbol in quotes and quotes[symbol].get("change_pct") is not None
+    ]
+    if not values:
+        return None
+    return sum(values) / len(values)
 
 
 def market_pulse() -> tuple[list[dict], str]:
@@ -133,12 +175,14 @@ def market_pulse() -> tuple[list[dict], str]:
             quote = quotes.get(symbol, {})
             last = quote.get("last") or metrics["last"]
             score = _trend_score({**metrics, "last": last})
+            day_score = _day_trend_score({**metrics, "last": last}, quote)
             rows.append(
                 {
                     "symbol": symbol,
                     "last": last,
                     "change": quote.get("change_pct"),
                     "volume": quote.get("volume"),
+                    "day_bias": _outlook_from_score(day_score),
                     "signal": _trend_signal(score),
                     "score": score,
                     "5D %": round(metrics["return_5d"], 2),
@@ -197,7 +241,7 @@ def price_history(symbol: str) -> tuple[pd.DataFrame, str]:
     return _empty_history(), "Public.com unavailable"
 
 
-def symbol_analysis(symbol: str) -> tuple[dict | None, str]:
+def symbol_analysis(symbol: str, horizon: str | None = None) -> tuple[dict | None, str]:
     symbol = symbol.strip().upper()
     if not symbol:
         return None, "Enter a symbol"
@@ -205,8 +249,11 @@ def symbol_analysis(symbol: str) -> tuple[dict | None, str]:
         return None, "Public.com not configured"
 
     try:
-        quotes = get_public_quotes((symbol,))
-        quote = quotes[0] if quotes else {}
+        quote_symbols = tuple(dict.fromkeys((symbol, "SPY", "QQQ")))
+        quote_rows = get_public_quotes(quote_symbols)
+        quote_map = {row["symbol"]: row for row in quote_rows}
+        quote = quote_map.get(symbol, quote_rows[0] if quote_rows else {})
+        market_change = _market_change(quote_map)
         try:
             history = get_public_price_history(symbol)
             metrics = _history_metrics(history)
@@ -227,7 +274,12 @@ def symbol_analysis(symbol: str) -> tuple[dict | None, str]:
                 "prior_20d_high": last,
             }
             score = 50
-            outlook = "Neutral"
+            day_score = _day_trend_score(metrics, quote, market_change)
+            outlook = (
+                _outlook_from_score(day_score)
+                if horizon == "Day trade (same day)"
+                else "Neutral"
+            )
             volatility = "Normal"
             return (
                 {
@@ -239,6 +291,9 @@ def symbol_analysis(symbol: str) -> tuple[dict | None, str]:
                     "atr_pct": 0.0,
                     "volume_ratio": None,
                     "trend_score": score,
+                    "day_score": day_score,
+                    "day_bias": _outlook_from_score(day_score),
+                    "market_change_pct": market_change,
                     "outlook": outlook,
                     "volatility": volatility,
                 },
@@ -248,7 +303,10 @@ def symbol_analysis(symbol: str) -> tuple[dict | None, str]:
         last = quote.get("last") or metrics["last"]
         metrics = {**metrics, "last": last}
         score = _trend_score(metrics)
-        outlook = "Bullish" if score >= 58 else "Bearish" if score <= 42 else "Neutral"
+        swing_outlook = "Bullish" if score >= 58 else "Bearish" if score <= 42 else "Neutral"
+        day_score = _day_trend_score(metrics, quote, market_change)
+        day_outlook = _outlook_from_score(day_score)
+        outlook = day_outlook if horizon == "Day trade (same day)" else swing_outlook
         volatility = (
             "High"
             if metrics["atr_pct"] >= 3.5
@@ -270,6 +328,12 @@ def symbol_analysis(symbol: str) -> tuple[dict | None, str]:
                     else None
                 ),
                 "trend_score": score,
+                "day_score": day_score,
+                "day_bias": day_outlook,
+                "swing_outlook": swing_outlook,
+                "market_change_pct": (
+                    round(market_change, 2) if market_change is not None else None
+                ),
                 "outlook": outlook,
                 "volatility": volatility,
             },
