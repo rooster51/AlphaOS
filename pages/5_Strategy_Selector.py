@@ -88,7 +88,7 @@ with trade_tab:
 
     request = st.session_state.get("strategy_analysis_request")
     if request:
-        analysis, source = symbol_analysis(request["symbol"])
+        analysis, source = symbol_analysis(request["symbol"], request["horizon"])
         st.caption(f"Data source: {source}")
 
         if analysis is None:
@@ -111,6 +111,21 @@ with trade_tab:
             metrics[3].metric("20-Day", f"{analysis['return_20d']:+.2f}%")
             metrics[4].metric("ATR", f"{analysis['atr_pct']:.2f}%")
             metrics[5].metric("Trend Score", analysis["trend_score"])
+            context = st.columns(3)
+            context[0].metric("Active Outlook", analysis["outlook"])
+            context[1].metric("Day Bias", analysis.get("day_bias", "N/A"))
+            context[2].metric(
+                "Market Today",
+                (
+                    f"{analysis['market_change_pct']:+.2f}%"
+                    if analysis.get("market_change_pct") is not None
+                    else "N/A"
+                ),
+            )
+            if request["horizon"] == "Day trade (same day)":
+                st.caption(
+                    "Day-trade outlook uses live quote change, SPY/QQQ alignment, 5-day context, volume, and price location. Swing trend remains available as the slower backdrop."
+                )
 
             primary, alternatives = primary_strategy_idea(
                 analysis["outlook"],
