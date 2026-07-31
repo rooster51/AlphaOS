@@ -47,4 +47,6 @@ st.plotly_chart(
 )
 
 st.dataframe(pulse, use_container_width=True, hide_index=True)
-st.caption("Dashboard pulse uses live quote changes. The selected chart uses Public historical bars.")
+st.caption(
+    "Day Bias uses live quote direction with short-term confirmation. Score is the slower swing backdrop from 5-day and 20-day returns plus the 20-day moving average."
+)
