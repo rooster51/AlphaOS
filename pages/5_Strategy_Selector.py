@@ -2,6 +2,7 @@ import streamlit as st
 
 from modules.auth import get_current_user
 from modules.data import get_account_snapshot, get_user_settings
+from modules.income_risk import session_texture, spread_management_plan
 from modules.market_data import price_history, symbol_analysis
 from modules.options_income import build_income_spread, select_expiration_buckets
 from modules.public_data import (
@@ -26,6 +27,17 @@ def load_spread_into_journal(symbol: str, spread: dict) -> None:
     for key in list(st.session_state):
         if key.startswith("journal_"):
             del st.session_state[key]
+    management_notes = spread.get("management_notes")
+    notes = (
+        f"{spread['bucket']} income candidate; "
+        f"target width ${spread['target_width']:,.2f}; "
+        f"actual width ${spread['actual_width']:,.2f}; "
+        f"estimated max profit ${spread['max_profit']:,.2f}; "
+        f"estimated max loss ${spread['max_loss']:,.2f}; "
+        f"breakeven {spread['breakeven']}."
+    )
+    if management_notes:
+        notes = f"{notes} Management plan: {management_notes}"
     st.session_state["journal_spread_draft"] = {
         "symbol": symbol,
         "strategy": spread["strategy"],
@@ -33,14 +45,7 @@ def load_spread_into_journal(symbol: str, spread: dict) -> None:
         "side": "Short / Credit",
         "entry_price": spread["net_credit"],
         "legs": spread["legs"],
-        "notes": (
-            f"{spread['bucket']} income candidate; "
-            f"target width ${spread['target_width']:,.2f}; "
-            f"actual width ${spread['actual_width']:,.2f}; "
-            f"estimated max profit ${spread['max_profit']:,.2f}; "
-            f"estimated max loss ${spread['max_loss']:,.2f}; "
-            f"breakeven {spread['breakeven']}."
-        ),
+        "notes": notes,
     }
     st.switch_page("pages/6_Trade_Journal.py")
 
@@ -316,7 +321,10 @@ with income_tab:
 
     income_request = st.session_state.get("income_options_request")
     if income_request:
-        analysis, source = symbol_analysis(income_request["symbol"])
+        analysis, source = symbol_analysis(
+            income_request["symbol"],
+            "Day trade (same day)",
+        )
         st.caption(f"Data source: {source} + Public option chain")
 
         if analysis is None:
@@ -365,6 +373,25 @@ with income_tab:
                 "Realized Volatility",
                 analysis["volatility"],
             )
+            history, history_source = price_history(income_request["symbol"])
+            texture = session_texture(history, analysis)
+            texture_cols = st.columns(4)
+            texture_cols[0].metric("Session Setup", texture["label"])
+            texture_cols[1].metric("Status", texture["status"])
+            texture_cols[2].metric("Day Bias", analysis.get("day_bias", "N/A"))
+            texture_cols[3].metric(
+                "Market Today",
+                (
+                    f"{analysis['market_change_pct']:+.2f}%"
+                    if analysis.get("market_change_pct") is not None
+                    else "N/A"
+                ),
+            )
+            if texture["status"] in {"Caution", "Directional"}:
+                st.warning(f"{texture['detail']} {texture['action']}")
+            else:
+                st.info(f"{texture['detail']} {texture['action']}")
+            st.caption(f"Chart context source: {history_source}")
             st.caption(
                 f"Requested width: {income_request.get('width_label', 'Auto')}. "
                 "If the exact strike width is not listed, AlphaOS uses the nearest available protection leg."
@@ -420,6 +447,20 @@ with income_tab:
                             spread["legs"],
                             use_container_width=True,
                             hide_index=True,
+                        )
+                        management_plan = spread_management_plan(spread, analysis)
+                        spread["management_notes"] = " ".join(
+                            f"{row['Rule']}: {row['Trigger']}."
+                            for row in management_plan
+                        )
+                        st.subheader("Stop & Management Plan")
+                        st.dataframe(
+                            management_plan,
+                            use_container_width=True,
+                            hide_index=True,
+                        )
+                        st.caption(
+                            "Management levels are planning references, not automated orders. Decide before entry, then follow the plan instead of flipping direction after a stop."
                         )
                         if st.button(
                             "Load into Trade Journal",
