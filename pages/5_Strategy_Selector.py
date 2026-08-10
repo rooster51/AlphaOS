@@ -8,8 +8,11 @@ from modules.income_risk import session_texture
 from modules.market_data import price_history, symbol_analysis
 from modules.options_income import select_expiration_buckets
 from modules.options_suggestions import (
+    STRATEGY_OBJECTIVES,
     build_option_suggestions,
+    rank_option_suggestions,
     suggestion_management_plan,
+    strategy_catalog_rows,
 )
 from modules.public_data import (
     get_public_option_chain,
@@ -555,7 +558,7 @@ with analyze_tab:
 
 with income_tab:
     with st.form("income_options_form"):
-        i1, i2, i3 = st.columns(3)
+        i1, i2, i3, i4 = st.columns(4)
         income_symbol = i1.text_input(
             "Ticker",
             value="SPY",
@@ -565,7 +568,11 @@ with income_tab:
             "Trade bias",
             ["Auto from trend", "Bullish", "Neutral", "Bearish"],
         )
-        width_choice = i3.selectbox(
+        priority_objective = i3.selectbox(
+            "Priority",
+            STRATEGY_OBJECTIVES,
+        )
+        width_choice = i4.selectbox(
             "Target spread width",
             ["Auto", "$1 wide", "$2 wide", "$3 wide", "$5 wide", "$10 wide"],
             index=2,
@@ -580,6 +587,7 @@ with income_tab:
         st.session_state["income_options_request"] = {
             "symbol": income_symbol,
             "bias": spread_bias,
+            "objective": priority_objective,
             "width": None
             if width_choice == "Auto"
             else float(width_choice.replace("$", "").replace(" wide", "")),
@@ -643,6 +651,10 @@ with income_tab:
                     target_width,
                     expirations,
                 )
+                candidates = rank_option_suggestions(
+                    candidates,
+                    income_request.get("objective", "Account Growth"),
+                )
             except Exception:
                 candidates = {}
 
@@ -701,6 +713,7 @@ with income_tab:
                 st.info(f"{texture['detail']} {texture['action']}")
             st.caption(f"Chart context source: {history_source}")
             st.caption(
+                f"Priority: {income_request.get('objective', 'Account Growth')}. "
                 f"Requested width: {income_request.get('width_label', 'Auto')}. "
                 "If the exact strike width is not listed, AlphaOS uses the nearest available strike. Calendar and diagonal ideas remain unpriced unless both expirations can be priced."
             )
@@ -732,7 +745,7 @@ with income_tab:
 
                         for index, spread in enumerate(bucket_candidates):
                             with st.expander(
-                                f"{spread['strategy']} - {spread['side']}",
+                                f"{spread['strategy']} - {spread['side']} - Fit {spread.get('objective_score', 0)}/100",
                                 expanded=index == 0,
                             ):
                                 st.caption(
@@ -741,6 +754,9 @@ with income_tab:
                                 )
                                 st.write(spread.get("thesis", ""))
                                 st.caption(spread.get("fit", ""))
+                                st.caption(
+                                    f"Priority fit: {spread.get('objective_reason', 'general fit')}"
+                                )
                                 quality = evaluate_trade_quality(
                                     symbol=income_request["symbol"],
                                     strategy=spread["strategy"],
@@ -813,6 +829,21 @@ with income_tab:
                                         income_request["symbol"],
                                         spread,
                                     )
+                priced_strategies = {
+                    item["strategy"]
+                    for rows in candidates.values()
+                    for item in rows
+                    if item.get("entry_price") is not None
+                }
+                with st.expander("Strategy Catalog & Eligibility", expanded=False):
+                    st.dataframe(
+                        strategy_catalog_rows(
+                            income_request.get("objective", "Account Growth"),
+                            priced_strategies,
+                        ),
+                        use_container_width=True,
+                        hide_index=True,
+                    )
 
 with growth_engine_tab:
     st.subheader("Growth Engine Strategy")
