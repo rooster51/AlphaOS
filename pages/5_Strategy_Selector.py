@@ -12,6 +12,10 @@ from modules.public_data import (
 from modules.risk_guardrails import discipline_status
 from modules.signal_quality import backtest_signal, reversal_diagnostics
 from modules.strategies import primary_strategy_idea
+from modules.trade_analyzer import (
+    analyze_trade,
+    growth_engine_plan,
+)
 from modules.ui import configure_page, empty_state, page_header
 
 
@@ -50,10 +54,10 @@ def load_spread_into_journal(symbol: str, spread: dict) -> None:
     st.switch_page("pages/6_Trade_Journal.py")
 
 
-configure_page("Strategy Selector")
+configure_page("Trade Analyzer")
 page_header(
-    "Strategy Selector",
-    "Symbol-driven stock and options research using Public market data.",
+    "Trade Analyzer & Growth Engine",
+    "Pre-trade decisions, options strategy fit, income setups, and portfolio growth math.",
 )
 
 user = get_current_user()
@@ -61,7 +65,9 @@ user_id = user.get("id") if user else None
 settings = get_user_settings(user_id=user_id)
 snapshot = get_account_snapshot(user_id=user_id)
 
-trade_tab, income_tab = st.tabs(["Trade Suggestion", "Income Options"])
+trade_tab, analyze_tab, income_tab, growth_engine_tab = st.tabs(
+    ["Find a Trade", "Analyze My Trade", "Income Options", "Growth Engine"]
+)
 
 with trade_tab:
     with st.form("symbol_strategy_form"):
@@ -286,6 +292,195 @@ with trade_tab:
                 f"{option_count:,} positions",
             )
 
+with analyze_tab:
+    st.subheader("Manual Pre-Trade Analyzer")
+    with st.form("manual_trade_analyzer_form"):
+        a1, a2, a3 = st.columns(3)
+        analyzer_symbol = a1.text_input("Ticker", value="SPY").strip().upper()
+        horizon_selection = a2.selectbox(
+            "Holding period",
+            ["AUTO-DETECT", "DAY TRADE", "WEEKLY", "MONTHLY", "POSITION", "LEAPS"],
+        )
+        strategy = a3.selectbox(
+            "Strategy",
+            [
+                "Long Call",
+                "Long Put",
+                "Call Debit Spread",
+                "Put Debit Spread",
+                "Put Credit Spread",
+                "Call Credit Spread",
+                "Iron Condor",
+                "Butterfly",
+                "Calendar Spread",
+                "Diagonal Spread",
+                "LEAPS Call",
+                "LEAPS Put",
+                "LEAPS Debit Spread",
+            ],
+        )
+        b1, b2, b3, b4 = st.columns(4)
+        expiration = b1.date_input("Expiration")
+        premium = b2.number_input(
+            "Debit or credit per spread/contract",
+            min_value=0.0,
+            value=0.25,
+            step=0.01,
+        )
+        contracts = b3.number_input("Contracts / spreads", min_value=1, value=1, step=1)
+        account_balance = b4.number_input(
+            "Account balance",
+            min_value=0.0,
+            value=float(settings.get("default_account_size") or 100.0),
+            step=50.0,
+        )
+        c1, c2 = st.columns(2)
+        risk_pct = c1.number_input(
+            "Planned risk (%)",
+            min_value=0.0,
+            max_value=100.0,
+            value=float(settings.get("default_risk_pct") or 5.0),
+            step=0.25,
+        )
+        risk_dollar_limit = c2.number_input(
+            "Max planned dollar risk",
+            min_value=0.0,
+            value=7.0,
+            step=1.0,
+        )
+        legs_text = st.text_area(
+            "Legs",
+            value="Buy 550C\nSell 555C",
+            help="Examples: Buy 550C, Sell 555C, Sell 540P.",
+        )
+        analyze_submitted = st.form_submit_button(
+            "Analyze Trade",
+            type="primary",
+            use_container_width=True,
+        )
+
+    if analyze_submitted:
+        with st.spinner("Analyzing trade fit, risk, and exit structure..."):
+            analysis, analysis_source = symbol_analysis(analyzer_symbol, horizon_selection)
+            history, history_source = price_history(analyzer_symbol)
+            texture = session_texture(history, analysis or {})
+            result = analyze_trade(
+                analyzer_symbol,
+                strategy,
+                horizon_selection,
+                expiration,
+                legs_text,
+                premium,
+                contracts,
+                account_balance,
+                risk_pct,
+                risk_dollar_limit,
+                analysis,
+                texture,
+            )
+            st.session_state["manual_trade_analysis"] = {
+                "result": result,
+                "analysis": analysis,
+                "analysis_source": analysis_source,
+                "texture": texture,
+                "history_source": history_source,
+            }
+
+    manual = st.session_state.get("manual_trade_analysis")
+    if manual:
+        result = manual["result"]
+        analysis = manual["analysis"]
+        texture = manual["texture"]
+        st.caption(
+            f"Data sources: {manual['analysis_source']}; {manual['history_source']}"
+        )
+        verdict_cols = st.columns(5)
+        verdict_cols[0].metric("Verdict", result["verdict"])
+        verdict_cols[1].metric("Score", f"{result['score']}/100")
+        verdict_cols[2].metric("Horizon", result["horizon"])
+        verdict_cols[3].metric("DTE", result["dte"] if result["dte"] is not None else "N/A")
+        verdict_cols[4].metric("Session", texture["label"])
+
+        if result["verdict"] == "DO NOT TAKE":
+            st.error("NO TRADE / DO NOT TAKE")
+        elif result["warnings"]:
+            st.warning("Trade is not clean. Review warnings before deciding.")
+        else:
+            st.success("Analyzer found a complete pre-trade structure.")
+
+        if result["blockers"]:
+            st.subheader("Blockers")
+            for blocker in result["blockers"]:
+                st.error(blocker)
+        if result["warnings"]:
+            st.subheader("Warnings")
+            for warning in result["warnings"]:
+                st.warning(warning)
+
+        st.subheader("Trade Card")
+        risk = result["risk"]
+        st.dataframe(
+            [
+                {
+                    "Ticker": result["symbol"],
+                    "Strategy": result["strategy"],
+                    "Direction": result["direction"],
+                    "Horizon": result["horizon"],
+                    "Capital Required": risk["capital_required"],
+                    "Planned Loss": risk["planned_loss"],
+                    "Max Loss": risk["max_loss"],
+                    "Max Profit": risk["max_profit"],
+                    "Reward/Risk": risk["reward_risk"],
+                    "Account Committed %": risk["account_committed_pct"],
+                    "Risk Class": risk["risk_class"],
+                }
+            ],
+            use_container_width=True,
+            hide_index=True,
+        )
+        st.dataframe(result["legs"], use_container_width=True, hide_index=True)
+
+        st.subheader("Relevant Timeframes")
+        st.dataframe(
+            [{"Timeframe": item} for item in result["timeframes"]],
+            use_container_width=True,
+            hide_index=True,
+        )
+
+        if analysis:
+            context_cols = st.columns(4)
+            context_cols[0].metric("Underlying", f"${analysis['last']:,.2f}")
+            context_cols[1].metric("Day Bias", analysis.get("day_bias", "N/A"))
+            context_cols[2].metric("Swing", analysis.get("swing_outlook", analysis.get("outlook", "N/A")))
+            context_cols[3].metric("ATR", f"{analysis['atr_pct']:.2f}%")
+        st.info(f"{texture['detail']} {texture['action']}")
+
+        st.subheader("Trade Management")
+        plan = result["exit_plan"]
+        if not plan.get("available"):
+            st.error(plan["reason"])
+        else:
+            st.dataframe(
+                [
+                    {"Item": "Entry", "Plan": plan["entry"]},
+                    {"Item": "Initial invalidation", "Plan": plan["underlying_invalidation"]},
+                    {"Item": "Estimated option/spread stop", "Plan": plan["estimated_option_stop"]},
+                    {"Item": "Planned loss", "Plan": plan["planned_loss"]},
+                    {"Item": "Target 1", "Plan": plan["target_1"]},
+                    {"Item": "Target 2", "Plan": plan["target_2"]},
+                    {"Item": "Profit plan", "Plan": plan["profit_plan"]},
+                    {"Item": "Breakeven rule", "Plan": plan["breakeven_rule"]},
+                    {"Item": "Time stop", "Plan": plan["time_stop"]},
+                    {"Item": "Early exit", "Plan": plan["early_exit"]},
+                    {"Item": "End of day", "Plan": plan["eod"]},
+                ],
+                use_container_width=True,
+                hide_index=True,
+            )
+            st.caption(
+                "Option/spread stop values are estimates. Greeks, volatility, time decay, and bid/ask changes can alter actual fillable prices."
+            )
+
 with income_tab:
     with st.form("income_options_form"):
         i1, i2, i3 = st.columns(3)
@@ -471,6 +666,97 @@ with income_tab:
                                 income_request["symbol"],
                                 spread,
                             )
+
+with growth_engine_tab:
+    st.subheader("Growth Engine Strategy")
+    g1, g2, g3 = st.columns(3)
+    current_value = g1.number_input(
+        "Current portfolio value",
+        min_value=0.0,
+        value=float(settings.get("default_account_size") or 100.0),
+        step=50.0,
+        key="growth_engine_current",
+    )
+    target_value = g2.number_input(
+        "Target portfolio value",
+        min_value=0.0,
+        value=max(float(settings.get("default_account_size") or 100.0) * 2, 250.0),
+        step=50.0,
+        key="growth_engine_target",
+    )
+    target_days = g3.number_input(
+        "Target days",
+        min_value=1,
+        value=90,
+        step=1,
+        key="growth_engine_days",
+    )
+    g4, g5, g6 = st.columns(3)
+    risk_per_trade = g4.number_input(
+        "Risk per trade (%)",
+        min_value=0.0,
+        max_value=25.0,
+        value=float(settings.get("default_risk_pct") or 5.0),
+        step=0.25,
+        key="growth_engine_risk",
+    )
+    trades_per_week = g5.number_input(
+        "Planned trades per week",
+        min_value=0,
+        value=3,
+        step=1,
+        key="growth_engine_trades",
+    )
+    average_r = g6.number_input(
+        "Average R per winning plan",
+        min_value=-5.0,
+        value=1.0,
+        step=0.25,
+        key="growth_engine_avg_r",
+    )
+    plan = growth_engine_plan(
+        current_value,
+        target_value,
+        target_days,
+        risk_per_trade,
+        trades_per_week,
+        average_r,
+    )
+    plan_cols = st.columns(5)
+    plan_cols[0].metric("Growth Needed", f"${plan['gap']:,.2f}")
+    plan_cols[1].metric("Daily Need", f"${plan['daily_needed']:,.2f}")
+    plan_cols[2].metric("Daily %", f"{plan['daily_pct']:.2f}%")
+    plan_cols[3].metric("Weekly Need", f"${plan['weekly_needed']:,.2f}")
+    plan_cols[4].metric("Expected Weekly", f"${plan['expected_weekly_profit']:,.2f}")
+    if "PLAUSIBLE" in plan["posture"] or "MET" in plan["posture"]:
+        st.success(plan["posture"])
+    else:
+        st.warning(plan["posture"])
+    st.dataframe(
+        [
+            {
+                "Rule": "Only take complete trade cards",
+                "Why": "A trade without entry, invalidation, planned loss, and targets does not qualify for the growth plan.",
+            },
+            {
+                "Rule": "Respect weekly risk budget",
+                "Why": f"Planned weekly risk budget is about ${plan['weekly_risk_budget']:,.2f}.",
+            },
+            {
+                "Rule": "No trade is a valid outcome",
+                "Why": "The growth engine depends on avoiding low-quality trades, not forcing activity.",
+            },
+            {
+                "Rule": "Stop after guardrail breach",
+                "Why": "Overtrading and revenge trading damage account survival more than missed trades.",
+            },
+        ],
+        use_container_width=True,
+        hide_index=True,
+    )
+    st.caption(
+        "Growth projections are planning math only. They are not expected returns or profit guarantees."
+    )
 
 st.caption(
     "Research only. Option estimates use current midpoint data and may not be fillable. Day-trade candidates use same-day expiration when listed; otherwise the nearest available expiration is shown. AlphaOS does not place orders."
