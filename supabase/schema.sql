@@ -14,6 +14,12 @@ create table if not exists public.user_settings (
   min_backtest_win_rate numeric(6, 3) default 50.0,
   max_reversal_warnings integer default 1,
   require_pretrade_checklist boolean default true,
+  min_trade_quality_score numeric(6, 3) default 70.0,
+  max_bid_ask_pct numeric(6, 3) default 18.0,
+  max_account_risk_pct numeric(6, 3) default 2.0,
+  block_choppy_day_trades boolean default true,
+  block_conflicting_trend boolean default true,
+  require_positive_backtest boolean default true,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   unique(user_id)
@@ -26,7 +32,13 @@ alter table public.user_settings
   add column if not exists cooldown_minutes integer default 60,
   add column if not exists min_backtest_win_rate numeric(6, 3) default 50.0,
   add column if not exists max_reversal_warnings integer default 1,
-  add column if not exists require_pretrade_checklist boolean default true;
+  add column if not exists require_pretrade_checklist boolean default true,
+  add column if not exists min_trade_quality_score numeric(6, 3) default 70.0,
+  add column if not exists max_bid_ask_pct numeric(6, 3) default 18.0,
+  add column if not exists max_account_risk_pct numeric(6, 3) default 2.0,
+  add column if not exists block_choppy_day_trades boolean default true,
+  add column if not exists block_conflicting_trend boolean default true,
+  add column if not exists require_positive_backtest boolean default true;
 
 create table if not exists public.watchlist (
   id uuid primary key default gen_random_uuid(),
