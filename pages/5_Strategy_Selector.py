@@ -1,10 +1,16 @@
+from datetime import date, datetime
+
 import streamlit as st
 
 from modules.auth import get_current_user
 from modules.data import get_account_snapshot, get_user_settings
-from modules.income_risk import session_texture, spread_management_plan
+from modules.income_risk import session_texture
 from modules.market_data import price_history, symbol_analysis
-from modules.options_income import build_income_spread, select_expiration_buckets
+from modules.options_income import select_expiration_buckets
+from modules.options_suggestions import (
+    build_option_suggestions,
+    suggestion_management_plan,
+)
 from modules.public_data import (
     get_public_option_chain,
     get_public_option_expirations,
@@ -32,12 +38,18 @@ def load_spread_into_journal(symbol: str, spread: dict) -> None:
         if key.startswith("journal_"):
             del st.session_state[key]
     management_notes = spread.get("management_notes")
+    side = spread.get("side") or (
+        "Short / Credit" if float(spread.get("net_credit") or 0.0) > 0 else "Long / Debit"
+    )
+    entry_price = spread.get("entry_price")
+    if entry_price is None:
+        entry_price = spread.get("net_credit", 0.0)
     notes = (
-        f"{spread['bucket']} income candidate; "
-        f"target width ${spread['target_width']:,.2f}; "
-        f"actual width ${spread['actual_width']:,.2f}; "
-        f"estimated max profit ${spread['max_profit']:,.2f}; "
-        f"estimated max loss ${spread['max_loss']:,.2f}; "
+        f"{spread['bucket']} option idea; "
+        f"strategy {spread['strategy']}; "
+        f"entry estimate ${float(entry_price or 0.0):,.2f}; "
+        f"estimated max profit {spread.get('max_profit', 'N/A')}; "
+        f"estimated max loss {spread.get('max_loss', 'N/A')}; "
         f"breakeven {spread['breakeven']}."
     )
     if management_notes:
@@ -46,8 +58,8 @@ def load_spread_into_journal(symbol: str, spread: dict) -> None:
         "symbol": symbol,
         "strategy": spread["strategy"],
         "expiration": spread["expiration"],
-        "side": "Short / Credit",
-        "entry_price": spread["net_credit"],
+        "side": side,
+        "entry_price": entry_price or 0.0,
         "legs": spread["legs"],
         "notes": notes,
     }
@@ -66,7 +78,7 @@ settings = get_user_settings(user_id=user_id)
 snapshot = get_account_snapshot(user_id=user_id)
 
 trade_tab, analyze_tab, income_tab, growth_engine_tab = st.tabs(
-    ["Find a Trade", "Analyze My Trade", "Income Options", "Growth Engine"]
+    ["Find a Trade", "Analyze My Trade", "Trade Suggestions", "Growth Engine"]
 )
 
 with trade_tab:
@@ -485,21 +497,21 @@ with income_tab:
     with st.form("income_options_form"):
         i1, i2, i3 = st.columns(3)
         income_symbol = i1.text_input(
-            "Income ticker",
+            "Ticker",
             value="SPY",
             help="Works with optionable ETFs/stocks such as SPY, QQQ, DIA, IWM, and index symbols such as SPX when supported by Public.",
         ).strip().upper()
         spread_bias = i2.selectbox(
-            "Spread bias",
+            "Trade bias",
             ["Auto from trend", "Bullish", "Neutral", "Bearish"],
         )
         width_choice = i3.selectbox(
-            "Spread width",
+            "Target spread width",
             ["Auto", "$1 wide", "$2 wide", "$3 wide", "$5 wide", "$10 wide"],
             index=2,
         )
         income_submitted = st.form_submit_button(
-            "Build Income Spreads",
+            "Build Trade Suggestions",
             type="primary",
             use_container_width=True,
         )
@@ -524,7 +536,7 @@ with income_tab:
 
         if analysis is None:
             empty_state(
-                "Income analysis is unavailable.",
+                "Trade suggestion analysis is unavailable.",
                 "Verify the ticker is optionable and the Public connection is active.",
             )
         else:
@@ -538,19 +550,39 @@ with income_tab:
                     income_request["symbol"]
                 )
                 buckets = select_expiration_buckets(expirations)
-                candidates = {}
+                chains = {}
                 for bucket, expiration in buckets.items():
-                    chain = get_public_option_chain(
+                    chains[bucket] = get_public_option_chain(
                         income_request["symbol"],
                         expiration,
                     )
-                    candidates[bucket] = build_income_spread(
-                        chain,
-                        float(analysis["last"]),
-                        outlook,
-                        bucket,
-                        spread_width=income_request["width"],
+                leaps_expiration = next(
+                    (
+                        expiration
+                        for expiration in expirations
+                        if (
+                            datetime.strptime(expiration[:10], "%Y-%m-%d").date()
+                            - date.today()
+                        ).days
+                        >= 181
+                    ),
+                    None,
+                )
+                if leaps_expiration:
+                    chains["LEAPS"] = get_public_option_chain(
+                        income_request["symbol"],
+                        leaps_expiration,
                     )
+                target_width = income_request["width"] or (
+                    float(analysis["last"]) * 0.01
+                )
+                candidates = build_option_suggestions(
+                    chains,
+                    float(analysis["last"]),
+                    outlook,
+                    target_width,
+                    expirations,
+                )
             except Exception:
                 candidates = {}
 
@@ -589,83 +621,100 @@ with income_tab:
             st.caption(f"Chart context source: {history_source}")
             st.caption(
                 f"Requested width: {income_request.get('width_label', 'Auto')}. "
-                "If the exact strike width is not listed, AlphaOS uses the nearest available protection leg."
+                "If the exact strike width is not listed, AlphaOS uses the nearest available strike. Calendar and diagonal ideas remain unpriced unless both expirations can be priced."
             )
 
             if not candidates or not any(candidates.values()):
                 empty_state(
-                    "No viable income spread was found.",
+                    "No viable option suggestions were found.",
                     "The selected chain may lack liquid contracts with valid bid and ask prices.",
                 )
             else:
-                bucket_tabs = st.tabs(["Day Trade", "Weekly", "Monthly"])
+                ordered_buckets = [
+                    bucket
+                    for bucket in ["Day Trade", "Weekly", "Monthly", "LEAPS"]
+                    if candidates.get(bucket)
+                ]
+                bucket_tabs = st.tabs(ordered_buckets)
                 for tab, bucket in zip(
                     bucket_tabs,
-                    ["Day Trade", "Weekly", "Monthly"],
+                    ordered_buckets,
                 ):
                     with tab:
-                        spread = candidates.get(bucket)
-                        if spread is None:
+                        bucket_candidates = candidates.get(bucket, [])
+                        if not bucket_candidates:
                             empty_state(
-                                f"No {bucket.lower()} spread is available.",
+                                f"No {bucket.lower()} suggestions are available.",
                                 "Try another ticker or directional bias.",
                             )
                             continue
 
-                        st.subheader(spread["strategy"])
-                        st.caption(
-                            f"Expiration: {spread['expiration']} - "
-                            f"{spread['expiration_note']}"
-                        )
-                        spread_metrics = st.columns(4)
-                        spread_metrics[0].metric(
-                            "Estimated Credit",
-                            f"${spread['net_credit']:,.2f}",
-                        )
-                        spread_metrics[1].metric(
-                            "Actual Width",
-                            f"${spread['actual_width']:,.2f}",
-                        )
-                        spread_metrics[2].metric(
-                            "Max Profit",
-                            f"${spread['max_profit']:,.2f}",
-                        )
-                        spread_metrics[3].metric(
-                            "Max Loss",
-                            f"${spread['max_loss']:,.2f}",
-                        )
-                        st.metric(
-                            "Breakeven",
-                            spread["breakeven"],
-                        )
-                        st.dataframe(
-                            spread["legs"],
-                            use_container_width=True,
-                            hide_index=True,
-                        )
-                        management_plan = spread_management_plan(spread, analysis)
-                        spread["management_notes"] = " ".join(
-                            f"{row['Rule']}: {row['Trigger']}."
-                            for row in management_plan
-                        )
-                        st.subheader("Stop & Management Plan")
-                        st.dataframe(
-                            management_plan,
-                            use_container_width=True,
-                            hide_index=True,
-                        )
-                        st.caption(
-                            "Management levels are planning references, not automated orders. Decide before entry, then follow the plan instead of flipping direction after a stop."
-                        )
-                        if st.button(
-                            "Load into Trade Journal",
-                            key=f"load_{bucket}",
-                            use_container_width=True,
-                        ):
-                            load_spread_into_journal(
-                                income_request["symbol"],
-                                spread,
-                            )
+                        for index, spread in enumerate(bucket_candidates):
+                            with st.expander(
+                                f"{spread['strategy']} - {spread['side']}",
+                                expanded=index == 0,
+                            ):
+                                st.caption(
+                                    f"Expiration: {spread['expiration']} - "
+                                    f"{spread['expiration_note']}"
+                                )
+                                st.write(spread.get("thesis", ""))
+                                st.caption(spread.get("fit", ""))
+                                spread_metrics = st.columns(5)
+                                entry = spread.get("entry_price")
+                                spread_metrics[0].metric(
+                                    "Entry",
+                                    f"${entry:,.2f}" if entry is not None else "Unpriced",
+                                )
+                                spread_metrics[1].metric(
+                                    "Width",
+                                    f"${float(spread.get('actual_width') or 0):,.2f}",
+                                )
+                                max_profit = spread.get("max_profit")
+                                max_loss = spread.get("max_loss")
+                                spread_metrics[2].metric(
+                                    "Max Profit",
+                                    f"${max_profit:,.2f}" if max_profit is not None else "Open",
+                                )
+                                spread_metrics[3].metric(
+                                    "Max Loss",
+                                    f"${max_loss:,.2f}" if max_loss is not None else "Unknown",
+                                )
+                                spread_metrics[4].metric("Breakeven", spread["breakeven"])
+                                if spread.get("legs"):
+                                    st.dataframe(
+                                        spread["legs"],
+                                        use_container_width=True,
+                                        hide_index=True,
+                                    )
+                                else:
+                                    empty_state(
+                                        "Pricing is incomplete for this strategy.",
+                                        "Use it as a strategy category until multi-expiration pricing is available.",
+                                    )
+                                management_plan = suggestion_management_plan(spread)
+                                spread["management_notes"] = " ".join(
+                                    f"{row['Rule']}: {row['Trigger']}."
+                                    for row in management_plan
+                                )
+                                st.subheader("Stop & Management Plan")
+                                st.dataframe(
+                                    management_plan,
+                                    use_container_width=True,
+                                    hide_index=True,
+                                )
+                                st.caption(
+                                    "Management levels are planning references, not automated orders. Decide before entry, then follow the plan instead of flipping direction after a stop."
+                                )
+                                if spread.get("legs") and st.button(
+                                    "Load into Trade Journal",
+                                    key=f"load_{bucket}_{index}",
+                                    use_container_width=True,
+                                ):
+                                    load_spread_into_journal(
+                                        income_request["symbol"],
+                                        spread,
+                                    )
 
 with growth_engine_tab:
     st.subheader("Growth Engine Strategy")
