@@ -4,6 +4,7 @@ from modules.auth import get_current_user, sign_in_form, sign_out_button
 from modules.data import add_watchlist_symbol, get_user_settings, get_watchlist, save_user_settings
 from modules.risk_guardrails import normalize_guardrails
 from modules.supabase_client import has_supabase_config
+from modules.trade_quality import normalize_quality_settings
 from modules.ui import configure_page, page_header
 
 
@@ -28,6 +29,7 @@ else:
 st.subheader("Trading Preferences")
 settings = get_user_settings(user_id=user.get("id") if user else None)
 guardrails = normalize_guardrails(settings)
+quality = normalize_quality_settings(settings)
 with st.form("settings_form"):
     display_name = st.text_input("Display name", value=settings.get("display_name") or "")
     default_account_size = st.number_input(
@@ -89,6 +91,42 @@ with st.form("settings_form"):
         "Require pre-trade checklist before considering a setup clear",
         value=guardrails["require_pretrade_checklist"],
     )
+    st.markdown("#### Trade Quality Gate")
+    q1, q2, q3 = st.columns(3)
+    min_trade_quality_score = q1.number_input(
+        "Minimum trade quality score",
+        min_value=0.0,
+        max_value=100.0,
+        value=quality["min_trade_quality_score"],
+        step=1.0,
+    )
+    max_bid_ask_pct = q2.number_input(
+        "Max option bid/ask width (%)",
+        min_value=0.0,
+        max_value=100.0,
+        value=quality["max_bid_ask_pct"],
+        step=1.0,
+    )
+    max_account_risk_pct = q3.number_input(
+        "Max account risk per idea (%)",
+        min_value=0.0,
+        max_value=100.0,
+        value=quality["max_account_risk_pct"],
+        step=0.25,
+    )
+    q4, q5, q6 = st.columns(3)
+    block_choppy_day_trades = q4.checkbox(
+        "Block choppy day trades",
+        value=quality["block_choppy_day_trades"],
+    )
+    block_conflicting_trend = q5.checkbox(
+        "Block conflicting day/swing trends",
+        value=quality["block_conflicting_trend"],
+    )
+    require_positive_backtest = q6.checkbox(
+        "Require positive backtest edge",
+        value=quality["require_positive_backtest"],
+    )
     settings_submitted = st.form_submit_button("Save settings")
 
 if settings_submitted:
@@ -105,6 +143,12 @@ if settings_submitted:
             "min_backtest_win_rate": min_backtest_win_rate,
             "max_reversal_warnings": max_reversal_warnings,
             "require_pretrade_checklist": require_pretrade_checklist,
+            "min_trade_quality_score": min_trade_quality_score,
+            "max_bid_ask_pct": max_bid_ask_pct,
+            "max_account_risk_pct": max_account_risk_pct,
+            "block_choppy_day_trades": block_choppy_day_trades,
+            "block_conflicting_trend": block_conflicting_trend,
+            "require_positive_backtest": require_positive_backtest,
         },
         user_id=user.get("id") if user else None,
     )
