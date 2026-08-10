@@ -68,6 +68,12 @@ DEMO_SETTINGS = {
     "min_backtest_win_rate": 50.0,
     "max_reversal_warnings": 1,
     "require_pretrade_checklist": True,
+    "min_trade_quality_score": 70.0,
+    "max_bid_ask_pct": 18.0,
+    "max_account_risk_pct": 2.0,
+    "block_choppy_day_trades": True,
+    "block_conflicting_trend": True,
+    "require_positive_backtest": True,
 }
 
 
@@ -146,7 +152,30 @@ def save_user_settings(settings: dict, user_id: str | None = None) -> None:
     if supabase and user_id and user_id != "demo-user":
         payload = dict(settings)
         payload["user_id"] = user_id
-        supabase.table("user_settings").upsert(payload, on_conflict="user_id").execute()
+        try:
+            supabase.table("user_settings").upsert(payload, on_conflict="user_id").execute()
+        except Exception:
+            legacy_keys = {
+                "display_name",
+                "default_account_size",
+                "default_risk_pct",
+                "timezone",
+                "max_trades_per_day",
+                "max_daily_loss_pct",
+                "cooldown_after_losses",
+                "cooldown_minutes",
+                "min_backtest_win_rate",
+                "max_reversal_warnings",
+                "require_pretrade_checklist",
+                "user_id",
+            }
+            legacy_payload = {
+                key: value for key, value in payload.items() if key in legacy_keys
+            }
+            supabase.table("user_settings").upsert(
+                legacy_payload,
+                on_conflict="user_id",
+            ).execute()
         return
     st.session_state["alphaos_user_settings"] = dict(settings)
 
