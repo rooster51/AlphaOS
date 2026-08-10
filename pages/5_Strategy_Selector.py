@@ -7,13 +7,37 @@ from modules.data import get_account_snapshot, get_user_settings
 from modules.income_risk import session_texture
 from modules.market_data import price_history, symbol_analysis
 from modules.options_income import select_expiration_buckets
-from modules.options_suggestions import (
-    STRATEGY_OBJECTIVES,
-    build_option_suggestions,
-    rank_option_suggestions,
-    suggestion_management_plan,
-    strategy_catalog_rows,
-)
+from modules.options_suggestions import build_option_suggestions, suggestion_management_plan
+
+try:
+    from modules.options_suggestions import (
+        STRATEGY_OBJECTIVES,
+        rank_option_suggestions,
+        strategy_catalog_rows,
+    )
+except ImportError:
+    STRATEGY_OBJECTIVES = [
+        "Account Growth",
+        "Income",
+        "Capital Preservation",
+        "Volatility Expansion",
+        "Hedging",
+    ]
+
+    def rank_option_suggestions(suggestions: dict, objective: str) -> dict:
+        return suggestions
+
+    def strategy_catalog_rows(objective: str, priced_strategies: set) -> list[dict]:
+        return [
+            {
+                "Strategy": "Strategy catalog unavailable",
+                "Category": "Fallback",
+                "Best For": objective,
+                "Risk Profile": "N/A",
+                "Availability": "Redeploy is still loading the latest module",
+                "Priority Fit": "N/A",
+            }
+        ]
 from modules.public_data import (
     get_public_option_chain,
     get_public_option_expirations,
