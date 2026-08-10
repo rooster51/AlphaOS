@@ -72,6 +72,8 @@ def _legs(*items: tuple[str, dict]) -> list[dict]:
                 "type": contract.get("type"),
                 "strike": float(contract["strike"]),
                 "contract": contract.get("contract"),
+                "bid": contract.get("bid"),
+                "ask": contract.get("ask"),
                 "mid": contract.get("mid"),
                 "delta": contract.get("delta"),
             }
