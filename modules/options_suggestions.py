@@ -5,6 +5,126 @@ from datetime import date, datetime
 from modules.options_income import build_income_spread
 
 
+STRATEGY_OBJECTIVES = [
+    "Account Growth",
+    "Income",
+    "Capital Preservation",
+    "Volatility Expansion",
+    "Hedging",
+]
+
+STRATEGY_CATALOG = {
+    "Bull Put Credit Spread": {
+        "category": "Credit Spread",
+        "best_for": ["Income", "Capital Preservation"],
+        "risk": "Defined risk",
+        "status": "Priced when chain supports it",
+    },
+    "Bear Call Credit Spread": {
+        "category": "Credit Spread",
+        "best_for": ["Income", "Capital Preservation"],
+        "risk": "Defined risk",
+        "status": "Priced when chain supports it",
+    },
+    "Call Debit Spread": {
+        "category": "Debit Spread",
+        "best_for": ["Account Growth"],
+        "risk": "Defined risk",
+        "status": "Priced when chain supports it",
+    },
+    "Put Debit Spread": {
+        "category": "Debit Spread",
+        "best_for": ["Account Growth", "Hedging"],
+        "risk": "Defined risk",
+        "status": "Priced when chain supports it",
+    },
+    "Long Call": {
+        "category": "Directional Option",
+        "best_for": ["Account Growth"],
+        "risk": "Premium at risk",
+        "status": "Priced when chain supports it",
+    },
+    "Long Put": {
+        "category": "Directional Option",
+        "best_for": ["Account Growth", "Hedging"],
+        "risk": "Premium at risk",
+        "status": "Priced when chain supports it",
+    },
+    "Iron Condor": {
+        "category": "Neutral Income",
+        "best_for": ["Income"],
+        "risk": "Defined risk",
+        "status": "Priced when chain supports it",
+    },
+    "Call Butterfly": {
+        "category": "Target-Zone",
+        "best_for": ["Capital Preservation", "Volatility Expansion"],
+        "risk": "Defined risk",
+        "status": "Priced when chain supports it",
+    },
+    "Long Straddle": {
+        "category": "Volatility",
+        "best_for": ["Volatility Expansion", "Account Growth"],
+        "risk": "Premium at risk",
+        "status": "Priced when chain supports it",
+    },
+    "Calendar Spread": {
+        "category": "Time Spread",
+        "best_for": ["Income", "Volatility Expansion"],
+        "risk": "Defined debit",
+        "status": "Tracked as unpriced until multi-expiration pricing is available",
+    },
+    "Diagonal Spread": {
+        "category": "Time Spread",
+        "best_for": ["Income", "Account Growth"],
+        "risk": "Defined debit",
+        "status": "Tracked as unpriced until multi-expiration pricing is available",
+    },
+    "Covered Call": {
+        "category": "Stock + Option",
+        "best_for": ["Income"],
+        "risk": "Requires stock position",
+        "status": "Catalog only until stock-leg awareness is added",
+    },
+    "Cash-Secured Put": {
+        "category": "Stock Entry / Income",
+        "best_for": ["Income", "Capital Preservation"],
+        "risk": "Assignment risk",
+        "status": "Catalog only until assignment/cash requirement logic is added",
+    },
+    "Collar": {
+        "category": "Hedge",
+        "best_for": ["Hedging", "Capital Preservation"],
+        "risk": "Requires stock position",
+        "status": "Catalog only until stock-leg awareness is added",
+    },
+    "Strangle": {
+        "category": "Volatility",
+        "best_for": ["Volatility Expansion"],
+        "risk": "Premium at risk or undefined if short",
+        "status": "Catalog only until OTM pair pricing is added",
+    },
+    "Iron Butterfly": {
+        "category": "Neutral Income",
+        "best_for": ["Income"],
+        "risk": "Defined risk",
+        "status": "Catalog only until ATM wing construction is added",
+    },
+    "Jade Lizard": {
+        "category": "Neutral / Bullish Income",
+        "best_for": ["Income"],
+        "risk": "Undefined put-side risk unless cash-secured",
+        "status": "Catalog only until margin/assignment logic is added",
+    },
+    "Poor Man's Covered Call": {
+        "category": "LEAPS + Short Call",
+        "best_for": ["Income", "Account Growth"],
+        "risk": "LEAPS debit plus short-call risk",
+        "status": "Catalog only until multi-expiration pricing is available",
+    },
+}
+
+
 def _mid(contract: dict) -> float | None:
     if contract.get("mid") is not None:
         return float(contract["mid"])
@@ -117,6 +237,132 @@ def _candidate(
         "thesis": thesis,
         "fit": fit,
     }
+
+
+def _catalog_key(strategy: str) -> str:
+    if strategy.startswith("LEAPS"):
+        return "Long Call" if "Call" in strategy else "Long Put"
+    return strategy
+
+
+def objective_score(suggestion: dict, objective: str) -> tuple[int, str]:
+    strategy = suggestion.get("strategy", "")
+    profile = STRATEGY_CATALOG.get(_catalog_key(strategy), {})
+    score = 50
+    reasons = []
+
+    if objective in profile.get("best_for", []):
+        score += 25
+        reasons.append(f"fits {objective.lower()}")
+
+    side = suggestion.get("side", "")
+    max_profit = suggestion.get("max_profit")
+    max_loss = suggestion.get("max_loss")
+    entry = suggestion.get("entry_price")
+    strategy_text = strategy.lower()
+
+    if objective == "Account Growth":
+        if side == "Long / Debit":
+            score += 12
+            reasons.append("directional upside")
+        if max_profit is None and entry is not None:
+            score += 8
+            reasons.append("open-ended profit profile")
+        if "leaps" in strategy_text:
+            score += 10
+            reasons.append("longer runway")
+    elif objective == "Income":
+        if side == "Short / Credit":
+            score += 18
+            reasons.append("premium collection")
+        if "condor" in strategy_text:
+            score += 8
+            reasons.append("range income structure")
+    elif objective == "Capital Preservation":
+        if max_loss is not None:
+            score += 12
+            reasons.append("defined max loss")
+        if max_loss is not None and max_profit is not None and max_loss <= max_profit * 2:
+            score += 6
+            reasons.append("risk is not extreme versus reward")
+    elif objective == "Volatility Expansion":
+        if "straddle" in strategy_text:
+            score += 25
+            reasons.append("profits from movement")
+        if side == "Long / Debit":
+            score += 6
+            reasons.append("long premium exposure")
+    elif objective == "Hedging":
+        if "put" in strategy_text:
+            score += 20
+            reasons.append("downside exposure")
+        if max_loss is not None:
+            score += 6
+            reasons.append("defined hedge cost")
+
+    if entry is None:
+        score -= 30
+        reasons.append("not fully priced")
+    if max_loss is None and objective in {"Capital Preservation", "Income"}:
+        score -= 12
+        reasons.append("unknown max loss")
+
+    return max(0, min(100, score)), ", ".join(reasons) or "general fit"
+
+
+def rank_option_suggestions(
+    suggestions: dict[str, list[dict]],
+    objective: str,
+) -> dict[str, list[dict]]:
+    ranked = {}
+    for bucket, rows in suggestions.items():
+        enriched = []
+        for row in rows:
+            score, reason = objective_score(row, objective)
+            enriched.append(
+                {
+                    **row,
+                    "objective": objective,
+                    "objective_score": score,
+                    "objective_reason": reason,
+                }
+            )
+        ranked[bucket] = sorted(
+            enriched,
+            key=lambda item: (
+                item.get("entry_price") is None,
+                -int(item.get("objective_score") or 0),
+                item.get("strategy", ""),
+            ),
+        )
+    return ranked
+
+
+def strategy_catalog_rows(objective: str, priced_strategies: set[str]) -> list[dict]:
+    rows = []
+    for strategy, profile in STRATEGY_CATALOG.items():
+        rows.append(
+            {
+                "Strategy": strategy,
+                "Category": profile["category"],
+                "Best For": ", ".join(profile["best_for"]),
+                "Risk Profile": profile["risk"],
+                "Availability": "Priced in current results"
+                if strategy in priced_strategies
+                else profile["status"],
+                "Priority Fit": "High"
+                if objective in profile["best_for"]
+                else "Secondary",
+            }
+        )
+    return sorted(
+        rows,
+        key=lambda row: (
+            row["Priority Fit"] != "High",
+            row["Availability"] != "Priced in current results",
+            row["Strategy"],
+        ),
+    )
 
 
 def _debit_spread(
