@@ -22,6 +22,7 @@ from modules.trade_analyzer import (
     analyze_trade,
     growth_engine_plan,
 )
+from modules.trade_quality import evaluate_trade_quality, quality_badge_text
 from modules.ui import configure_page, empty_state, page_header
 
 
@@ -64,6 +65,23 @@ def load_spread_into_journal(symbol: str, spread: dict) -> None:
         "notes": notes,
     }
     st.switch_page("pages/6_Trade_Journal.py")
+
+
+def render_quality_gate(quality: dict) -> None:
+    status = quality["status"]
+    if status == "Blocked":
+        st.error(f"Trade Quality Gate: {quality_badge_text(quality)}")
+    elif status == "Approved":
+        st.success(f"Trade Quality Gate: {quality_badge_text(quality)}")
+    else:
+        st.warning(f"Trade Quality Gate: {quality_badge_text(quality)}")
+    if quality["blockers"]:
+        for blocker in quality["blockers"]:
+            st.error(blocker)
+    if quality["warnings"]:
+        for warning in quality["warnings"]:
+            st.warning(warning)
+    st.dataframe(quality["checks"], use_container_width=True, hide_index=True)
 
 
 configure_page("Trade Analyzer")
@@ -390,12 +408,50 @@ with analyze_tab:
                 analysis,
                 texture,
             )
+            checks = reversal_diagnostics(history, result["direction"]) if analysis else []
+            hold_map = {
+                "DAY TRADE": 1,
+                "WEEKLY": 5,
+                "MONTHLY": 20,
+                "POSITION": 45,
+                "LEAPS": 60,
+            }
+            signal_backtest = backtest_signal(
+                history,
+                result["direction"],
+                hold_days=hold_map.get(result["horizon"], 5),
+            )
+            discipline = discipline_status(
+                snapshot.get("trades", []),
+                settings,
+                reversal_checks=checks,
+                backtest=signal_backtest,
+            )
+            quality = evaluate_trade_quality(
+                symbol=analyzer_symbol,
+                strategy=result["strategy"],
+                side=result["risk"]["risk_class"],
+                bucket=result["horizon"],
+                legs=result["legs"],
+                entry_price=premium,
+                max_loss=result["risk"]["max_loss"],
+                analysis=analysis,
+                session=texture,
+                reversal_checks=checks,
+                backtest=signal_backtest,
+                discipline=discipline,
+                settings=settings,
+            )
             st.session_state["manual_trade_analysis"] = {
                 "result": result,
                 "analysis": analysis,
                 "analysis_source": analysis_source,
                 "texture": texture,
                 "history_source": history_source,
+                "reversal_checks": checks,
+                "backtest": signal_backtest,
+                "discipline": discipline,
+                "quality": quality,
             }
 
     manual = st.session_state.get("manual_trade_analysis")
@@ -403,6 +459,7 @@ with analyze_tab:
         result = manual["result"]
         analysis = manual["analysis"]
         texture = manual["texture"]
+        quality = manual.get("quality")
         st.caption(
             f"Data sources: {manual['analysis_source']}; {manual['history_source']}"
         )
@@ -419,6 +476,9 @@ with analyze_tab:
             st.warning("Trade is not clean. Review warnings before deciding.")
         else:
             st.success("Analyzer found a complete pre-trade structure.")
+
+        if quality:
+            render_quality_gate(quality)
 
         if result["blockers"]:
             st.subheader("Blockers")
@@ -602,6 +662,27 @@ with income_tab:
             )
             history, history_source = price_history(income_request["symbol"])
             texture = session_texture(history, analysis)
+            reversal_checks = reversal_diagnostics(history, outlook)
+            hold_map = {
+                "Day Trade": 1,
+                "Weekly": 5,
+                "Monthly": 20,
+                "LEAPS": 60,
+            }
+            strategy_backtests = {
+                bucket: backtest_signal(
+                    history,
+                    outlook,
+                    hold_days=hold_map.get(bucket, 5),
+                )
+                for bucket in ["Day Trade", "Weekly", "Monthly", "LEAPS"]
+            }
+            discipline = discipline_status(
+                snapshot.get("trades", []),
+                settings,
+                reversal_checks=reversal_checks,
+                backtest=strategy_backtests.get("Day Trade"),
+            )
             texture_cols = st.columns(4)
             texture_cols[0].metric("Session Setup", texture["label"])
             texture_cols[1].metric("Status", texture["status"])
@@ -660,6 +741,22 @@ with income_tab:
                                 )
                                 st.write(spread.get("thesis", ""))
                                 st.caption(spread.get("fit", ""))
+                                quality = evaluate_trade_quality(
+                                    symbol=income_request["symbol"],
+                                    strategy=spread["strategy"],
+                                    side=spread.get("side", ""),
+                                    bucket=bucket,
+                                    legs=spread.get("legs", []),
+                                    entry_price=spread.get("entry_price"),
+                                    max_loss=spread.get("max_loss"),
+                                    analysis=analysis,
+                                    session=texture,
+                                    reversal_checks=reversal_checks,
+                                    backtest=strategy_backtests.get(bucket),
+                                    discipline=discipline,
+                                    settings=settings,
+                                )
+                                render_quality_gate(quality)
                                 spread_metrics = st.columns(5)
                                 entry = spread.get("entry_price")
                                 spread_metrics[0].metric(
@@ -710,6 +807,7 @@ with income_tab:
                                     "Load into Trade Journal",
                                     key=f"load_{bucket}_{index}",
                                     use_container_width=True,
+                                    disabled=quality["status"] == "Blocked",
                                 ):
                                     load_spread_into_journal(
                                         income_request["symbol"],
