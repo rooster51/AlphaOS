@@ -11,21 +11,12 @@ from modules.options_suggestions import build_option_suggestions, suggestion_man
 
 try:
     from modules.options_suggestions import (
-        STRATEGY_OBJECTIVES,
         STRATEGY_CATALOG,
         rank_option_suggestions,
         strategy_explanation,
         strategy_catalog_rows,
     )
 except ImportError:
-    STRATEGY_OBJECTIVES = [
-        "Account Growth",
-        "Income",
-        "Capital Preservation",
-        "Volatility Expansion",
-        "Hedging",
-    ]
-
     def rank_option_suggestions(suggestions: dict, objective: str) -> dict:
         return suggestions
 
@@ -50,7 +41,7 @@ except ImportError:
                 "Best For": objective,
                 "Risk Profile": "N/A",
                 "Availability": "Redeploy is still loading the latest module",
-                "Priority Fit": "N/A",
+                "Growth Fit": "N/A",
             }
         ]
 from modules.public_data import (
@@ -597,7 +588,7 @@ with analyze_tab:
 
 with income_tab:
     with st.form("income_options_form"):
-        i1, i2, i3, i4, i5 = st.columns(5)
+        i1, i2, i3, i4 = st.columns(4)
         income_symbol = i1.text_input(
             "Ticker",
             value="SPY",
@@ -607,15 +598,11 @@ with income_tab:
             "Trade bias",
             ["Auto from trend", "Bullish", "Neutral", "Bearish"],
         )
-        priority_objective = i3.selectbox(
-            "Priority",
-            STRATEGY_OBJECTIVES,
-        )
-        strategy_choice = i4.selectbox(
+        strategy_choice = i3.selectbox(
             "Strategy",
             ["Auto - best fit", *sorted(STRATEGY_CATALOG.keys())],
         )
-        width_choice = i5.selectbox(
+        width_choice = i4.selectbox(
             "Target spread width",
             ["Auto", "$1 wide", "$2 wide", "$3 wide", "$5 wide", "$10 wide"],
             index=2,
@@ -630,7 +617,7 @@ with income_tab:
         st.session_state["income_options_request"] = {
             "symbol": income_symbol,
             "bias": spread_bias,
-            "objective": priority_objective,
+            "objective": "Account Growth",
             "strategy_choice": strategy_choice,
             "width": None
             if width_choice == "Auto"
@@ -757,7 +744,6 @@ with income_tab:
                 st.info(f"{texture['detail']} {texture['action']}")
             st.caption(f"Chart context source: {history_source}")
             st.caption(
-                f"Priority: {income_request.get('objective', 'Account Growth')}. "
                 f"Strategy: {income_request.get('strategy_choice', 'Auto - best fit')}. "
                 f"Requested width: {income_request.get('width_label', 'Auto')}. "
                 "If the exact strike width is not listed, AlphaOS uses the nearest available strike. Calendar and diagonal ideas remain unpriced unless both expirations can be priced."
@@ -822,9 +808,7 @@ with income_tab:
                                 )
                                 st.write(spread.get("thesis", ""))
                                 st.caption(spread.get("fit", ""))
-                                st.caption(
-                                    f"Priority fit: {spread.get('objective_reason', 'general fit')}"
-                                )
+                                st.caption(f"Fit: {spread.get('objective_reason', 'general fit')}")
                                 quality = evaluate_trade_quality(
                                     symbol=income_request["symbol"],
                                     strategy=spread["strategy"],

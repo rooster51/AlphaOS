@@ -5,14 +5,6 @@ from datetime import date, datetime
 from modules.options_income import build_income_spread
 
 
-STRATEGY_OBJECTIVES = [
-    "Account Growth",
-    "Income",
-    "Capital Preservation",
-    "Volatility Expansion",
-    "Hedging",
-]
-
 STRATEGY_CATALOG = {
     "Bull Put Credit Spread": {
         "category": "Credit Spread",
@@ -405,7 +397,7 @@ def strategy_catalog_rows(objective: str, priced_strategies: set[str]) -> list[d
                 "Availability": "Priced in current results"
                 if strategy in priced_strategies
                 else profile["status"],
-                "Priority Fit": "High"
+                "Growth Fit": "High"
                 if objective in profile["best_for"]
                 else "Secondary",
             }
@@ -413,7 +405,7 @@ def strategy_catalog_rows(objective: str, priced_strategies: set[str]) -> list[d
     return sorted(
         rows,
         key=lambda row: (
-            row["Priority Fit"] != "High",
+            row["Growth Fit"] != "High",
             row["Availability"] != "Priced in current results",
             row["Strategy"],
         ),
