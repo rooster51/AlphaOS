@@ -200,6 +200,8 @@ with trade_tab:
                 st.caption(
                     "Day-trade outlook uses live quote change, SPY/QQQ alignment, 5-day context, volume, and price location. Swing trend remains available as the slower backdrop."
                 )
+            else:
+                st.caption(analysis.get("timeframe_model", "Swing trend model"))
 
             primary, alternatives = primary_strategy_idea(
                 analysis["outlook"],
@@ -558,6 +560,7 @@ with analyze_tab:
             context_cols[1].metric("Day Bias", analysis.get("day_bias", "N/A"))
             context_cols[2].metric("Swing", analysis.get("swing_outlook", analysis.get("outlook", "N/A")))
             context_cols[3].metric("ATR", f"{analysis['atr_pct']:.2f}%")
+            st.caption(analysis.get("timeframe_model", "Trend model unavailable"))
         st.info(f"{texture['detail']} {texture['action']}")
 
         st.subheader("Trade Management")

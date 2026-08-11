@@ -72,10 +72,17 @@ def _history_metrics(history: pd.DataFrame) -> dict | None:
         axis=1,
     ).max(axis=1)
 
+    lookback_5 = min(5, len(frame) - 1)
     lookback_20 = min(20, len(frame) - 1)
-    return_5d = ((close.iloc[-1] / close.iloc[-6]) - 1) * 100
+    lookback_60 = min(60, len(frame) - 1)
+    lookback_120 = min(120, len(frame) - 1)
+    return_5d = ((close.iloc[-1] / close.iloc[-(lookback_5 + 1)]) - 1) * 100
     return_20d = ((close.iloc[-1] / close.iloc[-(lookback_20 + 1)]) - 1) * 100
+    return_60d = ((close.iloc[-1] / close.iloc[-(lookback_60 + 1)]) - 1) * 100
+    return_120d = ((close.iloc[-1] / close.iloc[-(lookback_120 + 1)]) - 1) * 100
     sma_20 = close.tail(20).mean()
+    sma_50 = close.tail(min(50, len(close))).mean()
+    sma_200 = close.tail(min(200, len(close))).mean()
     atr_14 = true_range.tail(14).mean()
     average_volume = frame["volume"].tail(20).mean()
     volume_ratio = (
@@ -89,14 +96,46 @@ def _history_metrics(history: pd.DataFrame) -> dict | None:
         "last": float(close.iloc[-1]),
         "return_5d": float(return_5d),
         "return_20d": float(return_20d),
+        "return_60d": float(return_60d),
+        "return_120d": float(return_120d),
         "sma_20": float(sma_20),
+        "sma_50": float(sma_50),
+        "sma_200": float(sma_200),
         "atr_pct": float((atr_14 / close.iloc[-1]) * 100),
         "volume_ratio": float(volume_ratio) if volume_ratio is not None else None,
         "prior_20d_high": float(prior_20d_high),
     }
 
 
-def _trend_score(metrics: dict) -> int:
+def _normalized_horizon(horizon: str | None) -> str:
+    value = (horizon or "Swing (2-8 weeks)").upper()
+    if "DAY" in value:
+        return "day"
+    if "INTERMEDIATE" in value or "MONTHLY" in value or "POSITION" in value:
+        return "intermediate"
+    if "LONG" in value or "LEAPS" in value:
+        return "long"
+    return "swing"
+
+
+def _trend_score(metrics: dict, horizon: str | None = None) -> int:
+    normalized = _normalized_horizon(horizon)
+    if normalized == "intermediate":
+        above_average = 10 if metrics["last"] >= metrics["sma_50"] else -10
+        return _clamp_score(
+            50
+            + above_average
+            + (metrics["return_20d"] * 1.25)
+            + (metrics["return_60d"] * 0.75)
+        )
+    if normalized == "long":
+        above_average = 10 if metrics["last"] >= metrics["sma_200"] else -10
+        return _clamp_score(
+            50
+            + above_average
+            + (metrics["return_60d"] * 0.8)
+            + (metrics["return_120d"] * 0.5)
+        )
     above_average = 10 if metrics["last"] >= metrics["sma_20"] else -10
     return _clamp_score(
         50
@@ -106,11 +145,7 @@ def _trend_score(metrics: dict) -> int:
     )
 
 
-def _day_trend_score(
-    metrics: dict,
-    quote: dict,
-    market_change_pct: float | None = None,
-) -> int:
+def _day_trend_score(metrics: dict, quote: dict, market_change_pct: float | None = None) -> int:
     quote_change = quote.get("change_pct")
     quote_change = float(quote_change) if quote_change is not None else 0.0
     market_change = float(market_change_pct) if market_change_pct is not None else 0.0
@@ -147,6 +182,17 @@ def _outlook_from_score(score: int) -> str:
     if score <= 44:
         return "Bearish"
     return "Neutral"
+
+
+def _timeframe_label(horizon: str | None) -> str:
+    normalized = _normalized_horizon(horizon)
+    if normalized == "day":
+        return "Day trend: live quote, SPY/QQQ alignment, 5-day context, volume, and 20-day location"
+    if normalized == "intermediate":
+        return "Intermediate trend: 20-day and 60-day returns with 50-day moving-average location"
+    if normalized == "long":
+        return "Long-term trend: 60-day and 120-day returns with 200-day moving-average location"
+    return "Swing trend: 5-day and 20-day returns with 20-day moving-average location"
 
 
 def _market_change(quotes: dict[str, dict]) -> float | None:
@@ -268,18 +314,18 @@ def symbol_analysis(symbol: str, horizon: str | None = None) -> tuple[dict | Non
                 "last": last,
                 "return_5d": 0.0,
                 "return_20d": 0.0,
+                "return_60d": 0.0,
+                "return_120d": 0.0,
                 "atr_pct": 0.0,
                 "volume_ratio": None,
                 "sma_20": last,
+                "sma_50": last,
+                "sma_200": last,
                 "prior_20d_high": last,
             }
             score = 50
             day_score = _day_trend_score(metrics, quote, market_change)
-            outlook = (
-                _outlook_from_score(day_score)
-                if horizon == "Day trade (same day)"
-                else "Neutral"
-            )
+            outlook = _outlook_from_score(day_score) if _normalized_horizon(horizon) == "day" else "Neutral"
             volatility = "Normal"
             return (
                 {
@@ -288,6 +334,8 @@ def symbol_analysis(symbol: str, horizon: str | None = None) -> tuple[dict | Non
                     "change_pct": quote.get("change_pct"),
                     "return_5d": 0.0,
                     "return_20d": 0.0,
+                    "return_60d": 0.0,
+                    "return_120d": 0.0,
                     "atr_pct": 0.0,
                     "volume_ratio": None,
                     "trend_score": score,
@@ -295,6 +343,7 @@ def symbol_analysis(symbol: str, horizon: str | None = None) -> tuple[dict | Non
                     "day_bias": _outlook_from_score(day_score),
                     "market_change_pct": market_change,
                     "outlook": outlook,
+                    "timeframe_model": _timeframe_label(horizon),
                     "volatility": volatility,
                 },
                 "Public.com live quote",
@@ -302,11 +351,12 @@ def symbol_analysis(symbol: str, horizon: str | None = None) -> tuple[dict | Non
 
         last = quote.get("last") or metrics["last"]
         metrics = {**metrics, "last": last}
-        score = _trend_score(metrics)
-        swing_outlook = "Bullish" if score >= 58 else "Bearish" if score <= 42 else "Neutral"
+        score = _trend_score(metrics, horizon)
+        swing_score = _trend_score(metrics, "Swing (2-8 weeks)")
+        swing_outlook = _outlook_from_score(swing_score)
         day_score = _day_trend_score(metrics, quote, market_change)
         day_outlook = _outlook_from_score(day_score)
-        outlook = day_outlook if horizon == "Day trade (same day)" else swing_outlook
+        outlook = day_outlook if _normalized_horizon(horizon) == "day" else _outlook_from_score(score)
         volatility = (
             "High"
             if metrics["atr_pct"] >= 3.5
@@ -321,6 +371,8 @@ def symbol_analysis(symbol: str, horizon: str | None = None) -> tuple[dict | Non
                 "change_pct": quote.get("change_pct"),
                 "return_5d": round(metrics["return_5d"], 2),
                 "return_20d": round(metrics["return_20d"], 2),
+                "return_60d": round(metrics["return_60d"], 2),
+                "return_120d": round(metrics["return_120d"], 2),
                 "atr_pct": round(metrics["atr_pct"], 2),
                 "volume_ratio": (
                     round(metrics["volume_ratio"], 2)
@@ -335,6 +387,7 @@ def symbol_analysis(symbol: str, horizon: str | None = None) -> tuple[dict | Non
                     round(market_change, 2) if market_change is not None else None
                 ),
                 "outlook": outlook,
+                "timeframe_model": _timeframe_label(horizon),
                 "volatility": volatility,
             },
             "Public.com live + historical",
