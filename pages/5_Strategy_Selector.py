@@ -12,7 +12,9 @@ from modules.options_suggestions import build_option_suggestions, suggestion_man
 try:
     from modules.options_suggestions import (
         STRATEGY_OBJECTIVES,
+        STRATEGY_CATALOG,
         rank_option_suggestions,
+        strategy_explanation,
         strategy_catalog_rows,
     )
 except ImportError:
@@ -26,6 +28,19 @@ except ImportError:
 
     def rank_option_suggestions(suggestions: dict, objective: str) -> dict:
         return suggestions
+
+    STRATEGY_CATALOG = {}
+
+    def strategy_explanation(strategy: str) -> dict:
+        return {
+            "Strategy": strategy,
+            "Category": "Fallback",
+            "How It Makes Money": "Redeploy is still loading the latest strategy profiles.",
+            "Best When": "N/A",
+            "Avoid When": "N/A",
+            "Risk Profile": "N/A",
+            "Availability": "Fallback",
+        }
 
     def strategy_catalog_rows(objective: str, priced_strategies: set) -> list[dict]:
         return [
@@ -582,7 +597,7 @@ with analyze_tab:
 
 with income_tab:
     with st.form("income_options_form"):
-        i1, i2, i3, i4 = st.columns(4)
+        i1, i2, i3, i4, i5 = st.columns(5)
         income_symbol = i1.text_input(
             "Ticker",
             value="SPY",
@@ -596,7 +611,11 @@ with income_tab:
             "Priority",
             STRATEGY_OBJECTIVES,
         )
-        width_choice = i4.selectbox(
+        strategy_choice = i4.selectbox(
+            "Strategy",
+            ["Auto - best fit", *sorted(STRATEGY_CATALOG.keys())],
+        )
+        width_choice = i5.selectbox(
             "Target spread width",
             ["Auto", "$1 wide", "$2 wide", "$3 wide", "$5 wide", "$10 wide"],
             index=2,
@@ -612,6 +631,7 @@ with income_tab:
             "symbol": income_symbol,
             "bias": spread_bias,
             "objective": priority_objective,
+            "strategy_choice": strategy_choice,
             "width": None
             if width_choice == "Auto"
             else float(width_choice.replace("$", "").replace(" wide", "")),
@@ -738,8 +758,17 @@ with income_tab:
             st.caption(f"Chart context source: {history_source}")
             st.caption(
                 f"Priority: {income_request.get('objective', 'Account Growth')}. "
+                f"Strategy: {income_request.get('strategy_choice', 'Auto - best fit')}. "
                 f"Requested width: {income_request.get('width_label', 'Auto')}. "
                 "If the exact strike width is not listed, AlphaOS uses the nearest available strike. Calendar and diagonal ideas remain unpriced unless both expirations can be priced."
+            )
+            strategy_profile = strategy_explanation(
+                income_request.get("strategy_choice", "Auto - best fit")
+            )
+            st.dataframe(
+                [strategy_profile],
+                use_container_width=True,
+                hide_index=True,
             )
 
             if not candidates or not any(candidates.values()):
@@ -760,6 +789,21 @@ with income_tab:
                 ):
                     with tab:
                         bucket_candidates = candidates.get(bucket, [])
+                        selected_strategy = income_request.get(
+                            "strategy_choice",
+                            "Auto - best fit",
+                        )
+                        if selected_strategy != "Auto - best fit":
+                            bucket_candidates = [
+                                item
+                                for item in bucket_candidates
+                                if item.get("strategy") == selected_strategy
+                                or (
+                                    item.get("strategy", "").startswith("LEAPS")
+                                    and selected_strategy
+                                    in {"Long Call", "Long Put"}
+                                )
+                            ]
                         if not bucket_candidates:
                             empty_state(
                                 f"No {bucket.lower()} suggestions are available.",
@@ -871,6 +915,8 @@ with income_tab:
 
 with growth_engine_tab:
     st.subheader("Growth Engine Strategy")
+    year_end = date(date.today().year, 12, 31)
+    days_to_year_end = max(1, (year_end - date.today()).days)
     g1, g2, g3 = st.columns(3)
     current_value = g1.number_input(
         "Current portfolio value",
@@ -882,14 +928,14 @@ with growth_engine_tab:
     target_value = g2.number_input(
         "Target portfolio value",
         min_value=0.0,
-        value=max(float(settings.get("default_account_size") or 100.0) * 2, 250.0),
+        value=10000.0,
         step=50.0,
         key="growth_engine_target",
     )
     target_days = g3.number_input(
         "Target days",
         min_value=1,
-        value=90,
+        value=days_to_year_end,
         step=1,
         key="growth_engine_days",
     )
@@ -934,6 +980,9 @@ with growth_engine_tab:
         st.success(plan["posture"])
     else:
         st.warning(plan["posture"])
+    st.info(
+        f"Fastest controlled path to $10k by {year_end.isoformat()}: prioritize only Approved Account Growth setups, usually debit spreads, and stop for the day after one planned loss. The math requires about {plan['daily_pct']:.2f}% compounded daily from the current value."
+    )
     st.dataframe(
         [
             {
