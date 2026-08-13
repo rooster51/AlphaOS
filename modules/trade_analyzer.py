@@ -21,22 +21,13 @@ HORIZON_TIMEFRAMES = {
 }
 
 DEBIT_STRATEGIES = {
-    "Long Call",
-    "Long Put",
     "Call Debit Spread",
     "Put Debit Spread",
-    "LEAPS Call",
-    "LEAPS Put",
-    "LEAPS Debit Spread",
-    "Butterfly",
-    "Calendar Spread",
-    "Diagonal Spread",
 }
 
 CREDIT_STRATEGIES = {
-    "Put Credit Spread",
-    "Call Credit Spread",
-    "Iron Condor",
+    "Bull Put Credit Spread",
+    "Bear Call Credit Spread",
 }
 
 
@@ -89,9 +80,9 @@ def parse_option_legs(raw_legs: str) -> list[dict]:
 
 
 def strategy_direction(strategy: str) -> str:
-    if strategy in {"Long Call", "Call Debit Spread", "Put Credit Spread", "LEAPS Call", "LEAPS Debit Spread"}:
+    if strategy in {"Call Debit Spread", "Bull Put Credit Spread"}:
         return "Bullish"
-    if strategy in {"Long Put", "Put Debit Spread", "Call Credit Spread", "LEAPS Put"}:
+    if strategy in {"Put Debit Spread", "Bear Call Credit Spread"}:
         return "Bearish"
     return "Neutral"
 

@@ -2,7 +2,15 @@ from __future__ import annotations
 
 from datetime import date, datetime
 
-ALLOWED_RECOMMENDED_STRATEGIES = ("Call Debit Spread", "Put Debit Spread")
+from modules.options_income import build_income_spread
+
+
+ALLOWED_RECOMMENDED_STRATEGIES = (
+    "Call Debit Spread",
+    "Put Debit Spread",
+    "Bull Put Credit Spread",
+    "Bear Call Credit Spread",
+)
 
 
 STRATEGY_CATALOG = {
@@ -23,6 +31,24 @@ STRATEGY_CATALOG = {
         "makes_money": "Pays a debit and profits when the underlying falls toward or below the short put.",
         "best_when": "Bearish trend alignment, breakdown, or hedge against downside pressure.",
         "avoid_when": "Bullish trend, failed breakdown, or low expected movement.",
+    },
+    "Bull Put Credit Spread": {
+        "category": "Credit Spread",
+        "best_for": ["Income", "Account Growth"],
+        "risk": "Defined risk",
+        "status": "Priced when chain supports it",
+        "makes_money": "Collects a credit and profits if price stays above the short put through exit or expiration.",
+        "best_when": "Bullish trend, support hold, or pullback bounce where premium is worth the defined risk.",
+        "avoid_when": "Price is breaking down, support is failing, or the credit is too small versus width.",
+    },
+    "Bear Call Credit Spread": {
+        "category": "Credit Spread",
+        "best_for": ["Income", "Account Growth"],
+        "risk": "Defined risk",
+        "status": "Priced when chain supports it",
+        "makes_money": "Collects a credit and profits if price stays below the short call through exit or expiration.",
+        "best_when": "Bearish trend, resistance rejection, or failed bounce where premium is worth the defined risk.",
+        "avoid_when": "Price is breaking out, resistance is failing, or the credit is too small versus width.",
     },
 }
 
@@ -271,11 +297,11 @@ def strategy_explanation(strategy: str) -> dict:
         return {
             "Strategy": strategy,
             "Category": "Dynamic",
-            "How It Makes Money": "Chooses a call debit spread for bullish tape or a put debit spread for bearish tape.",
-            "Best When": "You want AlphaOS to pick the daily debit spread that matches the current directional bias.",
+            "How It Makes Money": "Chooses bullish debit/credit spreads in bullish tape and bearish debit/credit spreads in bearish tape.",
+            "Best When": "You want AlphaOS to pick daily defined-risk spreads that match the current directional bias.",
             "Avoid When": "The session is neutral, choppy, or the option chain cannot produce a valid spread.",
-            "Risk Profile": "Defined debit risk",
-            "Availability": "Only call debit spreads and put debit spreads",
+            "Risk Profile": "Defined debit or defined credit-spread risk",
+            "Availability": "Only debit spreads and credit spreads",
         }
     profile = STRATEGY_CATALOG.get(strategy)
     if not profile:
@@ -361,9 +387,22 @@ def build_option_suggestions(
     for bucket, chain in chains.items():
         rows = []
         if outlook in {"Bullish", "Bearish"}:
-            candidate = _debit_spread(chain, underlying, outlook, bucket, width)
-            if candidate:
-                rows.append(candidate)
+            debit = _debit_spread(chain, underlying, outlook, bucket, width)
+            if debit:
+                rows.append(debit)
+            credit = build_income_spread(
+                chain,
+                underlying,
+                outlook,
+                bucket,
+                spread_width=width,
+            )
+            if credit:
+                credit["side"] = "Short / Credit"
+                credit["entry_price"] = credit["net_credit"]
+                credit["thesis"] = f"{outlook} credit spread with defined risk."
+                credit["fit"] = "Uses the same daily expiration bucket and sells premium in the direction of the tape."
+                rows.append(credit)
         suggestions[bucket] = rows
     return suggestions
 

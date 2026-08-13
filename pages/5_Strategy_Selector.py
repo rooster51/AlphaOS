@@ -120,7 +120,7 @@ def render_quality_gate(quality: dict) -> None:
 configure_page("Trade Analyzer")
 page_header(
     "Trade Analyzer & Growth Engine",
-    "Daily call debit spreads, put debit spreads, pre-trade checks, and portfolio growth math.",
+    "Daily debit spreads, credit spreads, pre-trade checks, and portfolio growth math.",
 )
 
 user = get_current_user()
@@ -371,6 +371,8 @@ with analyze_tab:
             [
                 "Call Debit Spread",
                 "Put Debit Spread",
+                "Bull Put Credit Spread",
+                "Bear Call Credit Spread",
             ],
         )
         b1, b2, b3, b4 = st.columns(4)
@@ -405,7 +407,7 @@ with analyze_tab:
         legs_text = st.text_area(
             "Legs",
             value="Buy 550C\nSell 555C",
-            help="Examples: Buy 550C, Sell 555C for a call debit spread; Buy 550P, Sell 545P for a put debit spread.",
+            help="Examples: Buy 550C, Sell 555C for a call debit spread; Sell 545P, Buy 540P for a bull put credit spread.",
         )
         analyze_submitted = st.form_submit_button(
             "Analyze Trade",
@@ -715,7 +717,7 @@ with income_tab:
             st.caption(
                 f"Strategy: {income_request.get('strategy_choice', 'Auto - best fit')}. "
                 f"Requested width: {income_request.get('width_label', 'Auto')}. "
-                "Daily recommendations are limited to call debit spreads and put debit spreads. If the exact strike width is not listed, AlphaOS uses the nearest available strike."
+                "Daily recommendations are limited to call/put debit spreads and bull put/bear call credit spreads. If the exact strike width is not listed, AlphaOS uses the nearest available strike."
             )
             strategy_profile = strategy_explanation(
                 income_request.get("strategy_choice", "Auto - best fit")

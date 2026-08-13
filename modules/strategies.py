@@ -1,7 +1,12 @@
 from __future__ import annotations
 
 
-ALLOWED_DAILY_STRATEGIES = ("Call Debit Spread", "Put Debit Spread")
+ALLOWED_DAILY_STRATEGIES = (
+    "Call Debit Spread",
+    "Put Debit Spread",
+    "Bull Put Credit Spread",
+    "Bear Call Credit Spread",
+)
 
 STRATEGY_GROUPS = {
     "Option Spread": list(ALLOWED_DAILY_STRATEGIES),
@@ -32,6 +37,26 @@ def _put_debit_spread() -> dict:
     }
 
 
+def _bull_put_credit_spread() -> dict:
+    return {
+        "vehicle": "Daily Credit Spread",
+        "strategy": "Bull Put Credit Spread",
+        "structure": "Sell an out-of-the-money put and buy a lower-strike protective put in the same expiration.",
+        "fit": "Bullish daily setup where price is expected to stay above the short put.",
+        "risk": "Maximum loss is spread width minus credit received.",
+    }
+
+
+def _bear_call_credit_spread() -> dict:
+    return {
+        "vehicle": "Daily Credit Spread",
+        "strategy": "Bear Call Credit Spread",
+        "structure": "Sell an out-of-the-money call and buy a higher-strike protective call in the same expiration.",
+        "fit": "Bearish daily setup where price is expected to stay below the short call.",
+        "risk": "Maximum loss is spread width minus credit received.",
+    }
+
+
 def strategy_ideas(
     outlook: str,
     volatility: str,
@@ -40,9 +65,9 @@ def strategy_ideas(
     horizon: str = "Day trade (same day)",
 ) -> list[dict]:
     if outlook == "Bullish":
-        return [_call_debit_spread()]
+        return [_call_debit_spread(), _bull_put_credit_spread()]
     if outlook == "Bearish":
-        return [_put_debit_spread()]
+        return [_put_debit_spread(), _bear_call_credit_spread()]
     return [
         {
             "vehicle": "No Trade",
