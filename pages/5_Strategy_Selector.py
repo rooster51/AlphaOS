@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date
 
 import streamlit as st
 
@@ -120,7 +120,7 @@ def render_quality_gate(quality: dict) -> None:
 configure_page("Trade Analyzer")
 page_header(
     "Trade Analyzer & Growth Engine",
-    "Pre-trade decisions, options strategy fit, income setups, and portfolio growth math.",
+    "Daily call debit spreads, put debit spreads, pre-trade checks, and portfolio growth math.",
 )
 
 user = get_current_user()
@@ -364,24 +364,13 @@ with analyze_tab:
         analyzer_symbol = a1.text_input("Ticker", value="SPY").strip().upper()
         horizon_selection = a2.selectbox(
             "Holding period",
-            ["AUTO-DETECT", "DAY TRADE", "WEEKLY", "MONTHLY", "POSITION", "LEAPS"],
+            ["DAY TRADE"],
         )
         strategy = a3.selectbox(
             "Strategy",
             [
-                "Long Call",
-                "Long Put",
                 "Call Debit Spread",
                 "Put Debit Spread",
-                "Put Credit Spread",
-                "Call Credit Spread",
-                "Iron Condor",
-                "Butterfly",
-                "Calendar Spread",
-                "Diagonal Spread",
-                "LEAPS Call",
-                "LEAPS Put",
-                "LEAPS Debit Spread",
             ],
         )
         b1, b2, b3, b4 = st.columns(4)
@@ -416,7 +405,7 @@ with analyze_tab:
         legs_text = st.text_area(
             "Legs",
             value="Buy 550C\nSell 555C",
-            help="Examples: Buy 550C, Sell 555C, Sell 540P.",
+            help="Examples: Buy 550C, Sell 555C for a call debit spread; Buy 550P, Sell 545P for a put debit spread.",
         )
         analyze_submitted = st.form_submit_button(
             "Analyze Trade",
@@ -446,10 +435,6 @@ with analyze_tab:
             checks = reversal_diagnostics(history, result["direction"]) if analysis else []
             hold_map = {
                 "DAY TRADE": 1,
-                "WEEKLY": 5,
-                "MONTHLY": 20,
-                "POSITION": 45,
-                "LEAPS": 60,
             }
             signal_backtest = backtest_signal(
                 history,
@@ -652,28 +637,12 @@ with income_tab:
                     income_request["symbol"]
                 )
                 buckets = select_expiration_buckets(expirations)
+                day_trade_expiration = buckets.get("Day Trade")
                 chains = {}
-                for bucket, expiration in buckets.items():
-                    chains[bucket] = get_public_option_chain(
+                if day_trade_expiration:
+                    chains["Day Trade"] = get_public_option_chain(
                         income_request["symbol"],
-                        expiration,
-                    )
-                leaps_expiration = next(
-                    (
-                        expiration
-                        for expiration in expirations
-                        if (
-                            datetime.strptime(expiration[:10], "%Y-%m-%d").date()
-                            - date.today()
-                        ).days
-                        >= 181
-                    ),
-                    None,
-                )
-                if leaps_expiration:
-                    chains["LEAPS"] = get_public_option_chain(
-                        income_request["symbol"],
-                        leaps_expiration,
+                        day_trade_expiration,
                     )
                 target_width = income_request["width"] or (
                     float(analysis["last"]) * 0.01
@@ -711,9 +680,6 @@ with income_tab:
             reversal_checks = reversal_diagnostics(history, outlook)
             hold_map = {
                 "Day Trade": 1,
-                "Weekly": 5,
-                "Monthly": 20,
-                "LEAPS": 60,
             }
             strategy_backtests = {
                 bucket: backtest_signal(
@@ -721,7 +687,7 @@ with income_tab:
                     outlook,
                     hold_days=hold_map.get(bucket, 5),
                 )
-                for bucket in ["Day Trade", "Weekly", "Monthly", "LEAPS"]
+                for bucket in ["Day Trade"]
             }
             discipline = discipline_status(
                 snapshot.get("trades", []),
@@ -749,7 +715,7 @@ with income_tab:
             st.caption(
                 f"Strategy: {income_request.get('strategy_choice', 'Auto - best fit')}. "
                 f"Requested width: {income_request.get('width_label', 'Auto')}. "
-                "If the exact strike width is not listed, AlphaOS uses the nearest available strike. Calendar and diagonal ideas remain unpriced unless both expirations can be priced."
+                "Daily recommendations are limited to call debit spreads and put debit spreads. If the exact strike width is not listed, AlphaOS uses the nearest available strike."
             )
             strategy_profile = strategy_explanation(
                 income_request.get("strategy_choice", "Auto - best fit")
@@ -768,7 +734,7 @@ with income_tab:
             else:
                 ordered_buckets = [
                     bucket
-                    for bucket in ["Day Trade", "Weekly", "Monthly", "LEAPS"]
+                    for bucket in ["Day Trade"]
                     if candidates.get(bucket)
                 ]
                 bucket_tabs = st.tabs(ordered_buckets)
@@ -787,11 +753,6 @@ with income_tab:
                                 item
                                 for item in bucket_candidates
                                 if item.get("strategy") == selected_strategy
-                                or (
-                                    item.get("strategy", "").startswith("LEAPS")
-                                    and selected_strategy
-                                    in {"Long Call", "Long Put"}
-                                )
                             ]
                         if not bucket_candidates:
                             empty_state(
@@ -890,7 +851,7 @@ with income_tab:
                     for item in rows
                     if item.get("entry_price") is not None
                 }
-                with st.expander("Strategy Catalog & Eligibility", expanded=False):
+                with st.expander("Allowed Daily Spread Strategies", expanded=False):
                     st.dataframe(
                         strategy_catalog_rows(
                             income_request.get("objective", "Account Growth"),
