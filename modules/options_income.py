@@ -4,15 +4,19 @@ from datetime import date, datetime
 
 
 BUCKET_TARGET_DAYS = {
-    "Day Trade": 0,
+    "0DTE": 0,
+    "1DTE": 1,
+    "2DTE": 2,
+    "3DTE": 3,
     "Weekly": 7,
-    "Monthly": 30,
 }
 
 BUCKET_WIDTH_PCT = {
-    "Day Trade": 0.005,
+    "0DTE": 0.005,
+    "1DTE": 0.0075,
+    "2DTE": 0.01,
+    "3DTE": 0.0125,
     "Weekly": 0.015,
-    "Monthly": 0.03,
 }
 
 
@@ -35,16 +39,6 @@ def select_expiration_buckets(
     selected = {}
     for label, target_days in BUCKET_TARGET_DAYS.items():
         candidates = available
-        if label == "Monthly":
-            standard_monthlies = [
-                expiration
-                for expiration in available
-                if expiration.weekday() == 4
-                and 15 <= expiration.day <= 21
-                and 7 <= (expiration - as_of).days <= 60
-            ]
-            if standard_monthlies:
-                candidates = standard_monthlies
         best = min(
             candidates,
             key=lambda expiration: (
@@ -190,7 +184,7 @@ def build_income_spread(
         if spread_width is not None and float(spread_width) > 0
         else underlying * BUCKET_WIDTH_PCT[bucket]
     )
-    target_delta = 0.20 if bucket == "Day Trade" else 0.25
+    target_delta = 0.20 if dte <= 1 else 0.25
 
     put_pair = _credit_leg_pair(
         chain.get("puts", []),
@@ -272,10 +266,8 @@ def build_income_spread(
         breakeven = f"${float(short_call) + credit:,.2f}"
 
     expiration_note = (
-        "Same-day expiration"
+        "0DTE / same-day expiration"
         if dte == 0
-        else f"Nearest listed expiration ({dte} DTE)"
-        if bucket == "Day Trade"
         else f"{dte} DTE"
     )
     return {

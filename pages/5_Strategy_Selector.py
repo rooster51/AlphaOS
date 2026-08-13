@@ -639,12 +639,11 @@ with income_tab:
                     income_request["symbol"]
                 )
                 buckets = select_expiration_buckets(expirations)
-                day_trade_expiration = buckets.get("Day Trade")
                 chains = {}
-                if day_trade_expiration:
-                    chains["Day Trade"] = get_public_option_chain(
+                for bucket, expiration in buckets.items():
+                    chains[bucket] = get_public_option_chain(
                         income_request["symbol"],
-                        day_trade_expiration,
+                        expiration,
                     )
                 target_width = income_request["width"] or (
                     float(analysis["last"]) * 0.01
@@ -681,7 +680,11 @@ with income_tab:
             texture = session_texture(history, analysis)
             reversal_checks = reversal_diagnostics(history, outlook)
             hold_map = {
-                "Day Trade": 1,
+                "0DTE": 1,
+                "1DTE": 1,
+                "2DTE": 2,
+                "3DTE": 3,
+                "Weekly": 5,
             }
             strategy_backtests = {
                 bucket: backtest_signal(
@@ -689,13 +692,13 @@ with income_tab:
                     outlook,
                     hold_days=hold_map.get(bucket, 5),
                 )
-                for bucket in ["Day Trade"]
+                for bucket in ["0DTE", "1DTE", "2DTE", "3DTE", "Weekly"]
             }
             discipline = discipline_status(
                 snapshot.get("trades", []),
                 settings,
                 reversal_checks=reversal_checks,
-                backtest=strategy_backtests.get("Day Trade"),
+                backtest=strategy_backtests.get("0DTE"),
             )
             texture_cols = st.columns(4)
             texture_cols[0].metric("Session Setup", texture["label"])
@@ -736,7 +739,7 @@ with income_tab:
             else:
                 ordered_buckets = [
                     bucket
-                    for bucket in ["Day Trade"]
+                    for bucket in ["0DTE", "1DTE", "2DTE", "3DTE", "Weekly"]
                     if candidates.get(bucket)
                 ]
                 bucket_tabs = st.tabs(ordered_buckets)
