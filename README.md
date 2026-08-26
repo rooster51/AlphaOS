@@ -75,5 +75,10 @@ The deployed app is browser-based and usable from desktop and phone browsers.
 - `disabled_pages/` contains retired MVP pages that are not loaded by Streamlit.
 - `modules/public_data.py` contains server-side Public.com calls for brokerage, quotes, and option chains.
 - `modules/pulse_backtest.py` contains the Pulse Bar setup detection and backtest logic.
+- `tradingview/alphaos_pulse_confirm.pine` contains the TradingView confirmation indicator for 30-minute Pulse Bar setups.
 - `supabase/schema.sql` contains database tables, row-level security, and update triggers.
 - API keys belong in Streamlit secrets, never in source control.
+
+## TradingView Confirmation Indicator
+
+Open TradingView, create a new Pine Script indicator, paste `tradingview/alphaos_pulse_confirm.pine`, save it, and add it to a 30-minute chart. Use the alert conditions for Pulse Bar detection, breakout confirmation, and chop warnings.

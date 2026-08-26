@@ -1,0 +1,104 @@
+//@version=5
+indicator("AlphaOS Pulse Bar Confirm", overlay=true, max_labels_count=500, max_lines_count=500)
+
+pulseSession = input.session("0930-1130", "Pulse detection window")
+tradeSession = input.session("0930-1600", "Breakout confirmation window")
+closeThreshold = input.float(0.90, "Close-location threshold", minval=0.50, maxval=1.00, step=0.01)
+showChopWarning = input.bool(true, "Show chop warning")
+showPulseLines = input.bool(true, "Show active pulse high/low")
+requireVwapAlignment = input.bool(false, "Require VWAP alignment for confirmation")
+
+inPulseWindow = not na(time(timeframe.period, pulseSession))
+inTradeWindow = not na(time(timeframe.period, tradeSession))
+newDay = ta.change(time("D"))
+
+barRange = high - low
+closeLocation = barRange > 0 ? (close - low) / barRange : na
+
+bullPulse = inPulseWindow and close > open and closeLocation >= closeThreshold
+bearPulse = inPulseWindow and close < open and closeLocation <= 1.0 - closeThreshold
+
+emaFast = ta.ema(close, 9)
+emaSlow = ta.ema(close, 21)
+vwapValue = ta.vwap(hlc3)
+atrValue = ta.atr(14)
+atrPct = close != 0 ? atrValue / close : na
+emaSpreadPct = close != 0 ? math.abs(emaFast - emaSlow) / close : na
+flatTrend = emaSpreadPct < atrPct * 0.25
+vwapChop = atrValue > 0 ? math.abs(close - vwapValue) < atrValue * 0.25 : false
+insidePriorBar = high <= high[1] and low >= low[1]
+choppySession = showChopWarning and inTradeWindow and (flatTrend or vwapChop or insidePriorBar)
+
+var float pulseHigh = na
+var float pulseLow = na
+var int pulseDirection = 0
+var int pulseBarIndex = na
+var bool pulseTriggered = false
+var line highLine = na
+var line lowLine = na
+
+if newDay
+    pulseHigh := na
+    pulseLow := na
+    pulseDirection := 0
+    pulseBarIndex := na
+    pulseTriggered := false
+    if not na(highLine)
+        line.delete(highLine)
+    if not na(lowLine)
+        line.delete(lowLine)
+    highLine := na
+    lowLine := na
+
+if bullPulse or bearPulse
+    pulseHigh := high
+    pulseLow := low
+    pulseDirection := bullPulse ? 1 : -1
+    pulseBarIndex := bar_index
+    pulseTriggered := false
+    if showPulseLines
+        if not na(highLine)
+            line.delete(highLine)
+        if not na(lowLine)
+            line.delete(lowLine)
+        highLine := line.new(bar_index, pulseHigh, bar_index + 1, pulseHigh, extend=extend.right, color=color.new(color.lime, 0), width=2)
+        lowLine := line.new(bar_index, pulseLow, bar_index + 1, pulseLow, extend=extend.right, color=color.new(color.red, 0), width=2)
+
+vwapOkBull = not requireVwapAlignment or close > vwapValue
+vwapOkBear = not requireVwapAlignment or close < vwapValue
+
+bullBreakout = inTradeWindow and pulseDirection == 1 and not pulseTriggered and bar_index > pulseBarIndex and high > pulseHigh and vwapOkBull
+bearBreakout = inTradeWindow and pulseDirection == -1 and not pulseTriggered and bar_index > pulseBarIndex and low < pulseLow and vwapOkBear
+
+if bullBreakout or bearBreakout
+    pulseTriggered := true
+
+plotshape(bullPulse, title="Bullish Pulse Bar", style=shape.triangleup, location=location.belowbar, color=color.lime, size=size.small, text="Pulse")
+plotshape(bearPulse, title="Bearish Pulse Bar", style=shape.triangledown, location=location.abovebar, color=color.red, size=size.small, text="Pulse")
+plotshape(bullBreakout, title="Bullish Breakout Confirmed", style=shape.labelup, location=location.belowbar, color=color.new(color.lime, 0), textcolor=color.black, text="CALL/PUT CREDIT")
+plotshape(bearBreakout, title="Bearish Breakout Confirmed", style=shape.labeldown, location=location.abovebar, color=color.new(color.red, 0), textcolor=color.white, text="PUT/CALL CREDIT")
+plotshape(choppySession, title="Chop Warning", style=shape.circle, location=location.bottom, color=color.new(color.orange, 0), size=size.tiny, text="Chop")
+
+plot(emaFast, title="EMA 9", color=color.new(color.teal, 0))
+plot(emaSlow, title="EMA 21", color=color.new(color.blue, 0))
+plot(vwapValue, title="VWAP", color=color.new(color.yellow, 0))
+
+bgcolor(choppySession ? color.new(color.orange, 90) : na, title="Chop Background")
+
+var table statusTable = table.new(position.top_right, 1, 5)
+if barstate.islast
+    tfText = timeframe.isminutes and timeframe.multiplier == 30 ? "30m chart: OK" : "Use 30m chart"
+    pulseText = pulseDirection == 1 ? "Active pulse: Bullish" : pulseDirection == -1 ? "Active pulse: Bearish" : "Active pulse: None"
+    triggerText = pulseTriggered ? "Breakout: Triggered" : "Breakout: Waiting"
+    chopText = choppySession ? "Regime: Choppy" : "Regime: Clean/Neutral"
+    table.cell(statusTable, 0, 0, "AlphaOS Pulse", text_color=color.white, bgcolor=color.new(color.black, 0))
+    table.cell(statusTable, 0, 1, tfText, text_color=color.white, bgcolor=color.new(color.gray, 15))
+    table.cell(statusTable, 0, 2, pulseText, text_color=color.white, bgcolor=color.new(color.gray, 15))
+    table.cell(statusTable, 0, 3, triggerText, text_color=color.white, bgcolor=color.new(color.gray, 15))
+    table.cell(statusTable, 0, 4, chopText, text_color=color.white, bgcolor=choppySession ? color.new(color.orange, 0) : color.new(color.gray, 15))
+
+alertcondition(bullPulse, title="AlphaOS Bullish Pulse Bar", message="AlphaOS bullish Pulse Bar detected on {{ticker}}.")
+alertcondition(bearPulse, title="AlphaOS Bearish Pulse Bar", message="AlphaOS bearish Pulse Bar detected on {{ticker}}.")
+alertcondition(bullBreakout, title="AlphaOS Bullish Breakout Confirmed", message="AlphaOS bullish Pulse breakout confirmed on {{ticker}}. Review call debit or bull put credit spread.")
+alertcondition(bearBreakout, title="AlphaOS Bearish Breakout Confirmed", message="AlphaOS bearish Pulse breakout confirmed on {{ticker}}. Review put debit or bear call credit spread.")
+alertcondition(choppySession, title="AlphaOS Chop Warning", message="AlphaOS chop warning on {{ticker}}. Avoid forcing breakout trades.")
