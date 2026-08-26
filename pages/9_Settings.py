@@ -2,6 +2,7 @@ import streamlit as st
 
 from modules.auth import get_current_user, sign_in_form, sign_out_button
 from modules.data import add_watchlist_symbol, get_user_settings, get_watchlist, save_user_settings
+from modules.marketdata_provider import has_marketdata_config
 from modules.risk_guardrails import normalize_guardrails
 from modules.supabase_client import has_supabase_config
 from modules.trade_quality import normalize_quality_settings
@@ -25,6 +26,12 @@ if has_supabase_config():
     st.success("Supabase secrets detected.")
 else:
     st.warning("Supabase secrets are not configured. Demo session storage is browser-session only.")
+
+st.subheader("Market Data")
+if has_marketdata_config():
+    st.success("MarketData.app key detected for Pulse 30-minute candles.")
+else:
+    st.warning("MARKETDATA_API_KEY is not configured. Pulse backtests can still run from uploaded 30-minute CSV files.")
 
 st.subheader("Trading Preferences")
 settings = get_user_settings(user_id=user.get("id") if user else None)

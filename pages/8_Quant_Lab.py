@@ -1,7 +1,7 @@
 import pandas as pd
 import streamlit as st
 
-from modules.market_data import price_history
+from modules.marketdata_provider import get_marketdata_intraday_bars, has_marketdata_config
 from modules.pulse_backtest import PULSE_SYMBOLS, compare_pulse_strategies
 from modules.ui import configure_page, empty_state, page_header
 
@@ -25,6 +25,12 @@ threshold = st.select_slider(
     "Pulse close-location threshold",
     options=[0.80, 0.85, 0.90, 0.95],
     value=0.90,
+)
+lookback_days = st.slider(
+    "MarketData.app intraday lookback days",
+    min_value=1,
+    max_value=365,
+    value=30,
 )
 uploaded = st.file_uploader(
     "Optional 30-minute OHLC CSV",
@@ -54,11 +60,17 @@ if run:
             data_by_symbol = uploaded_data_by_symbol(uploaded)
             source = "uploaded 30-minute CSV"
         else:
+            if not has_marketdata_config():
+                st.error("Add MARKETDATA_API_KEY in Streamlit secrets before running Pulse with live MarketData.app candles.")
+                st.stop()
             data_by_symbol = {}
-            source = "Public historical endpoint"
+            source = f"MarketData.app 30-minute candles, last {lookback_days} days"
             for symbol in symbols:
-                history, _ = price_history(symbol)
-                data_by_symbol[symbol] = history
+                data_by_symbol[symbol] = get_marketdata_intraday_bars(
+                    symbol,
+                    resolution="30",
+                    lookback_days=int(lookback_days),
+                )
 
         summary, diagnostics = compare_pulse_strategies(
             data_by_symbol,
@@ -94,5 +106,5 @@ if run:
                 st.dataframe(trades.tail(100), use_container_width=True, hide_index=True)
 
 st.caption(
-    "Original Pulse uses the raw 30-minute Pulse Bar breakout. Enhanced Pulse adds 9/21 EMA alignment. Results are research only and exclude option pricing, slippage, commissions, taxes, assignment, and execution quality."
+    "Original Pulse uses the raw 30-minute Pulse Bar breakout. Enhanced Pulse adds 9/21 EMA alignment. Public.com remains the options-chain source; MarketData.app is used only for Pulse candles. Results are research only and exclude option pricing, slippage, commissions, taxes, assignment, and execution quality."
 )
