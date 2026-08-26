@@ -1,6 +1,7 @@
 import streamlit as st
 
 from modules.auth import get_current_user, sign_in_form, sign_out_button
+from modules.alpaca_data import has_alpaca_config
 from modules.data import add_watchlist_symbol, get_user_settings, get_watchlist, save_user_settings
 from modules.risk_guardrails import normalize_guardrails
 from modules.supabase_client import has_supabase_config
@@ -25,6 +26,12 @@ if has_supabase_config():
     st.success("Supabase secrets detected.")
 else:
     st.warning("Supabase secrets are not configured. Demo session storage is browser-session only.")
+
+st.subheader("Alpaca")
+if has_alpaca_config():
+    st.success("Alpaca data secrets detected for Pulse 30-minute bars.")
+else:
+    st.warning("Alpaca secrets are not configured. Quant Lab can still run from uploaded CSV files.")
 
 st.subheader("Trading Preferences")
 settings = get_user_settings(user_id=user.get("id") if user else None)

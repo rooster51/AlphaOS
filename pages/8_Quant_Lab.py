@@ -1,6 +1,7 @@
 import pandas as pd
 import streamlit as st
 
+from modules.alpaca_data import get_alpaca_intraday_bars, has_alpaca_config
 from modules.pulse_backtest import PULSE_SYMBOLS, compare_pulse_strategies
 from modules.ui import configure_page, empty_state, page_header
 
@@ -20,6 +21,11 @@ symbols = st.multiselect(
     list(PULSE_SYMBOLS),
     default=list(PULSE_SYMBOLS),
 )
+data_source = st.radio(
+    "Historical data source",
+    ["Alpaca 30-minute bars", "CSV upload"],
+    horizontal=True,
+)
 threshold = st.select_slider(
     "Pulse close-location threshold",
     options=[0.80, 0.85, 0.90, 0.95],
@@ -35,6 +41,16 @@ uploaded = st.file_uploader(
     "Optional 30-minute OHLC CSV",
     type=["csv"],
     help="Expected columns: symbol, timestamp, open, high, low, close. Volume is optional.",
+)
+alpaca_feed = st.selectbox(
+    "Alpaca feed",
+    ["iex", "sip"],
+    help="Free Alpaca accounts can use IEX. SIP historical data may require the end time to be at least 15 minutes old or a paid plan.",
+)
+use_spy_proxy = st.checkbox(
+    "Use SPY as proxy for SPX/XSP",
+    value=True,
+    help="Alpaca stock bars are best for ETFs. This lets SPX and XSP research use SPY bars when index bars are unavailable.",
 )
 
 
@@ -55,11 +71,32 @@ run = st.button("Run Pulse Backtest", type="primary", use_container_width=True)
 
 if run:
     try:
-        if uploaded is None:
+        if data_source == "CSV upload":
+            if uploaded is None:
+                st.error("Upload a 30-minute OHLC CSV before running the Pulse backtest.")
+                st.stop()
+            data_by_symbol = uploaded_data_by_symbol(uploaded)
+            source = f"uploaded 30-minute CSV, expected lookback around {lookback_days} days"
+        else:
+            if not has_alpaca_config():
+                st.error("Add ALPACA_API_KEY_ID and ALPACA_API_SECRET_KEY in Streamlit secrets before using Alpaca bars.")
+                st.stop()
+            data_by_symbol = {}
+            labels = []
+            for symbol in symbols:
+                bars, label = get_alpaca_intraday_bars(
+                    symbol,
+                    lookback_days=int(lookback_days),
+                    timeframe="30Min",
+                    feed=alpaca_feed,
+                    use_spy_proxy=use_spy_proxy,
+                )
+                data_by_symbol[symbol] = bars
+                labels.append(label)
+            source = f"Alpaca {alpaca_feed} 30-minute bars: {', '.join(labels)}"
+        if not data_by_symbol:
             st.error("Upload a 30-minute OHLC CSV before running the Pulse backtest.")
             st.stop()
-        data_by_symbol = uploaded_data_by_symbol(uploaded)
-        source = f"uploaded 30-minute CSV, expected lookback around {lookback_days} days"
 
         summary, diagnostics = compare_pulse_strategies(
             data_by_symbol,
@@ -95,5 +132,5 @@ if run:
                 st.dataframe(trades.tail(100), use_container_width=True, hide_index=True)
 
 st.caption(
-    "Original Pulse uses the raw 30-minute Pulse Bar breakout. Enhanced Pulse adds 9/21 EMA alignment. Public.com remains the options-chain source. Pulse testing is CSV-only until a cheaper intraday data source is chosen. Results are research only and exclude option pricing, slippage, commissions, taxes, assignment, and execution quality."
+    "Original Pulse uses the raw 30-minute Pulse Bar breakout. Enhanced Pulse adds 9/21 EMA alignment. Public.com remains the options-chain source; Alpaca or CSV supplies historical bars. Results are research only and exclude option pricing, slippage, commissions, taxes, assignment, and execution quality."
 )

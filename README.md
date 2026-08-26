@@ -18,7 +18,7 @@ The MVP intentionally does not support automated trade execution.
 - Supabase-ready authentication
 - Defined-risk spread suggestions
 - Public.com option-chain pricing
-- CSV-uploaded 30-minute Pulse Bar candles
+- Alpaca or CSV-uploaded 30-minute Pulse Bar candles
 - SPX, XSP, SPY, QQQ, IWM, and DIA scanner universe
 - Pulse Bar Original vs Enhanced backtest lab
 - Compounding growth calculator
@@ -63,6 +63,8 @@ SUPABASE_URL = "https://your-project.supabase.co"
 SUPABASE_ANON_KEY = "your-supabase-anon-key"
 PUBLIC_API_SECRET = "your-public-secret-key"
 PUBLIC_OWNER_EMAIL = "your-login-email@example.com"
+ALPACA_API_KEY_ID = "your-alpaca-key-id"
+ALPACA_API_SECRET_KEY = "your-alpaca-secret-key"
 ```
 
 5. Deploy the app.
@@ -75,6 +77,7 @@ The deployed app is browser-based and usable from desktop and phone browsers.
 - `pages/` contains Streamlit multipage routes.
 - `disabled_pages/` contains retired MVP pages that are not loaded by Streamlit.
 - `modules/public_data.py` contains server-side Public.com calls for brokerage, quotes, and option chains.
+- `modules/alpaca_data.py` contains server-side Alpaca calls for 30-minute ETF bars.
 - `modules/pulse_backtest.py` contains the Pulse Bar setup detection and backtest logic.
 - `tradingview/alphaos_pulse_confirm.pine` contains the TradingView confirmation indicator for 30-minute Pulse Bar setups.
 - `supabase/schema.sql` contains database tables, row-level security, and update triggers.
@@ -83,3 +86,7 @@ The deployed app is browser-based and usable from desktop and phone browsers.
 ## TradingView Confirmation Indicator
 
 Open TradingView, create a new Pine Script indicator, paste `tradingview/alphaos_pulse_confirm.pine`, save it, and add it to a 30-minute chart. Use the alert conditions for Pulse Bar detection, breakout confirmation, and chop warnings.
+
+## Alpaca Data
+
+Quant Lab can pull 30-minute bars from Alpaca for ETF symbols such as `SPY`, `QQQ`, `DIA`, and `IWM`. Since Alpaca stock bars do not reliably cover `SPX` and `XSP` on free plans, the app includes an option to use `SPY` as a proxy for those index symbols during research.
