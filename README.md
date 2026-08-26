@@ -10,6 +10,7 @@ The MVP intentionally does not support automated trade execution.
 - Scanner
 - Strategy Selector
 - Quant Lab
+- TradingView Indicator
 - Settings
 
 ## Current MVP Features

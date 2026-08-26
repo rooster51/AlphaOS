@@ -28,7 +28,7 @@ if not user:
     st.info("Configure Supabase and API keys in Streamlit secrets for cloud auth and live data.")
 
 st.subheader("Core Workflow")
-cards = st.columns(3)
+cards = st.columns(4)
 with cards[0]:
     st.markdown("#### Scanner")
     st.write("Scan SPX, XSP, SPY, QQQ, IWM, and DIA for current market context.")
@@ -41,6 +41,10 @@ with cards[2]:
     st.markdown("#### Quant Lab")
     st.write("Run the 30-minute Pulse Bar backtest when valid intraday data is available.")
     st.page_link("pages/8_Quant_Lab.py", label="Open Quant Lab")
+with cards[3]:
+    st.markdown("#### TradingView")
+    st.write("Copy the AlphaOS Pulse confirmation indicator into TradingView.")
+    st.page_link("pages/10_TradingView_Indicator.py", label="Open Indicator")
 
 st.divider()
 
