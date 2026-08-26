@@ -2,7 +2,11 @@ import pandas as pd
 import streamlit as st
 
 from modules.alpaca_data import get_alpaca_intraday_bars, has_alpaca_config
-from modules.pulse_backtest import PULSE_SYMBOLS, compare_pulse_strategies
+from modules.pulse_backtest import (
+    PULSE_SYMBOLS,
+    compare_pulse_strategies,
+    pulse_strategy_rollup,
+)
 from modules.ui import configure_page, empty_state, page_header
 
 
@@ -111,6 +115,33 @@ if run:
     if summary.empty:
         empty_state("No backtest rows were produced.")
     else:
+        rollup = pulse_strategy_rollup(diagnostics)
+        if not rollup.empty:
+            st.subheader("Strategy Rollup")
+            st.dataframe(rollup, use_container_width=True, hide_index=True)
+
+            original = rollup[rollup["Strategy"] == "Original Pulse"]
+            enhanced = rollup[rollup["Strategy"] == "Enhanced Pulse"]
+            if not original.empty and not enhanced.empty:
+                comparison = st.columns(4)
+                comparison[0].metric(
+                    "Original Trades",
+                    int(original.iloc[0]["Trades"]),
+                )
+                comparison[1].metric(
+                    "Enhanced Trades",
+                    int(enhanced.iloc[0]["Trades"]),
+                )
+                comparison[2].metric(
+                    "Original Expectancy",
+                    f"{float(original.iloc[0]['Expectancy R']):+.3f}R",
+                )
+                comparison[3].metric(
+                    "Enhanced Expectancy",
+                    f"{float(enhanced.iloc[0]['Expectancy R']):+.3f}R",
+                )
+
+        st.subheader("Symbol Detail")
         st.dataframe(summary, use_container_width=True, hide_index=True)
 
     unavailable = summary[summary["Status"] == "DATA_UNAVAILABLE"] if "Status" in summary else pd.DataFrame()

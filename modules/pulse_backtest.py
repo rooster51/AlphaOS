@@ -273,7 +273,48 @@ def compare_pulse_strategies(
         }
         for strategy_name, config in configs.items():
             result = backtest_pulse_symbol(history, symbol, config)
+            result["strategy"] = strategy_name
             result["summary"]["Strategy"] = strategy_name
             rows.append(result["summary"])
             diagnostics[f"{symbol}-{strategy_name}"] = result
     return pd.DataFrame(rows), diagnostics
+
+
+def pulse_strategy_rollup(diagnostics: dict[str, dict]) -> pd.DataFrame:
+    rows = []
+    strategy_names = sorted(
+        {result.get("strategy", "") for result in diagnostics.values() if result.get("strategy")}
+    )
+    for strategy_name in strategy_names:
+        strategy_results = [
+            result
+            for result in diagnostics.values()
+            if result.get("strategy") == strategy_name
+        ]
+        trades = []
+        total_setups = 0
+        valid_symbols = 0
+        tested_symbols = set()
+        for result in strategy_results:
+            tested_symbols.add(result.get("symbol", ""))
+            setups = result.get("setups", pd.DataFrame())
+            if not setups.empty:
+                total_setups += int(len(setups))
+            if result.get("status") == "OK":
+                valid_symbols += 1
+            trade_frame = result.get("trades", pd.DataFrame())
+            if not trade_frame.empty:
+                trades.append(trade_frame)
+
+        combined = pd.concat(trades, ignore_index=True) if trades else pd.DataFrame()
+        metrics = _metrics(combined)
+        rows.append(
+            {
+                "Strategy": strategy_name,
+                "Symbols Tested": len([symbol for symbol in tested_symbols if symbol]),
+                "Valid Symbols": valid_symbols,
+                "Pulse Setups": total_setups,
+                **metrics,
+            }
+        )
+    return pd.DataFrame(rows)
