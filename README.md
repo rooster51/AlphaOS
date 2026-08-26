@@ -17,7 +17,7 @@ The MVP intentionally does not support automated trade execution.
 - Supabase-ready authentication
 - Defined-risk spread suggestions
 - Public.com option-chain pricing
-- MarketData.app 30-minute Pulse Bar candles
+- CSV-uploaded 30-minute Pulse Bar candles
 - SPX, XSP, SPY, QQQ, IWM, and DIA scanner universe
 - Pulse Bar Original vs Enhanced backtest lab
 - Compounding growth calculator
@@ -62,7 +62,6 @@ SUPABASE_URL = "https://your-project.supabase.co"
 SUPABASE_ANON_KEY = "your-supabase-anon-key"
 PUBLIC_API_SECRET = "your-public-secret-key"
 PUBLIC_OWNER_EMAIL = "your-login-email@example.com"
-MARKETDATA_API_KEY = "your-marketdata-app-key"
 ```
 
 5. Deploy the app.
@@ -75,7 +74,6 @@ The deployed app is browser-based and usable from desktop and phone browsers.
 - `pages/` contains Streamlit multipage routes.
 - `disabled_pages/` contains retired MVP pages that are not loaded by Streamlit.
 - `modules/public_data.py` contains server-side Public.com calls for brokerage, quotes, and option chains.
-- `modules/marketdata_provider.py` contains server-side MarketData.app calls for 30-minute Pulse candles.
 - `modules/pulse_backtest.py` contains the Pulse Bar setup detection and backtest logic.
 - `supabase/schema.sql` contains database tables, row-level security, and update triggers.
 - API keys belong in Streamlit secrets, never in source control.
