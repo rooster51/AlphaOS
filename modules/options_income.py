@@ -38,7 +38,20 @@ def select_expiration_buckets(
 
     selected = {}
     for label, target_days in BUCKET_TARGET_DAYS.items():
-        candidates = available
+        if label == "Weekly":
+            candidates = [
+                expiration
+                for expiration in available
+                if 4 <= (expiration - as_of).days <= 10
+            ]
+        else:
+            candidates = [
+                expiration
+                for expiration in available
+                if (expiration - as_of).days == target_days
+            ]
+        if not candidates:
+            continue
         best = min(
             candidates,
             key=lambda expiration: (

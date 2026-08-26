@@ -28,15 +28,12 @@ SECTOR_ETFS = {
 }
 
 SCANNER_SYMBOLS = (
-    "AAPL",
-    "AMD",
-    "AMZN",
-    "COST",
-    "GOOGL",
-    "META",
-    "MSFT",
-    "NVDA",
-    "TSLA",
+    "SPX",
+    "XSP",
+    "SPY",
+    "QQQ",
+    "IWM",
+    "DIA",
 )
 
 

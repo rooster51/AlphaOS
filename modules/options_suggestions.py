@@ -10,6 +10,7 @@ ALLOWED_RECOMMENDED_STRATEGIES = (
     "Put Debit Spread",
     "Bull Put Credit Spread",
     "Bear Call Credit Spread",
+    "Iron Condor",
 )
 
 
@@ -49,6 +50,15 @@ STRATEGY_CATALOG = {
         "makes_money": "Collects a credit and profits if price stays below the short call through exit or expiration.",
         "best_when": "Bearish trend, resistance rejection, or failed bounce where premium is worth the defined risk.",
         "avoid_when": "Price is breaking out, resistance is failing, or the credit is too small versus width.",
+    },
+    "Iron Condor": {
+        "category": "Neutral Credit Spread",
+        "best_for": ["Income", "Account Growth"],
+        "risk": "Defined risk",
+        "status": "Priced when chain supports both put and call spreads",
+        "makes_money": "Collects credit from a put spread and a call spread, then profits if price stays between the short strikes.",
+        "best_when": "Neutral or range-bound tape with contained expected movement and no clean breakout.",
+        "avoid_when": "Trend day, breakout setup, expanding volatility, or a major catalyst.",
     },
 }
 
@@ -297,11 +307,11 @@ def strategy_explanation(strategy: str) -> dict:
         return {
             "Strategy": strategy,
             "Category": "Dynamic",
-            "How It Makes Money": "Chooses bullish debit/credit spreads in bullish tape and bearish debit/credit spreads in bearish tape.",
-            "Best When": "You want AlphaOS to pick daily defined-risk spreads that match the current directional bias.",
-            "Avoid When": "The session is neutral, choppy, or the option chain cannot produce a valid spread.",
-            "Risk Profile": "Defined debit or defined credit-spread risk",
-            "Availability": "Only debit spreads and credit spreads",
+            "How It Makes Money": "Chooses debit spreads or credit spreads for directional tape, and iron condors for neutral range tape.",
+            "Best When": "You want AlphaOS to pick daily defined-risk spreads that match the current bias.",
+            "Avoid When": "The session is choppy without range structure or the option chain cannot produce a valid spread.",
+            "Risk Profile": "Defined debit or credit-spread risk",
+            "Availability": "Debit spreads, credit spreads, and iron condors",
         }
     profile = STRATEGY_CATALOG.get(strategy)
     if not profile:
@@ -403,6 +413,20 @@ def build_option_suggestions(
                 credit["thesis"] = f"{outlook} credit spread with defined risk."
                 credit["fit"] = "Uses the same daily expiration bucket and sells premium in the direction of the tape."
                 rows.append(credit)
+        elif outlook == "Neutral":
+            condor = build_income_spread(
+                chain,
+                underlying,
+                outlook,
+                bucket,
+                spread_width=width,
+            )
+            if condor and condor.get("strategy") == "Iron Condor":
+                condor["side"] = "Short / Credit"
+                condor["entry_price"] = condor["net_credit"]
+                condor["thesis"] = "Neutral defined-risk range structure."
+                condor["fit"] = "Collects premium on both sides when the tape is range-bound and breakout risk is lower."
+                rows.append(condor)
         suggestions[bucket] = rows
     return suggestions
 

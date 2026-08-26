@@ -6,6 +6,7 @@ ALLOWED_DAILY_STRATEGIES = (
     "Put Debit Spread",
     "Bull Put Credit Spread",
     "Bear Call Credit Spread",
+    "Iron Condor",
 )
 
 STRATEGY_GROUPS = {
@@ -57,6 +58,16 @@ def _bear_call_credit_spread() -> dict:
     }
 
 
+def _iron_condor() -> dict:
+    return {
+        "vehicle": "Daily Neutral Credit Spread",
+        "strategy": "Iron Condor",
+        "structure": "Sell an out-of-the-money put spread and call spread in the same expiration.",
+        "fit": "Neutral daily setup where price is expected to stay inside the short strikes.",
+        "risk": "Maximum loss is the widest spread width minus the total credit received.",
+    }
+
+
 def strategy_ideas(
     outlook: str,
     volatility: str,
@@ -68,15 +79,7 @@ def strategy_ideas(
         return [_call_debit_spread(), _bull_put_credit_spread()]
     if outlook == "Bearish":
         return [_put_debit_spread(), _bear_call_credit_spread()]
-    return [
-        {
-            "vehicle": "No Trade",
-            "strategy": "No Trade",
-            "structure": "Wait for a bullish or bearish daily trend before selecting a spread.",
-            "fit": "Neutral or choppy tape does not fit the two-strategy daily spread plan.",
-            "risk": "No new trade recommended.",
-        }
-    ]
+    return [_iron_condor()]
 
 
 def primary_strategy_idea(
