@@ -37,7 +37,7 @@ def render():
             render_pulse()
     with methods:
         st.markdown("""### Research conventions
-* Daily, aligned, adjusted-close data. No automatic filling of missing values. Demo data is synthetic. CSV inputs must already account for corporate actions. Current asset lists may carry survivorship bias.
+* Daily, aligned observations. Public mode uses provider closes with unverified split/dividend adjustment: price-return research, not total-return performance. CSV inputs must already account for corporate actions. No automatic filling of missing values. Public mode excludes today's potentially incomplete bar and intersects asset dates. Current asset lists may carry survivorship bias.
 * Long-only portfolios, no leverage, daily rebalancing, zero cash yield. Signals use a full extra bar: information at close t−2 determines exposure from close t−1 to close t. Costs apply to absolute traded weight, including drift and the first investment, in basis points per side. No final liquidation is assumed.
 * CAGR and volatility use 252 observations/year. Sharpe uses sample standard deviation and a user-supplied risk-free hurdle; cash holdings do not earn that hurdle. Sortino uses root mean squared negative excess daily returns. Drawdown includes initial capital.
 * Walk-forward selects among 20/60/120-day momentum models using trailing training Sharpe, then evaluates the chosen model on the next untouched test block. Test blocks never overlap. The full-sample strategy and allocation diagnostics are descriptive, not out-of-sample evidence. Repeated experimentation can still overfit the test history.
@@ -64,13 +64,45 @@ Reference: [chronological validation](https://scikit-learn.org/stable/modules/ge
             chart(stress.set_index("Spot shock")[["Expiration P&L ($)"]], "Terminal payoff scenarios")
             st.dataframe(stress, hide_index=True, use_container_width=True)
             st.caption("Deterministic price scenarios, not probabilities. Unlimited losses extend beyond the displayed grid.")
+            if selected['source'].startswith('Public'):
+                st.markdown("#### Provider Greek exposure")
+                exposures = {}
+                for greek in ('delta','gamma','theta','vega'):
+                    available = all(l.get(greek) is not None and np.isfinite(l[greek]) for l in selected['legs'])
+                    exposures[greek] = units * (sum(l['qty']*100*l[greek] for l in selected['legs']) + (selected['shares'] if greek == 'delta' else 0)) if available else None
+                st.dataframe(pd.Series(exposures,name='Signed position exposure').to_frame(),use_container_width=True)
+                st.caption("Standard 100-share multiplier. Delta: shares equivalent; gamma: delta change per $1 underlying move; vega: dollars per 1 percentage-point IV move. Theta retains the provider time convention. Missing Greeks remain unavailable.")
+                with st.expander("Inspect Public option-contract history"):
+                    st.caption("Fetch daily OHLCV for these specific contracts. This is not historical chain discovery or a bid/ask execution backtest; availability varies by contract.")
+                    if st.button("Fetch selected contracts' history"):
+                        from modules.public_data import get_public_research_bars
+                        frames = []
+                        for leg in selected['legs']:
+                            try:
+                                history = get_public_research_bars(leg['contract'],'MONTH',option=True)
+                                history['contract'] = leg['contract']
+                                frames.append(history)
+                            except Exception as exc:
+                                st.warning(f"History unavailable for {leg['contract']} ({type(exc).__name__}).")
+                        st.session_state['public_contract_history'] = {'contracts':[l['contract'] for l in selected['legs']], 'data':pd.concat(frames,ignore_index=True) if frames else pd.DataFrame()}
+                    saved = st.session_state.get('public_contract_history')
+                    if saved and saved['contracts'] == [l['contract'] for l in selected['legs']]:
+                        if saved['data'].empty:
+                            st.info("No contract history returned.")
+                        else:
+                            st.dataframe(saved['data'],hide_index=True,use_container_width=True)
+                            st.download_button("Export contract history",saved['data'].to_csv(index=False),'public-contract-history.csv','text/csv')
     with research:
         with st.form("quant_run"):
             a,b,c = st.columns(3)
-            source = a.selectbox("Research dataset", ["Synthetic demonstration", "Adjusted-close CSV"])
+            source = a.selectbox("Research dataset", ["Public market history", "Synthetic demonstration", "Adjusted-close CSV"])
             model = b.selectbox("Portfolio model", ["Momentum", "Inverse volatility", "Equal weight"])
             capital = c.number_input("Starting NAV ($)", min_value=100.0, value=100000.0, step=10000.0)
             uploaded = st.file_uploader("Daily adjusted closes · date, ASSET_A, ASSET_B, …", type="csv")
+            a,b = st.columns(2)
+            public_symbols = a.multiselect("Public research symbols", ["SPY","QQQ","IWM","DIA","TLT","IEF","GLD"], default=["SPY","QQQ","TLT","GLD"])
+            public_period = b.selectbox("Public history period", ["FIVE_YEARS","TEN_YEARS","YEAR"])
+            st.caption("Public loads market history on submission (cached for five minutes). It does not import your brokerage holdings. Provider closes are not verified total-return prices.")
             a,b,c,d = st.columns(4)
             lookback = a.selectbox("Signal lookback", [20,60,120], index=1)
             cost = b.number_input("Trading cost (bps / side)", 0.0, 100.0, 5.0)
@@ -84,7 +116,13 @@ Reference: [chronological validation](https://scikit-learn.org/stable/modules/ge
         st.download_button("Download CSV template", demo_prices().head(600).rename_axis("date").to_csv(), "synthetic-adjusted-close-template.csv", "text/csv")
         if submitted:
             try:
-                if source == "Adjusted-close CSV":
+                metadata = {}
+                if source == "Public market history":
+                    from modules.public_research import load_public_research
+                    with st.spinner("Loading Public daily history and aligning completed sessions…"):
+                        prices, metadata = load_public_research(public_symbols, public_period)
+                    st.session_state['public_research_audit'] = metadata
+                elif source == "Adjusted-close CSV":
                     if uploaded is None:
                         raise ValueError("Upload an adjusted-close CSV first.")
                     prices = validate_prices(pd.read_csv(io.BytesIO(uploaded.getvalue())))
@@ -103,13 +141,21 @@ Reference: [chronological validation](https://scikit-learn.org/stable/modules/ge
                 wf, folds, wf_weights = walk_forward(prices, train, test, cost, rf/100)
                 simulations, drawdowns = bootstrap(wf.Net, horizon, 1000, block)
                 config = dict(source=source, model=model, lookback=lookback, cost_bps=cost, rf=rf/100,
-                              train=train, test=test, block=block, horizon=horizon, seed=51, paths=1000, capital=capital)
+                              train=train, test=test, block=block, horizon=horizon, seed=51, paths=1000, capital=capital,
+                              data_metadata=metadata)
                 digest = hashlib.sha256(prices.to_csv().encode()).hexdigest()
                 st.session_state["quant_run_result"] = dict(prices=prices, held=held, ledger=ledger, benchmark=benchmark,
                     wf=wf, folds=folds, simulations=simulations, drawdowns=drawdowns, config=config, digest=digest)
             except (ValueError, TypeError, pd.errors.ParserError) as exc:
                 st.session_state.pop("quant_run_result", None)
                 st.error(str(exc))
+        audit = st.session_state.get('public_research_audit')
+        if audit:
+            with st.expander("Last successful Public data retrieval"):
+                st.caption(f"{audit['retrieved_at']} · {audit['period']} · {audit['adjustment']}")
+                st.dataframe(pd.DataFrame(audit['audit']),hide_index=True,use_container_width=True)
+                if audit['quotes']:
+                    st.dataframe(pd.DataFrame(audit['quotes']),hide_index=True,use_container_width=True)
         result = st.session_state.get("quant_run_result")
         if not result:
             st.info("Run research to generate a performance report, risk diagnostics, and out-of-sample tests.")
@@ -117,6 +163,9 @@ Reference: [chronological validation](https://scikit-learn.org/stable/modules/ge
         p, ledger, wf, cfg = result['prices'], result['ledger'], result['wf'], result['config']
         if cfg['source'].startswith("Synthetic"):
             st.warning("SYNTHETIC RESEARCH — all prices and performance in this report are illustrative.")
+        elif cfg['source'] == 'Public market history':
+            st.info("PUBLIC MARKET HISTORY — actual provider closes; strategy performance is simulated. Dividend/split adjustment is unverified, so results are price-return research rather than validated total returns.")
+            st.caption(f"Retrieved {cfg['data_metadata']['retrieved_at']} · {cfg['data_metadata']['period']} · no synthetic fallback")
         st.caption(f"Last submitted run · {cfg['model']} · {len(p):,} observations · {p.index[0].date()} to {p.index[-1].date()} · dataset SHA256 {result['digest'][:16]}")
         stats = metrics(wf.Net, cfg['rf'])
         a,b,c,d = st.columns(4)
@@ -171,3 +220,4 @@ Reference: [chronological validation](https://scikit-learn.org/stable/modules/ge
         report = {"config":cfg,"dataset_sha256":result['digest'],"oos_metrics":{k:float(v) if np.isfinite(v) else None for k,v in stats.items()}}
         st.download_button("Export research manifest · JSON",json.dumps(report,indent=2),"quant-research.json","application/json")
         st.download_button("Export OOS returns · CSV",wf.to_csv(),"quant-oos-returns.csv","text/csv")
+        st.download_button("Export research prices · CSV",p.rename_axis('date').to_csv(),"quant-source-prices.csv","text/csv")

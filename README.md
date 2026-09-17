@@ -155,3 +155,21 @@ cost, data-quality and model assumptions.
 
 Run all numerical tests with pandas/numpy installed:
 `python -m unittest discover -s tests -v`.
+
+## Public-powered research
+
+Portfolio Research now defaults to Public market history: choose ETF symbols and
+one, five or ten years, then run research. Daily provider bars are requested via
+the existing server-side credential, aligned on common dates without filling,
+and current-day bars are excluded. Sparse or invalid data fails explicitly;
+there is no synthetic fallback. Adjustment semantics are unverified, so Public
+mode reports price-return research, not validated total returns. The retrieval
+audit, latest available quotes, actual coverage, source CSV and metadata are
+available in the app. Research is refreshed on submission with a five-minute
+history cache, not a continuously streaming or scheduled feed.
+
+Selected Public options now retain quote timestamps and Greeks. Quant Lab can
+show signed Greek exposure and request a month of individual contract OHLCV.
+That endpoint does not establish historical chain discovery or historical bid/ask
+coverage for expired contracts. No brokerage positions, orders or executions are
+requested by the research workflow.

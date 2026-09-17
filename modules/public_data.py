@@ -256,6 +256,12 @@ def _option_quote_row(quote: Any, option_type: str) -> dict | None:
         "ask": ask,
         "mid": mid,
         "delta": _as_float(greeks.delta if greeks else None),
+        "gamma": _as_float(greeks.gamma if greeks else None),
+        "theta": _as_float(greeks.theta if greeks else None),
+        "vega": _as_float(greeks.vega if greeks else None),
+        "rho": _as_float(greeks.rho if greeks else None),
+        "bid_timestamp": getattr(quote, "bid_timestamp", None),
+        "ask_timestamp": getattr(quote, "ask_timestamp", None),
         "iv": _as_float(greeks.implied_volatility if greeks else None),
         "volume": quote.volume,
         "open_interest": getattr(quote, "open_interest", None),
@@ -338,3 +344,17 @@ def test_public_connection() -> tuple[bool, str]:
         return True, f"Connected to Public account ending in {account_id[-4:]}."
     except Exception:
         return False, "Public authentication failed. Check or regenerate the secret key."
+
+
+@st.cache_data(ttl=300, show_spinner=False)
+def get_public_research_bars(symbol: str, period: str = "FIVE_YEARS", option: bool = False) -> pd.DataFrame:
+    """Provider OHLCV; adjustment semantics are not assumed to be total return."""
+    from public_api_sdk import BarAggregation, BarPeriod, InstrumentType
+    if period not in {"YEAR", "FIVE_YEARS", "TEN_YEARS", "MONTH"}:
+        raise ValueError("Unsupported research period.")
+    client, _ = _public_context()
+    kind = InstrumentType.OPTION if option else _instrument_type_for_symbol(InstrumentType, symbol)
+    response = client.get_bars(symbol, BarPeriod(period), instrument_type=kind, aggregation=BarAggregation.ONE_DAY)
+    return pd.DataFrame([{"date": bar.timestamp, "open": float(bar.open), "high": float(bar.high),
+                          "low": float(bar.low), "close": float(bar.close), "volume": float(bar.volume)}
+                         for bar in response.regular_market.bars])

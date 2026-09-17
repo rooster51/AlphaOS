@@ -6,4 +6,5 @@ __pycache__/
 .pytest_cache/
 .DS_Store
 .runtime-packages/
+.public-sdk-inspect/
 .preview-*.log

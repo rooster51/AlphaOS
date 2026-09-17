@@ -140,7 +140,7 @@ def render():
             return
         rows = result["rows"]
         st.caption(f"{result['symbol']} · {result['scope']} · Retrieved {result['fetched']} · Underlying timestamp: {result['quote_time']}")
-        st.caption("Last submitted scan. Submit again to apply changed filters. Option quote age is not exposed by this adapter; retrieval time is not exchange time.")
+        st.caption("Last submitted scan. Submit again to apply changed filters. Provider bid/ask timestamps appear in the contract details when available; retrieval time is not exchange time.")
         for error in result["errors"]:
             st.warning(error)
         if not rows:
@@ -199,4 +199,7 @@ def render():
             if not isfinite(r["max_loss"]):
                 st.warning("Unlimited loss potential. The chart shows only a finite price range.")
         st.dataframe(pd.DataFrame([{"Action": "Buy" if l["qty"] > 0 else "Sell", "Contracts": abs(l["qty"]), "Type": l["type"], "Strike": l["strike"], "Bid": l["bid"], "Ask": l["ask"], "Contract": l.get("contract", "Unavailable")} for l in r["legs"]]), hide_index=True, use_container_width=True)
+        if result['source'].startswith('Public'):
+            st.dataframe(pd.DataFrame([{'Contract': l.get('contract'), 'Bid timestamp':str(l.get('bid_timestamp') or 'Unavailable'),
+                'Ask timestamp':str(l.get('ask_timestamp') or 'Unavailable'), **{g:l.get(g) for g in ('delta','gamma','theta','vega','rho','iv')}} for l in r['legs']]),hide_index=True,use_container_width=True)
         st.caption("Estimates assume standard contracts held to expiration. Review settlement, assignment exposure, and quote freshness before acting.")
