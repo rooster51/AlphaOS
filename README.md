@@ -1,6 +1,6 @@
 # AlphaOS
 
-AlphaOS is a cloud-first Streamlit MVP for defined-risk spread research and Pulse Bar testing. It is designed for Streamlit Community Cloud, GitHub source control, Supabase auth/database/storage, and server-side Python API calls.
+AlphaOS is a Streamlit premium-selling research app with timeframe selection, 15 income strategy generators, expiration risk/reward, estimated probability of profit, and interactive payoff charts. It retains the Scanner, Pulse Bar lab, TradingView tools, and existing Public/Supabase integrations.
 
 The MVP intentionally does not support automated trade execution.
 
@@ -90,3 +90,43 @@ Open TradingView, create a new Pine Script indicator, paste `tradingview/alphaos
 ## Alpaca Data
 
 Quant Lab can pull 30-minute bars from Alpaca for ETF symbols such as `SPY`, `QQQ`, `DIA`, and `IWM`. Since Alpaca stock bars do not reliably cover `SPX` and `XSP` on free plans, the app includes an option to use `SPY` as a proxy for those index symbols during research.
+
+## Premium Studio rebuild
+
+The home page and Strategy Selector now open a shared premium-selling workspace.
+Choose a preset horizon or a custom 0–180 calendar-day expiration range, select
+strategies and risk families, and click **Find premium trades**. The maximum-loss
+budget is per strategy unit; zero disables that filter. Stock-backed positions
+include share-purchase risk. Unlimited-risk trades require the Uncovered family
+and no maximum-loss budget.
+
+Supported generators: bull put and bear call spreads, iron condors, iron
+butterflies, cash-secured puts, covered calls, covered strangles, short puts,
+short calls, short strangles, short straddles, call/put ratio spreads, and
+call/put broken-wing butterflies. Only net-credit constructions are returned.
+Calendars, diagonals and other multi-expiration strategies are documented but
+not generated. This is not an exhaustive set of all possible option combinations.
+
+The demo uses synthetic quotes for a fictional $500 underlying. Connected mode
+uses the existing Public adapter, never silently substitutes demo prices, and
+reports the underlying timestamp plus retrieval time. The adapter does not expose
+option quote timestamps; verify freshness before acting. Index share-covered
+positions are excluded. Standard 100-share contract assumptions must be verified
+against broker specifications.
+
+Probability of profit is a lognormal expiration-payoff estimate after entry
+commissions, using constant volatility and zero price drift. It is not a backtest
+or a prediction guarantee. Same-day POP is unavailable. IV may be manually set or
+estimated from near-ATM chain IV. Risk:reward means maximum loss / maximum profit.
+Natural and midpoint pricing, per-contract entry commissions, payoff charts,
+breakevens, stock/cash requirements and CSV exports are included.
+
+Engine tests (no third-party dependencies):
+
+```bash
+python -m unittest discover -s tests -v
+```
+
+Implementation: `modules/premium_engine.py` contains pricing/payoff calculations;
+`modules/premium_workspace.py` contains the shared Streamlit workspace. Existing
+Scanner, Quant Lab, TradingView and Settings routes remain available.
