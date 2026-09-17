@@ -79,6 +79,7 @@ def render():
                 min_pop = c.slider("Minimum estimated POP (%)", 0, 99, 0)
             submitted = st.form_submit_button("Find premium trades →", type="primary", use_container_width=True)
         if submitted:
+            st.session_state["premium_scan_version"] = st.session_state.get("premium_scan_version", 0) + 1
             ranges = {"Same day": (0, 0), "1–7 days": (1, 7), "8–21 days": (8, 21), "30–45 days": (30, 45), "60–90 days": (60, 90), "Custom": bounds}
             low, high = ranges[horizon]
             now = datetime.now(ZoneInfo("America/New_York"))
@@ -155,14 +156,23 @@ def render():
         st.caption("Sorted by estimated POP, then lower risk/reward. High POP does not imply positive expected returns.")
         table = pd.DataFrame([{
             "#": i + 1, "Strategy": r["strategy"], "Expiration": r["expiration"], "DTE": r["dte"],
+            "Strikes": " / ".join(f"{'Buy' if l['qty'] > 0 else 'Sell'} {abs(l['qty'])} {l['strike']:g}{l['type'][0]}" for l in r["legs"]),
             "Credit / unit": money(r["credit"] * 100), "Max profit": money(r["max_profit"]),
             "Max loss": money(r["max_loss"]), "Risk : reward": f"{r['risk_reward']:.2f} : 1" if isfinite(r["risk_reward"]) else "Unlimited",
             "Est. POP": f"{r['pop']:.1%}" if r["pop"] is not None else "Unavailable",
         } for i, r in enumerate(rows)])
-        st.dataframe(table, hide_index=True, use_container_width=True)
+        st.caption("Click a row to inspect its strikes, contracts, and payoff below.")
+        event = st.dataframe(table, hide_index=True, use_container_width=True,
+            on_select="rerun", selection_mode="single-row",
+            key=f"opportunities_{st.session_state.get('premium_scan_version', 0)}")
         st.download_button("Export scan · CSV", table.to_csv(index=False), "alphaos-premium-scan.csv", "text/csv")
-        selected = st.selectbox("Inspect a trade", range(len(rows)), format_func=lambda i: f"{i+1:02d} · {rows[i]['strategy']} · {rows[i]['expiration']}")
+        if not event.selection.rows:
+            st.info("Select an opportunity row to view the trade details.")
+            return
+        selected = event.selection.rows[0]
         r = rows[selected]
+        st.session_state["quant_selected_option"] = {**r, "symbol": result["symbol"], "source": result["source"]}
+        st.markdown(f"### Trade {selected + 1} · {result['symbol']} · {r['expiration']}")
         left, right = st.columns([2, 1])
         with left:
             strikes = [x["strike"] for x in r["legs"]]

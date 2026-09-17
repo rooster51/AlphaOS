@@ -130,3 +130,28 @@ python -m unittest discover -s tests -v
 Implementation: `modules/premium_engine.py` contains pricing/payoff calculations;
 `modules/premium_workspace.py` contains the shared Streamlit workspace. Existing
 Scanner, Quant Lab, TradingView and Settings routes remain available.
+
+## Quantitative research workbench
+
+Opportunity rows are selectable and show strike summaries. Selecting a row opens
+its contract legs and payoff without a dropdown, and sends the snapshot to the
+Quant Lab options stress tab for deterministic terminal-price scenarios.
+
+Quant Lab now includes daily portfolio research from adjusted-close CSVs or an
+explicitly synthetic demonstration dataset. Models include long-only momentum,
+inverse volatility and equal weight. Signals have a full-bar execution delay;
+trading costs account for portfolio drift and turnover. Reports include NAV,
+CAGR, Sharpe, Sortino, Calmar, drawdown, historical VaR/expected shortfall,
+rolling volatility, correlations, shrunk-covariance risk contributions and
+benchmark OLS diagnostics.
+
+Chronological walk-forward validation selects momentum lookbacks using training
+Sharpe and evaluates nonoverlapping test blocks. A seeded moving-block bootstrap
+simulates net out-of-sample returns. JSON manifests include configuration and a
+dataset hash; OOS returns can be exported. The original Pulse lab is retained in
+its own tab. This is a research workbench, not a validated institutional risk
+system or a historical options backtester. See the in-app Methodology for timing,
+cost, data-quality and model assumptions.
+
+Run all numerical tests with pandas/numpy installed:
+`python -m unittest discover -s tests -v`.
