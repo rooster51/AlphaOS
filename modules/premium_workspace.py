@@ -56,6 +56,8 @@ def render():
 
 **Pricing:** Natural sells at bid and buys at ask; Midpoint assumes fills halfway between bid and ask. Missing, crossed, negative, and nonfinite quotes are excluded. Entry fees are per option contract. Exit fees, slippage, stock commissions, and taxes are excluded.
 
+**Candidate selection:** search quoted OTM strikes within the selected distance from spot (up to 40 sampled strikes per side), plus ATM straddles and iron butterflies. Paired put/call structures use matching proximity ranks; this is not an exhaustive combination search. Every candidate must meet the net-credit floor after entry fees. These filters do not establish a trading edge.
+
 **Position basis:** one strategy unit, standard 100-share contracts. Covered positions include shares purchased at the displayed spot. Cash-secured puts reserve strike × 100; covered strangles also reserve assignment cash. No broker margin estimate is made. Early assignment, exercise, dividends, and settlement differences can change realized results; verify contract specifications.""")
     with finder:
         with st.form("premium_scan"):
@@ -68,13 +70,17 @@ def render():
             families = b.multiselect("Risk families", ["Defined", "Stock-backed", "Uncovered"], default=["Defined"])
             budget = c.number_input("Maximum loss per unit ($)", min_value=0.0, value=1500.0, step=100.0, help="Zero disables the budget filter, including for unlimited risk.")
             strategies = st.multiselect("Strategies", list(CATALOG), default=list(CATALOG))
+            a, b, c = st.columns(3)
+            min_credit = a.number_input("Minimum net credit / unit ($)", min_value=0.0, value=50.0, step=10.0, help="Total option credit after entry fees for one complete strategy, not per leg.")
+            max_distance = b.slider("Maximum short-strike distance from spot (%)", 1, 25, 5)
+            ranking = c.selectbox("Rank opportunities by", ["Nearest short strikes", "Highest net credit", "Highest estimated POP"])
             with st.expander("Pricing & model assumptions"):
                 a, b, c = st.columns(3)
                 width = a.number_input("Target wing width ($)", min_value=1.0, value=5.0)
                 pricing = b.selectbox("Fill assumption", ["Natural", "Midpoint"])
                 fee = c.number_input("Entry fee / option contract ($)", min_value=0.0, value=0.65, step=0.05)
                 a, b, c = st.columns(3)
-                iv_mode = a.selectbox("Volatility source", ["Manual assumption", "Chain ATM IV"])
+                iv_mode = a.selectbox("Volatility source", ["Chain ATM IV", "Manual assumption"])
                 manual_iv = b.number_input("Annualized volatility (%)", min_value=1.0, max_value=500.0, value=25.0)
                 min_pop = c.slider("Minimum estimated POP (%)", 0, 99, 0)
             submitted = st.form_submit_button("Find premium trades →", type="primary", use_container_width=True)
@@ -113,7 +119,8 @@ def render():
                             contracts = sorted(chain["calls"] + chain["puts"], key=lambda c: abs((c.get("strike") or 0) - spot))[:8]
                             values = [c["iv"] for c in contracts if c.get("iv") is not None and isfinite(c["iv"]) and 0 < c["iv"] <= 5]
                             iv = median(values) if values else None
-                        for row in generate(chain, spot, max(dte, 0.25) / 365, iv, width, fee, pricing, today):
+                        for row in generate(chain, spot, max(dte, 0.25) / 365, iv, width, fee, pricing, today,
+                                            min_net_credit=min_credit, max_short_distance=max_distance / 100):
                             if dte == 0:
                                 row["pop"] = None
                             row.update(dte=dte, iv=iv)
@@ -127,15 +134,20 @@ def render():
                             if min_pop and (row["pop"] is None or row["pop"] * 100 < min_pop):
                                 continue
                             rows.append(row)
-                    rows.sort(key=lambda r: (-(r["pop"] if r["pop"] is not None else -1), r["risk_reward"]))
+                    sort_keys = {
+                        "Nearest short strikes": lambda r: (r["short_distance"], -r["net_credit"]),
+                        "Highest net credit": lambda r: (-r["net_credit"], r["short_distance"]),
+                        "Highest estimated POP": lambda r: (-(r["pop"] if r["pop"] is not None else -1), -r["net_credit"]),
+                    }
+                    rows.sort(key=sort_keys[ranking])
                     st.session_state["premium_result"] = dict(rows=rows, source=source, symbol="DEMO" if demo else symbol,
                         spot=spot, fetched=now.strftime("%Y-%m-%d %H:%M %Z"), quote_time=quote_time,
-                        scope=f"{low}–{high} DTE · {pricing} fills · {iv_mode}", errors=errors)
+                        scope=f"{low}–{high} DTE · {pricing} fills · {iv_mode} · Minimum net credit ${min_credit:g} · Short strikes within {max_distance}%", ranking=ranking, errors=errors)
                 except Exception:
                     st.session_state.pop("premium_result", None)
                     st.error("Could not load market data. Check the Public connection in Settings and try again. No demo data was substituted.")
         result = st.session_state.get("premium_result")
-        if not result or result["source"] != source:
+        if not result or result["source"] != source or "ranking" not in result:
             st.caption("Choose your horizon and run a scan to compare potential trades.")
             return
         rows = result["rows"]
@@ -153,11 +165,13 @@ def render():
         c.metric("Highest model POP", f"{max(pops):.1%}" if pops else "Unavailable")
         d.metric("Strategies represented", len({r["strategy"] for r in rows}))
         st.subheader("Your opportunity set")
-        st.caption("Sorted by estimated POP, then lower risk/reward. High POP does not imply positive expected returns.")
+        st.caption(f"Sorted by: {result.get('ranking', 'previous scan')}. Ranking is a comparison preference, not a prediction of expected returns. Closer strikes can increase loss probability.")
+        st.caption("Option quotes are dollars per share: $0.02 × 100 = $2 per standard contract. Unit credit combines every option leg; net credit subtracts entry fees.")
         table = pd.DataFrame([{
             "#": i + 1, "Strategy": r["strategy"], "Expiration": r["expiration"], "DTE": r["dte"],
             "Strikes": " / ".join(f"{'Buy' if l['qty'] > 0 else 'Sell'} {abs(l['qty'])} {l['strike']:g}{l['type'][0]}" for l in r["legs"]),
-            "Credit / unit": money(r["credit"] * 100), "Max profit": money(r["max_profit"]),
+            "Credit / unit ($)": money(r["credit"] * 100), "Net credit / unit ($)": money(r["net_credit"]),
+            "Farthest short / spot": f"{r['short_distance']:.1%}", "Max profit": money(r["max_profit"]),
             "Max loss": money(r["max_loss"]), "Risk : reward": f"{r['risk_reward']:.2f} : 1" if isfinite(r["risk_reward"]) else "Unlimited",
             "Est. POP": f"{r['pop']:.1%}" if r["pop"] is not None else "Unavailable",
         } for i, r in enumerate(rows)])
@@ -198,8 +212,9 @@ def render():
                 st.write(f"**Stock purchase:** {r['shares']} shares / {money(r['shares'] * r['spot'])}")
             if not isfinite(r["max_loss"]):
                 st.warning("Unlimited loss potential. The chart shows only a finite price range.")
-        st.dataframe(pd.DataFrame([{"Action": "Buy" if l["qty"] > 0 else "Sell", "Contracts": abs(l["qty"]), "Type": l["type"], "Strike": l["strike"], "Bid": l["bid"], "Ask": l["ask"], "Contract": l.get("contract", "Unavailable")} for l in r["legs"]]), hide_index=True, use_container_width=True)
+        st.dataframe(pd.DataFrame([{"Action": "Buy" if l["qty"] > 0 else "Sell", "Contracts": abs(l["qty"]), "Type": l["type"], "Strike": l["strike"], "Bid ($/share)": l["bid"], "Ask ($/share)": l["ask"], "Contract": l.get("contract", "Unavailable")} for l in r["legs"]]), hide_index=True, use_container_width=True)
         if result['source'].startswith('Public'):
             st.dataframe(pd.DataFrame([{'Contract': l.get('contract'), 'Bid timestamp':str(l.get('bid_timestamp') or 'Unavailable'),
                 'Ask timestamp':str(l.get('ask_timestamp') or 'Unavailable'), **{g:l.get(g) for g in ('delta','gamma','theta','vega','rho','iv')}} for l in r['legs']]),hide_index=True,use_container_width=True)
         st.caption("Estimates assume standard contracts held to expiration. Review settlement, assignment exposure, and quote freshness before acting.")
+

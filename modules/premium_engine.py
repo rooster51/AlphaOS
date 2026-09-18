@@ -86,7 +86,8 @@ def valid_contract(c):
         return False
 
 
-def generate(chain, spot, years, iv, width=5, fee=0.65, pricing="Natural", as_of=None):
+def generate(chain, spot, years, iv, width=5, fee=0.65, pricing="Natural", as_of=None,
+             min_net_credit=50.0, max_short_distance=0.05):
     as_of = as_of or date.today()
     if not isfinite(spot) or spot <= 0 or width <= 0 or years <= 0:
         return []
@@ -107,9 +108,14 @@ def generate(chain, spot, years, iv, width=5, fee=0.65, pricing="Natural", as_of
             return
         if len({(x["type"], x["strike"]) for x in legs}) != len(legs):
             return
+        short_distance = max(abs(x["strike"] / spot - 1) for x in legs if x["qty"] < 0)
+        if short_distance > max_short_distance + 1e-10:
+            return
+        if any(x["bid"] <= 0 for x in legs if x["qty"] < 0):
+            return
         credit = -sum(x["qty"] * ((x["bid"] + x["ask"]) / 2 if pricing == "Midpoint" else (x["ask"] if x["qty"] > 0 else x["bid"])) for x in legs)
         fees = fee * sum(abs(x["qty"]) for x in legs)
-        if credit * 100 <= fees:
+        if credit * 100 <= fees or credit * 100 - fees < min_net_credit:
             return
         stats = analyze(legs, credit, spot, years, iv, shares, fees)
         if stats["max_profit"] <= 0 or stats["max_loss"] <= 0:
@@ -118,10 +124,22 @@ def generate(chain, spot, years, iv, width=5, fee=0.65, pricing="Natural", as_of
         if CATALOG[name][1] == "Defined" and not isfinite(stats["max_loss"]):
             return
         results.append(dict(strategy=name, legs=legs, credit=credit, shares=shares,
-                            fees=fees, spot=spot, expiration=chain["expiration"], **stats))
-    for offset in (0.5, 1.0, 1.5):
-        distance = spot * (iv or 0.25) * sqrt(years) * offset
-        p, c = pick("Put", spot - distance, "below", spot), pick("Call", spot + distance, "above", spot)
+                            fees=fees, net_credit=credit * 100 - fees, short_distance=short_distance,
+                            spot=spot, expiration=chain["expiration"], **stats))
+    # Search quoted nearby strikes independently of the volatility assumption.
+    # Cap each side to 40 evenly sampled strikes, retaining the nearest and farthest.
+    def short_candidates(kind):
+        candidates = sorted((c for c in pools[kind] if c["bid"] > 0
+            and (c["strike"] < spot if kind == "Put" else c["strike"] > spot)
+            and abs(c["strike"] / spot - 1) <= max_short_distance + 1e-10),
+            key=lambda c: abs(c["strike"] - spot))
+        if len(candidates) > 40:
+            candidates = [candidates[round(i * (len(candidates) - 1) / 39)] for i in range(40)]
+        return candidates
+    puts, calls = short_candidates("Put"), short_candidates("Call")
+    for i in range(max(len(puts), len(calls))):
+        p = puts[i] if i < len(puts) else None
+        c = calls[i] if i < len(calls) else None
         pl = pick("Put", p["strike"] - width, "below", p["strike"]) if p else None
         cl = pick("Call", c["strike"] + width, "above", c["strike"]) if c else None
         add("Bull put spread", [leg(p, -1), leg(pl, 1)])
