@@ -49,17 +49,36 @@ def render():
 Reference: [chronological validation](https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.TimeSeriesSplit.html) · [BIS risk terminology](https://www.bis.org/basel_framework/chapter/MAR/10.htm?inforce=20230101&published=20200327&tldate=20040605)
 """)
     with option_tab:
-        selected = st.session_state.get("quant_selected_option")
+        input_mode = st.radio('Trade input', ['Selected opportunity','Enter my own trade'],horizontal=True)
+        if input_mode == 'Enter my own trade':
+            from modules.manual_trade import manual_trade_form
+            selected = manual_trade_form()
+        else:
+            selected = st.session_state.get("quant_selected_option")
         if not selected:
-            st.info("Click a trade in the Strategy Selector opportunity table, then return here to stress that position.")
-            st.page_link("pages/5_Strategy_Selector.py", label="Open opportunities")
+            if input_mode == 'Selected opportunity':
+                st.info("Click a trade in the Strategy Selector opportunity table, then return here to stress that position.")
+                st.page_link("pages/5_Strategy_Selector.py", label="Open opportunities")
         else:
             from modules.premium_engine import payoff
             st.subheader(f"{selected['symbol']} · {selected['strategy']} · {selected['expiration']}")
-            st.caption(f"Source: {selected['source']} · snapshot from your selected scan, not a refreshed quote.")
+            st.caption(f"Source: {selected['source']} · saved input snapshot, not a refreshed quote.")
             units = st.number_input("Strategy units", 1, 10000, 1)
+            st.caption('Units multiply every option leg, share position, and entered fee together. Use 1 if the entered quantities already describe your whole position.')
+            from modules.premium_workspace import money
+            a,b,c = st.columns(3)
+            a.metric('Maximum expiration profit',money(selected['max_profit']*units))
+            b.metric('Maximum expiration loss',money(selected['max_loss']*units))
+            c.metric('Estimated expiration POP',f"{selected['pop']:.1%}" if selected.get('pop') is not None else 'Unavailable')
+            st.caption('POP is a constant-volatility model estimate, not a backtested win rate. Same-day POP is unavailable.')
+            st.write('**Breakevens:** '+(', '.join(f'${x:,.2f}' for x in selected['breakevens']) or 'None'))
+            st.dataframe(pd.DataFrame(selected['legs']),hide_index=True,use_container_width=True)
+            if selected['source'] == 'Manual entry':
+                st.write(f"**Net option premium:** {'credit' if selected['credit'] >= 0 else 'debit'} ${abs(selected['credit'])*100*units:,.2f} · **Entry fees:** ${selected['fees']*units:,.2f}")
+                export = {k:selected[k] for k in ('symbol','expiration','spot','stock_basis','shares','fees','credit','legs','iv')}
+                st.download_button('Export manual trade · JSON',json.dumps(export,indent=2,allow_nan=False),'manual-trade.json','application/json')
             shocks = np.array([-.5, -.3, -.2, -.1, -.05, 0, .05, .1, .2, .3, .5])
-            values = [payoff(selected['legs'], selected['credit'], selected['spot']*(1+s), selected['shares'], selected['spot'], selected['fees'])*units for s in shocks]
+            values = [payoff(selected['legs'], selected['credit'], selected['spot']*(1+s), selected['shares'], selected.get('stock_basis',selected['spot']), selected['fees'])*units for s in shocks]
             stress = pd.DataFrame({"Spot shock": shocks, "Terminal spot": selected['spot']*(1+shocks), "Expiration P&L ($)": values})
             chart(stress.set_index("Spot shock")[["Expiration P&L ($)"]], "Terminal payoff scenarios")
             st.dataframe(stress, hide_index=True, use_container_width=True)

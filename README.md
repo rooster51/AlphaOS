@@ -173,3 +173,14 @@ show signed Greek exposure and request a month of individual contract OHLCV.
 That endpoint does not establish historical chain discovery or historical bid/ask
 coverage for expired contracts. No brokerage positions, orders or executions are
 requested by the research workflow.
+
+## Manual option trades
+
+Quant Lab → Options stress lab now offers Selected opportunity or Enter my own
+trade. The manual builder supports 1–12 same-expiration option legs with buy/sell,
+call/put, whole contract quantities, strikes and per-share entry premiums, plus
+optional signed shares with a separate stock entry price, total fees and model
+volatility. Debit and credit positions share the expiration stress workflow.
+Input validation rejects incomplete legs and expired dates. Manual and scanner
+positions are stored separately in browser-session state. Export manual inputs
+as JSON to retain a copy; this workflow does not place orders.
