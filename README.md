@@ -212,3 +212,16 @@ Before Phase 2, establish reliable historical chains/quotes and corporate-action
 handling, settlement and assignment conventions, execution/fee assumptions, and
 a chronological validation protocol. Daily individual-contract bars alone do
 not establish a historical options execution backtest.
+
+## Phase 2: historical market state
+
+Quant Lab → Market State Research provides SPY/QQQ trailing daily features and
+separate future-outcome labels using Public FIVE_YEARS/TEN_YEARS history.
+Warm-up and unavailable forward outcomes stay missing. Export separate CSVs
+with metadata or download the JSON manifest. Existing options, Portfolio
+Research and Pulse workflows are retained.
+
+See [formulas, availability, tests and data limitations](docs/market_state.md).
+The complete suite passes 71 tests. Provider session completeness and
+corporate-action adjustment remain unverified and are disclosed in the UI.
+No recommendations or options expectancy model are added.
