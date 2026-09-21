@@ -225,3 +225,19 @@ See [formulas, availability, tests and data limitations](docs/market_state.md).
 The complete suite passes 71 tests. Provider session completeness and
 corporate-action adjustment remain unverified and are disclosed in the UI.
 No recommendations or options expectancy model are added.
+
+## Phase 3: historical analog research
+
+After generating a Phase 2 dataset, open Quant Lab → Historical Analogs. Compare
+the latest completed or a historical target using configurable tolerance filters
+or standardized nearest neighbors. Candidate dates are strictly earlier, and
+outcomes must have matured by the target close. Separate per-horizon masks prevent
+later information from entering historical-date summaries or exports.
+
+Inspect feature funnels, independent pass counts, historical return/excursion
+summaries, distributions, percentile curves, analog timelines and fixed tolerance
+sensitivity presets. These are descriptive historical frequencies, not forecast
+probabilities or trade recommendations. All 100 tests pass, including retained
+Phase 1/2, Portfolio and Pulse integration tests.
+
+See [historical analog methods, chronology and limitations](docs/historical_analogs.md).
