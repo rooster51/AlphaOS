@@ -184,3 +184,31 @@ volatility. Debit and credit positions share the expiration stress workflow.
 Input validation rejects incomplete legs and expired dates. Manual and scanner
 positions are stored separately in browser-session state. Export manual inputs
 as JSON to retain a copy; this workflow does not place orders.
+
+## Phase 1: adaptive options payoff analysis
+
+Options stress lab now separates a fine Payoff map from the existing Extreme
+stress scenarios. The map includes exact spot, strikes, calculated breakevens,
+and interval midpoints, with padding on both sides. Regular sampling targets
+$0.50 or finer at ETF scale and tightens to a quarter of the narrowest strike
+gap. Broad ranges are limited to 401 regular points plus exact landmarks and
+midpoints. The chart marks spot, strikes, breakevens and finite global bounds;
+the table labels landmarks and reports terminal price, move, P&L and return on
+finite positive maximum risk. Scenarios are deterministic, not probabilities.
+
+Economics are recalculated through the unchanged generalized payoff engine,
+including stock entry basis, fees and strategy units. Net credit/debit includes
+entry fees but excludes stock purchase cash flows. Width and pre-fee credit as
+a percentage of width are shown only for equal-quantity, two-leg verticals
+without shares; they are intentionally unavailable for ambiguous structures.
+Contracts must share an expiration and use the standard 100-share multiplier.
+The existing model POP is retained separately; no historical probability,
+expectancy model, recommendation system, ML or new dependency was added.
+
+Validation: 47 unit/integration tests, including narrow credit/debit spreads,
+condors, butterflies, broken wings, multiple roots, stock basis, scaling,
+unlimited exposure, malformed trades, both input paths and Portfolio Research.
+Before Phase 2, establish reliable historical chains/quotes and corporate-action
+handling, settlement and assignment conventions, execution/fee assumptions, and
+a chronological validation protocol. Daily individual-contract bars alone do
+not establish a historical options execution backtest.

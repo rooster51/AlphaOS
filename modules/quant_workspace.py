@@ -55,45 +55,44 @@ Reference: [chronological validation](https://scikit-learn.org/stable/modules/ge
             selected = manual_trade_form()
         else:
             selected = st.session_state.get("quant_selected_option")
+        if selected:
+            from modules.options_payoff import validate_trade
+            try:
+                selected = validate_trade(selected)
+            except ValueError as exc:
+                st.error(str(exc))
+                selected = None
         if not selected:
             if input_mode == 'Selected opportunity':
                 st.info("Click a trade in the Strategy Selector opportunity table, then return here to stress that position.")
                 st.page_link("pages/5_Strategy_Selector.py", label="Open opportunities")
         else:
-            from modules.premium_engine import payoff
             st.subheader(f"{selected['symbol']} · {selected['strategy']} · {selected['expiration']}")
             st.caption(f"Source: {selected['source']} · saved input snapshot, not a refreshed quote.")
             units = st.number_input("Strategy units", 1, 10000, 1)
             st.caption('Units multiply every option leg, share position, and entered fee together. Use 1 if the entered quantities already describe your whole position.')
-            from modules.premium_workspace import money
-            a,b,c = st.columns(3)
-            a.metric('Maximum expiration profit',money(selected['max_profit']*units))
-            b.metric('Maximum expiration loss',money(selected['max_loss']*units))
-            c.metric('Estimated expiration POP',f"{selected['pop']:.1%}" if selected.get('pop') is not None else 'Unavailable')
-            st.caption('POP is a constant-volatility model estimate, not a backtested win rate. Same-day POP is unavailable.')
-            st.write('**Breakevens:** '+(', '.join(f'${x:,.2f}' for x in selected['breakevens']) or 'None'))
+            from modules.options_payoff_view import render_payoff_analysis
+            render_payoff_analysis(selected, units)
+            with st.expander('Existing model probability estimate'):
+                pop = selected.get('pop')
+                st.metric('Estimated expiration POP',f"{pop:.1%}" if isinstance(pop,(int,float)) and np.isfinite(pop) else 'Unavailable')
+                st.caption('Existing constant-volatility model estimate, separate from the payoff map. Not a historical win rate or expected-value estimate. Same-day POP is unavailable.')
             st.dataframe(pd.DataFrame(selected['legs']),hide_index=True,use_container_width=True)
             if selected['source'] == 'Manual entry':
                 st.write(f"**Net option premium:** {'credit' if selected['credit'] >= 0 else 'debit'} ${abs(selected['credit'])*100*units:,.2f} · **Entry fees:** ${selected['fees']*units:,.2f}")
-                export = {k:selected[k] for k in ('symbol','expiration','spot','stock_basis','shares','fees','credit','legs','iv')}
+                export = {k:selected.get(k) for k in ('symbol','expiration','spot','stock_basis','shares','fees','credit','legs','iv')}
                 st.download_button('Export manual trade · JSON',json.dumps(export,indent=2,allow_nan=False),'manual-trade.json','application/json')
-            shocks = np.array([-.5, -.3, -.2, -.1, -.05, 0, .05, .1, .2, .3, .5])
-            values = [payoff(selected['legs'], selected['credit'], selected['spot']*(1+s), selected['shares'], selected.get('stock_basis',selected['spot']), selected['fees'])*units for s in shocks]
-            stress = pd.DataFrame({"Spot shock": shocks, "Terminal spot": selected['spot']*(1+shocks), "Expiration P&L ($)": values})
-            chart(stress.set_index("Spot shock")[["Expiration P&L ($)"]], "Terminal payoff scenarios")
-            st.dataframe(stress, hide_index=True, use_container_width=True)
-            st.caption("Deterministic price scenarios, not probabilities. Unlimited losses extend beyond the displayed grid.")
             if selected['source'].startswith('Public'):
                 st.markdown("#### Provider Greek exposure")
                 exposures = {}
                 for greek in ('delta','gamma','theta','vega'):
-                    available = all(l.get(greek) is not None and np.isfinite(l[greek]) for l in selected['legs'])
+                    available = all(isinstance(l.get(greek),(int,float)) and np.isfinite(l[greek]) for l in selected['legs'])
                     exposures[greek] = units * (sum(l['qty']*100*l[greek] for l in selected['legs']) + (selected['shares'] if greek == 'delta' else 0)) if available else None
                 st.dataframe(pd.Series(exposures,name='Signed position exposure').to_frame(),use_container_width=True)
                 st.caption("Standard 100-share multiplier. Delta: shares equivalent; gamma: delta change per $1 underlying move; vega: dollars per 1 percentage-point IV move. Theta retains the provider time convention. Missing Greeks remain unavailable.")
                 with st.expander("Inspect Public option-contract history"):
                     st.caption("Fetch daily OHLCV for these specific contracts. This is not historical chain discovery or a bid/ask execution backtest; availability varies by contract.")
-                    if st.button("Fetch selected contracts' history"):
+                    if st.button("Fetch selected contracts' history", disabled=not all(l.get('contract') for l in selected['legs'])):
                         from modules.public_data import get_public_research_bars
                         frames = []
                         for leg in selected['legs']:
@@ -103,9 +102,9 @@ Reference: [chronological validation](https://scikit-learn.org/stable/modules/ge
                                 frames.append(history)
                             except Exception as exc:
                                 st.warning(f"History unavailable for {leg['contract']} ({type(exc).__name__}).")
-                        st.session_state['public_contract_history'] = {'contracts':[l['contract'] for l in selected['legs']], 'data':pd.concat(frames,ignore_index=True) if frames else pd.DataFrame()}
+                        st.session_state['public_contract_history'] = {'contracts':[l.get('contract') for l in selected['legs']], 'data':pd.concat(frames,ignore_index=True) if frames else pd.DataFrame()}
                     saved = st.session_state.get('public_contract_history')
-                    if saved and saved['contracts'] == [l['contract'] for l in selected['legs']]:
+                    if saved and saved['contracts'] == [l.get('contract') for l in selected['legs']]:
                         if saved['data'].empty:
                             st.info("No contract history returned.")
                         else:
