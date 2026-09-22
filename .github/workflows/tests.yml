@@ -1,6 +1,9 @@
 name: tests
 
 on:
+  push:
+    branches:
+      - phase5-option-economics
   pull_request:
   workflow_dispatch:
 
