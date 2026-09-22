@@ -14,7 +14,7 @@ For target spot `S0` and an analog H-session forward return `r_i`:
 
 The scenario terminal spot is passed to the existing Phase 1 generalized expiration payoff function. This preserves partial P&L between strikes rather than reducing a spread to a binary short-strike survival event.
 
-Only finite Phase 3 outcomes that were marked observable by the target date are used. Supported horizons remain 1, 2, 3, 5, and 10 observed sessions. Calendar DTE is not silently treated as trading-session horizon.
+Only finite Phase 3 outcomes that were marked observable by the target date are used. Analog dates must be unique and strictly before the target. Supported horizons remain 1, 2, 3, 5, and 10 observed sessions. Calendar DTE is not silently treated as trading-session horizon.
 
 ## Reported economics
 
@@ -28,7 +28,7 @@ The saved trade's existing entry fees remain inside the Phase 1 payoff. Phase 5 
 
 ## Robustness
 
-The engine accepts either Phase 3 analog method. The UI/research layer may rerun it on Tight, Default, and Wide tolerance samples. A non-overlapping diagnostic uses the same deterministic earliest-first observed-session-window convention as Phase 4 when the required chronology metadata is available. This reduces overlapping outcome windows but does not make the observations statistically independent.
+The engine accepts either Phase 3 analog method. A non-overlapping diagnostic uses the same deterministic earliest-first observed-session-window convention as Phase 4 when the required chronology metadata is available. This reduces overlapping outcome windows but does not make the observations statistically independent.
 
 ## Limitations
 
@@ -40,4 +40,8 @@ The engine accepts either Phase 3 analog method. The UI/research layer may rerun
 - Public underlying adjustment conventions and exchange-session completeness retain the upstream limitations documented by Market State Research.
 - A positive distribution-conditioned expected payoff does not establish that a trade is profitable in the future.
 
-Phase 6 may consume this engine for systematic candidate comparison, but Phase 5 itself does not select strikes, expirations, rank trades, or submit orders.
+## Merge gates
+
+Do not merge Phase 5 to `main` until the full regression suite executes successfully in a real runtime, the Streamlit Option Economics page loads without import/runtime errors, and the saved opportunity and completed-session target are intentionally synchronized rather than silently mixed.
+
+A later phase may consume this engine for systematic candidate comparison, but Phase 5 itself does not select strikes, expirations, rank trades, or submit orders.
