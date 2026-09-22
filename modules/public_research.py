@@ -44,10 +44,13 @@ def align_daily_histories(histories, as_of=None):
 
 def load_public_research(symbols, period):
     from modules.public_data import get_public_research_bars, get_public_quotes
+    from modules.history_diagnostics import HistoryError
     histories = {}
     for symbol in symbols:
         try:
             histories[symbol] = get_public_research_bars(symbol, period)
+        except HistoryError:
+            raise
         except Exception as exc:
             # Never expose credentials, headers, account IDs or raw server responses.
             raise ValueError(f"Public history unavailable for {symbol} ({type(exc).__name__}). Check API access in Settings or try another period.") from None

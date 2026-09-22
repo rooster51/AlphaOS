@@ -20,6 +20,9 @@ def render_market_state():
         except ValueError as exc:
             st.session_state.pop('market_state_result',None)
             st.error(str(exc))
+            if hasattr(exc,'diagnostics'):
+                with st.expander('History retrieval diagnostic'):
+                    st.json(exc.diagnostics)
     result = st.session_state.get('market_state_result')
     if result is None:
         st.info('Select SPY or QQQ and generate a dataset. Missing warm-up history remains unavailable.')

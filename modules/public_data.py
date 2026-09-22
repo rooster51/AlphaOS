@@ -354,7 +354,33 @@ def get_public_research_bars(symbol: str, period: str = "FIVE_YEARS", option: bo
         raise ValueError("Unsupported research period.")
     client, _ = _public_context()
     kind = InstrumentType.OPTION if option else _instrument_type_for_symbol(InstrumentType, symbol)
-    response = client.get_bars(symbol, BarPeriod(period), instrument_type=kind, aggregation=BarAggregation.ONE_DAY)
-    return pd.DataFrame([{"date": bar.timestamp, "open": float(bar.open), "high": float(bar.high),
+    from modules.history_diagnostics import HistoryError, history_diagnostics, schema_issues
+    from public_api_sdk.models.historic_data import BarsResponse
+    from pydantic import ValidationError as SchemaError
+    diagnostic = history_diagnostics(symbol, period)
+    # Same authenticated transport/path as SDK get_bars, retaining its response
+    # validation. Inspect only public OHLC fields before parsing the SDK envelope.
+    try:
+        client.auth_manager.refresh_token_if_needed()
+        raw = client.api_client.get(f'/userapigateway/historicdata/{kind.value}/{symbol}/{BarPeriod(period).value}/{BarAggregation.ONE_DAY.value}')
+    except Exception as exc:
+        status = getattr(exc, 'status_code', None)
+        diagnostic['http_status'] = status if isinstance(status,int) else None
+        raise HistoryError('Public rejected the history request (HTTP 400).' if status == 400 else
+            'Public history request failed; verify access or retry later.', diagnostic) from None
+    diagnostic['stage'] = 'provider_schema'
+    if isinstance(raw,dict) and isinstance(raw.get('regularMarket'),dict) and isinstance(raw['regularMarket'].get('bars'),list):
+        bars = raw['regularMarket']['bars']
+        if all(isinstance(bar,dict) for bar in bars):
+            frame = pd.DataFrame([{key: bar.get('timestamp' if key=='date' else key) for key in ('date','open','high','low','close','volume')} for bar in bars])
+            diagnostic.update(history_diagnostics(symbol,period,frame),stage='provider_schema')
+    try:
+        response = BarsResponse(**raw)
+    except SchemaError as exc:
+        diagnostic['schema_issues'] = schema_issues(exc)
+        raise HistoryError('Unexpected provider response schema; see the field-level diagnostic.',diagnostic) from None
+    result = pd.DataFrame([{"date": bar.timestamp, "open": float(bar.open), "high": float(bar.high),
                           "low": float(bar.low), "close": float(bar.close), "volume": float(bar.volume)}
                          for bar in response.regular_market.bars])
+    result.attrs['provider_diagnostics'] = dict(diagnostic,stage='normalized')
+    return result
