@@ -2,7 +2,9 @@
 
 This module does not reconstruct historical option quotes. It applies the saved
 trade's exact expiration payoff to underlying terminal returns observed in a
-Phase 3 historical-analog sample.
+Phase 3 historical-analog sample. Historical analog selection is anchored to the
+latest completed research session; payoff scenarios are anchored to the trade's
+current underlying spot.
 """
 from math import isfinite
 
@@ -14,7 +16,7 @@ from modules.options_payoff import trade_analysis, validate_trade
 from modules.premium_engine import payoff
 from modules.threshold_survival import non_overlapping_subset
 
-VERSION = "option-scenario-ev-v1"
+VERSION = "option-scenario-ev-v2"
 
 
 def _finite_number(value, label, minimum=None):
@@ -34,7 +36,7 @@ def _prepare_analogs(analog_result, horizon):
         frame = analog_result["analogs"].copy().reset_index(drop=True)
         target = analog_result["target"]
         symbol = str(target["symbol"])
-        target_spot = float(target["close"])
+        research_spot = float(target["close"])
         target_date = pd.Timestamp(target["date"])
         if target_date.tzinfo:
             target_date = target_date.tz_convert('UTC').tz_localize(None)
@@ -42,7 +44,7 @@ def _prepare_analogs(analog_result, horizon):
         frame['date'] = pd.to_datetime(frame['date'], utc=True, errors='raise').dt.tz_convert(None).dt.normalize()
     except (KeyError, TypeError, ValueError, AttributeError):
         raise ValueError("Supply a valid Phase 3 analog result with target and attached outcomes.") from None
-    if symbol not in ("SPY", "QQQ") or not isfinite(target_spot) or target_spot <= 0:
+    if symbol not in ("SPY", "QQQ") or not isfinite(research_spot) or research_spot <= 0:
         raise ValueError("Phase 3 target symbol/spot is invalid.")
     if frame.date.isna().any() or frame.date.duplicated().any() or (frame.date >= target_date).any():
         raise ValueError("Analog dates must be unique, valid sessions strictly before the target date.")
@@ -57,7 +59,7 @@ def _prepare_analogs(analog_result, horizon):
     if flag in frame:
         known &= frame[flag].eq(True).fillna(False)
     frame = frame.loc[known].copy()
-    return frame, symbol, target_spot, col
+    return frame, symbol, research_spot, target_date, col
 
 
 def _summary(pnl, max_loss):
@@ -90,7 +92,7 @@ def _summary(pnl, max_loss):
 def scenario_economics(analog_result, trade, horizon=3, units=1,
                        commission_per_contract=0.0, entry_slippage=0.0,
                        terminal_friction=0.0):
-    """Apply today's exact expiration payoff to matured analog terminal returns."""
+    """Apply analog forward returns to the current trade spot and exact payoff."""
     validated = validate_trade(trade)
     if not isinstance(units, (int, float)) or not isfinite(units) or units < 1 or units != int(units):
         raise ValueError("Strategy units must be a positive whole number.")
@@ -98,11 +100,11 @@ def scenario_economics(analog_result, trade, horizon=3, units=1,
     commission = _finite_number(commission_per_contract, "Commission per contract", 0)
     slippage = _finite_number(entry_slippage, "Entry slippage", 0)
     terminal_cost = _finite_number(terminal_friction, "Terminal friction", 0)
-    analogs, symbol, target_spot, return_col = _prepare_analogs(analog_result, horizon)
+    analogs, symbol, research_spot, target_date, return_col = _prepare_analogs(analog_result, horizon)
     if validated["symbol"] != symbol:
         raise ValueError("Trade symbol must match the Phase 3 target symbol.")
-    if abs(validated["spot"] / target_spot - 1) > 1e-6:
-        raise ValueError("Trade spot must match the Phase 3 target spot. Refresh the research/trade snapshot together.")
+    trade_spot = _finite_number(validated["spot"], "Trade spot", 0.0000001)
+    spot_gap = trade_spot / research_spot - 1
 
     analysis = trade_analysis(validated, units)
     per_unit_contracts = sum(abs(int(leg["qty"])) for leg in validated["legs"])
@@ -110,7 +112,7 @@ def scenario_economics(analog_result, trade, horizon=3, units=1,
     rows = []
     for _, row in analogs.iterrows():
         ret = float(row[return_col])
-        terminal = target_spot * (1 + ret)
+        terminal = trade_spot * (1 + ret)
         gross = payoff(validated["legs"], validated["credit"], terminal,
                        validated["shares"], validated["stock_basis"], validated["fees"]) * units
         rows.append(dict(analog_date=pd.Timestamp(row["date"]), analog_forward_return=ret,
@@ -137,8 +139,10 @@ def scenario_economics(analog_result, trade, horizon=3, units=1,
 
     return dict(config=dict(version=VERSION, symbol=symbol, horizon=horizon, units=units,
                     analog_method=analog_result.get("config", {}).get("method"),
-                    analog_target_date=analog_result.get("config", {}).get("target_date"),
-                    interpretation="Distribution-conditioned expiration payoff; not a historical options backtest or forecast probability."),
+                    analog_target_date=str(target_date.date()), research_close=research_spot,
+                    trade_spot=trade_spot, trade_spot_gap_from_research_close=spot_gap,
+                    scenario_anchor="current_trade_spot",
+                    interpretation="Historical analogs are selected from the latest completed research state; their forward returns are applied to the current trade spot. This is not a historical options backtest or forecast probability."),
         trade=validated, trade_analysis=analysis,
         friction=dict(existing_trade_fees=validated["fees"]*units, commission_per_contract=commission,
                       entry_slippage=slippage, terminal_friction=terminal_cost, modeled_extra_friction=extra_friction),
