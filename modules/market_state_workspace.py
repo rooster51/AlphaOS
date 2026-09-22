@@ -3,6 +3,7 @@ import json
 import pandas as pd
 import streamlit as st
 from modules.market_state_research import load_market_state, export_csv
+from modules.research_session import save_research_session, get_research_session, summarize_research_session
 
 
 def render_market_state():
@@ -16,7 +17,18 @@ def render_market_state():
     if submitted:
         try:
             with st.spinner('Loading completed daily OHLC and calculating historical states…'):
-                st.session_state['market_state_result'] = load_market_state(symbol,period)
+                result = load_market_state(symbol,period)
+                st.session_state['market_state_result'] = result
+                # Features contain the validated OHLC columns plus point-in-time features.
+                # Save only the canonical OHLC slice as the shared research history.
+                history = result['features'][['date','symbol','open','high','low','close']].copy()
+                save_research_session(
+                    st.session_state,
+                    history=history,
+                    symbol=result['metadata']['symbol'],
+                    period=result['metadata'].get('requested_period', period),
+                    metadata=result['metadata'],
+                )
         except ValueError as exc:
             st.session_state.pop('market_state_result',None)
             st.error(str(exc))
@@ -24,6 +36,11 @@ def render_market_state():
                 with st.expander('History retrieval diagnostic'):
                     st.json(exc.diagnostics)
     result = st.session_state.get('market_state_result')
+    active = get_research_session(st.session_state)
+    if active is not None:
+        summary = summarize_research_session(st.session_state)
+        st.success(f"Active Research Dataset: {summary.symbol} · {summary.period} · {summary.first_date} to {summary.last_date} · {summary.observations:,} sessions")
+        st.caption('This submitted OHLC dataset is available to other Quant Lab research pages during this app session.')
     if result is None:
         st.info('Select SPY or QQQ and generate a dataset. Missing warm-up history remains unavailable.')
         return
