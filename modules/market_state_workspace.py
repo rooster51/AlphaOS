@@ -8,6 +8,11 @@ from modules.market_state_research import load_market_state, export_csv
 def render_market_state():
     st.subheader('Market State Research')
     st.caption('Historical information available after each completed session close. Descriptive features and future research labels only; no trade recommendations.')
+    with st.expander('Public history compatibility diagnostic'):
+        st.caption('Read-only provider probes. Results are diagnostics only and never substituted for research history.')
+        if st.button('Check SPY long-history provider support'):
+            from modules.public_data import probe_public_history
+            st.json(probe_public_history('SPY'))
     with st.form('market_state_form'):
         a,b = st.columns(2)
         symbol = a.selectbox('Market-state symbol',['SPY','QQQ'])

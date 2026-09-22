@@ -1,6 +1,16 @@
 """Allowlisted research diagnostics. Never serialize provider errors or inputs."""
 import numpy as np
 import pandas as pd
+import re
+
+
+def api_error_detail(exc):
+    """Only fixed vocabulary can leave the server, never arbitrary error text."""
+    allowed = set('invalid unsupported not supported period aggregation combination enum value request parameter parameters argument type failed convert conversion allowed values must be one of is for to from string no data available range maximum exceeded too many bars bad FIVE_YEARS TEN_YEARS ALL SINCE_PURCHASE ONE_DAY ONE_WEEK ONE_MONTH EQUITY'.lower().split())
+    message = getattr(exc,'message','')
+    if not isinstance(message,str):
+        return []
+    return [word.lower() for word in re.findall(r'[A-Za-z_]+',message) if word.lower() in allowed][:60]
 
 
 class HistoryError(ValueError):

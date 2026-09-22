@@ -354,7 +354,7 @@ def get_public_research_bars(symbol: str, period: str = "FIVE_YEARS", option: bo
         raise ValueError("Unsupported research period.")
     client, _ = _public_context()
     kind = InstrumentType.OPTION if option else _instrument_type_for_symbol(InstrumentType, symbol)
-    from modules.history_diagnostics import HistoryError, history_diagnostics, schema_issues
+    from modules.history_diagnostics import HistoryError, history_diagnostics, schema_issues, api_error_detail
     from public_api_sdk.models.historic_data import BarsResponse
     from pydantic import ValidationError as SchemaError
     diagnostic = history_diagnostics(symbol, period)
@@ -366,6 +366,7 @@ def get_public_research_bars(symbol: str, period: str = "FIVE_YEARS", option: bo
     except Exception as exc:
         status = getattr(exc, 'status_code', None)
         diagnostic['http_status'] = status if isinstance(status,int) else None
+        diagnostic['provider_reason_terms'] = api_error_detail(exc)
         raise HistoryError('Public rejected the history request (HTTP 400).' if status == 400 else
             'Public history request failed; verify access or retry later.', diagnostic) from None
     diagnostic['stage'] = 'provider_schema'
@@ -384,3 +385,26 @@ def get_public_research_bars(symbol: str, period: str = "FIVE_YEARS", option: bo
                          for bar in response.regular_market.bars])
     result.attrs['provider_diagnostics'] = dict(diagnostic,stage='normalized')
     return result
+
+
+def probe_public_history(symbol):
+    """Read-only compatibility diagnostic; never feed probe results into research."""
+    from modules.history_diagnostics import history_diagnostics, api_error_detail
+    client, _ = _public_context()
+    results = []
+    start = (pd.Timestamp.now(tz='America/New_York').normalize()-pd.DateOffset(years=10)).date().isoformat()
+    for period, aggregation in [('TEN_YEARS','ONE_DAY'),('TEN_YEARS',None),('ALL','ONE_DAY'),('ALL',None),('SINCE_PURCHASE','ONE_DAY')]:
+        diagnostic = history_diagnostics(symbol,period)
+        diagnostic['aggregation'] = aggregation or 'PROVIDER_DEFAULT'
+        path = f'/userapigateway/historicdata/EQUITY/{symbol}/{period}' + (f'/{aggregation}' if aggregation else '')
+        try:
+            client.auth_manager.refresh_token_if_needed()
+            raw = client.api_client.get(path,params={'purchaseDate':start} if period=='SINCE_PURCHASE' else None)
+            bars = raw['regularMarket']['bars']
+            frame = pd.DataFrame([{key:bar.get('timestamp' if key=='date' else key) for key in ('date','open','high','low','close')} for bar in bars])
+            diagnostic.update(history_diagnostics(symbol,period,frame),stage='raw_response',aggregation=aggregation or 'PROVIDER_DEFAULT')
+        except Exception as exc:
+            status = getattr(exc,'status_code',None)
+            diagnostic.update(http_status=status if isinstance(status,int) else None,provider_reason_terms=api_error_detail(exc))
+        results.append(diagnostic)
+    return results
