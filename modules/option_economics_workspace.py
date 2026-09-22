@@ -22,7 +22,7 @@ def _fmt_pct(value):
 
 def render_option_economics():
     st.subheader("Option Economics")
-    st.caption("Apply today's exact expiration payoff to underlying returns observed in similar historical market states. This is scenario research, not a historical options backtest or trade recommendation.")
+    st.caption("Select analogs from the latest completed market state, then apply their forward returns to the current trade spot and today's exact expiration payoff. This is scenario research, not a historical options backtest or trade recommendation.")
     selected = st.session_state.get("quant_selected_option")
     if not selected:
         st.info("Select an opportunity in Strategy Selector first. Manual-trade integration can be added after the core Phase 5 path is validated.")
@@ -44,9 +44,16 @@ def render_option_economics():
     if summary.symbol != selected['symbol']:
         st.warning(f"Active research dataset is {summary.symbol}, but the selected option is {selected['symbol']}. Generate {selected['symbol']} in Market State Research first.")
         return
+    research_close=float(active['history']['close'].iloc[-1])
+    spot_gap=float(selected['spot'])/research_close-1
     st.success(f"Active Research Dataset: {summary.symbol} · {summary.period} · through {summary.last_date} · {summary.observations:,} sessions")
+    a,b,c=st.columns(3)
+    a.metric("Completed-session research close",f"${research_close:,.2f}")
+    b.metric("Current trade snapshot spot",f"${selected['spot']:,.2f}")
+    c.metric("Spot move since research close",f"{spot_gap:+.2%}")
+    st.caption("Analog selection uses the completed-session market state. Scenario returns are anchored to the current trade spot, so intraday movement is visible rather than silently treated as yesterday's close.")
     st.write(f"**{selected['symbol']} · {selected['strategy']} · {selected['expiration']}**")
-    st.caption(f"Saved spot ${selected['spot']:,.2f} · saved quote source {selected['source']}. Refresh the selected opportunity before research if the underlying has moved.")
+    st.caption(f"Saved quote source {selected['source']}. Refresh the selected opportunity if its option quote or underlying spot is stale.")
     a,b,c,d=st.columns(4)
     horizon=a.selectbox("Observed-session horizon",[1,2,3,5,10],index=2,key='ev_horizon')
     method=b.selectbox("Analog method",['tolerance','nearest'],key='ev_method')
@@ -59,14 +66,10 @@ def render_option_economics():
         try:
             with st.spinner("Building analog payoff scenarios from the active research dataset…"):
                 bars=active['history'].copy(deep=True)
-                # Point-in-time features and forward labels are rebuilt from the exact submitted OHLC dataset.
                 completed_before = pd.Timestamp(summary.last_date) + pd.Timedelta(days=1)
                 features=market_state_features(bars,completed_before.date())
                 outcomes=forward_outcomes(bars,completed_before.date())
                 research=analog_research(features,outcomes,method=method,horizon=horizon)
-                target_spot=float(research['target']['close'])
-                if abs(selected['spot']/target_spot-1)>1e-6:
-                    raise ValueError(f"Saved trade spot (${selected['spot']:.2f}) differs from latest completed research close (${target_spot:.2f}). Refresh/research on a synchronized snapshot; AlphaOS will not silently mix them.")
                 result=scenario_economics(research,selected,horizon,units,commission,slippage,terminal)
                 st.session_state['option_economics_result']=result
         except Exception as exc:
