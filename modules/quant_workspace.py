@@ -30,13 +30,16 @@ def render():
     st.caption("ALPHAOS / QUANTITATIVE RESEARCH")
     st.title("Test the edge. Measure the risk.")
     st.write("A reproducible workbench for portfolio construction, chronological validation, and tail-risk analysis.")
-    research, option_tab, pulse, methods, market_state, analogs = st.tabs(["Portfolio research", "Options stress lab", "Pulse research", "Methodology", "Market State Research", "Historical Analogs"])
+    research, option_tab, pulse, methods, market_state, analogs, thresholds = st.tabs(["Portfolio research", "Options stress lab", "Pulse research", "Methodology", "Market State Research", "Historical Analogs", "Threshold Research"])
     with market_state:
         from modules.market_state_workspace import render_market_state
         render_market_state()
     with analogs:
         from modules.historical_analogs_workspace import render_historical_analogs
         render_historical_analogs()
+    with thresholds:
+        from modules.threshold_workspace import render_threshold_research
+        render_threshold_research()
     with pulse:
         with st.expander("Open the original 30-minute Pulse laboratory"):
             from modules.pulse_workspace import render_pulse

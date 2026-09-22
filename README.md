@@ -241,3 +241,18 @@ probabilities or trade recommendations. All 100 tests pass, including retained
 Phase 1/2, Portfolio and Pulse integration tests.
 
 See [historical analog methods, chronology and limitations](docs/historical_analogs.md).
+
+## Phase 4: threshold / strike survival research
+
+Quant Lab → Threshold Research evaluates normalized underlying thresholds on
+the saved Phase 3 sample. Put/call styles separately report terminal survival,
+touch/breach, equality and recovery, with explicit valid counts and nominal
+Wilson intervals. Price/percentage inputs, selected short-leg shortcuts, custom
+distance grids, horizon matrices, distribution context, non-overlapping
+robustness and observation export are available. Historical targets recheck
+outcome maturity and use target-date spot; saved-trade shortcuts are disabled
+in that mode. Existing provider/model POP is unchanged and remains separate.
+
+All 133 tests pass. See [threshold definitions, denominators and limitations](docs/threshold_survival.md).
+This is descriptive underlying research, not historical option execution or
+profitability. No recommendations or Phase 5 functionality are added.
