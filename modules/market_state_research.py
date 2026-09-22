@@ -24,19 +24,24 @@ def load_market_state(symbol, period):
     if symbol not in ('SPY','QQQ') or period not in ('FIVE_YEARS','TEN_YEARS'):
         raise ValueError('Select SPY/QQQ and FIVE_YEARS/TEN_YEARS.')
     from modules.public_data import get_public_research_bars
-    from modules.history_diagnostics import HistoryError
+    from modules.history_diagnostics import HistoryError, history_diagnostics
     try:
         history = get_public_research_bars(symbol,period).copy()
     except HistoryError:
         raise
-    except Exception as exc:
-        raise ValueError(f'Public daily OHLC unavailable ({type(exc).__name__}). Check Public access or try another period.') from None
+    except Exception:
+        raise HistoryError('Public history could not be loaded; verify provider access.',history_diagnostics(symbol,period)) from None
     history['symbol'] = symbol
     now = datetime.now(ZoneInfo('America/New_York'))
-    return build_research_dataset(history,now.date(),dict(source='Public regular-market ONE_DAY OHLC',
+    try:
+        return build_research_dataset(history,now.date(),dict(source='Public regular-market ONE_DAY OHLC',
         requested_period=period,data_read_at=now.isoformat(),provider_diagnostics=history.attrs.get('provider_diagnostics',{}),
         retrieval_note='Read from existing Public adapter with up to 300-second cache. Exact upstream retrieval timestamp is unavailable.',
         completion_policy='Conservatively exclude all bars dated today or later in America/New_York, even after close; daily timestamps use UTC calendar date.'))
+    except ValueError as exc:
+        diagnostic = history_diagnostics(symbol,period,history)
+        diagnostic['stage'] = 'ohlc_validation_or_features'
+        raise HistoryError(str(exc),diagnostic) from None
 
 
 def export_csv(dataset, kind):

@@ -55,6 +55,30 @@ class MarketStateUITests(unittest.TestCase):
         self.assertFalse(app.error)
         self.assertIn('Strategy Rollup',[h.value for h in app.subheader])
 
+    def test_safe_history_diagnostic_visible(self):
+        from modules.history_diagnostics import HistoryError
+        app=self.app()
+        error=HistoryError('Public rejected the requested period/aggregation (HTTP 400).',
+            dict(symbol='SPY',requested_period='TEN_YEARS',provider='Public',stage='provider_request',returned_rows=None))
+        with patch('modules.market_state_workspace.load_market_state',side_effect=error):
+            next(b for b in app.button if b.label=='Generate market-state dataset').click().run()
+        self.assertFalse(app.exception)
+        self.assertIn('History retrieval diagnostic',[e.label for e in app.expander])
+        self.assertIn('HTTP 400',app.error[0].value)
+        self.assertNotIn('market_state_result',app.session_state)
+
+    def test_portfolio_safe_history_diagnostic_visible(self):
+        from modules.history_diagnostics import HistoryError
+        app=self.app()
+        next(s for s in app.selectbox if s.label=='Research dataset').set_value('Public market history')
+        error=HistoryError('Requested daily coverage was not supplied.',
+            dict(symbol='SPY',requested_period='TEN_YEARS',provider='Public',stage='coverage_validation',returned_rows=120))
+        with patch('modules.public_research.load_public_research',side_effect=error):
+            next(b for b in app.button if b.label=='Run research →').click().run()
+        self.assertFalse(app.exception)
+        self.assertIn('History retrieval diagnostic',[e.label for e in app.expander])
+        self.assertTrue(any('daily coverage' in e.value for e in app.error))
+
 
 if __name__=='__main__':
     unittest.main()

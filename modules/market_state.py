@@ -33,8 +33,12 @@ def validate_ohlc(history, completed_before, expected_sessions=None):
     if pd.api.types.is_numeric_dtype(frame['date']):
         raise ValueError('Dates must be explicit daily dates or timestamps, not numeric epochs.')
     days = pd.to_datetime(frame['date'], errors='coerce', utc=True, format='mixed').dt.tz_convert(None).dt.normalize()
-    if days.isna().any() or days.duplicated().any() or not days.is_monotonic_increasing:
-        raise ValueError('Dates must be valid, unique and in strictly increasing chronological order.')
+    if days.isna().any():
+        raise ValueError(f'{int(days.isna().sum())} invalid daily timestamps.')
+    if days.duplicated().any():
+        raise ValueError(f'{int(days.duplicated().sum())} duplicate session dates after UTC normalization; first: {days[days.duplicated()].iloc[0].date()}.')
+    if not days.is_monotonic_increasing:
+        raise ValueError('Dates must be in strictly increasing chronological order.')
     frame['date'] = days
     symbols = frame['symbol']
     if symbols.isna().any() or not symbols.map(lambda s: isinstance(s,str) and bool(s.strip())).all() or symbols.nunique() != 1:
@@ -44,10 +48,12 @@ def validate_ohlc(history, completed_before, expected_sessions=None):
         frame[col] = pd.to_numeric(frame[col],errors='coerce')
     values = frame[RAW[2:]].to_numpy(dtype=float)
     if not np.isfinite(values).all() or (values <= 0).any():
-        raise ValueError('OHLC must be numeric, finite, positive and complete; missing prices are not filled.')
-    if ((frame.high < frame[['open','close','low']].max(axis=1)) |
-            (frame.low > frame[['open','close','high']].min(axis=1))).any():
-        raise ValueError('Invalid OHLC bounds: high must contain open/close/low and low must contain open/close/high.')
+        row,col = np.argwhere(~np.isfinite(values) | (values <= 0))[0]
+        raise ValueError(f'OHLC must be numeric, finite, positive and complete; invalid {RAW[2+col]} on {days.iloc[row].date()}. Missing prices are not filled.')
+    invalid_bounds = ((frame.high < frame[['open','close','low']].max(axis=1)) |
+            (frame.low > frame[['open','close','high']].min(axis=1)))
+    if invalid_bounds.any():
+        raise ValueError(f'Invalid OHLC bounds on {days[invalid_bounds].iloc[0].date()}: high must contain open/close/low and low must contain open/close/high ({int(invalid_bounds.sum())} rows).')
     cutoff = pd.Timestamp(completed_before)
     if pd.isna(cutoff):
         raise ValueError('Supply an explicit completed-session cutoff date.')

@@ -348,63 +348,16 @@ def test_public_connection() -> tuple[bool, str]:
 
 @st.cache_data(ttl=300, show_spinner=False)
 def get_public_research_bars(symbol: str, period: str = "FIVE_YEARS", option: bool = False) -> pd.DataFrame:
-    """Provider OHLCV; adjustment semantics are not assumed to be total return."""
-    from public_api_sdk import BarAggregation, BarPeriod, InstrumentType
-    if period not in {"YEAR", "FIVE_YEARS", "TEN_YEARS", "MONTH"}:
-        raise ValueError("Unsupported research period.")
-    client, _ = _public_context()
+    """Observed Public daily OHLC, with explicit long-history mapping and audit."""
+    from public_api_sdk import InstrumentType
+    from modules.public_history import fetch_research_bars, research_request
+    from modules.history_diagnostics import HistoryError, history_diagnostics
     kind = InstrumentType.OPTION if option else _instrument_type_for_symbol(InstrumentType, symbol)
-    from modules.history_diagnostics import HistoryError, history_diagnostics, schema_issues, api_error_detail
-    from public_api_sdk.models.historic_data import BarsResponse
-    from pydantic import ValidationError as SchemaError
-    diagnostic = history_diagnostics(symbol, period)
-    # Same authenticated transport/path as SDK get_bars, retaining its response
-    # validation. Inspect only public OHLC fields before parsing the SDK envelope.
+    as_of = pd.Timestamp.now(tz='America/New_York').date()
+    research_request(symbol,period,kind.value,as_of)  # Reject unsupported input before authentication.
     try:
-        client.auth_manager.refresh_token_if_needed()
-        raw = client.api_client.get(f'/userapigateway/historicdata/{kind.value}/{symbol}/{BarPeriod(period).value}/{BarAggregation.ONE_DAY.value}')
-    except Exception as exc:
-        status = getattr(exc, 'status_code', None)
-        diagnostic['http_status'] = status if isinstance(status,int) else None
-        diagnostic['provider_reason_terms'] = api_error_detail(exc)
-        raise HistoryError('Public rejected the history request (HTTP 400).' if status == 400 else
-            'Public history request failed; verify access or retry later.', diagnostic) from None
-    diagnostic['stage'] = 'provider_schema'
-    if isinstance(raw,dict) and isinstance(raw.get('regularMarket'),dict) and isinstance(raw['regularMarket'].get('bars'),list):
-        bars = raw['regularMarket']['bars']
-        if all(isinstance(bar,dict) for bar in bars):
-            frame = pd.DataFrame([{key: bar.get('timestamp' if key=='date' else key) for key in ('date','open','high','low','close','volume')} for bar in bars])
-            diagnostic.update(history_diagnostics(symbol,period,frame),stage='provider_schema')
-    try:
-        response = BarsResponse(**raw)
-    except SchemaError as exc:
-        diagnostic['schema_issues'] = schema_issues(exc)
-        raise HistoryError('Unexpected provider response schema; see the field-level diagnostic.',diagnostic) from None
-    result = pd.DataFrame([{"date": bar.timestamp, "open": float(bar.open), "high": float(bar.high),
-                          "low": float(bar.low), "close": float(bar.close), "volume": float(bar.volume)}
-                         for bar in response.regular_market.bars])
-    result.attrs['provider_diagnostics'] = dict(diagnostic,stage='normalized')
-    return result
-
-
-def probe_public_history(symbol):
-    """Read-only compatibility diagnostic; never feed probe results into research."""
-    from modules.history_diagnostics import history_diagnostics, api_error_detail
-    client, _ = _public_context()
-    results = []
-    start = (pd.Timestamp.now(tz='America/New_York').normalize()-pd.DateOffset(years=10)).date().isoformat()
-    for period, aggregation in [('TEN_YEARS','ONE_DAY'),('TEN_YEARS',None),('ALL','ONE_DAY'),('ALL',None),('SINCE_PURCHASE','ONE_DAY')]:
-        diagnostic = history_diagnostics(symbol,period)
-        diagnostic['aggregation'] = aggregation or 'PROVIDER_DEFAULT'
-        path = f'/userapigateway/historicdata/EQUITY/{symbol}/{period}' + (f'/{aggregation}' if aggregation else '')
-        try:
-            client.auth_manager.refresh_token_if_needed()
-            raw = client.api_client.get(path,params={'purchaseDate':start} if period=='SINCE_PURCHASE' else None)
-            bars = raw['regularMarket']['bars']
-            frame = pd.DataFrame([{key:bar.get('timestamp' if key=='date' else key) for key in ('date','open','high','low','close')} for bar in bars])
-            diagnostic.update(history_diagnostics(symbol,period,frame),stage='raw_response',aggregation=aggregation or 'PROVIDER_DEFAULT')
-        except Exception as exc:
-            status = getattr(exc,'status_code',None)
-            diagnostic.update(http_status=status if isinstance(status,int) else None,provider_reason_terms=api_error_detail(exc))
-        results.append(diagnostic)
-    return results
+        client, _ = _public_context()
+    except Exception:
+        raise HistoryError('Public history access is unavailable; check Public configuration in Settings.',
+                           history_diagnostics(symbol,period)) from None
+    return fetch_research_bars(client,symbol,period,kind.value,as_of)

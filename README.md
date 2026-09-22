@@ -256,3 +256,7 @@ in that mode. Existing provider/model POP is unchanged and remains separate.
 All 133 tests pass. See [threshold definitions, denominators and limitations](docs/threshold_survival.md).
 This is descriptive underlying research, not historical option execution or
 profitability. No recommendations or Phase 5 functionality are added.
+
+Public daily-history retrieval now maps ten years to an explicit supported
+start-date request, with strict coverage checks and safe diagnostics. See the
+[reproduction, period mapping and data-quality notes](docs/public_history_debugging.md).

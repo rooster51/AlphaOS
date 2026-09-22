@@ -176,6 +176,9 @@ Reference: [chronological validation](https://scikit-learn.org/stable/modules/ge
             except (ValueError, TypeError, pd.errors.ParserError) as exc:
                 st.session_state.pop("quant_run_result", None)
                 st.error(str(exc))
+                if hasattr(exc,'diagnostics'):
+                    with st.expander('History retrieval diagnostic'):
+                        st.json(exc.diagnostics)
         audit = st.session_state.get('public_research_audit')
         if audit:
             with st.expander("Last successful Public data retrieval"):
