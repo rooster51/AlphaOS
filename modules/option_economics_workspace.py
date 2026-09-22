@@ -9,7 +9,7 @@ from modules.market_outcomes import forward_outcomes
 from modules.market_state import market_state_features
 from modules.option_scenario_ev import scenario_economics
 from modules.options_payoff import validate_trade
-from modules.public_data import get_public_research_bars
+from modules.research_session import get_research_session, summarize_research_session
 
 
 def _fmt_money(value):
@@ -35,6 +35,16 @@ def render_option_economics():
     if selected['symbol'] not in ('SPY','QQQ'):
         st.info("Phase 5 underlying analog research currently supports SPY and QQQ.")
         return
+
+    active = get_research_session(st.session_state)
+    if active is None:
+        st.warning("No active Quant Lab research dataset. Open Market State Research, generate SPY or QQQ history, then return here.")
+        return
+    summary = summarize_research_session(st.session_state)
+    if summary.symbol != selected['symbol']:
+        st.warning(f"Active research dataset is {summary.symbol}, but the selected option is {selected['symbol']}. Generate {selected['symbol']} in Market State Research first.")
+        return
+    st.success(f"Active Research Dataset: {summary.symbol} · {summary.period} · through {summary.last_date} · {summary.observations:,} sessions")
     st.write(f"**{selected['symbol']} · {selected['strategy']} · {selected['expiration']}**")
     st.caption(f"Saved spot ${selected['spot']:,.2f} · saved quote source {selected['source']}. Refresh the selected opportunity before research if the underlying has moved.")
     a,b,c,d=st.columns(4)
@@ -47,10 +57,12 @@ def render_option_economics():
     terminal=b.number_input("Terminal/exit friction / unit ($)",0.,100.,0.,step=.50,key='ev_terminal')
     if st.button("Run option economics →",type='primary',use_container_width=True,key='run_option_economics'):
         try:
-            with st.spinner("Loading completed daily history and building analog payoff scenarios…"):
-                bars=get_public_research_bars(selected['symbol'],'TEN_YEARS')
-                features=market_state_features(bars,selected['symbol'])
-                outcomes=forward_outcomes(features)
+            with st.spinner("Building analog payoff scenarios from the active research dataset…"):
+                bars=active['history'].copy(deep=True)
+                # Point-in-time features and forward labels are rebuilt from the exact submitted OHLC dataset.
+                completed_before = pd.Timestamp(summary.last_date) + pd.Timedelta(days=1)
+                features=market_state_features(bars,completed_before.date())
+                outcomes=forward_outcomes(bars,completed_before.date())
                 research=analog_research(features,outcomes,method=method,horizon=horizon)
                 target_spot=float(research['target']['close'])
                 if abs(selected['spot']/target_spot-1)>1e-6:
