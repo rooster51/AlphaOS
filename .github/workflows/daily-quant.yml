@@ -1,0 +1,64 @@
+name: Daily research and options archive
+
+on:
+  schedule:
+    # 18:23 EDT / 17:23 EST. Runner also checks NYSE holidays and session close.
+    - cron: '23 22 * * 1-5'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: alphaos-daily-archive
+  cancel-in-progress: false
+
+jobs:
+  archive:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: requirements-daily.txt
+      - name: Install runner dependencies
+        run: python -m pip install -r requirements-daily.txt
+      - name: Record checked-out code revision
+        run: echo "ALPHAOS_CODE_REVISION=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+      - name: Collect immutable snapshots
+        id: collect
+        env:
+          PUBLIC_API_SECRET: ${{ secrets.PUBLIC_API_SECRET }}
+          PUBLIC_ACCOUNT_NUMBER: ${{ secrets.PUBLIC_ACCOUNT_NUMBER }}
+        run: python scripts/run_daily_quant.py
+      - name: Preserve collected artifacts even if one symbol failed
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: daily-quant-${{ github.run_id }}
+          path: |
+            data/daily_quant/*.json
+            data/options/*/*.json.gz
+            data/archive_manifest.json
+          if-no-files-found: ignore
+          retention-days: 90
+      - name: Commit available snapshots and derived manifest
+        if: always()
+        shell: bash
+        run: |
+          if [ ! -d data ]; then exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          for path in data/daily_quant data/options data/archive_manifest.json; do
+            if [ -e "$path" ]; then git add -- "$path"; fi
+          done
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Archive daily AlphaOS research and observable options"
+          git pull --rebase origin main
+          git push origin HEAD:main

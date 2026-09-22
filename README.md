@@ -260,3 +260,17 @@ profitability. No recommendations or Phase 5 functionality are added.
 Public daily-history retrieval now maps ten years to an explicit supported
 start-date request, with strict coverage checks and safe diagnostics. See the
 [reproduction, period mapping and data-quality notes](docs/public_history_debugging.md).
+
+## Daily research and options archive
+
+`python scripts/run_daily_quant.py` runs the existing Phase 2–4 engines without
+Streamlit, with frozen SPY/QQQ defaults and separate point-in-time option-chain
+observations. The GitHub Actions workflow runs at 22:23 UTC on weekdays and
+checks the NYSE calendar. Existing artifacts are immutable; partial failures
+and quote-quality issues remain explicit. Quant Lab's **Daily Archive** tab
+opens archived sessions without changing interactive research.
+
+Configure the GitHub Actions secret `PUBLIC_API_SECRET` and optionally
+`PUBLIC_ACCOUNT_NUMBER`; Streamlit secrets are not automatically shared with
+Actions. See [setup, every schema field, units, timing and limitations](docs/daily_quant_schema.md).
+This is collection infrastructure, not Phase 5 or trade recommendations.

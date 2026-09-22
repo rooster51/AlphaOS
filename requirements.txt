@@ -5,3 +5,4 @@ numpy>=1.26.4
 plotly>=5.22.0
 python-dateutil>=2.9.0.post0
 publicdotcom-py==0.1.17
+pandas-market-calendars==5.4.0

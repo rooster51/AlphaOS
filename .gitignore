@@ -8,3 +8,6 @@ __pycache__/
 .runtime-packages/
 .public-sdk-inspect/
 .preview-*.log
+data/.daily-quant.lock
+data/**/.snapshot-*
+data/.manifest-*

@@ -31,6 +31,15 @@ dates, weekend rows, missing/nonfinite/nonpositive OHLC, or OHLC bounds failures
 No close-to-close moves exceeded 25%; this coarse check is not proof of
 corporate-action adjustment. Temporary compatibility-probe UI was removed.
 
+The deployed fixed Market State Research path was then verified for both SPY
+and QQQ TEN_YEARS: each returned 2,513 bars from 2016-09-22 to 2026-09-22,
+producing 2,512 completed feature rows through 2026-09-21. Both passed the raw
+quality audit with zero listed failures; maximum calendar gap was four days.
+The fix regression suite passed all 159 tests (133 prior plus 26 new). All four
+symbol/period combinations were tested with deterministic provider fixtures;
+final live five-year checks were not completed before development moved to the
+daily pipeline request.
+
 ## Fix and data path
 
 `market_state_workspace` → `load_market_state` → cached

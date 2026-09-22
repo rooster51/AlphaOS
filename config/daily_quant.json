@@ -1,0 +1,21 @@
+{
+  "version": "daily-quant-config-v1",
+  "symbols": ["SPY", "QQQ"],
+  "history": "TEN_YEARS",
+  "analog": {
+    "method": "tolerance",
+    "horizon": 3,
+    "numerical_features": ["return_5d", "rsi_14", "distance_ema_21_atr", "realized_vol_20d", "range_position_20"],
+    "tolerances": {"return_5d": 0.02, "rsi_14": 10.0, "distance_ema_21_atr": 0.75, "realized_vol_20d": 0.05, "range_position_20": 0.20},
+    "exact_structure": true
+  },
+  "sensitivity": true,
+  "thresholds": {
+    "distances": [0.005, 0.01, 0.015, 0.02, 0.025, 0.03],
+    "modes": ["put", "call"],
+    "horizons": [1, 2, 3, 5, 10]
+  },
+  "options": {"min_dte": 0, "max_dte": 10, "strike_band": 0.10},
+  "calendar": "NYSE",
+  "earliest_collection_hour_et": 17
+}
