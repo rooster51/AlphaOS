@@ -93,6 +93,13 @@ def test_symbol_and_spot_must_match_point_in_time_research():
         scenario_economics(analog_result([.01],spot=101),pcs(),3)
 
 
+def test_target_date_or_future_analog_is_rejected():
+    data=analog_result([.01])
+    data['analogs'].loc[0,'date']=data['target']['date']
+    with pytest.raises(ValueError,match='strictly before'):
+        scenario_economics(data,pcs(),3)
+
+
 def test_invalid_horizon_and_friction_rejected():
     with pytest.raises(ValueError):
         scenario_economics(analog_result([.01]),pcs(),4)
