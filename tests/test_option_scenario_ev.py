@@ -66,6 +66,7 @@ def test_extra_friction_is_separate_from_existing_trade_fees():
     assert row.gross_expiration_pnl == pytest.approx(18.70)
     assert row.modeled_extra_friction == pytest.approx(4.30)
     assert row.net_expiration_pnl == pytest.approx(14.40)
+    assert result['friction']['existing_trade_fees'] == pytest.approx(1.30)
 
 
 def test_units_scale_payoff_and_friction():
@@ -82,6 +83,7 @@ def test_missing_or_unknown_outcomes_are_excluded():
     data['analogs'].loc[1,'outcome_known_by_target_3s']=False
     result=scenario_economics(data,pcs(),3)
     assert result['net_summary']['n'] == 0
+    assert result['net_summary']['expected_payoff'] is None
 
 
 def test_symbol_and_spot_must_match_point_in_time_research():
