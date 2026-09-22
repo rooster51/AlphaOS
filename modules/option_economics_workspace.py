@@ -4,7 +4,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
-from modules.historical_analogs import analog_research, sensitivity_analysis
+from modules.historical_analogs import analog_research
 from modules.market_outcomes import forward_outcomes
 from modules.market_state import market_state_features
 from modules.option_scenario_ev import scenario_economics
@@ -49,12 +49,9 @@ def render_option_economics():
         try:
             with st.spinner("Loading completed daily history and building analog payoff scenarios…"):
                 bars=get_public_research_bars(selected['symbol'],'TEN_YEARS')
-                # Public research bars use provider column names already accepted by Market State.
                 features=market_state_features(bars,selected['symbol'])
                 outcomes=forward_outcomes(features)
                 research=analog_research(features,outcomes,method=method,horizon=horizon)
-                # Selected opportunities can be intraday while analog target is latest completed close.
-                # Re-anchor payoff spot to the completed target only when the saved trade spot matches it closely.
                 target_spot=float(research['target']['close'])
                 if abs(selected['spot']/target_spot-1)>1e-6:
                     raise ValueError(f"Saved trade spot (${selected['spot']:.2f}) differs from latest completed research close (${target_spot:.2f}). Refresh/research on a synchronized snapshot; AlphaOS will not silently mix them.")
@@ -92,7 +89,7 @@ def render_option_economics():
         dict(sample='Full analog sample',N=net['n'],expected_payoff=net['expected_payoff'],median=net['median_payoff'],positive_frequency=net['positive_frequency'],p10=net['p10_payoff'],ev_on_max_risk=net['expected_payoff_on_max_risk']),
         dict(sample='Non-overlapping diagnostic',N=non['n'],expected_payoff=non['expected_payoff'],median=non['median_payoff'],positive_frequency=non['positive_frequency'],p10=non['p10_payoff'],ev_on_max_risk=non['expected_payoff_on_max_risk'])
     ]),hide_index=True,use_container_width=True)
-    st.caption("The non-overlapping subset is a robustness diagnostic; it does not make observations fully independent. Tight/Default/Wide payoff comparisons remain a follow-up integration item before Phase 5 merge.")
+    st.caption("The non-overlapping subset is a robustness diagnostic; it does not make observations fully independent.")
     with st.expander("Inspect scenario observations"):
         st.dataframe(obs,hide_index=True,use_container_width=True)
         st.download_button("Export scenario observations",obs.to_csv(index=False),'option-scenario-economics.csv','text/csv')
