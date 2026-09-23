@@ -4,7 +4,7 @@ Phase 7 deliberately keeps HTTP concerns separate from Streamlit. Research
 calculations continue to live in modules/ and are imported here so there is
 one quantitative engine, not a second implementation.
 """
-from datetime import date
+from datetime import date, datetime\nfrom math import isfinite\nfrom zoneinfo import ZoneInfo
 from typing import Literal
 
 from fastapi import FastAPI, HTTPException, Query
@@ -14,7 +14,7 @@ from pydantic import BaseModel, Field
 from modules.market_state_research import load_market_state
 from modules.selector_research import context_from_dataset
 from modules.price_structure import nearest_levels
-from modules.phase6_research import research_workspace, compare_candidates
+from modules.phase6_research import research_workspace, compare_candidates, chain_verticals
 
 API_VERSION = "phase7-research-api-v1"
 SUPPORTED_SYMBOLS = {"SPY", "QQQ"}
@@ -122,6 +122,43 @@ def market_snapshot(symbol: str, horizon: int = Query(3), spot: float | None = Q
     })
 
 
+@app.get("/v1/quote/{symbol}")
+def live_quote(symbol: str):
+    from modules.public_data import get_public_quotes
+    symbol = _symbol(symbol)
+    try:
+        rows = get_public_quotes((symbol,))
+        quote = next((q for q in rows if q["symbol"] == symbol), None)
+        if not quote:
+            raise HTTPException(503, "Public quote unavailable")
+        return jsonable_encoder({"api_version": API_VERSION, "source": "Public", "quote": quote})
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(503, f"Public quote unavailable: {exc}") from exc
+
+
+@app.get("/v1/options/{symbol}/expirations")
+def option_expirations(symbol: str):
+    from modules.public_data import get_public_option_expirations
+    symbol = _symbol(symbol)
+    try:
+        return {"api_version": API_VERSION, "source": "Public", "symbol": symbol, "expirations": get_public_option_expirations(symbol)}
+    except Exception as exc:
+        raise HTTPException(503, f"Public expirations unavailable: {exc}") from exc
+
+
+@app.get("/v1/options/{symbol}/chain/{expiration}")
+def option_chain(symbol: str, expiration: date):
+    from modules.public_data import get_public_option_chain
+    symbol = _symbol(symbol)
+    try:
+        chain = get_public_option_chain(symbol, expiration.isoformat())
+        return jsonable_encoder({"api_version": API_VERSION, "source": "Public", "retrieved_at": datetime.now(ZoneInfo("America/New_York")).isoformat(), "chain": chain})
+    except Exception as exc:
+        raise HTTPException(503, f"Public option chain unavailable: {exc}") from exc
+
+
 @app.get("/v1/structure/{symbol}")
 def price_structure(symbol: str, horizon: int = Query(3), spot: float | None = Query(None, gt=0), levels: int = Query(3, ge=1, le=10)):
     s = _snapshot(symbol, spot, horizon)
@@ -191,3 +228,38 @@ def compare_trades(req: CompareRequest):
         "rejected": compared["rejected"].to_dict("records"),
         "note": "Rows preserve input order. AlphaOS does not rank or auto-select a trade.",
     })
+
+
+@app.get("/v1/options/{symbol}/vertical")
+def research_live_vertical(symbol: str, expiration: date, short_strike: float = Query(gt=0), long_strike: float = Query(gt=0), option_type: Literal["put", "call"] = Query(), horizon: int = Query(3)):
+    """Fetch Public quotes for exact legs, use natural credit, then run AlphaOS research."""
+    from modules.public_data import get_public_option_chain, get_public_quotes
+    symbol = _symbol(symbol)
+    if horizon not in SUPPORTED_HORIZONS:
+        raise HTTPException(400, "horizon must be one of 1, 2, 3, 5, 10 observed sessions")
+    try:
+        quotes = get_public_quotes((symbol,))
+        quote = next((q for q in quotes if q["symbol"] == symbol), None)
+        if not quote or not quote.get("last") or not isfinite(quote["last"]):
+            raise HTTPException(503, "Underlying Public quote unavailable")
+        chain = get_public_option_chain(symbol, expiration.isoformat())
+        side = chain["puts"] if option_type == "put" else chain["calls"]
+        short = next((x for x in side if float(x["strike"]) == short_strike), None)
+        long = next((x for x in side if float(x["strike"]) == long_strike), None)
+        if not short or not long:
+            raise HTTPException(404, "Requested option leg is not present in the Public chain")
+        if short.get("bid") is None or long.get("ask") is None:
+            raise HTTPException(422, "Natural executable-side quote is incomplete")
+        credit = float(short["bid"]) - float(long["ask"])
+        if credit <= 0:
+            raise HTTPException(422, "Natural short-bid minus long-ask credit is not positive")
+        req = TradeRequest(symbol=symbol, expiration=expiration, spot=float(quote["last"]), credit=credit, horizon=horizon,
+            legs=[Leg(type="Put" if option_type == "put" else "Call", strike=short_strike, qty=-1), Leg(type="Put" if option_type == "put" else "Call", strike=long_strike, qty=1)])
+        s, result = _run(req)
+        e = result["evidence"]
+        return jsonable_encoder({"meta": {**_meta(s), "source": "Public", "underlying_quote": quote, "pricing": "short bid minus long ask; hypothetical natural fill", "short_contract": short, "long_contract": long},
+            "context": e["context"], "threshold": e["threshold"]["summary"], "economics": e["economics"]["net_summary"], "robustness": result["robustness"].to_dict("records"), "levels": result["levels"].to_dict("records")})
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(503, f"Public vertical research unavailable: {exc}") from exc
