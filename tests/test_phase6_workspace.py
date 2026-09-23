@@ -158,3 +158,17 @@ def test_quant_lab_tab_integration():
     app.switch_page('pages/8_Quant_Lab.py').run()
     assert not app.exception
     assert 'Trade Research' in [t.label for t in app.tabs]
+
+
+def test_market_generation_immediately_enables_trade_research():
+    from unittest.mock import patch
+    from modules.market_state_research import build_research_dataset
+    app=AppTest.from_file(str(Path(__file__).resolve().parents[1]/'streamlit_app.py'),default_timeout=60).run()
+    app.switch_page('pages/8_Quant_Lab.py').run()
+    data=build_research_dataset(history(),'2022-01-01',dict(source='fixture'))
+    with patch('modules.market_state_workspace.load_market_state',return_value=data):
+        next(b for b in app.button if b.label=='Generate market-state dataset').click().run()
+    assert not app.exception
+    assert 'Run integrated trade research' in [b.label for b in app.button]
+    next(b for b in app.button if b.label=='Run integrated trade research').click().run()
+    assert not app.exception and 'phase6_result' in app.session_state

@@ -31,9 +31,6 @@ def render():
     st.title("Test the edge. Measure the risk.")
     st.write("A reproducible workbench for portfolio construction, chronological validation, and tail-risk analysis.")
     research, option_tab, pulse, methods, market_state, analogs, thresholds, archive, trade_research = st.tabs(["Portfolio research", "Options stress lab", "Pulse research", "Methodology", "Market State Research", "Historical Analogs", "Threshold Research", "Daily Archive", "Trade Research"])
-    with trade_research:
-        from modules.phase6_workspace import render_phase6
-        render_phase6()
     with archive:
         from modules.daily_archive_workspace import render_daily_archive
         render_daily_archive()
@@ -46,6 +43,9 @@ def render():
     with thresholds:
         from modules.threshold_workspace import render_threshold_research
         render_threshold_research()
+    with trade_research:
+        from modules.phase6_workspace import render_phase6
+        render_phase6()
     with pulse:
         with st.expander("Open the original 30-minute Pulse laboratory"):
             from modules.pulse_workspace import render_pulse
