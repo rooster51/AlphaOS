@@ -11,17 +11,13 @@ import pandas as pd
 VERSION = "price-structure-v1"
 
 
-def _prepare(history: pd.DataFrame) -> pd.DataFrame:
-    required={"date","symbol","open","high","low","close"}
-    if not isinstance(history,pd.DataFrame) or history.empty or not required.issubset(history.columns):
-        raise ValueError("Supply nonempty date, symbol, open, high, low, close history.")
-    f=history.copy()
-    f["date"]=pd.to_datetime(f["date"],errors="raise")
-    for c in ("open","high","low","close"):
-        f[c]=pd.to_numeric(f[c],errors="raise")
-    f=f.sort_values("date").drop_duplicates("date",keep="last").reset_index(drop=True)
-    if len(f)<60 or (f[["open","high","low","close"]]<=0).any().any():
-        raise ValueError("Price structure requires at least 60 valid completed daily bars.")
+def _prepare(history, completed_before=None):
+    from modules.market_state import validate_ohlc
+    if completed_before is None:
+        completed_before = pd.Timestamp.now(tz='America/New_York').date()
+    f, _ = validate_ohlc(history, completed_before)
+    if len(f)<60 or f.symbol.iloc[0] not in ('SPY','QQQ'):
+        raise ValueError('Price structure requires at least 60 valid completed SPY/QQQ bars.')
     return f
 
 
@@ -51,12 +47,22 @@ def _cluster(candidates, tolerance):
     return groups
 
 
-def price_structure(history: pd.DataFrame, lookback=252, pivot_window=3, cluster_atr=.20):
-    f=_prepare(history)
+def price_structure(history: pd.DataFrame, lookback=252, pivot_window=3, cluster_atr=.20, completed_before=None, anchor_spot=None):
+    if isinstance(lookback,bool) or int(lookback)!=lookback or lookback<60:
+        raise ValueError('Lookback must be an integer of at least 60 sessions.')
+    if isinstance(pivot_window,bool) or int(pivot_window)!=pivot_window or pivot_window<1 or 2*pivot_window>=lookback:
+        raise ValueError('Invalid pivot confirmation window.')
+    if not np.isfinite(cluster_atr) or cluster_atr<=0:
+        raise ValueError('Clustering distance must be positive and finite.')
+    f=_prepare(history, completed_before)
     f=f.tail(min(int(lookback),len(f))).reset_index(drop=True)
     atr=_atr(f)
     current_atr=float(atr.iloc[-1]) if pd.notna(atr.iloc[-1]) else float((f.high-f.low).tail(14).mean())
-    spot=float(f.close.iloc[-1]); symbol=str(f.symbol.iloc[-1]); as_of=f.date.iloc[-1]
+    research_close=float(f.close.iloc[-1])
+    spot=research_close if anchor_spot is None else float(anchor_spot)
+    if not np.isfinite(spot) or spot<=0 or not np.isfinite(current_atr) or current_atr<=0:
+        raise ValueError('Positive finite spot and nonzero ATR are required.')
+    symbol=str(f.symbol.iloc[-1]); as_of=f.date.iloc[-1]
     highs,lows=_pivots(f,pivot_window)
     # Add rolling extremes as independent structural observations.
     for n in (20,50,100,252):
@@ -64,14 +70,14 @@ def price_structure(history: pd.DataFrame, lookback=252, pivot_window=3, cluster
             w=f.tail(n)
             highs.append((int(w.high.idxmax()),float(w.high.max()),f"{n}d_high"))
             lows.append((int(w.low.idxmin()),float(w.low.min()),f"{n}d_low"))
-    tolerance=max(current_atr*cluster_atr,spot*.001)
+    tolerance=max(current_atr*cluster_atr,research_close*.001)
     rows=[]
     for side,cands in (("resistance",highs),("support",lows)):
         for group in _cluster(cands,tolerance):
             level=float(np.mean([x[1] for x in group]))
             if side=="resistance" and level<=spot: continue
             if side=="support" and level>=spot: continue
-            touches=len(group); last=max(x[0] for x in group); age=len(f)-1-last
+            touches=len(set(x[0] for x in group)); last=max(x[0] for x in group); age=len(f)-1-last
             distance=level/spot-1
             rows.append(dict(side=side,level=level,zone_low=level-tolerance/2,zone_high=level+tolerance/2,
                              distance_pct=distance,distance_atr=(level-spot)/current_atr,
@@ -83,7 +89,7 @@ def price_structure(history: pd.DataFrame, lookback=252, pivot_window=3, cluster
         levels=levels.sort_values(["side","abs_distance_atr","last_observed_sessions_ago"]).reset_index(drop=True)
     return {"config":{"version":VERSION,"symbol":symbol,"as_of":str(as_of.date()),"lookback":len(f),
                       "pivot_window":pivot_window,"cluster_atr":cluster_atr},
-            "spot":spot,"atr":current_atr,"levels":levels}
+            "spot":spot,"research_close":research_close,"atr":current_atr,"levels":levels}
 
 
 def nearest_levels(result, per_side=3):

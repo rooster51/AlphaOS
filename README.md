@@ -274,3 +274,8 @@ Configure the GitHub Actions secret `PUBLIC_API_SECRET` and optionally
 `PUBLIC_ACCOUNT_NUMBER`; Streamlit secrets are not automatically shared with
 Actions. See [setup, every schema field, units, timing and limitations](docs/daily_quant_schema.md).
 This is collection infrastructure, not Phase 5 or trade recommendations.
+
+
+### Phase 6: integrated trade research
+
+Quant Lab **Trade Research** combines current-spot-anchored distributions, historical support/resistance, short-strike behavior, Phase 5.2 economics and fixed robustness comparisons. Enter a vertical or load a saved trade; normalized option-chain CSVs support unranked candidate evidence comparisons. See [research definitions, boundary audit and limitations](docs/phase6_research.md).

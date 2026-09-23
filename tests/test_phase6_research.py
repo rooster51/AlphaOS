@@ -15,9 +15,14 @@ class Phase6ResearchTests(unittest.TestCase):
 
     def analogs(self):
         returns=np.array([.02,.01,0,-.01,-.02])
-        return {'analogs':pd.DataFrame({'date':pd.bdate_range('2025-01-01',periods=5),
-            'future_return_3s':returns,'max_up_excursion_3s':[.03,.02,.01,.005,.002],
-            'max_down_excursion_3s':[-.002,-.005,-.01,-.02,-.03]})}
+        result={'analogs':pd.DataFrame({'date':pd.bdate_range('2025-01-01',periods=5),
+            'future_return_3s':returns,'future_high_excursion_3s':[.03,.02,.01,.005,.002],
+            'future_low_excursion_3s':[-.002,-.005,-.01,-.02,-.03]})}
+        result['analogs']['symbol']='SPY'
+        result['analogs']['close']=100.
+        result['session_dates']=pd.bdate_range('2025-01-01',periods=20)
+        result['target']={'date':result['session_dates'][-1],'symbol':'SPY','close':100.}
+        return result
 
     def test_price_structure_returns_both_sides(self):
         r=price_structure(self.history(),lookback=120)
@@ -40,20 +45,32 @@ class Phase6ResearchTests(unittest.TestCase):
         r=level_behavior(self.analogs(),horizon=3,anchor_spot=100.,level=101.,side='resistance')
         s=r['summary']
         self.assertEqual(s['n'],5)
-        # 101 is +1%. Only .03 and .02 upside excursions are strictly/effectively above
-        # the floating threshold in this fixture, so the observed touch rate is 2/5.
-        self.assertAlmostEqual(s['touch_frequency'],.4)
-        self.assertAlmostEqual(s['terminal_beyond_frequency'],.4)
-        self.assertAlmostEqual(s['rejection_given_touch'],0.)
-        self.assertAlmostEqual(s['break_hold_given_touch'],1.)
+        self.assertAlmostEqual(s['touch_frequency'],.6)
+        self.assertAlmostEqual(s['terminal_beyond_frequency'],.2)
+        self.assertAlmostEqual(s['terminal_equal_frequency'],.2)
+        self.assertAlmostEqual(s['rejection_given_touch'],1/3)
+        self.assertAlmostEqual(s['break_hold_given_touch'],1/3)
 
     def test_support_behavior(self):
-        r=level_behavior(self.analogs(),horizon=3,anchor_spot=100.,level=99.,side='support')
-        s=r['summary']
-        self.assertAlmostEqual(s['touch_frequency'],.4)
-        self.assertAlmostEqual(s['terminal_beyond_frequency'],.4)
-        self.assertAlmostEqual(s['rejection_given_touch'],0.)
-        self.assertAlmostEqual(s['break_hold_given_touch'],1.)
+        s=level_behavior(self.analogs(),horizon=3,anchor_spot=100.,level=99.,side='support')['summary']
+        self.assertAlmostEqual(s['touch_frequency'],.6)
+        self.assertAlmostEqual(s['terminal_beyond_frequency'],.2)
+        self.assertAlmostEqual(s['terminal_equal_frequency'],.2)
+        self.assertAlmostEqual(s['rejection_given_touch'],1/3)
+        self.assertAlmostEqual(s['break_hold_given_touch'],1/3)
+
+    def test_exact_and_near_boundaries(self):
+        for side,sign in [('support',-1),('resistance',1)]:
+            for offset,equal,beyond in [(0,True,False),(1e-14,True,False),(1e-8,False,True),(-1e-8,False,False)]:
+                a=self.analogs()
+                a['analogs']=a['analogs'].iloc[:1].copy()
+                a['analogs']['future_return_3s']=sign*(.01+offset)
+                a['analogs']['future_high_excursion_3s']=.02
+                a['analogs']['future_low_excursion_3s']=-.02
+                row=level_behavior(a,horizon=3,anchor_spot=100,level=100+sign,side=side)['observations'].iloc[0]
+                self.assertEqual(bool(row.terminal_equal),equal)
+                self.assertEqual(bool(row.terminal_beyond),beyond)
+                self.assertTrue(row.touched)
 
     def test_validation(self):
         with self.assertRaises(ValueError): summarize_forward_distribution(self.analogs(),4,100)

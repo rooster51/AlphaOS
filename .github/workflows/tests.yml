@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - phase5-option-economics
+      - phase6-price-structure
+      - main
   pull_request:
   workflow_dispatch:
 

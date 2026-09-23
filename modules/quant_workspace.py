@@ -30,7 +30,10 @@ def render():
     st.caption("ALPHAOS / QUANTITATIVE RESEARCH")
     st.title("Test the edge. Measure the risk.")
     st.write("A reproducible workbench for portfolio construction, chronological validation, and tail-risk analysis.")
-    research, option_tab, pulse, methods, market_state, analogs, thresholds, archive = st.tabs(["Portfolio research", "Options stress lab", "Pulse research", "Methodology", "Market State Research", "Historical Analogs", "Threshold Research", "Daily Archive"])
+    research, option_tab, pulse, methods, market_state, analogs, thresholds, archive, trade_research = st.tabs(["Portfolio research", "Options stress lab", "Pulse research", "Methodology", "Market State Research", "Historical Analogs", "Threshold Research", "Daily Archive", "Trade Research"])
+    with trade_research:
+        from modules.phase6_workspace import render_phase6
+        render_phase6()
     with archive:
         from modules.daily_archive_workspace import render_daily_archive
         render_daily_archive()
