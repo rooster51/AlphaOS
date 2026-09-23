@@ -18,7 +18,7 @@ def test_rejects_unknown_symbol_without_provider_call():
 def test_openapi_exposes_research_surface():
     paths = client.get("/openapi.json").json()["paths"]
     assert "/v1/market/{symbol}" in paths
-    assert "/v1/structure/{symbol}" in paths
+    assert "/v1/quote/{symbol}" in paths\n    assert "/v1/options/{symbol}/expirations" in paths\n    assert "/v1/options/{symbol}/chain/{expiration}" in paths\n    assert "/v1/options/{symbol}/vertical" in paths\n    assert "/v1/structure/{symbol}" in paths
     assert "/v1/distribution/{symbol}" in paths
     assert "/v1/trade/research" in paths
     assert "/v1/trade/compare" in paths
