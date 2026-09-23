@@ -30,7 +30,11 @@ def render():
     st.caption("ALPHAOS / QUANTITATIVE RESEARCH")
     st.title("Test the edge. Measure the risk.")
     st.write("A reproducible workbench for portfolio construction, chronological validation, and tail-risk analysis.")
-    research, option_tab, pulse, methods, market_state, analogs, thresholds, archive, trade_research = st.tabs(["Portfolio research", "Options stress lab", "Pulse research", "Methodology", "Market State Research", "Historical Analogs", "Threshold Research", "Daily Archive", "Trade Research"])
+    tab_names=["Portfolio research", "Options stress lab", "Pulse research", "Methodology", "Market State Research", "Historical Analogs", "Threshold Research", "Daily Archive", "Trade Research"]
+    if st.session_state.get('open_trade_research'):
+        tab_names=['Trade Research']+[name for name in tab_names if name!='Trade Research']
+    tab_views=dict(zip(tab_names,st.tabs(tab_names)))
+    research, option_tab, pulse, methods, market_state, analogs, thresholds, archive, trade_research = [tab_views[name] for name in ["Portfolio research", "Options stress lab", "Pulse research", "Methodology", "Market State Research", "Historical Analogs", "Threshold Research", "Daily Archive", "Trade Research"]]
     with archive:
         from modules.daily_archive_workspace import render_daily_archive
         render_daily_archive()

@@ -5,6 +5,7 @@ on:
     branches:
       - phase5-option-economics
       - phase6-price-structure
+      - strategy-selector-quant-workflow
       - main
   pull_request:
   workflow_dispatch:

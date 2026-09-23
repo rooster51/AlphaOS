@@ -9,6 +9,8 @@ import streamlit as st
 
 from modules.premium_engine import CATALOG, demo_chain, generate, payoff
 from modules.ui import configure_page
+from modules.selector_research import build_scan_research, annotate_candidates, research_columns, select_candidate
+from modules.price_structure import nearest_levels
 
 
 def money(value):
@@ -83,6 +85,8 @@ def render():
                 iv_mode = a.selectbox("Volatility source", ["Chain ATM IV", "Manual assumption"])
                 manual_iv = b.number_input("Annualized volatility (%)", min_value=1.0, max_value=500.0, value=25.0)
                 min_pop = c.slider("Minimum estimated POP (%)", 0, 99, 0)
+            research_horizon = st.selectbox("Observed-session research horizon", [1,2,3,5,10], index=2)
+            st.caption("This controls the historical forward window used for candidate research. It is independent of calendar DTE.")
             submitted = st.form_submit_button("Find premium trades →", type="primary", use_container_width=True)
         if submitted:
             st.session_state["premium_scan_version"] = st.session_state.get("premium_scan_version", 0) + 1
@@ -94,6 +98,7 @@ def render():
             with st.spinner("Building expiration payoffs and probability estimates…"):
                 try:
                     quote_time = "Synthetic"
+                    research_snapshot = None
                     if demo:
                         spot = 500.0
                         chains = [demo_chain(d, as_of=today) for d in sorted(set([low, (low + high) // 2, high]))]
@@ -105,6 +110,11 @@ def render():
                             raise ValueError("Underlying quote unavailable.")
                         spot = q["last"]
                         quote_time = str(q.get("updated_at") or "Unavailable")
+                        if symbol in ('SPY','QQQ'):
+                            try:
+                                research_snapshot = build_scan_research(symbol,spot,research_horizon,quote_time,now.isoformat())
+                            except Exception:
+                                errors.append('Completed market research unavailable for this scan. Candidates retain quote/payoff data; historical fields are unavailable. No prior research snapshot was substituted.')
                         expirations = [e for e in get_public_option_expirations(symbol) if low <= (datetime.fromisoformat(e).date() - today).days <= high]
                         chains = []
                         for expiration in expirations:
@@ -134,6 +144,8 @@ def render():
                             if min_pop and (row["pop"] is None or row["pop"] * 100 < min_pop):
                                 continue
                             rows.append(row)
+                    if research_snapshot is not None:
+                        rows = annotate_candidates(rows,research_snapshot,symbol)
                     sort_keys = {
                         "Nearest short strikes": lambda r: (r["short_distance"], -r["net_credit"]),
                         "Highest net credit": lambda r: (-r["net_credit"], r["short_distance"]),
@@ -141,6 +153,7 @@ def render():
                     }
                     rows.sort(key=sort_keys[ranking])
                     st.session_state["premium_result"] = dict(rows=rows, source=source, symbol="DEMO" if demo else symbol,
+                        research_snapshot=research_snapshot, research_horizon=research_horizon, retrieved_at=now.isoformat(),
                         spot=spot, fetched=now.strftime("%Y-%m-%d %H:%M %Z"), quote_time=quote_time,
                         scope=f"{low}–{high} DTE · {pricing} fills · {iv_mode} · Minimum net credit ${min_credit:g} · Short strikes within {max_distance}%", ranking=ranking, errors=errors)
                 except Exception:
@@ -155,6 +168,10 @@ def render():
         st.caption("Last submitted scan. Submit again to apply changed filters. Provider bid/ask timestamps appear in the contract details when available; retrieval time is not exchange time.")
         for error in result["errors"]:
             st.warning(error)
+        if result.get('research_snapshot') is not None:
+            render_market_context(result['research_snapshot'])
+        elif result['source'].startswith('Demo') or result['symbol'] not in ('SPY','QQQ'):
+            st.caption('Completed-state structural and threshold research is available for Public SPY/QQQ scans. Other strategies and symbols retain the existing scanner workflow.')
         if not rows:
             st.info("No eligible trades match. Try more strategies, another risk budget, or a wider expiration range.")
             return
@@ -174,7 +191,9 @@ def render():
             "Farthest short / spot": f"{r['short_distance']:.1%}", "Max profit": money(r["max_profit"]),
             "Max loss": money(r["max_loss"]), "Risk : reward": f"{r['risk_reward']:.2f} : 1" if isfinite(r["risk_reward"]) else "Unlimited",
             "Est. POP": f"{r['pop']:.1%}" if r["pop"] is not None else "Unavailable",
+            **research_columns(r),
         } for i, r in enumerate(rows)])
+        st.caption(f"Historical research: {result.get('research_horizon',3)} observed sessions, independent of DTE. Historical frequencies are descriptive, not forecast probabilities. Research N counts terminal outcomes; Touch N can differ. Blank research fields mean unavailable or not a plain credit vertical.")
         st.caption("Click a row to inspect its strikes, contracts, and payoff below.")
         event = st.dataframe(table, hide_index=True, use_container_width=True,
             on_select="rerun", selection_mode="single-row",
@@ -185,7 +204,7 @@ def render():
             return
         selected = event.selection.rows[0]
         r = rows[selected]
-        st.session_state["quant_selected_option"] = {**r, "symbol": result["symbol"], "source": result["source"]}
+        select_candidate(st.session_state,result,selected)
         st.markdown(f"### Trade {selected + 1} · {result['symbol']} · {r['expiration']}")
         left, right = st.columns([2, 1])
         with left:
@@ -216,5 +235,32 @@ def render():
         if result['source'].startswith('Public'):
             st.dataframe(pd.DataFrame([{'Contract': l.get('contract'), 'Bid timestamp':str(l.get('bid_timestamp') or 'Unavailable'),
                 'Ask timestamp':str(l.get('ask_timestamp') or 'Unavailable'), **{g:l.get(g) for g in ('delta','gamma','theta','vega','rho','iv')}} for l in r['legs']]),hide_index=True,use_container_width=True)
+        if st.button("Research selected trade in Quant Lab →",type='primary'):
+            st.session_state['open_trade_research']=True
+            st.switch_page('pages/8_Quant_Lab.py')
         st.caption("Estimates assume standard contracts held to expiration. Review settlement, assignment exposure, and quote freshness before acting.")
 
+
+
+def render_market_context(snapshot):
+    st.subheader('Market structure before the trade')
+    a,b,c,d=st.columns(4)
+    a.metric('Research close',money(snapshot['research_close']))
+    b.metric('Current Public underlying spot',money(snapshot['current_spot']))
+    c.metric('Spot move since research close',f"{snapshot['current_spot']/snapshot['research_close']-1:+.2%}")
+    d.metric('Completed-session ATR',money(snapshot['structure']['atr']))
+    st.caption(f"Completed research session: {snapshot['research_date']} · Public quote timestamp: {snapshot['quote_timestamp']} · Scan retrieval: {snapshot['scan_retrieved_at']}. Quote time and research date describe different observations.")
+    zones=nearest_levels(snapshot['structure'],3)
+    for column,side in zip(st.columns(2),('support','resistance')):
+        with column:
+            st.markdown('**Nearest '+side+' zones**')
+            if zones.empty or zones[zones.side==side].empty:
+                st.info('No '+side+' zone identified.'); continue
+            shown=zones[zones.side==side][['zone_low','level','zone_high','distance_pct','distance_atr','observations','last_observed_sessions_ago','sources']].copy()
+            shown['distance_pct']=shown.distance_pct.map(lambda v:f'{v:+.2%}')
+            shown.columns=['Zone low','Central level','Zone high','Distance from spot %','Distance ATR','Structural observations','Sessions since observation','Sources']
+            st.dataframe(shown,hide_index=True,use_container_width=True)
+    st.caption('Historical price-structure zones are descriptive, not predictions. Above / inside / below describes location only; it is not a safety or quality rating.')
+    with st.expander('Structural and historical research methodology'):
+        st.write('Confirmed pivots and rolling extrema use completed daily bars. Observation counts are unique structural dates, not intraday touches. Analog selection uses frozen default tolerances; all candidates reuse the same sample. Touch includes equality; finishing beyond is strict and equality remains separate. Provider adjustments and exchange-calendar completeness may be unverified.')
+        st.json(snapshot['analog']['config'])

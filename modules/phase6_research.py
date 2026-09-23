@@ -51,14 +51,27 @@ def selected_evidence(analog, trade, structure, horizon, **friction):
     return dict(context=context,threshold=threshold,economics=economics)
 
 
-def research_workspace(history, trade, completed_before, horizon=3, method='tolerance', metadata=None, **friction):
+def research_workspace(history, trade, completed_before, horizon=3, method='tolerance', metadata=None, prepared=None, **friction):
     t=validate_trade(trade)
     bars,audit=validate_ohlc(history,completed_before)
     if bars.symbol.iloc[0]!=t['symbol']: raise ValueError('Trade and research symbol must match.')
-    features=market_state_features(bars,completed_before)
-    outcomes=forward_outcomes(bars,completed_before)
+    reusable=False
+    if prepared:
+        try:
+            source=prepared['dataset']
+            reusable=(prepared['snapshot_id']==digest({k:v for k,v in prepared.items() if k!='snapshot_id'})
+                and digest(source['features'][['date','symbol','open','high','low','close']])==digest(bars))
+        except (KeyError,TypeError,ValueError): pass
+        if not reusable: raise ValueError('Prepared research does not match the completed OHLC prefix.')
+    features=prepared['dataset']['features'] if reusable else market_state_features(bars,completed_before)
+    outcomes=prepared['dataset']['outcomes'] if reusable else forward_outcomes(bars,completed_before)
     structure=price_structure(bars,completed_before=completed_before,anchor_spot=t['spot'])
-    samples={h:analog_research(features,outcomes,method=method,horizon=h) for h in HORIZONS}
+    samples={}
+    for h in HORIZONS:
+        if reusable and method=='tolerance' and prepared['horizon']==h:
+            samples[h]=prepared['analog']
+        else:
+            samples[h]=analog_research(features,outcomes,method=method,horizon=h)
     if horizon not in samples: raise ValueError('Unsupported observed-session horizon.')
     primary=samples[horizon]
     evidence=selected_evidence(primary,t,structure,horizon,**friction)
@@ -70,7 +83,7 @@ def research_workspace(history, trade, completed_before, horizon=3, method='tole
     robustness=[]
     for name,mult in [('Tight tolerance',.75),('Default tolerance',1.),('Wide tolerance',1.5),('Nearest 50',None)]:
         args=dict(method='nearest',neighbors=50) if mult is None else dict(method='tolerance',tolerances={k:v*mult for k,v in DEFAULT_TOLERANCES.items()})
-        analog=analog_research(features,outcomes,horizon=horizon,**args)
+        analog=primary if name=='Default tolerance' and method=='tolerance' else analog_research(features,outcomes,horizon=horizon,**args)
         ev=scenario_economics(analog,t,horizon,**friction)
         robustness.append(dict(sample=name,**ev['net_summary']))
     robustness.append(dict(sample='Primary non-overlapping diagnostic',**evidence['economics']['non_overlapping_net_summary']))

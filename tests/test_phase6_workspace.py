@@ -147,7 +147,7 @@ def test_ui_saved_call_and_missing_dataset():
     state={}; save_research_session(state,history=history(),symbol='SPY',period='fixture')
     app.session_state['quant_research_session']=state['quant_research_session']
     app.session_state['quant_selected_option']=trade(True)
-    app.run(); app.selectbox(key='p6_source').set_value('Selected opportunity').run()
+    app.run(); app.selectbox(key='p6_source').set_value('Selected Strategy Selector candidate').run()
     next(b for b in app.button if b.label=='Run integrated trade research').click().run()
     assert not app.exception
     assert 'Historical survival BELOW short strike' in [m.label for m in app.metric]

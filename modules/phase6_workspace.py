@@ -4,7 +4,9 @@ import hashlib
 from zoneinfo import ZoneInfo
 import pandas as pd
 import streamlit as st
-from modules.research_session import get_research_session
+from modules.research_session import get_research_session, save_research_session
+from modules.selector_research import valid_saved_snapshot, candidate_fingerprint, context_from_dataset
+from modules.market_state_research import load_market_state
 from modules.daily_archive import canonical_bytes, digest
 from modules.options_payoff import validate_trade
 from modules.phase6_research import research_workspace, chain_verticals, compare_candidates
@@ -14,24 +16,68 @@ from modules.historical_analogs import sample_warning
 def render_phase6():
     st.subheader('Trade Research · Price Structure')
     st.caption('Historical evidence for one trade. Descriptive zones and scenario distributions are not predictions, price targets, or recommendations.')
+    candidate=st.session_state.get('quant_selected_option')
+    token=candidate_fingerprint(candidate) if candidate else None
+    if candidate and st.session_state.get('p6_candidate_token')!=token:
+        st.session_state['p6_source']='Selected Strategy Selector candidate'
+        st.session_state['p6_candidate_token']=token
+        st.session_state.pop('phase6_result',None)
+    source=st.selectbox('Trade Research input',['Enter a vertical','Selected Strategy Selector candidate','Saved manual trade'],key='p6_source')
+    saved=None; snapshot=None; context={}
+    if source!='Enter a vertical':
+        try: saved=validate_trade(candidate if source=='Selected Strategy Selector candidate' else st.session_state.get('quant_manual_option'))
+        except ValueError:
+            st.info('Save a matching trade in Strategy Selector or Options stress lab first.'); return
+        context=saved.get('research_context') or {}
+        proposed=st.session_state.get('quant_selected_research') if source=='Selected Strategy Selector candidate' else None
+        if valid_saved_snapshot(saved,proposed): snapshot=proposed
+        elif context:
+            st.warning('Saved research context does not match this trade or dataset. It will not be reused. Refresh market research explicitly; the original quote and research timestamps remain displayed below.')
+        st.write(f"Selected {saved['symbol']} · {saved['strategy']} · {saved['expiration']} · saved credit ${saved['credit']:.4f} per share")
+        st.dataframe(pd.DataFrame(saved['legs']),hide_index=True)
+        if context:
+            st.caption(f"Candidate snapshot: research {context.get('research_date')} at ${context.get('research_close')} · quote {context.get('quote_timestamp')} at ${context.get('current_spot')} · scan retrieval {context.get('scan_retrieved_at')}. This is a saved observation, not an automatic refresh.")
     active=get_research_session(st.session_state)
     if active is None:
         dataset=st.session_state.get('market_state_result')
         if dataset:
             active=dict(history=dataset['features'][['date','symbol','open','high','low','close']],metadata=dataset['metadata'])
+    if snapshot:
+        data=snapshot['dataset']
+        active=dict(history=data['features'][['date','symbol','open','high','low','close']],metadata=data['metadata'])
+    refresh_symbol=saved['symbol'] if saved else str(active['history'].symbol.iloc[-1]) if active else None
+    refresh_token=token if source=='Selected Strategy Selector candidate' else digest(dict(source=source,symbol=refresh_symbol,saved=saved))
+    if refresh_symbol in ('SPY','QQQ') and st.button('Refresh market research',key='p6_refresh_button'):
+        try:
+            data=load_market_state(refresh_symbol,'FIVE_YEARS')
+            refreshed_horizon=context.get('horizon',3)
+            if refreshed_horizon not in (1,2,3,5,10): refreshed_horizon=3
+            refreshed_snapshot=context_from_dataset(data,saved['spot'] if saved else float(data['features'].close.iloc[-1]),
+                refreshed_horizon,saved.get('quote_timestamp','Unavailable') if saved else 'Manual spot',
+                data['metadata'].get('data_read_at','Unavailable'))
+            st.session_state['p6_refreshed_research']=dict(token=refresh_token,dataset=data,snapshot=refreshed_snapshot)
+            save_research_session(st.session_state,history=data['features'][['date','symbol','open','high','low','close']],
+                symbol=refresh_symbol,period='FIVE_YEARS',metadata=data['metadata'])
+            st.session_state.pop('phase6_result',None)
+        except Exception:
+            st.error('Market research refresh failed. The last available dataset remains explicitly dated; no quote or candidate snapshot was changed.')
+    refreshed=st.session_state.get('p6_refreshed_research')
+    if refreshed and refreshed['token']==refresh_token:
+        data=refreshed['dataset']
+        active=dict(history=data['features'][['date','symbol','open','high','low','close']],metadata=data['metadata'])
+        st.caption(f"Refreshed research: {data['metadata']['end']} at ${float(data['features'].close.iloc[-1]):,.2f} · read {data['metadata'].get('data_read_at','Unavailable')}. Candidate spot, premium and quote timestamp remain the saved values; updating research does not refresh the quote.")
+    elif context and snapshot is None:
+        st.info('Refresh market research to replace the invalid context before running this candidate. Manual entry remains available.'); return
     if active is None:
         st.info('Generate Market State Research for SPY or QQQ first. The completed daily dataset is reused here.'); return
     bars=active['history']; metadata=active.get('metadata',{})
     symbol=str(bars.symbol.iloc[-1]); today=datetime.now(ZoneInfo('America/New_York')).date()
-    source=st.selectbox('Trade Research input',['Enter a vertical','Selected opportunity','Saved manual trade'],key='p6_source')
-    saved=None
-    if source!='Enter a vertical':
-        try: saved=validate_trade(st.session_state.get('quant_selected_option' if source=='Selected opportunity' else 'quant_manual_option'))
-        except ValueError:
-            st.info('Save a matching trade in Strategy Selector or Options stress lab first.'); return
-        if saved['symbol']!=symbol:
-            st.warning('Trade and research symbols differ. Load matching Market State Research.'); return
-        st.dataframe(pd.DataFrame(saved['legs']),hide_index=True)
+    if saved and saved['symbol']!=symbol:
+        st.warning('Trade and research symbols differ. Refresh market research for this candidate or load matching Market State Research.'); return
+    if saved and (len(saved['legs'])!=2 or saved['shares'] or saved['legs'][0]['type']!=saved['legs'][1]['type']):
+        st.info('Integrated structural research currently supports plain vertical credit spreads. This candidate remains available in Options stress lab and Option Economics; manual vertical entry remains available.'); return
+    initial_horizon=context.get('horizon',3) if snapshot else 3
+    initial_method=context.get('analog_config',{}).get('method','tolerance') if snapshot else 'tolerance'
     with st.form('p6_form'):
         a,b,c=st.columns(3)
         spot=a.number_input('Current trade spot',min_value=.01,value=float(saved['spot'] if saved else bars.close.iloc[-1]))
@@ -43,8 +89,8 @@ def render_phase6():
             short=b.number_input('Short strike',min_value=.01,value=float(round(float(bars.close.iloc[-1])*.99)))
             long=c.number_input('Long strike',min_value=.01,value=float(round(float(bars.close.iloc[-1])*.99)-1))
         a,b=st.columns(2)
-        horizon=a.selectbox('Trade Research observed-session horizon',[1,2,3,5,10],index=2)
-        method=b.selectbox('Trade Research analog method',['tolerance','nearest'])
+        horizon=a.selectbox('Trade Research observed-session horizon',[1,2,3,5,10],index=[1,2,3,5,10].index(initial_horizon))
+        method=b.selectbox('Trade Research analog method',['tolerance','nearest'],index=['tolerance','nearest'].index(initial_method))
         st.caption('Choose the observed-session horizon explicitly. Calendar DTE does not determine this setting. All five horizons are shown with separately matured analog samples.')
         a,b,c=st.columns(3)
         commission=a.number_input('Research extra commission / contract ($)',min_value=0.,value=0.)
@@ -66,6 +112,7 @@ def render_phase6():
                           dict(type='Put' if kind.startswith('Put') else 'Call',strike=long,qty=1)])
             with st.spinner('Building completed-state research and fixed robustness comparisons…'):
                 result=research_workspace(bars,trade,today,horizon,method,metadata,
+                    prepared=refreshed['snapshot'] if refreshed and refreshed['token']==refresh_token else snapshot,
                     commission_per_contract=commission,entry_slippage=slip,terminal_friction=terminal)
             st.session_state['phase6_result']=dict(identity=identity,result=result)
         except (ValueError,TypeError,KeyError) as exc: st.error(str(exc))

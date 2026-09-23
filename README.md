@@ -279,3 +279,8 @@ This is collection infrastructure, not Phase 5 or trade recommendations.
 ### Phase 6: integrated trade research
 
 Quant Lab **Trade Research** combines current-spot-anchored distributions, historical support/resistance, short-strike behavior, Phase 5.2 economics and fixed robustness comparisons. Enter a vertical or load a saved trade; normalized option-chain CSVs support unranked candidate evidence comparisons. See [research definitions, boundary audit and limitations](docs/phase6_research.md).
+
+
+### Strategy Selector research handoff
+
+Public SPY/QQQ scans now show completed price structure above live candidates. Select a row and use **Research selected trade in Quant Lab** to carry its quote, actual credit and explicit research horizon into the integrated workspace. [Workflow, caching, provenance and limitations](docs/selector_quant_workflow.md).
