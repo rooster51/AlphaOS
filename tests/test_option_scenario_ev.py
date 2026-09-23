@@ -86,11 +86,14 @@ def test_missing_or_unknown_outcomes_are_excluded():
     assert result['net_summary']['expected_payoff'] is None
 
 
-def test_symbol_and_spot_must_match_point_in_time_research():
+def test_symbol_must_match_but_current_trade_spot_may_bridge_research_close():
     with pytest.raises(ValueError,match='symbol'):
         scenario_economics(analog_result([.01],symbol='SPY'),pcs(),3)
-    with pytest.raises(ValueError,match='spot'):
-        scenario_economics(analog_result([.01],spot=101),pcs(),3)
+    # Phase 5.2 intentionally allows a current trade spot that differs from the
+    # completed research close; historical returns are applied to the explicit
+    # current trade anchor instead of silently pretending the snapshots match.
+    result=scenario_economics(analog_result([.01],spot=101),pcs(spot=100),3)
+    assert result['net_summary']['n'] == 1
 
 
 def test_target_date_or_future_analog_is_rejected():
