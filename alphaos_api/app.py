@@ -13,6 +13,9 @@ from modules.price_structure import nearest_levels
 from modules.forward_distribution import summarize_forward_distribution
 from .contracts import APIError,TradeRequest,CompareRequest,ResearchResponse,ErrorResponse,SCHEMA_VERSION
 from .service import ResearchService,symbol_value,horizon_value
+from .config import load_secret_files
+
+load_secret_files()
 
 app=FastAPI(title='AlphaOS Research API',version=SCHEMA_VERSION,debug=False,
     description='Read-only descriptive research using the same AlphaOS engine as Streamlit. No order execution or recommendations.')

@@ -1,8 +1,10 @@
 """Single-process deployment entry point: python -m alphaos_api."""
 import os
+from .config import load_secret_files
 
 
 def main():
+    load_secret_files()
     if not os.environ.get('ALPHAOS_API_TOKEN'):
         raise SystemExit('ALPHAOS_API_TOKEN must be configured before starting the server.')
     try:

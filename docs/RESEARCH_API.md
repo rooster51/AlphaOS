@@ -17,6 +17,13 @@ virtual environment. Streamlit, Supabase and UI secrets files are unnecessary.
 | `PUBLIC_ACCOUNT_NUMBER` | Optional account-selection preference; keep server-side. |
 | `PORT` | Listening port, default 8000; use the host-provided value. |
 
+Render **Secret Files** are also supported: `/etc/secrets/ALPHAOS_API_TOKEN`,
+`/etc/secrets/PUBLIC_API_SECRET`, and `/etc/secrets/PUBLIC_ACCOUNT_NUMBER`.
+The existing filename `Public_Account` is accepted for the account preference.
+Each file must contain just its raw value or a single `NAME=value` line.
+Environment variables take precedence, even when empty. The API startup loads
+these explicit mounts into its process environment without logging contents.
+
 Start from the repository root: `python -m alphaos_api`. The entry point starts
 Uvicorn on `0.0.0.0`, uses one worker, disables access logs, and fails closed
 without the API token. The equivalent explicit command is
