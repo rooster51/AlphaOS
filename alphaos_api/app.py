@@ -4,7 +4,9 @@ Phase 7 deliberately keeps HTTP concerns separate from Streamlit. Research
 calculations continue to live in modules/ and are imported here so there is
 one quantitative engine, not a second implementation.
 """
-from datetime import date, datetime\nfrom math import isfinite\nfrom zoneinfo import ZoneInfo
+from datetime import date, datetime
+from math import isfinite
+from zoneinfo import ZoneInfo
 from typing import Literal
 
 from fastapi import FastAPI, HTTPException, Query
