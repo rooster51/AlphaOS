@@ -1,5 +1,10 @@
 from fastapi.testclient import TestClient
 from alphaos_api.app import app
+import pytest
+
+@pytest.fixture(autouse=True)
+def token(monkeypatch):
+    monkeypatch.setenv("ALPHAOS_API_TOKEN","api-test-token")
 
 client = TestClient(app)
 
@@ -11,7 +16,7 @@ def test_health_is_read_only():
 
 
 def test_rejects_unknown_symbol_without_provider_call():
-    r = client.get("/v1/market/IWM")
+    r = client.get("/v1/market/IWM",headers={"Authorization":"Bearer api-test-token"})
     assert r.status_code == 400
 
 
