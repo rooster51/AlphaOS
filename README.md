@@ -284,3 +284,11 @@ Quant Lab **Trade Research** combines current-spot-anchored distributions, histo
 ### Strategy Selector research handoff
 
 Public SPY/QQQ scans now show completed price structure above live candidates. Select a row and use **Research selected trade in Quant Lab** to carry its quote, actual credit and explicit research horizon into the integrated workspace. [Workflow, caching, provenance and limitations](docs/selector_quant_workflow.md).
+
+### Phase 7: read-only research API
+
+FastAPI exposes the existing SPY/QQQ research engines, exact Public verticals,
+unranked spread scans and saved-candidate research with bearer authentication.
+It runs separately from Streamlit using `python -m alphaos_api` and
+`requirements-api.txt`. See [deployment, HTTP/action contract, evidence definitions,
+cache lifetimes and limitations](docs/RESEARCH_API.md).
