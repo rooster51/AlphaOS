@@ -5,7 +5,7 @@ import importlib
 import json
 import re
 from urllib.parse import urlsplit, parse_qs
-from unittest.mock import Mock
+from unittest.mock import Mock, AsyncMock
 
 import pytest
 from fastapi import FastAPI
@@ -118,6 +118,9 @@ def test_discovery_auth_handshake_and_list(env):
     assert c.get('/.well-known/oauth-protected-resource/mcp').json()['resource']==BASE+'/mcp'
     meta=c.get('/.well-known/oauth-authorization-server').json()
     assert meta['authorization_response_iss_parameter_supported'] and meta['code_challenge_methods_supported']==['S256']
+    assert meta['issuer']==BASE
+    assert c.get('/.well-known/oauth-protected-resource/mcp').json()['authorization_servers']==[meta['issuer']]
+    assert meta['client_id_metadata_document_supported'] is True
     assert rpc(c,'owner-test-secret','tools/list').status_code==401
     _,tokens=login(c);token=tokens['access_token']
     handshake=rpc(c,token,'initialize',dict(protocolVersion='2025-11-25',capabilities={},clientInfo={'name':'test','version':'1'}))
@@ -295,3 +298,125 @@ def test_latest_protocol_tool_call(env):
     response=rpc(c,tokens['access_token'],'tools/call',dict(name='live_quote',arguments={'symbol':'SPY'}),version='2026-07-28')
     assert response.status_code==200,response.text
     assert response.json()['result']['structuredContent']['meta']['symbol']=='SPY'
+
+
+def test_basic_header_only_and_mismatched_client(env):
+    c,_,_,_=env
+    reg=registration(c,token_endpoint_auth_method='client_secret_basic').json()
+    cid=reg['client_id'];credentials=(cid,reg['client_secret'])
+    auth,verifier=authorize(c,cid)
+    approved,_=consent(c,auth.headers['location'])
+    code=parse_qs(urlsplit(approved.headers['location']).query)['code'][0]
+    form=dict(grant_type='authorization_code',code=code,code_verifier=verifier,
+        redirect_uri=CALLBACK,resource=BASE+'/mcp')
+    assert c.post('/token',data={**form,'client_id':'different'},auth=credentials).status_code==401
+    assert c.post('/token',data=form,auth=(cid,'wrong')).status_code==401
+    tokens=c.post('/token',data=form,auth=credentials)
+    assert tokens.status_code==200,tokens.text
+    token=tokens.json()['access_token']
+    assert rpc(c,token,'tools/list').status_code==200
+    refreshed=c.post('/token',data=dict(grant_type='refresh_token',
+        refresh_token=tokens.json()['refresh_token'],resource=BASE+'/mcp'),auth=credentials)
+    assert refreshed.status_code==200
+    assert c.post('/revoke',data={'token':refreshed.json()['refresh_token']},auth=credentials).status_code==200
+    assert rpc(c,token,'tools/list').status_code==401
+
+
+def client_document():
+    from alphaos_api.mcp_auth import CHATGPT_CLIENT
+    return dict(client_id=CHATGPT_CLIENT,redirect_uris=[CALLBACK],
+        token_endpoint_auth_methods_supported=['none','private_key_jwt'],
+        token_endpoint_auth_method='private_key_jwt',
+        grant_types=['authorization_code','refresh_token'],response_types=['code'])
+
+
+def test_cimd_identity_survives_restart_but_grants_do_not(env,monkeypatch):
+    from alphaos_api.mcp_auth import OwnerOAuth,CHATGPT_CLIENT
+    c,_,app,_=env
+    fetch=AsyncMock(return_value=(client_document(),60))
+    monkeypatch.setattr(OwnerOAuth,'fetch_client_metadata',fetch)
+    def cimd_login(client):
+        auth,verifier=authorize(client,CHATGPT_CLIENT)
+        assert auth.status_code==302
+        approved,_=consent(client,auth.headers['location'])
+        q=parse_qs(urlsplit(approved.headers['location']).query)
+        assert q['iss']==[client.get('/.well-known/oauth-authorization-server').json()['issuer']]
+        tokens=token_request(client,CHATGPT_CLIENT,q['code'][0],verifier)
+        assert tokens.status_code==200,tokens.text
+        return tokens.json()
+    before=cimd_login(c)
+    assert not app.state.oauth.clients.entries  # No dynamic registration.
+    assert rpc(c,before['access_token'],'tools/list').status_code==200
+    restarted=FastAPI();restarted.include_router(api.router)
+    build_mcp(restarted,api.sanitized)
+    with TestClient(restarted,base_url=BASE,follow_redirects=False) as after:
+        assert rpc(after,before['access_token'],'tools/list').status_code==401
+        assert after.post('/token',data=dict(grant_type='refresh_token',client_id=CHATGPT_CLIENT,
+            refresh_token=before['refresh_token'],resource=BASE+'/mcp')).json()['error']=='invalid_grant'
+        fresh=cimd_login(after)  # Same client URL, no recreate/register step.
+        assert not call(after,fresh['access_token'],'live_quote',{'symbol':'SPY'})['isError']
+    assert fetch.await_count==2
+
+
+@pytest.mark.parametrize('changes',[
+    {'client_id':'https://evil.example/client.json'},
+    {'redirect_uris':['https://evil.example/callback']},
+    {'token_endpoint_auth_methods_supported':['private_key_jwt']},
+    {'grant_types':['client_credentials']},
+    {'response_types':['token']}])
+def test_cimd_rejects_invalid_metadata(env,monkeypatch,changes):
+    from alphaos_api.mcp_auth import OwnerOAuth,CHATGPT_CLIENT
+    c,_,_,_=env
+    document=client_document();document.update(changes)
+    monkeypatch.setattr(OwnerOAuth,'fetch_client_metadata',AsyncMock(return_value=(document,60)))
+    auth,_=authorize(c,CHATGPT_CLIENT)
+    assert auth.status_code==400
+
+
+def test_cimd_never_fetches_arbitrary_urls(env,monkeypatch,caplog):
+    from alphaos_api.mcp_auth import OwnerOAuth,CHATGPT_CLIENT
+    c,_,_,_=env
+    fetch=AsyncMock(side_effect=RuntimeError('public-test-secret'))
+    monkeypatch.setattr(OwnerOAuth,'fetch_client_metadata',fetch)
+    for url in ('http://127.0.0.1/client.json','https://chatgpt.com.evil.example/oauth/client.json',
+                'https://chatgpt.com/oauth/client.json?secret=owner-test-secret'):
+        assert authorize(c,url)[0].status_code==400
+    fetch.assert_not_called()
+    assert authorize(c,CHATGPT_CLIENT)[0].status_code==400
+    assert 'public-test-secret' not in caplog.text and 'owner-test-secret' not in caplog.text
+
+
+def test_oauth_diagnostics_never_log_credentials(env,caplog,monkeypatch):
+    from alphaos_api.mcp_auth import logger
+    # Other UI integration tests can configure process-wide logging.
+    monkeypatch.setattr(logger,'disabled',False)
+    monkeypatch.setattr(logger,'propagate',True)
+    caplog.set_level('WARNING',logger=logger.name)
+    c,_,_,_=env
+    _,tokens=login(c)
+    assert 'stage=/authorize status=302' in caplog.text
+    assert 'stage=/token status=200' in caplog.text
+    for value in ('owner-test-secret','public-test-secret',tokens['access_token'],tokens['refresh_token']):
+        assert value not in caplog.text
+
+
+@pytest.mark.parametrize('failure',['redirect','oversize','wrong_content_type'])
+def test_cimd_http_response_boundaries(env,monkeypatch,failure):
+    import httpx
+    from alphaos_api.mcp_auth import CHATGPT_CLIENT
+    c,_,_,_=env
+    requested=[]
+    def response(request):
+        requested.append(str(request.url))
+        if failure=='redirect':
+            return httpx.Response(302,headers={'Location':'https://evil.example/client.json'})
+        if failure=='oversize':
+            return httpx.Response(200,content=b'x'*65537,headers={'Content-Type':'application/json'})
+        return httpx.Response(200,content=json.dumps(client_document()),headers={'Content-Type':'text/html'})
+    original=httpx.AsyncClient
+    def factory(*args,**kwargs):
+        kwargs['transport']=httpx.MockTransport(response)
+        return original(*args,**kwargs)
+    monkeypatch.setattr(httpx,'AsyncClient',factory)
+    assert authorize(c,CHATGPT_CLIENT)[0].status_code==400
+    assert requested==[CHATGPT_CLIENT]

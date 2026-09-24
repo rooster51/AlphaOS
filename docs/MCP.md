@@ -19,10 +19,12 @@ sanitization remain shared. Streamlit remains its own application.
    | Description | `Read-only SPY/QQQ market and options research; no execution or trade ranking.` |
    | Server URL | `https://alphaos.onrender.com/mcp` |
    | Authentication | **OAuth** |
-   | OAuth Client ID | Leave blank for dynamic client registration |
-   | OAuth Client Secret | Leave blank for dynamic client registration |
+   | OAuth Client ID | Leave blank for automatic discovery |
+   | OAuth Client Secret | Leave blank for automatic discovery |
+   | Registration method, if shown | **CIMD** |
 
-3. Connect. ChatGPT discovers the authorization server and registers its client.
+3. Connect. ChatGPT discovers the authorization server and uses its published
+   Client ID Metadata Document (CIMD) identity.
    On the **AlphaOS** consent page, enter your existing `ALPHAOS_API_TOKEN` in
    the password field and select **Allow research access**. Enter it only on
    `https://alphaos.onrender.com/oauth/consent`, never in a conversation. Do not
@@ -38,8 +40,9 @@ and do not paste the REST token into the OAuth Client Secret field. The OpenAPI
 URL is a REST schema, not the MCP Server URL. If an account/workspace does not
 offer custom apps, that account's access must be resolved separately.
 
-The supported authorization flow uses dynamic client registration (DCR), not
-CIMD or a manually invented client ID. The server advertises issuer identification
+The preferred flow uses CIMD with public-client authentication (`none`) and
+mandatory PKCE. DCR remains a legacy alternative; use CIMD for a client identity
+that can be recovered after restarts. The server advertises issuer identification
 and accepts the official `https://chatgpt.com/connector_platform_oauth_redirect`
 callback and `https://chatgpt.com/connector/oauth/{callback_id}` form. Redirects
 are registered and compared exactly; arbitrary callback domains are rejected.
@@ -77,13 +80,21 @@ There is no additional OAuth signing secret or OpenAI API key to configure.
 Python 3.12 is the CI target. Startup disables access logs; leave SDK/HTTP debug
 logging off and do not log request bodies, query strings or authorization headers.
 
-OAuth state, like research snapshots, is **in memory**. A deploy, crash or
-free-tier sleep loses registrations and grants. Reconnect after restart; if
-ChatGPT retains an expired/unknown client ID, remove and recreate its AlphaOS app
-to register again. Registrations also expire after 24 hours. This is a private,
-single-user preview limitation, not durable production identity infrastructure.
-Persistent authorization storage would be needed before wider or uninterrupted
-use. Do not add workers or instances without shared authorization/cache storage.
+The CIMD identity is ChatGPT's stable HTTPS metadata URL. AlphaOS re-fetches and
+validates it after restart; its local metadata cache is disposable, not a client
+registry. A CIMD connection needs no app recreation when Render restarts.
+
+OAuth grants, pending consent/PKCE state, authorization codes and research
+snapshots remain in memory. A deploy, crash or free-tier sleep invalidates them.
+Reconnect and sign in again after restart. Refresh tokens fail closed with
+`invalid_grant`; old tokens are never silently restored. Durable state would
+still be needed for uninterrupted login/refresh across restarts. Do not add
+workers or instances without shared authorization/cache storage.
+
+Legacy DCR registrations remain process-local and expire after 24 hours. An
+existing DCR app must be recreated once with CIMD to remove that dependency.
+Durable DCR would require a shared database or persistent volume; the free Render
+filesystem is not a durable solution. No paid storage has been provisioned.
 Rolling back the service to `phase7-research-api` removes MCP and retains REST.
 
 ## Authentication architecture
@@ -99,6 +110,15 @@ Rolling back the service to `phase7-research-api` removes MCP and retains REST.
   AlphaOS additionally enforces the resource indicator, owner consent, scope,
   fixed callbacks and bounded storage. Public and confidential registered clients
   are supported; there is no client-credentials grant.
+- CIMD fetches are restricted to the exact official `https://chatgpt.com/oauth/client.json`
+  and callback-specific `/oauth/{callback_id}/client.json` locations. Redirects
+  are not followed, TLS verification stays enabled, response size/time are
+  bounded, and identity, callback, grants and public authentication support are
+  validated. No arbitrary URL or JWKS URL is fetched. Cache-Control is respected
+  with a maximum five-minute metadata cache.
+- All issuer strings use the exact public origin without a trailing slash.
+  HTTP Basic credentials can be supplied solely in the Authorization header;
+  the adapter supplies the SDK's internal form field while retaining its checks.
 - Consent requires the owner token, an exact same-origin POST, a one-use pending
   request and a CSRF value bound to a Secure/HttpOnly/SameSite cookie. No third-party
   assets load on that page. Client text is escaped and responses are not cached.
@@ -112,6 +132,8 @@ Rolling back the service to `phase7-research-api` removes MCP and retains REST.
 - Errors omit provider exceptions, input values and OAuth error descriptions.
   Existing response sanitization removes configured credential values and
   sensitive fields. Keep credentials out of tool arguments and prompts.
+- Production OAuth diagnostics log only fixed stage names and status codes,
+  never client IDs, queries, headers, bodies, codes or credentials.
 
 ## Read-only tools and contracts
 
@@ -167,6 +189,9 @@ current-protocol list/call, all research workflows, input/provider errors, exact
 tool inventory, REST parity, PKCE, redirects/resources, consent CSRF, confidential
 clients, expiry, code replay, refresh replay, revocation, scope, rate limits and
 host/origin/body limits. Providers are mocked and credentials are test values.
+Regression tests also compare issuer strings exactly, exercise header-only Basic,
+and rebuild the server to verify CIMD identity recovery while old grants remain
+invalid. CIMD metadata and network failures fail closed.
 The existing suite separately covers Streamlit and the research engines.
 
 Deployment checks must test authenticated initialization, tools/list and a real

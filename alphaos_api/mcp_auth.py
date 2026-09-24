@@ -1,16 +1,20 @@
 """Private-owner OAuth adapter. Protocol validation/PKCE use the official MCP SDK."""
 from collections import OrderedDict, deque
 from html import escape
+import base64
 import hashlib
 import hmac
 import json
+import logging
 import os
 import re
 import secrets
 import time
-from urllib.parse import urlencode, urlsplit, parse_qsl, urlunsplit
+from urllib.parse import urlencode, urlsplit, parse_qsl, urlunsplit, unquote
 
+import httpx
 from pydantic import AnyHttpUrl
+from starlette.requests import Request
 from starlette.responses import HTMLResponse, JSONResponse, RedirectResponse
 from starlette.routing import Route
 from mcp.server.auth.provider import (AccessToken, AuthorizationCode, RefreshToken,
@@ -21,9 +25,12 @@ from mcp.server.auth.handlers.register import RegistrationHandler
 from mcp.server.auth.middleware.client_auth import ClientAuthenticator
 from mcp.server.auth.routes import build_metadata
 from mcp.server.auth.settings import ClientRegistrationOptions, RevocationOptions
-from mcp.shared.auth import OAuthToken
+from mcp.shared.auth import OAuthToken, OAuthClientInformationFull
 
 SCOPE = 'research:read'
+CHATGPT_CLIENT = 'https://chatgpt.com/oauth/client.json'
+CHATGPT_CALLBACK = 'https://chatgpt.com/connector_platform_oauth_redirect'
+logger = logging.getLogger(__name__)
 SECURITY_HEADERS = {'Cache-Control': 'no-store', 'Pragma': 'no-cache',
     'Referrer-Policy': 'no-referrer', 'X-Content-Type-Options': 'nosniff',
     'Content-Security-Policy': "default-src 'none'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'"}
@@ -68,6 +75,7 @@ class OwnerOAuth:
             raise ValueError('MCP public URL must be an HTTPS origin.')
         self.resource = self.base + '/mcp'
         self.clients = Store(128)
+        self.metadata_clients = Store(128)
         self.pending = Store(128)
         self.codes = Store(128)
         self.access = Store(512)
@@ -86,7 +94,75 @@ class OwnerOAuth:
         return False
 
     async def get_client(self, client_id):
+        # A published client identity is recoverable after process restart. Only
+        # exact official ChatGPT document locations may be fetched (no redirects).
+        if client_id == CHATGPT_CLIENT or re.fullmatch(
+                r'https://chatgpt\.com/oauth/[A-Za-z0-9_-]{1,100}/client\.json', client_id):
+            cached = self.metadata_clients.get(client_id)
+            if cached:
+                return cached
+            try:
+                document, ttl = await self.fetch_client_metadata(client_id)
+                methods = document.get('token_endpoint_auth_methods_supported')
+                if methods is None:
+                    methods = [document.get('token_endpoint_auth_method')]
+                if (document.get('client_id') != client_id or not isinstance(methods,list)
+                        or 'none' not in methods):
+                    return None
+                callback = (CHATGPT_CALLBACK if client_id == CHATGPT_CLIENT else
+                    'https://chatgpt.com/connector/oauth/'+client_id.split('/')[-2])
+                if document.get('redirect_uris') != [callback]:
+                    return None
+                if (set(document.get('grant_types',[])) != {'authorization_code','refresh_token'}
+                        or document.get('response_types') != ['code']):
+                    return None
+                client = OAuthClientInformationFull(client_id=client_id,
+                    redirect_uris=[callback],token_endpoint_auth_method='none',
+                    grant_types=['authorization_code','refresh_token'],response_types=['code'],
+                    scope=SCOPE,client_name='ChatGPT',application_type='web')
+                if ttl > 0:
+                    self.metadata_clients.put(client_id,client,ttl)
+                return client
+            except Exception:
+                return None
         return self.clients.get(client_id)
+
+    async def fetch_client_metadata(self, client_id):
+        async with httpx.AsyncClient(timeout=10,follow_redirects=False) as client:
+            async with client.stream('GET',client_id,headers={'Accept':'application/json'}) as response:
+                if response.status_code != 200 or 'application/json' not in response.headers.get('content-type',''):
+                    raise ValueError('Invalid client metadata')
+                body = bytearray()
+                async for chunk in response.aiter_bytes():
+                    body.extend(chunk)
+                    if len(body) > 65536:
+                        raise ValueError('Client metadata too large')
+                cache = response.headers.get('cache-control','').lower()
+                age = re.search(r'(?:^|,)\s*max-age=(\d+)',cache)
+                ttl = min(300,int(age[1])) if age else 60
+                if 'no-store' in cache or 'no-cache' in cache:
+                    ttl = 0
+                return json.loads(body),ttl
+
+    async def basic_client_request(self, request):
+        # SDK 2.2 requires form client_id even for RFC 6749 HTTP Basic.
+        # Adapt header-only requests; the SDK still verifies ID and secret.
+        header = request.headers.get('authorization','')
+        if not header.startswith('Basic '):
+            return request
+        form = await request.form()
+        if form.get('client_id'):
+            return request  # Let the SDK reject conflicting header/body IDs.
+        decoded = base64.b64decode(header[6:],validate=True).decode('utf-8')
+        client_id, _ = decoded.split(':',1)
+        body = urlencode([*form.multi_items(),('client_id',unquote(client_id))]).encode()
+        scope = dict(request.scope)
+        scope['headers'] = [(k,v) for k,v in scope['headers'] if k not in (b'content-length',b'content-type')]
+        scope['headers'] += [(b'content-type',b'application/x-www-form-urlencoded'),
+            (b'content-length',str(len(body)).encode())]
+        async def receive():
+            return {'type':'http.request','body':body,'more_body':False}
+        return Request(scope,receive)
 
     async def register_client(self, client_info):
         if not client_info.redirect_uris or len(client_info.redirect_uris) > 2:
@@ -179,6 +255,7 @@ class OwnerOAuth:
         if self.limited('revoke', 30):
             return JSONResponse({'error':'rate_limited'},429,headers=SECURITY_HEADERS)
         try:
+            request = await self.basic_client_request(request)
             client = await ClientAuthenticator(self).authenticate_request(request)
             form = await request.form()
             raw = str(form.get('token',''))
@@ -251,8 +328,12 @@ class OwnerOAuth:
         authenticator = ClientAuthenticator(self)
         metadata = build_metadata(AnyHttpUrl(self.base), None, options, RevocationOptions(enabled=True))
         data = metadata.model_dump(mode='json', exclude_none=True)
-        data.update(authorization_response_iss_parameter_supported=True,
-            token_endpoint_auth_methods_supported=['none','client_secret_post','client_secret_basic'])
+        # AnyHttpUrl normalizes an empty path to '/'. RFC 9207 requires exact
+        # equality with protected-resource authorization_servers and callback iss.
+        data.update(issuer=self.base,authorization_response_iss_parameter_supported=True,
+            client_id_metadata_document_supported=True,
+            token_endpoint_auth_methods_supported=['none','client_secret_post','client_secret_basic'],
+            revocation_endpoint_auth_methods_supported=['none','client_secret_post','client_secret_basic'])
 
         async def discovery(request):
             return JSONResponse(data, headers=SECURITY_HEADERS)
@@ -263,6 +344,7 @@ class OwnerOAuth:
                     return JSONResponse({'error':'rate_limited'}, 429, headers=SECURITY_HEADERS)
                 try:
                     if name == 'token':
+                        request = await self.basic_client_request(request)
                         form = await request.form()
                         if form.get('resource') != self.resource:
                             return JSONResponse({'error':'invalid_target'}, 400, headers=SECURITY_HEADERS)
@@ -287,9 +369,18 @@ class OwnerOAuth:
                 except Exception:
                     return JSONResponse({'error':'invalid_request'}, 400, headers=SECURITY_HEADERS)
             return call
-        return [Route('/.well-known/oauth-authorization-server', discovery),
+        routes = [Route('/.well-known/oauth-authorization-server', discovery),
             Route('/authorize', guarded(AuthorizationHandler(self),'authorize'), methods=['GET','POST']),
             Route('/register', guarded(RegistrationHandler(self,options),'register'), methods=['POST']),
             Route('/token', guarded(TokenHandler(self,authenticator),'token'), methods=['POST']),
             Route('/revoke', self.revoke, methods=['POST']),
             Route('/oauth/consent', self.consent, methods=['GET','POST'])]
+        # Safe stage/status diagnostics only: never URLs with queries, client IDs,
+        # headers, bodies, codes, tokens, or exception text.
+        def traced(endpoint, stage):
+            async def call(request):
+                response = await endpoint(request)
+                logger.warning('alphaos_oauth stage=%s status=%d',stage,response.status_code)
+                return response
+            return call
+        return [Route(route.path,traced(route.endpoint,route.path),methods=route.methods) for route in routes]
