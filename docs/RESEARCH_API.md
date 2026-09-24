@@ -1,5 +1,9 @@
 # AlphaOS Research API — Phase 7
 
+For ChatGPT Developer Mode, use the [Phase 8 MCP interface and OAuth setup](MCP.md).
+The REST schema and static bearer configuration below remain available to REST
+clients; they are not the remote MCP connection configuration.
+
 Read-only SPY/QQQ research using the same Phase 1–6 engines and Public adapter
 as Streamlit. It does not submit orders, select a winner, or rank candidates.
 Streamlit remains a separate application. No hosting resource is created by

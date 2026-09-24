@@ -292,3 +292,12 @@ unranked spread scans and saved-candidate research with bearer authentication.
 It runs separately from Streamlit using `python -m alphaos_api` and
 `requirements-api.txt`. See [deployment, HTTP/action contract, evidence definitions,
 cache lifetimes and limitations](docs/RESEARCH_API.md).
+
+### Phase 8: ChatGPT remote MCP
+
+The same API process now exposes ten read-only research tools through Streamable
+HTTP at `/mcp`, with a private OAuth consent flow and separate scoped tokens.
+Existing REST bearer authentication and research calculations are retained.
+See [ChatGPT configuration, deployment, authentication and restart limitations](docs/MCP.md).
+An actual ChatGPT connection and tool invocation are required to confirm the
+integration; protocol smoke tests alone are insufficient.
