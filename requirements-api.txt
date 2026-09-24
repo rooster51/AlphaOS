@@ -1,0 +1,9 @@
+# Standalone research server; does not install Streamlit or portfolio/UI packages.
+fastapi>=0.115.0,<1
+uvicorn>=0.30.0,<1
+pandas>=2.2.2,<4
+numpy>=1.26.4,<3
+python-dateutil>=2.9.0.post0,<3
+publicdotcom-py==0.1.17
+pandas-market-calendars==5.4.0
+tzdata>=2024.1
