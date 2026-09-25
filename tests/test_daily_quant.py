@@ -356,6 +356,8 @@ class DailyProviderTests(unittest.TestCase):
         self.assertIn("23 22 * * 1-5",workflow)
         self.assertIn('cancel-in-progress: false',workflow)
         self.assertIn('secrets.PUBLIC_API_SECRET',workflow)
+        self.assertIn('if [ -z "$PUBLIC_API_SECRET" ]; then',workflow)
+        self.assertIn('PUBLIC_API_SECRET is unavailable to this job',workflow)
         self.assertNotIn('--force-rebuild',workflow)
         self.assertIn('if: always()',workflow)
 
