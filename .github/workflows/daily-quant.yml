@@ -36,7 +36,12 @@ jobs:
         env:
           PUBLIC_API_SECRET: ${{ secrets.PUBLIC_API_SECRET }}
           PUBLIC_ACCOUNT_NUMBER: ${{ secrets.PUBLIC_ACCOUNT_NUMBER }}
-        run: python scripts/run_daily_quant.py
+        run: |
+          if [ -z "$PUBLIC_API_SECRET" ]; then
+            echo '::error::PUBLIC_API_SECRET is unavailable to this job. Configure it as an Actions repository secret, or attach the environment where it is stored.'
+            exit 1
+          fi
+          python scripts/run_daily_quant.py
       - name: Preserve collected artifacts even if one symbol failed
         if: always()
         uses: actions/upload-artifact@v4
