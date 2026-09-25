@@ -59,14 +59,57 @@ def authorize(client,client_id,**changes):
     return response,verifier
 
 
-def consent(client,location,**changes):
+def consent(client,location,origin=BASE,**changes):
     page=client.get(location)
     assert page.status_code==200,page.text
     csrf=re.search(r'name="csrf" value="([^"]+)"',page.text).group(1)
     ticket=parse_qs(urlsplit(location).query)['ticket'][0]
     form=dict(ticket=ticket,csrf=csrf,owner_token='owner-test-secret',decision='allow')
     form.update(changes)
-    return client.post('/oauth/consent',data=form,headers={'Origin':BASE}),form
+    return client.post('/oauth/consent',data=form,headers={} if origin is None else {'Origin':origin}),form
+
+
+@pytest.mark.parametrize('origin',[BASE,None,'null'])
+def test_consent_browser_origins_preserve_authorization_and_pkce(env,origin):
+    c,_,_,_=env
+    cid=registration(c).json()['client_id']
+    auth,verifier=authorize(c,cid)
+    rejected,_=consent(c,auth.headers['location'],origin=origin,owner_token='wrong')
+    assert rejected.status_code==403
+    approved,form=consent(c,auth.headers['location'],origin=origin)
+    assert approved.status_code==303
+    code=parse_qs(urlsplit(approved.headers['location']).query)['code'][0]
+    headers={} if origin is None else {'Origin':origin}
+    assert c.post('/oauth/consent',data=form,headers=headers).status_code==400
+    assert token_request(c,cid,code,'wrong-verifier').status_code==400
+    assert token_request(c,cid,code,verifier).status_code==200
+    assert token_request(c,cid,code,verifier).status_code==400
+
+
+@pytest.mark.parametrize('origin',[BASE,None,'null'])
+@pytest.mark.parametrize('failure',['foreign_origin','invalid_csrf','missing_cookie','expired_ticket'])
+def test_consent_origin_compatibility_retains_csrf_protections(env,origin,failure):
+    from alphaos_api.mcp_auth import fingerprint
+    c,_,app,_=env
+    cid=registration(c).json()['client_id'];auth,_=authorize(c,cid)
+    page=c.get(auth.headers['location'])
+    assert page.status_code==200
+    cookie_header=page.headers['set-cookie'].lower()
+    assert '__host-alphaos-consent=' in cookie_header
+    assert all(flag in cookie_header for flag in ('secure','httponly','samesite=lax','max-age=300'))
+    ticket=parse_qs(urlsplit(auth.headers['location']).query)['ticket'][0]
+    csrf=re.search(r'name="csrf" value="([^"]+)"',page.text).group(1)
+    form=dict(ticket=ticket,csrf=csrf,owner_token='owner-test-secret',decision='allow')
+    if failure=='foreign_origin':origin='https://evil.example'
+    elif failure=='invalid_csrf':form['csrf']='wrong'
+    elif failure=='missing_cookie':c.cookies.clear()
+    else:
+        key=fingerprint(ticket)
+        _,pending=app.state.oauth.pending.entries[key]
+        app.state.oauth.pending.entries[key]=(0,pending)
+    response=c.post('/oauth/consent',data=form,headers={} if origin is None else {'Origin':origin})
+    assert response.status_code==400
+    assert response.json()=={'error':'invalid_request'}
 
 
 def token_request(client,client_id,code,verifier,**changes):

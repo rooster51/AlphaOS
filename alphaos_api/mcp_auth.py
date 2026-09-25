@@ -307,9 +307,12 @@ class OwnerOAuth:
         ticket, csrf = str(form.get('ticket','')), str(form.get('csrf',''))
         pending = self.pending.get(fingerprint(ticket))
         cookie = request.cookies.get('__Host-alphaos-consent','')
+        # Browser form submissions can have an opaque or absent Origin. The
+        # pending ticket and double-submit/server-side CSRF checks still apply.
+        origin_valid = request.headers.get('origin') in (None, 'null', self.base)
         if (not pending or not csrf or not cookie or not hmac.compare_digest(csrf, cookie)
             or not hmac.compare_digest(fingerprint(csrf), pending['csrf'] or '')
-            or request.headers.get('origin') != self.base):
+            or not origin_valid):
             return JSONResponse({'error': 'invalid_request'}, 400, headers=SECURITY_HEADERS)
         params, client = pending['params'], pending['client']
         fields = {'state': params.state, 'iss': self.base}

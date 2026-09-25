@@ -91,3 +91,31 @@ No protocol/authentication behavior changes in this diagnostic patch.
 Set `ALPHAOS_PROTOCOL_DIAGNOSTICS=0` to disable this temporary trace after
 diagnosis. Test coverage checks that planted sensitive values are absent from
 logs, that tool behavior is retained, and that disabling diagnostics works.
+
+## Targeted consent POST correction — 2026-09-25
+
+Actual ChatGPT fresh creation selected CIMD and reached `/oauth/consent` at
+13:23:24 UTC (200). The user's form POST at 13:26:35 UTC returned 400
+`invalid_request`, before owner-token validation and within the 300-second TTL.
+The diagnostic Origin category was `other`: this excludes missing Origin and
+ChatGPT's origin, but cannot distinguish literal `null`, AlphaOS's origin, or
+another explicit origin. No raw Origin was recorded; exact historical attribution
+is unavailable. The unchanged instance identifier was `vm98k`.
+
+The consent page serves `Referrer-Policy: no-referrer`. Browser form POSTs can
+send `Origin: null` under that policy, unlike the HTTP tests which supplied the
+AlphaOS origin explicitly. See [MDN Referrer-Policy](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Referrer-Policy).
+This is a concrete browser compatibility defect in the strict equality check;
+the historical log alone does not prove it was the only failed validation.
+
+The targeted correction accepts absent Origin, literal `null`, or the exact
+AlphaOS origin inside `OwnerOAuth.consent`; every other explicit Origin remains
+rejected. Pending ticket, 300-second expiry, Secure/HttpOnly/SameSite cookie,
+form CSRF and server-side fingerprint comparisons, owner-token checks, PKCE,
+code consumption, rate limits and all security headers remain unchanged.
+Regression cases exercise all three accepted Origin forms, foreign Origin,
+CSRF mismatch, absent cookie, expired/replayed ticket, wrong owner token,
+successful authorization, and PKCE/code replay checks.
+
+Actual ChatGPT consent completion and a tool invocation remain required for
+end-to-end acceptance. No quant/research changes are included.
