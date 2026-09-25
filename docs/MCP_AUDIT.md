@@ -68,3 +68,26 @@ any grant is issued. See [OpenAI OAuth requirements](https://developers.openai.c
 
 Final acceptance requires actual ChatGPT app creation and an authenticated tool
 invocation. Independent HTTP smoke success is not a substitute.
+
+## Follow-up trace — 2026-09-25
+
+Confirmed local and GitHub Phase 8 HEAD were
+`a1585a6aa144cd8c4ed7aca394c2c1e8954526e4`. Render marked that exact SHA live,
+with deployment timestamp September 24, 2026 at 17:14:51 EDT. The public issuer
+now matches exactly and metadata advertises CIMD. Health returned 200;
+unauthenticated GET/POST/OPTIONS `/mcp` returned the Bearer 401 challenge.
+An independent CIMD/PKCE exchange, initialize, tools/list and QQQ quote succeeded.
+These checks are deliberately distinguished from an actual ChatGPT attempt.
+
+Temporary protocol diagnostics cover only fixed MCP/OAuth paths. Each request
+logs a generated correlation ID, UTC timestamp, method, path, status, classified
+Accept/Content-Type/Origin/protocol-version values, and allowlisted RPC/OAuth
+stages and error codes. DCR and CIMD are distinguished; callback paths are
+classified rather than echoing arbitrary URLs or IDs. CIMD fetch/validation
+outcomes use the same correlation ID. No authorization headers, cookies, bodies,
+query strings, client secrets, tokens, codes or PKCE verifiers are recorded.
+No protocol/authentication behavior changes in this diagnostic patch.
+
+Set `ALPHAOS_PROTOCOL_DIAGNOSTICS=0` to disable this temporary trace after
+diagnosis. Test coverage checks that planted sensitive values are absent from
+logs, that tool behavior is retained, and that disabling diagnostics works.

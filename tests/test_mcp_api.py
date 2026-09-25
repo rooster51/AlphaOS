@@ -420,3 +420,27 @@ def test_cimd_http_response_boundaries(env,monkeypatch,failure):
     monkeypatch.setattr(httpx,'AsyncClient',factory)
     assert authorize(c,CHATGPT_CLIENT)[0].status_code==400
     assert requested==[CHATGPT_CLIENT]
+
+
+def test_protocol_diagnostics_allowlist_and_disable(env,monkeypatch,caplog):
+    from alphaos_api.protocol_diagnostics import logger,redirect_kind
+    monkeypatch.setattr(logger,'disabled',False)
+    monkeypatch.setattr(logger,'propagate',True)
+    caplog.set_level('WARNING',logger=logger.name)
+    c,_,_,_=env
+    response=c.post('/mcp?token=never-log-query',headers={'Authorization':'Bearer never-log-auth',
+        'Cookie':'secret=never-log-cookie','Origin':'https://never-log-origin.example',
+        'Accept':'never-log-accept','MCP-Protocol-Version':'never-log-version'},
+        json={'method':'never-log-method','params':{'code':'never-log-code'}})
+    assert response.status_code==401
+    assert '"path": "/mcp"' in caplog.text and '"status": 401' in caplog.text
+    assert 'never-log-' not in caplog.text
+    _,tokens=login(c)
+    assert not call(c,tokens['access_token'],'live_quote',{'symbol':'SPY'})['isError']
+    assert '"rpc_method": "tools/call"' in caplog.text
+    assert tokens['access_token'] not in caplog.text and tokens['refresh_token'] not in caplog.text
+    assert 'owner-test-secret' not in caplog.text
+    assert redirect_kind('https://[')=='other'
+    caplog.clear();monkeypatch.setenv('ALPHAOS_PROTOCOL_DIAGNOSTICS','0')
+    assert rpc(c,None,'tools/list').status_code==401
+    assert 'alphaos_protocol' not in caplog.text

@@ -26,6 +26,7 @@ from mcp.server.auth.middleware.client_auth import ClientAuthenticator
 from mcp.server.auth.routes import build_metadata
 from mcp.server.auth.settings import ClientRegistrationOptions, RevocationOptions
 from mcp.shared.auth import OAuthToken, OAuthClientInformationFull
+from .protocol_diagnostics import emit, client_kind
 
 SCOPE = 'research:read'
 CHATGPT_CLIENT = 'https://chatgpt.com/oauth/client.json'
@@ -100,6 +101,7 @@ class OwnerOAuth:
                 r'https://chatgpt\.com/oauth/[A-Za-z0-9_-]{1,100}/client\.json', client_id):
             cached = self.metadata_clients.get(client_id)
             if cached:
+                emit('client_resolution',registration=client_kind(client_id),result='cache_hit')
                 return cached
             try:
                 document, ttl = await self.fetch_client_metadata(client_id)
@@ -108,13 +110,16 @@ class OwnerOAuth:
                     methods = [document.get('token_endpoint_auth_method')]
                 if (document.get('client_id') != client_id or not isinstance(methods,list)
                         or 'none' not in methods):
+                    emit('client_resolution',registration=client_kind(client_id),result='identity_or_auth_method_rejected')
                     return None
                 callback = (CHATGPT_CALLBACK if client_id == CHATGPT_CLIENT else
                     'https://chatgpt.com/connector/oauth/'+client_id.split('/')[-2])
                 if document.get('redirect_uris') != [callback]:
+                    emit('client_resolution',registration=client_kind(client_id),result='redirect_rejected')
                     return None
                 if (set(document.get('grant_types',[])) != {'authorization_code','refresh_token'}
                         or document.get('response_types') != ['code']):
+                    emit('client_resolution',registration=client_kind(client_id),result='grant_or_response_type_rejected')
                     return None
                 client = OAuthClientInformationFull(client_id=client_id,
                     redirect_uris=[callback],token_endpoint_auth_method='none',
@@ -122,14 +127,19 @@ class OwnerOAuth:
                     scope=SCOPE,client_name='ChatGPT',application_type='web')
                 if ttl > 0:
                     self.metadata_clients.put(client_id,client,ttl)
+                emit('client_resolution',registration=client_kind(client_id),result='resolved')
                 return client
             except Exception:
+                emit('client_resolution',registration=client_kind(client_id),result='fetch_or_validation_failed')
                 return None
-        return self.clients.get(client_id)
+        client=self.clients.get(client_id)
+        emit('client_resolution',registration='dcr',result='found' if client else 'unknown_client')
+        return client
 
     async def fetch_client_metadata(self, client_id):
         async with httpx.AsyncClient(timeout=10,follow_redirects=False) as client:
             async with client.stream('GET',client_id,headers={'Accept':'application/json'}) as response:
+                emit('cimd_fetch',status=response.status_code)
                 if response.status_code != 200 or 'application/json' not in response.headers.get('content-type',''):
                     raise ValueError('Invalid client metadata')
                 body = bytearray()

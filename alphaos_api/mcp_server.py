@@ -14,6 +14,7 @@ from mcp.server.transport_security import TransportSecuritySettings, RequestBody
 from mcp_types import CallToolResult, TextContent, ToolAnnotations
 from .contracts import TradeRequest, CompareRequest, SCHEMA_VERSION
 from .mcp_auth import OwnerOAuth, SCOPE
+from .protocol_diagnostics import ProtocolDiagnostics
 
 INSTRUCTIONS = '''AlphaOS provides read-only market research, never trade execution or a recommended winner.
 Preserve sample sizes, timestamps and caveats. Candidate generator order is not a ranking.
@@ -123,6 +124,7 @@ def build_mcp(app, sanitize):
             allowed_origins=[oauth.base,'https://chatgpt.com']))
     app.router.routes.extend(oauth.routes())
     app.add_middleware(RequestBodyLimitMiddleware,max_body_size=131072)
+    app.add_middleware(ProtocolDiagnostics)
     app.mount('/',mcp_app)
     app.state.mcp=server
     app.state.oauth=oauth
