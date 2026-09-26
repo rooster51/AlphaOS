@@ -112,6 +112,30 @@ def test_consent_origin_compatibility_retains_csrf_protections(env,origin,failur
     assert response.json()=={'error':'invalid_request'}
 
 
+@pytest.mark.parametrize('callback',[CALLBACK,'https://chatgpt.com/connector/oauth/test-client'])
+def test_consent_csp_allows_only_validated_callback(env,callback):
+    from alphaos_api.mcp_auth import SECURITY_HEADERS
+    c,_,_,_=env
+    original=dict(SECURITY_HEADERS)
+    assert registration(c,redirect_uris=['https://evil.example/callback']).status_code==400
+    cid=registration(c,redirect_uris=[callback]).json()['client_id']
+    rejected,_=authorize(c,cid,redirect_uri='https://evil.example/callback')
+    assert rejected.status_code==400
+    auth,_=authorize(c,cid,redirect_uri=callback)
+    page=c.get(auth.headers['location'])
+    assert page.status_code==200
+    csp=page.headers['content-security-policy']
+    directives=dict((p.strip().split()[0],p.strip().split()[1:]) for p in csp.split(';') if p.strip())
+    assert directives['form-action']==["'self'",callback]
+    assert '*' not in csp
+    assert 'https://evil.example/callback' not in directives['form-action']
+    assert 'https://chatgpt.com/arbitrary' not in directives['form-action']
+    assert csp.replace("form-action 'self' "+callback,"form-action 'self'")==original['Content-Security-Policy']
+    for name,value in original.items():
+        if name!='Content-Security-Policy':assert page.headers[name]==value
+    assert SECURITY_HEADERS==original
+
+
 def token_request(client,client_id,code,verifier,**changes):
     form=dict(grant_type='authorization_code',client_id=client_id,code=code,
         code_verifier=verifier,redirect_uri=CALLBACK,resource=BASE+'/mcp')

@@ -298,7 +298,12 @@ class OwnerOAuth:
 <label>AlphaOS owner token <input type="password" name="owner_token" required autocomplete="off"></label>
 <button name="decision" value="allow">Allow research access</button>
 <button name="decision" value="deny" formnovalidate>Cancel</button></form></body></html>'''
-            response = HTMLResponse(html, headers=SECURITY_HEADERS)
+            # The SDK has already validated this exact callback. Browsers apply
+            # form-action to the POST's redirect as well as its initial target.
+            headers = dict(SECURITY_HEADERS)
+            headers['Content-Security-Policy'] = headers['Content-Security-Policy'].replace(
+                "form-action 'self'", "form-action 'self' " + str(pending['params'].redirect_uri))
+            response = HTMLResponse(html, headers=headers)
             response.set_cookie('__Host-alphaos-consent', csrf, max_age=300, secure=True, httponly=True, samesite='lax', path='/')
             return response
         if self.limited('consent', 10):
