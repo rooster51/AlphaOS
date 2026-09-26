@@ -16,10 +16,11 @@ from modules.history_diagnostics import HistoryError
 from .contracts import APIError,SCHEMA_VERSION,CAVEATS
 from .cache import TTLStore
 from .provider import MarketProvider
+from modules.quote_freshness import freshness, normalize_timestamp
 
 NY=ZoneInfo('America/New_York')
 HORIZONS=(1,2,3,5,10)
-QUOTE_FIELDS=('symbol','last','bid','ask','previous_close','change','change_pct','volume','updated_at')
+QUOTE_FIELDS=('symbol','last','bid','ask','previous_close','change','change_pct','volume','updated_at','provider_timestamp_field','provider_timestamp','provider_timestamp_representation')
 LEG_FIELDS=('contract','type','strike','bid','ask','mid','bid_timestamp','ask_timestamp','iv','delta','gamma','theta','vega','rho','volume','open_interest')
 
 
@@ -86,9 +87,22 @@ class ResearchService:
             matches=[q for q in rows if q.get('symbol')==symbol]
             if len(matches)!=1 or not finite(matches[0].get('last')) or matches[0]['last']<=0:
                 raise APIError('missing_quote',503)
-            q={k:matches[0].get(k) for k in QUOTE_FIELDS};q['updated_at']=stamp(q['updated_at'])
-            return dict(quote=q,retrieved_at=self.clock().isoformat())
-        return self.data.put(('quote',symbol),load(),30) if refresh else self.data.load(('quote',symbol),30,load)
+            q={k:matches[0].get(k) for k in QUOTE_FIELDS};q['updated_at']=normalize_timestamp(q['updated_at'])
+            q['retrieved_at']=self.clock().isoformat()
+            return dict(quote=q,retrieved_at=q['retrieved_at'])
+        key=('quote',symbol)
+        with self.data.lock:
+            cached=None if refresh else self.data.get(key)
+            result=cached if cached is not None else self.data.put(key,load(),30)
+        return {**result,'cache':dict(hit=cached is not None,key=list(key),ttl_seconds=30,cached_at=result['retrieved_at']),
+            'freshness':freshness(result['quote'],self.clock(),result['retrieved_at'])}
+
+    def require_quote(self,bundle,live=False):
+        quality=freshness(bundle['quote'],self.clock(),bundle['retrieved_at'])
+        if not quality['usable_for_live_research' if live else 'usable_for_contextual_research']:
+            code='market_closed_quote' if quality['data_status']=='latest_available' else 'stale_quote' if quality['data_status']=='stale' else 'quote_freshness_unknown'
+            raise APIError(code,503)
+        return quality
 
     def expiration(self,value):
         if isinstance(value,str):
@@ -131,14 +145,16 @@ class ResearchService:
         if snapshot_id:
             bundle=self.snapshots.get(snapshot_id)
             if bundle is None:raise APIError('stale_snapshot',410)
+            if bundle['source']=='Public':self.require_quote(bundle['quote'])
             s=bundle['prepared']
             if s['dataset']['metadata']['symbol']!=symbol or s['horizon']!=horizon or (spot is not None and s['current_spot']!=spot):
                 raise APIError('snapshot_mismatch',409)
             return bundle
         q=(quote_bundle or self.quote(symbol,refresh)) if spot is None else dict(quote={'symbol':symbol,'last':spot,'updated_at':None},retrieved_at=self.clock().isoformat())
+        if spot is None:self.require_quote(q)
         if not finite(q['quote']['last']) or q['quote']['last']<=0:raise APIError('invalid_spot')
         day=self.today()
-        key=('snapshot',symbol,horizon,digest(q),str(day))
+        key=('snapshot',symbol,horizon,digest(dict(quote=q['quote'],retrieved_at=q['retrieved_at'])),str(day))
         def create():
             dataset=self.data.load(('history',symbol,str(day)),300,lambda:self.provider_call(self.provider.history,symbol,day))
             try:
@@ -154,9 +170,13 @@ class ResearchService:
     def meta(self,bundle=None,symbol=None,horizon=None,quote=None):
         s=bundle['prepared'] if bundle else None
         q=bundle['quote']['quote'] if bundle else quote or {}
+        quality=freshness(q,self.clock(),bundle['quote']['retrieved_at'] if bundle else None) if q else None
+        explicit=bundle is not None and bundle['source']!='Public'
         return dict(schema_version=SCHEMA_VERSION,generated_at=self.clock().isoformat(),source=bundle['source'] if bundle else 'Public',
             symbol=s['dataset']['metadata']['symbol'] if s else symbol,research_session=s['research_date'] if s else None,
-            research_close=s['research_close'] if s else None,quote_as_of=q.get('updated_at'),current_spot=q.get('last'),
+            research_close=s['research_close'] if s else None,quote_as_of=q.get('updated_at'),
+            current_spot=q.get('last') if explicit or quality and quality['usable_for_live_research'] else None,
+            quote_freshness=quality if not explicit else dict(freshness='unknown',usable_for_live_research=False,source='Explicit user input; not a verified live quote'),
             observed_session_horizon=s['horizon'] if s else horizon,snapshot_id=s['snapshot_id'] if s else None)
 
     def envelope(self,evidence,bundle=None,**meta):
@@ -167,8 +187,10 @@ class ResearchService:
         ages=[(self.clock()-pd.Timestamp(v).to_pydatetime()).total_seconds() for v in values if stamp(v)]
         return dict(timestamps_incomplete=any(not stamp(v) for v in values),
             oldest_quote_age_seconds=max(ages) if ages else None,
-            stale_quote=any(age>900 for age in ages),future_timestamp=any(age < -60 for age in ages),
-            note='Last available quotes; delay/market-close status is unverified. Older than 15 minutes is flagged, not silently refreshed.')
+            stale_quote=(freshness(quote,self.clock())['data_status']=='stale' if quote else False) or any(
+                (self.clock()-pd.Timestamp(v).to_pydatetime()).total_seconds()>900 for leg in legs for v in (leg.get('bid_timestamp'),leg.get('ask_timestamp')) if stamp(v)),
+            future_timestamp=any(age < -60 for age in ages),
+            note='Underlying uses the shared calendar freshness contract. Option-leg ages retain the 15-minute warning; option session/delay status is unverified.')
 
     def validate_legs(self,short,long,kind,symbol,expiration):
         width=short['strike']-long['strike'] if kind=='put' else long['strike']-short['strike']
@@ -193,7 +215,8 @@ class ResearchService:
         if kind not in ('put','call'):raise APIError('invalid_option_type')
         if not all(finite(v) and v>0 for v in (short_strike,long_strike)):raise APIError('invalid_strike')
         if (short_strike-long_strike if kind=='put' else long_strike-short_strike)<=0:raise APIError('invalid_vertical_orientation')
-        q=self.quote(symbol,refresh);chain=self.chain(symbol,expiration,refresh)
+        q=self.quote(symbol,refresh);self.require_quote(q,live=True)
+        chain=self.chain(symbol,expiration,refresh)
         pool=chain['chain']['puts' if kind=='put' else 'calls']
         matches=[[l for l in pool if l.get('strike')==strike] for strike in (short_strike,long_strike)]
         if any(len(m)!=1 for m in matches):raise APIError('contract_unavailable',404)
@@ -204,7 +227,7 @@ class ResearchService:
             legs=[{**short,'qty':-1},{**long,'qty':1}])
         # snapshot reuses the exact cached underlying quote, not a new underlying request.
         bundle=self.snapshot(symbol,horizon,quote_bundle=q)
-        if bundle['quote']!=q:raise APIError('snapshot_mismatch',409)
+        if bundle['quote']['quote']!=q['quote'] or bundle['quote']['retrieved_at']!=q['retrieved_at']:raise APIError('snapshot_mismatch',409)
         return bundle,trade,dict(underlying=q,chain_retrieved_at=chain['retrieved_at'],chain_quality=chain['quality'],short_contract=short,long_contract=long,
             pricing_method='short bid minus long ask; hypothetical natural fill',timing=self.timing(q['quote'],[short,long]))
 
@@ -220,6 +243,7 @@ class ResearchService:
             legs=legs,shares=0,fees=0,strategy='Explicit vertical credit spread',source='Explicit user input; no quote inferred')
 
     def research(self,bundle,trade,method='tolerance',**friction):
+        if bundle['source']=='Public':self.require_quote(bundle['quote'],live=True)
         s=bundle['prepared'];dataset=s['dataset']
         try:
             r=research_workspace(dataset['features'][['date','symbol','open','high','low','close']],trade,
@@ -256,7 +280,8 @@ class ResearchService:
         if not exps:raise APIError('expiration_unavailable',404)
         if len(exps)>5:raise APIError('scan_scope_too_large')
         if refresh:self.quote(symbol,True)
-        bundle=self.snapshot(symbol,horizon);s=bundle['prepared'];spot=s['current_spot'];rows=[];chains=[];excluded=[]
+        bundle=self.snapshot(symbol,horizon);self.require_quote(bundle['quote'],live=True)
+        s=bundle['prepared'];spot=s['current_spot'];rows=[];chains=[];excluded=[]
         if s['analog']['analogs'].empty:raise APIError('insufficient_analog_sample')
         for expiry in exps:
             c=self.chain(symbol,expiry,refresh);chains.append(c)

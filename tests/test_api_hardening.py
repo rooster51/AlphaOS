@@ -171,8 +171,12 @@ def test_snapshot_reuse_and_mismatch(env):
 
 def test_stale_and_incomplete_timestamps_are_reported(env):
     c,p,_,_=env;p.quote.return_value[0]['updated_at']='2026-09-23T15:00:00Z';p.chain.return_value['puts'][-1]['bid_timestamp']=None
-    r=vertical(c);assert r.status_code==200,r.text
-    timing=r.json()['evidence']['quotes']['timing'];assert timing['stale_quote'] and timing['timestamps_incomplete']
+    r=vertical(c);assert r.status_code==503,r.text
+    assert r.json()['error']['code']=='stale_quote'
+    quote=c.get('/v1/quote/SPY').json()
+    assert quote['evidence']['timing']['stale_quote']
+    assert quote['meta']['current_spot'] is None
+    assert c.get('/v1/options/SPY/chain/2026-09-25').json()['evidence']['quality']['timing']['timestamps_incomplete']
 
 
 def test_required_credit_equations_use_existing_payoff(env):
@@ -248,6 +252,7 @@ def test_cache_defensive_copy_and_day_cutoff(env):
     s=service.snapshot('SPY',3);s['prepared']['current_spot']=1234
     assert service.snapshot('SPY',3)['prepared']['current_spot']==100
     clock.value=datetime(2026,9,25,1,tzinfo=timezone.utc) # Still Sep 24 in New York.
+    p.quote.return_value[0]['updated_at']='2026-09-24T19:59:59Z' # Valid completed-session observation.
     service.snapshot('SPY',3)
     assert p.history.call_args.args[1]==date(2026,9,24)
 

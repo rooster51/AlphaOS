@@ -50,6 +50,7 @@ class ResponseMeta(BaseModel):
     research_close: float | None
     quote_as_of: str | None
     current_spot: float | None
+    quote_freshness: dict | None = None
     observed_session_horizon: int | None
     snapshot_id: str | None
 
