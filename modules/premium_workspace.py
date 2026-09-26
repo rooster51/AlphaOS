@@ -11,6 +11,7 @@ from modules.premium_engine import CATALOG, demo_chain, generate, payoff
 from modules.ui import configure_page
 from modules.selector_research import build_scan_research, annotate_candidates, research_columns, select_candidate
 from modules.price_structure import nearest_levels
+from modules.quote_freshness import require_research_quote, QuoteUnavailable
 
 
 def money(value):
@@ -108,6 +109,9 @@ def render():
                         q = next((q for q in quotes if q["symbol"] == symbol), None)
                         if not q or not q.get("last") or not isfinite(q["last"]) or q["last"] <= 0:
                             raise ValueError("Underlying quote unavailable.")
+                        quote_status = require_research_quote(q)
+                        if not quote_status['usable_for_execution_analysis']:
+                            errors.append('Underlying bid/ask is missing or suspect. Last-price research remains available; execution-sensitive analysis is not supported by this underlying quote.')
                         spot = q["last"]
                         quote_time = str(q.get("updated_at") or "Unavailable")
                         if symbol in ('SPY','QQQ'):
@@ -156,6 +160,9 @@ def render():
                         research_snapshot=research_snapshot, research_horizon=research_horizon, retrieved_at=now.isoformat(),
                         spot=spot, fetched=now.strftime("%Y-%m-%d %H:%M %Z"), quote_time=quote_time,
                         scope=f"{low}–{high} DTE · {pricing} fills · {iv_mode} · Minimum net credit ${min_credit:g} · Short strikes within {max_distance}%", ranking=ranking, errors=errors)
+                except QuoteUnavailable as exc:
+                    st.session_state.pop("premium_result", None)
+                    st.warning(str(exc))
                 except Exception:
                     st.session_state.pop("premium_result", None)
                     st.error("Could not load market data. Check the Public connection in Settings and try again. No demo data was substituted.")
@@ -163,6 +170,11 @@ def render():
         if not result or result["source"] != source or "ranking" not in result:
             st.caption("Choose your horizon and run a scan to compare potential trades.")
             return
+        if not demo:
+            try:
+                require_research_quote(dict(last=result['spot'],updated_at=result['quote_time']),retrieved_at=result.get('retrieved_at'))
+            except QuoteUnavailable as exc:
+                st.warning(str(exc)); return
         rows = result["rows"]
         st.caption(f"{result['symbol']} · {result['scope']} · Retrieved {result['fetched']} · Underlying timestamp: {result['quote_time']}")
         st.caption("Last submitted scan. Submit again to apply changed filters. Provider bid/ask timestamps appear in the contract details when available; retrieval time is not exchange time.")

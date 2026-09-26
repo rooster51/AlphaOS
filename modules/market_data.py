@@ -1,4 +1,5 @@
 from __future__ import annotations
+from modules.quote_freshness import require_research_quote, freshness
 
 import pandas as pd
 
@@ -216,13 +217,15 @@ def market_pulse() -> tuple[list[dict], str]:
             if metrics is None:
                 continue
             quote = quotes.get(symbol, {})
-            last = quote.get("last") or metrics["last"]
+            require_research_quote(quote,live=False)
+            last = quote["last"]
             score = _trend_score({**metrics, "last": last})
             day_score = _day_trend_score({**metrics, "last": last}, quote)
             rows.append(
                 {
                     "symbol": symbol,
                     "last": last,
+                    "quote_freshness": freshness(quote),
                     "change": quote.get("change_pct"),
                     "volume": quote.get("volume"),
                     "day_bias": _outlook_from_score(day_score),
@@ -232,7 +235,7 @@ def market_pulse() -> tuple[list[dict], str]:
                     "20D %": round(metrics["return_20d"], 2),
                 }
             )
-        return rows, "Public.com live + historical"
+        return rows, "Public.com dated observations + historical (not verified live entries)"
     except Exception:
         return [], "Public.com unavailable"
 
@@ -262,12 +265,13 @@ def dashboard_pulse() -> tuple[list[dict], str]:
                 {
                     "symbol": quote["symbol"],
                     "last": quote.get("last"),
+                    "quote_freshness": freshness(quote),
                     "change": change_pct,
                     "signal": signal,
                     "score": score,
                 }
             )
-        return rows, "Public.com live quotes"
+        return rows, "Public.com dated quotes; check observation freshness"
     except Exception:
         return [], "Public.com unavailable"
 
@@ -295,7 +299,8 @@ def symbol_analysis(symbol: str, horizon: str | None = None) -> tuple[dict | Non
         quote_symbols = tuple(dict.fromkeys((symbol, "SPY", "QQQ")))
         quote_rows = get_public_quotes(quote_symbols)
         quote_map = {row["symbol"]: row for row in quote_rows}
-        quote = quote_map.get(symbol, quote_rows[0] if quote_rows else {})
+        quote = quote_map.get(symbol, {})
+        require_research_quote(quote,live=False)
         market_change = _market_change(quote_map)
         try:
             history = get_public_price_history(symbol)
@@ -328,6 +333,7 @@ def symbol_analysis(symbol: str, horizon: str | None = None) -> tuple[dict | Non
                 {
                     "symbol": symbol,
                     "last": last,
+                    "quote_freshness": freshness(quote),
                     "change_pct": quote.get("change_pct"),
                     "return_5d": 0.0,
                     "return_20d": 0.0,
@@ -343,10 +349,11 @@ def symbol_analysis(symbol: str, horizon: str | None = None) -> tuple[dict | Non
                     "timeframe_model": _timeframe_label(horizon),
                     "volatility": volatility,
                 },
-                "Public.com live quote",
+                "Public.com dated quote; not a verified live entry",
             )
 
-        last = quote.get("last") or metrics["last"]
+        require_research_quote(quote,live=False)
+        last = quote["last"]
         metrics = {**metrics, "last": last}
         score = _trend_score(metrics, horizon)
         swing_score = _trend_score(metrics, "Swing (2-8 weeks)")
@@ -387,7 +394,7 @@ def symbol_analysis(symbol: str, horizon: str | None = None) -> tuple[dict | Non
                 "timeframe_model": _timeframe_label(horizon),
                 "volatility": volatility,
             },
-            "Public.com live + historical",
+            "Public.com dated observations + historical (not verified live entries)",
         )
     except Exception:
         return None, "Public.com unavailable"
@@ -434,7 +441,9 @@ def rotation_table() -> tuple[pd.DataFrame, str]:
                 {
                     "Group": group,
                     "Symbol": symbol,
-                    "Last": quotes.get(symbol, {}).get("last") or metrics["last"],
+                    "Last": quotes.get(symbol, {}).get("last"),
+                    "Quote status": freshness(quotes.get(symbol, {}))["data_status"],
+                    "Quote timestamp": quotes.get(symbol, {}).get("updated_at"),
                     "5D %": round(metrics["return_5d"], 2),
                     "20D %": round(metrics["return_20d"], 2),
                     "Rel Strength vs SPY %": round(relative_strength, 2),
@@ -459,7 +468,7 @@ def rotation_table() -> tuple[pd.DataFrame, str]:
         )
         return (
             frame.drop(columns="_composite").sort_values("Score", ascending=False),
-            "Public.com live + historical",
+            "Public.com dated observations + historical (not verified live entries)",
         )
     except Exception:
         return pd.DataFrame(columns=columns), "Public.com unavailable"
@@ -505,7 +514,8 @@ def scanner_results() -> tuple[pd.DataFrame, str]:
             if metrics is None:
                 continue
             quote = quotes.get(symbol, {})
-            last = quote.get("last") or metrics["last"]
+            require_research_quote(quote,live=False)
+            last = quote["last"]
             score = _trend_score({**metrics, "last": last})
             volume_ratio = metrics["volume_ratio"]
             if volume_ratio is not None:
@@ -516,6 +526,8 @@ def scanner_results() -> tuple[pd.DataFrame, str]:
                 {
                     "Symbol": symbol,
                     "Last": last,
+                    "Quote status": freshness(quote)["data_status"],
+                    "Quote timestamp": quote.get("updated_at"),
                     "Change %": quote.get("change_pct"),
                     "Setup": _scanner_setup({**metrics, "last": last}),
                     "Score": score,
@@ -531,7 +543,7 @@ def scanner_results() -> tuple[pd.DataFrame, str]:
             return frame, "Public.com unavailable"
         return (
             frame.sort_values("Score", ascending=False),
-            "Public.com live + historical",
+            "Public.com dated observations + historical (not verified live entries)",
         )
     except Exception:
         return pd.DataFrame(columns=columns), "Public.com unavailable"

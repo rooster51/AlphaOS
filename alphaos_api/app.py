@@ -177,3 +177,6 @@ def compare_trades(req:CompareRequest):
 
 
 app.include_router(router)
+
+from .mcp_server import build_mcp
+build_mcp(app, sanitized)

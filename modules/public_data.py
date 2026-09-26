@@ -91,9 +91,18 @@ def get_public_account_summaries() -> list[dict]:
 
 
 @st.cache_data(ttl=30, show_spinner=False)
-def get_public_quotes(symbols: tuple[str, ...]) -> list[dict]:
+def _cached_public_quotes(symbols: tuple[str, ...]) -> list[dict]:
     from modules.public_provider import get_public_quotes as shared
     return shared(symbols, _context=_public_context)
+
+
+def get_public_quotes(symbols: tuple[str, ...]) -> list[dict]:
+    from modules.quote_freshness import freshness
+    # Re-evaluate observation age on every read, including Streamlit cache hits.
+    return [{**q, 'freshness':freshness(q)} for q in _cached_public_quotes(symbols)]
+
+
+get_public_quotes.clear = _cached_public_quotes.clear
 
 
 @st.cache_data(ttl=300, show_spinner=False)

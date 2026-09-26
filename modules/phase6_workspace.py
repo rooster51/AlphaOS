@@ -11,6 +11,7 @@ from modules.daily_archive import canonical_bytes, digest
 from modules.options_payoff import validate_trade
 from modules.phase6_research import research_workspace, chain_verticals, compare_candidates
 from modules.historical_analogs import sample_warning
+from modules.quote_freshness import freshness
 
 
 def render_phase6():
@@ -29,6 +30,10 @@ def render_phase6():
         except ValueError:
             st.info('Save a matching trade in Strategy Selector or Options stress lab first.'); return
         context=saved.get('research_context') or {}
+        if source=='Selected Strategy Selector candidate' and not str(saved.get('source','')).startswith('Demo'):
+            quality=freshness(dict(last=saved['spot'],updated_at=saved.get('quote_timestamp') or context.get('quote_timestamp')))
+            if not quality['usable_for_live_research']:
+                st.warning('Saved candidate quote is stale, unknown or market closed. This workspace is non-live historical scenario research; its saved spot is not a new live entry price.')
         proposed=st.session_state.get('quant_selected_research') if source=='Selected Strategy Selector candidate' else None
         if valid_saved_snapshot(saved,proposed): snapshot=proposed
         elif context:
@@ -78,6 +83,7 @@ def render_phase6():
         st.info('Integrated structural research currently supports plain vertical credit spreads. This candidate remains available in Options stress lab and Option Economics; manual vertical entry remains available.'); return
     initial_horizon=context.get('horizon',3) if snapshot else 3
     initial_method=context.get('analog_config',{}).get('method','tolerance') if snapshot else 'tolerance'
+    st.caption('Trade spot is an explicit scenario input, not a verified live price. For a new manual trade, the initial value is the displayed completed historical close; enter your intended scenario price.')
     with st.form('p6_form'):
         a,b,c=st.columns(3)
         spot=a.number_input('Current trade spot',min_value=.01,value=float(saved['spot'] if saved else bars.close.iloc[-1]))
