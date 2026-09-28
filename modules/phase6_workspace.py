@@ -127,80 +127,85 @@ def render_phase6():
         st.info('Submit the trade inputs to build a research snapshot.'); return
     r=stored['result']; c=r['evidence']['context']; ev=r['evidence']['economics']; threshold=r['evidence']['threshold']
     st.caption('Showing the last submitted snapshot. Submit again after changing inputs. All dollar figures use the entered structure quantities; returns and frequencies are decimal fractions in exports.')
-    st.markdown('#### 1. Market snapshot')
-    a,b,d=st.columns(3)
-    a.metric('Research anchor · completed close',f"${c['research_close']:,.2f}")
-    b.metric('Current trade spot',f"${c['current_spot']:,.2f}")
-    d.metric('Research session',r['provenance']['research_date'])
-    st.caption('Completed daily history excludes today conservatively, even after close. Current trade spot and premium are explicit inputs, not independently verified live prices.')
-    st.markdown('#### 2. Support / resistance')
-    st.caption('Historical price-structure zones. Observations count unique pivot/extreme session dates, not every intraday touch. Distances use current trade spot and completed-history ATR.')
-    st.dataframe(r['levels'].rename(columns={'distance_pct':'Distance from current spot (decimal)','distance_atr':'Distance in ATR',
-        'observations':'Unique structural observations','last_observed_sessions_ago':'Sessions since last observation',
-        'touch_frequency':'Historical touch frequency','terminal_beyond_frequency':'Historical finish-beyond frequency',
-        'rejection_given_touch':'Rejection conditional on touch','break_hold_given_touch':'Finish beyond conditional on touch',
-        'terminal_equal_frequency':'Historical finish-at-level frequency',
-        'median_post_level_excursion':'Median continuation (decimal return)',
-        'p75_post_level_excursion':'P75 continuation','p90_post_level_excursion':'P90 continuation'}),hide_index=True)
-    if r['levels'].empty: st.info('No nearby structural zones were identified.')
-    st.markdown('#### 3. Historical move distribution')
-    rows=[]
-    labels={'terminal_return':'Terminal return','terminal_spot':'Terminal scenario price','max_up_excursion':'Maximum upside excursion',
-        'max_down_excursion':'Maximum downside excursion','upside_spot':'Upside excursion scenario price','downside_spot':'Downside excursion scenario price'}
-    for h,distribution in r['distributions'].items():
-        for field,values in distribution['summary'].items():
-            rows.append({'Observed sessions':h,'Measure':labels[field],'N':distribution['counts'][field],**values})
-    st.dataframe(pd.DataFrame(rows),hide_index=True)
-    st.caption('Scenario prices are anchored to current trade spot. They are not price targets. Horizon samples can differ because maturity is enforced separately.')
-    st.markdown('#### 4. Selected option threshold')
-    st.dataframe(pd.DataFrame([{**c,'Calendar DTE':(pd.Timestamp(c['expiration']).date()-today).days}]).drop(columns=['mode']),hide_index=True)
-    s=threshold['summary']
-    a,b,d=st.columns(3)
-    def pct(value): return 'Unavailable' if value is None else f'{value:.1%}'
-    a.metric('Historical survival '+('ABOVE short strike' if c['mode']=='put' else 'BELOW short strike'),pct(s['survival_frequency']))
-    b.metric('Historical touch / breach frequency',pct(s['touch_frequency']))
-    d.metric('Historical finish-beyond frequency',pct(s['terminal_breach_frequency']))
-    if threshold['config']['opposite_side']: st.warning('Short strike is across current spot from the usual out-of-the-money direction.')
-    st.caption('Touch includes equality. Finishing beyond is strict; terminal equality is separate. Breach and recovery means a touch/breach followed by terminal survival, not an observed intraday event sequence.')
-    st.dataframe(pd.DataFrame({'Full sample':s,'Non-overlapping paired diagnostic':threshold['non_overlapping_summary']}))
-    st.markdown('#### 5. Option economics')
-    st.warning(sample_warning(ev['net_summary']['n']))
-    st.dataframe(pd.DataFrame({'Before additional friction':ev['gross_summary'],'After additional friction':ev['net_summary']}))
-    st.caption('Existing saved fees are included once. EV/max risk retains the Phase 5.2 denominator: entry max risk before additional modeled friction. Historical scenario EV is not a guarantee of positive expectancy; positive-payoff frequency is not forecast probability.')
-    st.markdown('#### 6. Robustness')
-    st.dataframe(r['robustness'],hide_index=True)
-    st.caption('Fixed Tight / Default / Wide / Nearest 50 and primary non-overlapping comparisons. No favorable definition is selected automatically; non-overlap does not establish independence.')
-    st.markdown('#### 7. Detailed observations / exports')
-    with st.expander('Level behavior and continuation definitions'):
-        st.caption('Touch then rejection finishes strictly on the original side. Break and hold finishes strictly beyond; equality belongs to neither. Continuation measures maximum excursion beyond the level, not a timed post-touch path or persistent hold. Daily OHLC cannot establish intraday sequence.')
-        for detail in r['level_details']:
-            st.write(detail['config']); st.dataframe(detail['observations'],hide_index=True)
-    with st.expander('Scenario observations and provenance'):
-        st.dataframe(ev['observations'],hide_index=True); st.json(canonical_bytes(r['provenance']).decode())
-    st.download_button('Export integrated research JSON',canonical_bytes(r),'alphaos-trade-research.json','application/json')
-    st.download_button('Export payoff observations CSV',ev['observations'].to_csv(index=False),'alphaos-payoffs.csv','text/csv')
-    with st.expander('Compare option-chain candidates · research only'):
-        st.caption('Upload a normalized chain CSV: symbol, expiration (YYYY-MM-DD), type (put/call), strike, bid, ask, observed_at (timezone required), contract. Maximum 100 contracts / 200 spreads. Short bid minus long ask is a hypothetical credit, not a fill. Every candidate uses the submitted observed-session horizon, regardless of DTE; narrow expirations to your intended horizon. Archived observations remain dated observations, not current quotes.')
-        upload=st.file_uploader('Normalized option chain',type=['csv'],key='p6_chain')
-        candidate_identity=None if upload is None else digest(dict(content_sha256=hashlib.sha256(upload.getvalue()).hexdigest(),research=r['provenance'],trade=r['trade']))
-        if upload is not None and st.button('Compare candidate evidence'):
-            st.session_state.pop('phase6_candidates',None)
-            try:
-                upload.seek(0)
-                chain=pd.read_csv(upload)
-                trades,rejected=chain_verticals(chain,symbol,c['current_spot'],today)
-                comparison=compare_candidates(trades,r,today,**r['provenance']['friction'])
-                comparison['chain_rejections']=rejected
-                comparison['research_provenance']=r['provenance']
-                st.session_state['phase6_candidates']=dict(identity=candidate_identity,result=comparison)
-            except (ValueError,TypeError,KeyError) as exc: st.error(str(exc))
+    from modules.unified_trade_view import render_unified_trade
+    render_unified_trade(r)
+    with st.expander('5. Advanced Research · full existing evidence and exports'):
+        st.dataframe(r['primary']['analogs'],hide_index=True)
+        st.dataframe(threshold['observations'],hide_index=True)
+        st.markdown('#### 1. Market snapshot')
+        a,b,d=st.columns(3)
+        a.metric('Research anchor · completed close',f"${c['research_close']:,.2f}")
+        b.metric('Current trade spot',f"${c['current_spot']:,.2f}")
+        d.metric('Research session',r['provenance']['research_date'])
+        st.caption('Completed daily history excludes today conservatively, even after close. Current trade spot and premium are explicit inputs, not independently verified live prices.')
+        st.markdown('#### 2. Support / resistance')
+        st.caption('Historical price-structure zones. Observations count unique pivot/extreme session dates, not every intraday touch. Distances use current trade spot and completed-history ATR.')
+        st.dataframe(r['levels'].rename(columns={'distance_pct':'Distance from current spot (decimal)','distance_atr':'Distance in ATR',
+            'observations':'Unique structural observations','last_observed_sessions_ago':'Sessions since last observation',
+            'touch_frequency':'Historical touch frequency','terminal_beyond_frequency':'Historical finish-beyond frequency',
+            'rejection_given_touch':'Rejection conditional on touch','break_hold_given_touch':'Finish beyond conditional on touch',
+            'terminal_equal_frequency':'Historical finish-at-level frequency',
+            'median_post_level_excursion':'Median continuation (decimal return)',
+            'p75_post_level_excursion':'P75 continuation','p90_post_level_excursion':'P90 continuation'}),hide_index=True)
+        if r['levels'].empty: st.info('No nearby structural zones were identified.')
+        st.markdown('#### 3. Historical move distribution')
+        rows=[]
+        labels={'terminal_return':'Terminal return','terminal_spot':'Terminal scenario price','max_up_excursion':'Maximum upside excursion',
+            'max_down_excursion':'Maximum downside excursion','upside_spot':'Upside excursion scenario price','downside_spot':'Downside excursion scenario price'}
+        for h,distribution in r['distributions'].items():
+            for field,values in distribution['summary'].items():
+                rows.append({'Observed sessions':h,'Measure':labels[field],'N':distribution['counts'][field],**values})
+        st.dataframe(pd.DataFrame(rows),hide_index=True)
+        st.caption('Scenario prices are anchored to current trade spot. They are not price targets. Horizon samples can differ because maturity is enforced separately.')
+        st.markdown('#### 4. Selected option threshold')
+        st.dataframe(pd.DataFrame([{**c,'Calendar DTE':(pd.Timestamp(c['expiration']).date()-today).days}]).drop(columns=['mode']),hide_index=True)
+        s=threshold['summary']
+        a,b,d=st.columns(3)
+        def pct(value): return 'Unavailable' if value is None else f'{value:.1%}'
+        a.metric('Historical survival '+('ABOVE short strike' if c['mode']=='put' else 'BELOW short strike'),pct(s['survival_frequency']))
+        b.metric('Historical touch / breach frequency',pct(s['touch_frequency']))
+        d.metric('Historical finish-beyond frequency',pct(s['terminal_breach_frequency']))
+        if threshold['config']['opposite_side']: st.warning('Short strike is across current spot from the usual out-of-the-money direction.')
+        st.caption('Touch includes equality. Finishing beyond is strict; terminal equality is separate. Breach and recovery means a touch/breach followed by terminal survival, not an observed intraday event sequence.')
+        st.dataframe(pd.DataFrame({'Full sample':s,'Non-overlapping paired diagnostic':threshold['non_overlapping_summary']}))
+        st.markdown('#### 5. Option economics')
+        st.warning(sample_warning(ev['net_summary']['n']))
+        st.dataframe(pd.DataFrame({'Before additional friction':ev['gross_summary'],'After additional friction':ev['net_summary']}))
+        st.caption('Existing saved fees are included once. EV/max risk retains the Phase 5.2 denominator: entry max risk before additional modeled friction. Historical scenario EV is not a guarantee of positive expectancy; positive-payoff frequency is not forecast probability.')
+        st.markdown('#### 6. Robustness')
+        st.dataframe(r['robustness'],hide_index=True)
+        st.caption('Fixed Tight / Default / Wide / Nearest 50 and primary non-overlapping comparisons. No favorable definition is selected automatically; non-overlap does not establish independence.')
+        st.markdown('#### 7. Detailed observations / exports')
+        with st.expander('Level behavior and continuation definitions'):
+            st.caption('Touch then rejection finishes strictly on the original side. Break and hold finishes strictly beyond; equality belongs to neither. Continuation measures maximum excursion beyond the level, not a timed post-touch path or persistent hold. Daily OHLC cannot establish intraday sequence.')
+            for detail in r['level_details']:
+                st.write(detail['config']); st.dataframe(detail['observations'],hide_index=True)
+        with st.expander('Scenario observations and provenance'):
+            st.dataframe(ev['observations'],hide_index=True); st.json(canonical_bytes(r['provenance']).decode())
+        st.download_button('Export integrated research JSON',canonical_bytes(r),'alphaos-trade-research.json','application/json')
+        st.download_button('Export payoff observations CSV',ev['observations'].to_csv(index=False),'alphaos-payoffs.csv','text/csv')
+        with st.expander('Compare option-chain candidates · research only'):
+            st.caption('Upload a normalized chain CSV: symbol, expiration (YYYY-MM-DD), type (put/call), strike, bid, ask, observed_at (timezone required), contract. Maximum 100 contracts / 200 spreads. Short bid minus long ask is a hypothetical credit, not a fill. Every candidate uses the submitted observed-session horizon, regardless of DTE; narrow expirations to your intended horizon. Archived observations remain dated observations, not current quotes.')
+            upload=st.file_uploader('Normalized option chain',type=['csv'],key='p6_chain')
+            candidate_identity=None if upload is None else digest(dict(content_sha256=hashlib.sha256(upload.getvalue()).hexdigest(),research=r['provenance'],trade=r['trade']))
+            if upload is not None and st.button('Compare candidate evidence'):
+                st.session_state.pop('phase6_candidates',None)
+                try:
+                    upload.seek(0)
+                    chain=pd.read_csv(upload)
+                    trades,rejected=chain_verticals(chain,symbol,c['current_spot'],today)
+                    comparison=compare_candidates(trades,r,today,**r['provenance']['friction'])
+                    comparison['chain_rejections']=rejected
+                    comparison['research_provenance']=r['provenance']
+                    st.session_state['phase6_candidates']=dict(identity=candidate_identity,result=comparison)
+                except (ValueError,TypeError,KeyError) as exc: st.error(str(exc))
 
-        comparison=st.session_state.get('phase6_candidates')
-        if comparison and comparison['identity']==candidate_identity:
-            comparison=comparison['result']
-            st.dataframe(comparison['candidates'],hide_index=True)
-            st.dataframe(comparison['chain_rejections'],hide_index=True)
-            st.dataframe(comparison['rejected'],hide_index=True)
-            st.download_button('Export candidate evidence CSV',comparison['candidates'].to_csv(index=False),'alphaos-candidates.csv','text/csv')
-            st.download_button('Export candidate evidence with provenance',canonical_bytes(comparison),'alphaos-candidates.json','application/json')
-            st.caption('Rows follow contract order. There is no recommendation, ranking score, or best-trade selection.')
+            comparison=st.session_state.get('phase6_candidates')
+            if comparison and comparison['identity']==candidate_identity:
+                comparison=comparison['result']
+                st.dataframe(comparison['candidates'],hide_index=True)
+                st.dataframe(comparison['chain_rejections'],hide_index=True)
+                st.dataframe(comparison['rejected'],hide_index=True)
+                st.download_button('Export candidate evidence CSV',comparison['candidates'].to_csv(index=False),'alphaos-candidates.csv','text/csv')
+                st.download_button('Export candidate evidence with provenance',canonical_bytes(comparison),'alphaos-candidates.json','application/json')
+                st.caption('Rows follow contract order. There is no recommendation, ranking score, or best-trade selection.')
