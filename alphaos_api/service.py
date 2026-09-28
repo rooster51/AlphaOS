@@ -273,14 +273,17 @@ class ResearchService:
                 completed_before=result['provenance']['completed_before'],analog_config=result['primary']['config'],
                 audit=result['provenance']['audit'],engine_version=result['version'],payoff_version=economics['config']['version']))
 
-    def scan(self,symbol,strategy,expiration,dte_min,dte_max,horizon,max_distance,min_credit,max_candidates,width,refresh=False):
+    def scan(self,symbol,strategy,expiration,dte_min,dte_max,horizon,max_distance,min_credit,max_candidates,width,refresh=False,snapshot_bundle=None):
         symbol=symbol_value(symbol);horizon_value(horizon)
         if dte_min>dte_max:raise APIError('invalid_dte_range')
         exps=[self.expiration(expiration)] if expiration else [e for e in self.expirations(symbol)['expirations'] if dte_min<=(date.fromisoformat(e)-self.today()).days<=dte_max]
         if not exps:raise APIError('expiration_unavailable',404)
         if len(exps)>5:raise APIError('scan_scope_too_large')
-        if refresh:self.quote(symbol,True)
-        bundle=self.snapshot(symbol,horizon);self.require_quote(bundle['quote'],live=True)
+        if refresh and snapshot_bundle is None:self.quote(symbol,True)
+        bundle=snapshot_bundle or self.snapshot(symbol,horizon)
+        if bundle['prepared']['dataset']['metadata']['symbol']!=symbol or bundle['prepared']['horizon']!=horizon:
+            raise APIError('snapshot_mismatch',409)
+        self.require_quote(bundle['quote'],live=True)
         s=bundle['prepared'];spot=s['current_spot'];rows=[];chains=[];excluded=[]
         if s['analog']['analogs'].empty:raise APIError('insufficient_analog_sample')
         for expiry in exps:

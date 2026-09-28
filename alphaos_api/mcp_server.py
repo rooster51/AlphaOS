@@ -16,13 +16,18 @@ from .contracts import TradeRequest, CompareRequest, SCHEMA_VERSION
 from .mcp_auth import OwnerOAuth, SCOPE
 from .protocol_diagnostics import ProtocolDiagnostics
 
-INSTRUCTIONS = '''AlphaOS provides read-only market research, never trade execution or a recommended winner.
+INSTRUCTIONS = '''For symbol research requests (Run QQQ/SPY), use run_symbol_research for one coherent workflow.
+Use mode=overview for market context and mode=find for candidate discovery. For Refresh SYMBOL alone use mode=overview, refresh=true; scan only when requested.
+Present data state, context/structure, then qualifying candidates in generator order; disclose defaults and stopped stages.
+Never label stopped/context-only research live. Ask for missing expiration or spread identity; never infer a held position.
+AlphaOS provides read-only market research, never trade execution or a recommended winner.
 Preserve sample sizes, timestamps and caveats. Candidate generator order is not a ranking.
 Historical frequencies are descriptive, not calibrated forecasts. Threshold survival is not option probability of profit.
 Scenario EV is historical scenario economics, not guaranteed expectancy. Current quote and completed research session differ.
 Calendar DTE and observed-session research horizon differ. A 0–2 DTE scan with research_horizon=3 is NOT expiration-matched profitability evidence.
 Support/resistance describes historical price structure, not guaranteed floors or ceilings. Daily OHLC cannot reconstruct exact intraday paths.
 Reuse snapshot_id for related context and candidate_id for saved scan research. Stale IDs require an explicit fresh scan.
+For exact spread follow-ups prefer unified_candidate_research with a returned candidate_id, or unified_vertical_research with explicit expiration and strikes. PCS is short higher put/long lower put; CCS short lower call/long higher call. Do not silently choose expiration. For Compare those two, reuse existing compare_trades only with matching explicit symbol, scenario spot, horizon, method and friction; otherwise refresh/clarify the common context. Prices supplied for comparison are explicit scenarios, not verified fills. No winner selection or position management.
 Never request credentials in conversation or tool arguments. Authentication occurs only in the AlphaOS browser consent page.'''
 
 Horizon = Literal[1,2,3,5,10]
@@ -116,6 +121,31 @@ def build_mcp(app, sanitize):
     @tool('Use to compare explicit verticals in input order using one shared context. Never choose a winner or rank. Symbol, spot, horizon, method and friction must match; each trade receives its own payoff evidence.')
     async def compare_trades(comparison: CompareRequest) -> CallToolResult:
         return await invoke('/v1/trade/compare',body=comparison.model_dump(mode='json'))
+
+    @tool('Use this when the user asks Run QQQ/SPY, what is QQQ doing, find trades, or refresh a symbol. One workflow validates data, retrieves context/structure and optionally unranked vertical candidates. mode=run also researches each returned candidate; overview excludes scans; find returns candidate IDs. Defaults: 1-7 calendar DTE, 3 observed sessions, first 4 generator entries (not ranked), $1 wings, $0.05 credit/share. State all defaults. Stale or closed quotes stop live scans. refresh=true refreshes quote/chain observations. Do not use to manage positions or execute trades.')
+    async def run_symbol_research(symbol: Symbol,mode: Literal['run','overview','find']='run',horizon: Horizon=3,
+            strategy: Literal['pcs','ccs','both']='both',expiration: date|None=None,
+            dte_min: Annotated[int,Field(ge=0,le=180)]=1,dte_max: Annotated[int,Field(ge=0,le=180)]=7,
+            maximum_candidates: Annotated[int,Field(ge=1,le=10)]=4,
+            minimum_credit: Annotated[float,Field(ge=0,allow_inf_nan=False)]=.05,
+            wing_width: Annotated[float,Field(gt=0,le=100,allow_inf_nan=False)]=1,refresh: bool=False) -> CallToolResult:
+        return await invoke('/v1/research/'+quote(symbol,safe='')+'/run',dict(mode=mode,horizon=horizon,strategy=strategy,
+            expiration=expiration,dte_min=dte_min,dte_max=dte_max,maximum_candidates=maximum_candidates,
+            minimum_credit=minimum_credit,wing_width=wing_width,refresh=refresh))
+
+    @tool('Use this when researching a qualifying candidate from a recent scan. Returns unified Trade Snapshot, Market Structure, Historical Analog Behavior at short/breakeven/long strikes, Historical Scenario Payoff, and Advanced Research. Uses the saved observation without silent repricing; expired IDs require a new explicit scan. include_advanced exposes detailed tables. Historical frequencies are not future probabilities.')
+    async def unified_candidate_research(candidate_id: Annotated[str,Field(max_length=100)],include_advanced: bool=False) -> CallToolResult:
+        return await invoke('/v1/research/candidates/'+quote(candidate_id,safe=''),dict(include_advanced=include_advanced))
+
+    @tool('Use this when the user asks to research an exact PCS or CCS by strikes. Requires explicit symbol and expiration: ask if missing unless resolved from a returned candidate. Put short strike must exceed long strike; call short must be below long. Returns five unified research sections; hypothetical current natural credit, not held-position P&L. Freshness gating is mandatory. include_advanced adds details.')
+    async def unified_vertical_research(symbol: Symbol,expiration: date,option_type: Literal['put','call'],
+            short_strike: Positive,long_strike: Positive,horizon: Horizon=3,refresh: bool=False,include_advanced: bool=False) -> CallToolResult:
+        return await invoke('/v1/research/'+quote(symbol,safe='')+'/vertical',dict(expiration=expiration,option_type=option_type,
+            short_strike=short_strike,long_strike=long_strike,horizon=horizon,refresh=refresh,include_advanced=include_advanced))
+
+    @tool('Use this for unified non-live historical scenario research of a user-entered vertical with explicit spot and credit, including when markets are closed. Prices are user inputs, not verified live fills or held-position P&L. Returns the same five trade-centered sections. No position management or execution.')
+    async def unified_explicit_trade_research(trade: TradeRequest,include_advanced: bool=False) -> CallToolResult:
+        return await invoke('/v1/research/trade',dict(include_advanced=include_advanced),body=trade.model_dump(mode='json'))
 
     host=urlsplit(oauth.base).netloc
     mcp_app=server.streamable_http_app(stateless_http=True,json_response=True,max_request_body_size=131072,

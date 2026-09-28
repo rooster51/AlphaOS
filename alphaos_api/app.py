@@ -176,6 +176,8 @@ def compare_trades(req:CompareRequest):
         ordering='Input order; no ranking or automatic selection.'),s))
 
 
+from .phase9_routes import register_phase9
+register_phase9(router,lambda:app.state.service,respond)
 app.include_router(router)
 
 from .mcp_server import build_mcp
