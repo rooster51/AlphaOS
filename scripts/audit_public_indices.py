@@ -37,11 +37,15 @@ def main():
     report=dict(observed_at=datetime.now(ZoneInfo('UTC')).isoformat(),symbols={})
     if not os.environ.get('PUBLIC_API_SECRET'):
         print(json.dumps(dict(error='missing_public_secret')));return
+    stage='authentication'
     try:
-        client=PublicApiClient(ApiKeyAuthConfig(api_secret_key=os.environ['PUBLIC_API_SECRET'],validity_minutes=15))
-        account=_select_account(client.get_accounts().accounts,os.environ.get('PUBLIC_ACCOUNT_NUMBER') or None).account_id
-    except Exception:
-        print(json.dumps(dict(error='public_authentication_or_account_selection_failed')));return
+        client=PublicApiClient(ApiKeyAuthConfig(api_secret_key=os.environ['PUBLIC_API_SECRET'].strip(),validity_minutes=15))
+        accounts=client.get_accounts().accounts
+        stage='account_selection'
+        account=_select_account(accounts,os.environ.get('PUBLIC_ACCOUNT_NUMBER') or None).account_id
+    except Exception as exc:
+        status=getattr(exc,'status_code',None)
+        print(json.dumps(dict(error='public_access_failed',stage=stage,http_status=status if isinstance(status,int) else None)));return
     def request(label,fn,summarize):
         try:
             raw=fn();return dict(request=label,status=200,result=summarize(raw)),raw
