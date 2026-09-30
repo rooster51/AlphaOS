@@ -12,6 +12,8 @@ def render_unified_trade(research):
     st.write(f"{t['symbol']} · {t['strategy']} · {t['expiration']} · short {t['short_strike']:g} / long {t['long_strike']:g}")
     st.dataframe(pd.DataFrame([{k:t[k] for k in ('width','credit','max_profit','max_loss','return_on_risk','breakeven','scenario_spot')}]),hide_index=True)
     st.caption('Credit is dollars per share; payoff is dollars per structure. Return on risk is a decimal fraction. Scenario spot is an explicit input, not a verified live quote.')
+    st.caption(t['instrument']['settlement_caveat'])
+    st.write('Instrument',t['instrument'])
     st.write('Live trade state',t['live_trade_state'])
     st.write('Research state',t['research_state'])
     st.markdown('#### 2. Market Structure')

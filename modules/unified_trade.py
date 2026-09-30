@@ -1,5 +1,6 @@
 """Phase 9 presentation over authoritative Phase 6 evidence; no second quant engine."""
 from copy import deepcopy
+from modules.symbol_registry import metadata as instrument_metadata
 from modules.threshold_survival import threshold_research
 from modules.level_behavior import level_behavior
 from modules.daily_archive import json_value
@@ -20,7 +21,7 @@ def build_unified_trade(research, live_state=None, *, candidate_id=None, include
         usable_for_execution_analysis=False,source='Explicit scenario input; not verified live'))
     levels = [('short_strike',context['short_strike']),('breakeven',context['breakeven']),('long_strike',context['long_strike'])]
     distances = {name:dict(price=price,dollars=price-spot,fraction=price/spot-1) for name,price in levels}
-    snapshot = dict(symbol=trade['symbol'],strategy=context['strategy'],expiration=trade['expiration'],
+    snapshot = dict(instrument=instrument_metadata(trade['symbol']),symbol=trade['symbol'],strategy=context['strategy'],expiration=trade['expiration'],
         short_strike=context['short_strike'],long_strike=context['long_strike'],
         width=abs(context['short_strike']-context['long_strike']),credit=context['credit'],
         pricing_method=trade.get('source'),legs=trade['legs'],

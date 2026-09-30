@@ -13,6 +13,7 @@ from modules.option_scenario_ev import scenario_economics
 from modules.premium_engine import generate
 from modules.public_provider import provider_error
 from modules.history_diagnostics import HistoryError
+from modules.symbol_registry import SYMBOLS, instrument, metadata as instrument_metadata
 from .contracts import APIError,SCHEMA_VERSION,CAVEATS
 from .cache import TTLStore
 from .provider import MarketProvider
@@ -26,7 +27,7 @@ LEG_FIELDS=('contract','type','strike','bid','ask','mid','bid_timestamp','ask_ti
 
 def symbol_value(value):
     symbol=value.strip().upper()
-    if symbol not in ('SPY','QQQ'):raise APIError('unsupported_symbol',400)
+    if symbol not in SYMBOLS:raise APIError('unsupported_symbol',400)
     return symbol
 
 
@@ -172,7 +173,7 @@ class ResearchService:
         q=bundle['quote']['quote'] if bundle else quote or {}
         quality=freshness(q,self.clock(),bundle['quote']['retrieved_at'] if bundle else None) if q else None
         explicit=bundle is not None and bundle['source']!='Public'
-        return dict(schema_version=SCHEMA_VERSION,generated_at=self.clock().isoformat(),source=bundle['source'] if bundle else 'Public',
+        return dict(instrument=instrument_metadata(s['dataset']['metadata']['symbol'] if s else symbol),schema_version=SCHEMA_VERSION,generated_at=self.clock().isoformat(),source=bundle['source'] if bundle else 'Public',
             symbol=s['dataset']['metadata']['symbol'] if s else symbol,research_session=s['research_date'] if s else None,
             research_close=s['research_close'] if s else None,quote_as_of=q.get('updated_at'),
             current_spot=q.get('last') if explicit or quality and quality['usable_for_live_research'] else None,
@@ -203,7 +204,8 @@ class ResearchService:
             parsed=re.fullmatch(r'([A-Z]{1,6})\s*(\d{6})([CP])(\d{8})',contract or '')
             if not parsed:raise APIError('contract_unavailable',404)
             root,day,side,strike=parsed.groups()
-            if root!=symbol or day!=date.fromisoformat(expiration).strftime('%y%m%d') or side!=('P' if kind=='put' else 'C') or int(strike)/1000!=leg['strike']:
+            if root not in instrument(symbol).option_roots:raise APIError('unsupported_contract_root' if instrument(symbol).asset_type=='index' else 'contract_mismatch')
+            if day!=date.fromisoformat(expiration).strftime('%y%m%d') or side!=('P' if kind=='put' else 'C') or int(strike)/1000!=leg['strike']:
                 raise APIError('contract_mismatch')
         credit=short['bid']-long['ask']
         if credit<=0:raise APIError('nonpositive_natural_credit')
@@ -275,6 +277,7 @@ class ResearchService:
 
     def scan(self,symbol,strategy,expiration,dte_min,dte_max,horizon,max_distance,min_credit,max_candidates,width,refresh=False,snapshot_bundle=None):
         symbol=symbol_value(symbol);horizon_value(horizon)
+        width=instrument(symbol).default_wing_width if width is None else width
         if dte_min>dte_max:raise APIError('invalid_dte_range')
         exps=[self.expiration(expiration)] if expiration else [e for e in self.expirations(symbol)['expirations'] if dte_min<=(date.fromisoformat(e)-self.today()).days<=dte_max]
         if not exps:raise APIError('expiration_unavailable',404)
@@ -307,6 +310,8 @@ class ResearchService:
             for row in generated:
                 kind='put' if row['strategy']=='Bull put spread' else 'call' if row['strategy']=='Bear call spread' else None
                 if kind is None or strategy not in ('both','pcs' if kind=='put' else 'ccs'):continue
+                if instrument(symbol).asset_type=='index' and abs(abs(row['legs'][0]['strike']-row['legs'][1]['strike'])-width)>1e-8:
+                    excluded.append(dict(expiration=expiry,code='requested_wing_unavailable'));continue
                 try:self.validate_legs(row['legs'][0],row['legs'][1],kind,symbol,expiry)
                 except APIError as exc:
                     excluded.append(dict(expiration=expiry,code=exc.code));continue

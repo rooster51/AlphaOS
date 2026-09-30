@@ -2,6 +2,7 @@
 import json
 import pandas as pd
 import streamlit as st
+from modules.symbol_registry import SYMBOLS
 from modules.market_state_research import load_market_state, export_csv
 from modules.research_session import save_research_session, get_research_session, summarize_research_session
 
@@ -11,7 +12,7 @@ def render_market_state():
     st.caption('Historical information available after each completed session close. Descriptive features and future research labels only; no trade recommendations.')
     with st.form('market_state_form'):
         a,b = st.columns(2)
-        symbol = a.selectbox('Market-state symbol',['SPY','QQQ'])
+        symbol = a.selectbox('Market-state symbol',list(SYMBOLS))
         period = b.selectbox('Market-state history',['FIVE_YEARS','TEN_YEARS'])
         submitted = st.form_submit_button('Generate market-state dataset',type='primary')
     if submitted:
@@ -42,7 +43,7 @@ def render_market_state():
         st.success(f"Active Research Dataset: {summary.symbol} · {summary.period} · {summary.first_date} to {summary.last_date} · {summary.observations:,} sessions")
         st.caption('This submitted OHLC dataset is available to other Quant Lab research pages during this app session.')
     if result is None:
-        st.info('Select SPY or QQQ and generate a dataset. Missing warm-up history remains unavailable.')
+        st.info('Select SPY, QQQ, SPX or XSP and generate a dataset. Missing warm-up history remains unavailable.')
         return
     meta = result['metadata']
     st.caption(f"Last submitted dataset: {meta['symbol']} · {meta.get('requested_period','')} · {meta['start']} to {meta['end']} · {meta['observations']:,} observations. Submit again to apply changed inputs.")

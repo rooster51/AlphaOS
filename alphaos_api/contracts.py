@@ -42,6 +42,7 @@ class CompareRequest(BaseModel):
     candidates: list[TradeRequest]=Field(min_length=1,max_length=20)
 
 class ResponseMeta(BaseModel):
+    instrument: dict | None = None
     schema_version: str
     generated_at: str
     source: str

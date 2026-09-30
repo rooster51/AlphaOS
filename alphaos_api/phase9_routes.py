@@ -14,7 +14,7 @@ def register_phase9(router, get_service, respond):
             strategy:Literal['pcs','ccs','both']='both',expiration:date|None=None,
             dte_min:int=Query(1,ge=0,le=180),dte_max:int=Query(7,ge=0,le=180),
             maximum_candidates:int=Query(4,ge=1,le=10),minimum_credit:float=Query(.05,ge=0,allow_inf_nan=False),
-            wing_width:float=Query(1,gt=0,le=100,allow_inf_nan=False),refresh:bool=False):
+            wing_width:float|None=Query(None,gt=0,le=100,allow_inf_nan=False),refresh:bool=False):
         return respond(UnifiedResearch(get_service()).run(symbol,horizon,mode,strategy,expiration,dte_min,dte_max,
             maximum_candidates,minimum_credit,wing_width,refresh))
 

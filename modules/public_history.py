@@ -1,5 +1,6 @@
 """Public daily history adapter, including its supported dated long-history route."""
 import re
+from modules.symbol_registry import REGISTRY, instrument
 import pandas as pd
 
 from modules.history_diagnostics import HistoryError, history_diagnostics, schema_issues, api_error_detail
@@ -90,7 +91,8 @@ def fetch_research_bars(client, symbol, period, kind='EQUITY', as_of=None):
     except SchemaError as exc:
         diagnostic['schema_issues'] = schema_issues(exc)
         raise HistoryError('Unexpected provider response schema; see the field-level diagnostic.',diagnostic) from None
-    if response.symbol != symbol or response.period != provider_period:
+    expected=instrument(symbol).provider_response_symbol if symbol in REGISTRY else symbol
+    if response.symbol != expected or response.period != provider_period:
         raise HistoryError('Provider response symbol or period does not match the request.',diagnostic)
     if raw.get('leadingFill'):
         raise HistoryError('Provider supplied a synthetic leading-fill descriptor; full observed history is unavailable.',diagnostic)
@@ -101,7 +103,8 @@ def fetch_research_bars(client, symbol, period, kind='EQUITY', as_of=None):
     diagnostic['stage'] = 'normalization'
     if result.empty:
         raise HistoryError('Public returned no regular-market daily bars.',diagnostic)
-    if kind=='EQUITY':
+    diagnostic.update(provider_symbol=response.symbol,requested_symbol=symbol,research_proxy_used=False)
+    if kind in ('EQUITY','INDEX'):
         validate_coverage(result,symbol,period,as_of,diagnostic)
     result.attrs['provider_diagnostics'] = dict(diagnostic,stage='validated')
     return result

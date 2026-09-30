@@ -14,6 +14,7 @@ class UnifiedTradeResponse(BaseModel):
 
 
 class SymbolResearchResponse(BaseModel):
+    instrument: dict | None = None
     schema_version: Literal['alphaos-symbol-research-v1']
     symbol: str
     mode: Literal['run','overview','find']

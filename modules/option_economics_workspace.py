@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
+from modules.symbol_registry import SYMBOLS
 
 from modules.historical_analogs import DEFAULT_TOLERANCES, analog_research, sample_warning
 from modules.market_outcomes import forward_outcomes
@@ -53,11 +54,11 @@ def render_option_economics():
         selected=validate_trade(selected)
     except ValueError as exc:
         st.error(str(exc)); return
-    if selected['symbol'] not in ('SPY','QQQ'):
-        st.info("Phase 5 underlying analog research currently supports SPY and QQQ."); return
+    if selected['symbol'] not in SYMBOLS:
+        st.info("Phase 5 underlying analog research currently supports SPY, QQQ, SPX and XSP."); return
     active=get_research_session(st.session_state)
     if active is None:
-        st.warning("No active Quant Lab research dataset. Open Market State Research, generate SPY or QQQ history, then return here."); return
+        st.warning("No active Quant Lab research dataset. Open Market State Research, generate SPY, QQQ, SPX or XSP history, then return here."); return
     summary=summarize_research_session(st.session_state)
     if summary.symbol!=selected['symbol']:
         st.warning(f"Active research dataset is {summary.symbol}, but the selected option is {selected['symbol']}. Generate {selected['symbol']} in Market State Research first."); return

@@ -137,7 +137,7 @@ def research_live_vertical(symbol:str,expiration:date,option_type:Literal['put',
 def scan_credit_spreads(symbol:str,strategy:Literal['pcs','ccs','both']='both',expiration:date|None=None,
         dte_min:int=Query(1,ge=0,le=180),dte_max:int=Query(7,ge=0,le=180),research_horizon:int=3,
         maximum_short_distance:float=Query(.05,gt=0,le=.25,allow_inf_nan=False),minimum_credit:float=Query(.05,ge=0,allow_inf_nan=False),
-        maximum_candidates:int=Query(20,ge=1,le=100),wing_width:float=Query(1,gt=0,le=100,allow_inf_nan=False),refresh:bool=False):
+        maximum_candidates:int=Query(20,ge=1,le=100),wing_width:float|None=Query(None,gt=0,le=100,allow_inf_nan=False),refresh:bool=False):
     return respond(app.state.service.scan(symbol,strategy,expiration,dte_min,dte_max,research_horizon,
         maximum_short_distance,minimum_credit,maximum_candidates,wing_width,refresh))
 
