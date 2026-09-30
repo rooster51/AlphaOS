@@ -2,6 +2,7 @@
 import json
 import numpy as np
 import pandas as pd
+from modules.symbol_registry import SYMBOLS
 
 from modules.market_outcomes import HORIZONS
 
@@ -30,8 +31,8 @@ def _dated(frame, required):
     frame['date']=pd.to_datetime(frame.date,utc=True,errors='coerce',format='mixed').dt.tz_convert(None).dt.normalize()
     if frame.date.isna().any() or frame.date.duplicated().any() or not frame.date.is_monotonic_increasing:
         raise ValueError('Session dates must be valid, unique and chronological.')
-    if frame.symbol.isna().any() or frame.symbol.nunique()!=1 or frame.symbol.iloc[0] not in ('SPY','QQQ'):
-        raise ValueError('Use a single SPY or QQQ dataset.')
+    if frame.symbol.isna().any() or frame.symbol.nunique()!=1 or frame.symbol.iloc[0] not in SYMBOLS:
+        raise ValueError('Use a single registered-symbol dataset.')
     return frame
 
 

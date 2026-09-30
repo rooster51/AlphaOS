@@ -1,4 +1,4 @@
-"""Point-in-time price-structure research for SPY/QQQ.
+"""Point-in-time price-structure research for registered-symbol.
 
 Detects nearby support/resistance candidates from completed daily OHLC only. Levels
 are descriptive research features, not predictions or trade recommendations.
@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
+from modules.symbol_registry import SYMBOLS
 
 VERSION = "price-structure-v1"
 
@@ -16,8 +17,8 @@ def _prepare(history, completed_before=None):
     if completed_before is None:
         completed_before = pd.Timestamp.now(tz='America/New_York').date()
     f, _ = validate_ohlc(history, completed_before)
-    if len(f)<60 or f.symbol.iloc[0] not in ('SPY','QQQ'):
-        raise ValueError('Price structure requires at least 60 valid completed SPY/QQQ bars.')
+    if len(f)<60 or f.symbol.iloc[0] not in SYMBOLS:
+        raise ValueError('Price structure requires at least 60 valid completed registered-symbol bars.')
     return f
 
 

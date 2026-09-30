@@ -1,5 +1,6 @@
 """Thin service orchestration for Phase 9; original endpoints and engines remain authoritative."""
 import re
+from modules.symbol_registry import instrument, metadata as instrument_metadata
 from modules.unified_trade import build_unified_trade
 from modules.price_structure import nearest_levels
 from .contracts import APIError
@@ -40,10 +41,11 @@ class UnifiedResearch:
         return result
 
     def run(self,symbol,horizon=3,mode='run',strategy='both',expiration=None,dte_min=1,dte_max=7,
-            maximum_candidates=4,minimum_credit=.05,wing_width=1,refresh=False):
+            maximum_candidates=4,minimum_credit=.05,wing_width=None,refresh=False):
         symbol=symbol_value(symbol);horizon_value(horizon)
+        wing_width=instrument(symbol).default_wing_width if wing_width is None else wing_width
         service=self.service
-        response=dict(schema_version=VERSION,symbol=symbol,mode=mode,status='complete',stages=[],live_trade_state=None,
+        response=dict(instrument=instrument_metadata(symbol),schema_version=VERSION,symbol=symbol,mode=mode,status='complete',stages=[],live_trade_state=None,
             market_snapshot=None,market_structure=None,candidate_scan=None,qualifying_candidates=[],errors=[],
             defaults=dict(observed_session_horizon=horizon,dte_min=dte_min,dte_max=dte_max,expiration=str(expiration) if expiration else None,
                 maximum_candidates=maximum_candidates,minimum_credit=minimum_credit,wing_width=wing_width),

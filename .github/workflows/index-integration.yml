@@ -1,0 +1,27 @@
+name: Index integration validation
+on:
+  push:
+    branches: [phase9-index-support]
+    paths:
+      - 'modules/**'
+      - 'alphaos_api/**'
+      - scripts/validate_public_indices.py
+      - .github/workflows/index-integration.yml
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - run: pip install -r requirements-api.txt
+      - name: Read-only implemented index workflow validation
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+          PUBLIC_API_SECRET: ${{ secrets.PUBLIC_API }}
+          PUBLIC_ACCOUNT_NUMBER: ${{ secrets.PUBLIC_ACCOUNT }}
+        run: python scripts/validate_public_indices.py

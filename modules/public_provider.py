@@ -7,8 +7,9 @@ import pandas as pd
 from datetime import datetime, timezone
 from modules.quote_freshness import normalize_timestamp
 from modules.public_session import _select_account
+from modules.symbol_registry import REGISTRY, instrument
 
-INDEX_SYMBOLS = {"SPX", "NDX", "RUT", "DJX", "VIX"}
+INDEX_SYMBOLS = {"SPX", "XSP", "NDX", "RUT", "DJX", "VIX"}
 SYMBOL_ALIASES = {"^SPX":"SPX","$SPX":"SPX","SPX.X":"SPX","^NDX":"NDX","$NDX":"NDX","^RUT":"RUT","$RUT":"RUT","^VIX":"VIX","$VIX":"VIX"}
 
 class PublicProviderError(RuntimeError):
@@ -58,7 +59,10 @@ def _normalize_public_symbol(symbol: str) -> str:
     return SYMBOL_ALIASES.get(clean, clean)
 
 def _instrument_type_for_symbol(instrument_type: Any, symbol: str) -> Any:
-    if _normalize_public_symbol(symbol) in INDEX_SYMBOLS:
+    normalized=_normalize_public_symbol(symbol)
+    if normalized in REGISTRY:
+        return getattr(instrument_type,instrument(normalized).provider_type)
+    if normalized in INDEX_SYMBOLS:
         return getattr(instrument_type, 'INDEX', instrument_type.EQUITY)
     return instrument_type.EQUITY
 
@@ -80,15 +84,18 @@ def get_public_quotes(symbols: tuple[str, ...], _context=None) -> list[dict]:
         'source':'Public'} for quote in quotes]
 
 def get_public_price_history(symbol: str, _context=None) -> pd.DataFrame:
-    from public_api_sdk import BarAggregation, BarPeriod
+    from public_api_sdk import BarAggregation, BarPeriod, InstrumentType
     client, _ = (_context or _public_context)()
-    response = client.get_bars(_normalize_public_symbol(symbol), BarPeriod.QUARTER, aggregation=BarAggregation.ONE_DAY)
+    response = client.get_bars(_normalize_public_symbol(symbol), BarPeriod.QUARTER, aggregation=BarAggregation.ONE_DAY, instrument_type=_instrument_type_for_symbol(InstrumentType,symbol))
     return pd.DataFrame([{'date': pd.to_datetime(bar.timestamp), 'open': float(bar.open), 'high': float(bar.high), 'low': float(bar.low), 'close': float(bar.close), 'volume': float(bar.volume)} for bar in response.regular_market.bars])
 
 def get_public_option_expirations(symbol: str, _context=None) -> list[str]:
     from public_api_sdk import InstrumentType, OptionExpirationsRequest, OrderInstrument
     client, account_id = (_context or _public_context)()
     response = client.get_option_expirations(OptionExpirationsRequest(instrument=_order_instrument(OrderInstrument, InstrumentType, symbol)), account_id=account_id)
+    normalized=_normalize_public_symbol(symbol)
+    if normalized in REGISTRY and instrument(normalized).asset_type=='index' and response.base_symbol!=instrument(normalized).provider_response_symbol:
+        raise PublicProviderError('provider_symbol_mismatch')
     return sorted((str(expiration)[:10] for expiration in response.expirations))
 
 def _option_quote_row(quote: Any, option_type: str) -> dict | None:
@@ -109,7 +116,10 @@ def get_public_option_chain(symbol: str, expiration: str, _context=None) -> dict
     response = client.get_option_chain(OptionChainRequest(instrument=_order_instrument(OrderInstrument, InstrumentType, symbol), expiration_date=expiration), account_id=account_id)
     calls = [row for quote in response.calls if (row := _option_quote_row(quote, 'Call')) is not None]
     puts = [row for quote in response.puts if (row := _option_quote_row(quote, 'Put')) is not None]
-    return {'symbol': getattr(response, 'base_symbol', _normalize_public_symbol(symbol)), 'expiration': expiration, 'calls': calls, 'puts': puts}
+    normalized=_normalize_public_symbol(symbol)
+    if normalized in REGISTRY and instrument(normalized).asset_type=='index' and response.base_symbol!=instrument(normalized).provider_response_symbol:
+        raise PublicProviderError('provider_symbol_mismatch')
+    return {'symbol': normalized if normalized in REGISTRY and instrument(normalized).asset_type=='index' else getattr(response,'base_symbol',normalized), 'expiration': expiration, 'calls': calls, 'puts': puts}
 
 def get_public_research_bars(symbol: str, period: str='FIVE_YEARS', option: bool=False, _context=None) -> pd.DataFrame:
     """Observed Public daily OHLC, with explicit long-history mapping and audit."""

@@ -16,7 +16,7 @@ from .contracts import TradeRequest, CompareRequest, SCHEMA_VERSION
 from .mcp_auth import OwnerOAuth, SCOPE
 from .protocol_diagnostics import ProtocolDiagnostics
 
-INSTRUCTIONS = '''For symbol research requests (Run QQQ/SPY), use run_symbol_research for one coherent workflow.
+INSTRUCTIONS = '''For symbol research requests (Run QQQ/SPY/SPX/XSP), use run_symbol_research for one coherent workflow.
 Use mode=overview for market context and mode=find for candidate discovery. For Refresh SYMBOL alone use mode=overview, refresh=true; scan only when requested.
 Present data state, context/structure, then qualifying candidates in generator order; disclose defaults and stopped stages.
 Never label stopped/context-only research live. Ask for missing expiration or spread identity; never infer a held position.
@@ -28,6 +28,7 @@ Calendar DTE and observed-session research horizon differ. A 0–2 DTE scan with
 Support/resistance describes historical price structure, not guaranteed floors or ceilings. Daily OHLC cannot reconstruct exact intraday paths.
 Reuse snapshot_id for related context and candidate_id for saved scan research. Stale IDs require an explicit fresh scan.
 For exact spread follow-ups prefer unified_candidate_research with a returned candidate_id, or unified_vertical_research with explicit expiration and strikes. PCS is short higher put/long lower put; CCS short lower call/long higher call. Do not silently choose expiration. For Compare those two, reuse existing compare_trades only with matching explicit symbol, scenario spot, horizon, method and friction; otherwise refresh/clarify the common context. Prices supplied for comparison are explicit scenarios, not verified fills. No winner selection or position management.
+For SPX use actual SPX data and SPXW PM-settled contracts; other roots including SPX are unverified and unsupported. For XSP use actual XSP data. Default wings are 5 points for SPX and 1 for SPY/QQQ/XSP; never substitute a requested unavailable width. A 0DTE request must use the current America/New_York date and dte_min=dte_max=0. Historical sessions are not intraday expiration probabilities.
 Never request credentials in conversation or tool arguments. Authentication occurs only in the AlphaOS browser consent page.'''
 
 Horizon = Literal[1,2,3,5,10]
@@ -97,7 +98,7 @@ def build_mcp(app, sanitize):
             research_horizon: Horizon=3,maximum_short_distance: Annotated[float,Field(gt=0,le=.25,allow_inf_nan=False)]=.05,
             minimum_credit: Annotated[float,Field(ge=0,allow_inf_nan=False)]=.05,
             maximum_candidates: Annotated[int,Field(ge=1,le=100)]=20,
-            wing_width: Annotated[float,Field(gt=0,le=100,allow_inf_nan=False)]=1,refresh: bool=False) -> CallToolResult:
+            wing_width: Annotated[float|None,Field(gt=0,le=100,allow_inf_nan=False)]=None,refresh: bool=False) -> CallToolResult:
         params=dict(strategy=strategy,expiration=expiration,dte_min=dte_min,dte_max=dte_max,
             research_horizon=research_horizon,maximum_short_distance=maximum_short_distance,
             minimum_credit=minimum_credit,maximum_candidates=maximum_candidates,wing_width=wing_width,refresh=refresh)
@@ -122,13 +123,13 @@ def build_mcp(app, sanitize):
     async def compare_trades(comparison: CompareRequest) -> CallToolResult:
         return await invoke('/v1/trade/compare',body=comparison.model_dump(mode='json'))
 
-    @tool('Use this when the user asks Run QQQ/SPY, what is QQQ doing, find trades, or refresh a symbol. One workflow validates data, retrieves context/structure and optionally unranked vertical candidates. mode=run also researches each returned candidate; overview excludes scans; find returns candidate IDs. Defaults: 1-7 calendar DTE, 3 observed sessions, first 4 generator entries (not ranked), $1 wings, $0.05 credit/share. State all defaults. Stale or closed quotes stop live scans. refresh=true refreshes quote/chain observations. Do not use to manage positions or execute trades.')
+    @tool('Use this when the user asks Run QQQ/SPY/SPX/XSP, what is QQQ doing, find trades, or refresh a symbol. One workflow validates data, retrieves context/structure and optionally unranked vertical candidates. mode=run also researches each returned candidate; overview excludes scans; find returns candidate IDs. Defaults: 1-7 calendar DTE, 3 observed sessions, first 4 generator entries (not ranked), $5 SPX wings or $1 SPY/QQQ/XSP wings, $0.05 credit/share. State all defaults. Stale or closed quotes stop live scans. refresh=true refreshes quote/chain observations. Do not use to manage positions or execute trades.')
     async def run_symbol_research(symbol: Symbol,mode: Literal['run','overview','find']='run',horizon: Horizon=3,
             strategy: Literal['pcs','ccs','both']='both',expiration: date|None=None,
             dte_min: Annotated[int,Field(ge=0,le=180)]=1,dte_max: Annotated[int,Field(ge=0,le=180)]=7,
             maximum_candidates: Annotated[int,Field(ge=1,le=10)]=4,
             minimum_credit: Annotated[float,Field(ge=0,allow_inf_nan=False)]=.05,
-            wing_width: Annotated[float,Field(gt=0,le=100,allow_inf_nan=False)]=1,refresh: bool=False) -> CallToolResult:
+            wing_width: Annotated[float|None,Field(gt=0,le=100,allow_inf_nan=False)]=None,refresh: bool=False) -> CallToolResult:
         return await invoke('/v1/research/'+quote(symbol,safe='')+'/run',dict(mode=mode,horizon=horizon,strategy=strategy,
             expiration=expiration,dte_min=dte_min,dte_max=dte_max,maximum_candidates=maximum_candidates,
             minimum_credit=minimum_credit,wing_width=wing_width,refresh=refresh))

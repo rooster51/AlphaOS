@@ -6,6 +6,7 @@ from zoneinfo import ZoneInfo
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
+from modules.symbol_registry import SYMBOLS
 
 from modules.premium_engine import CATALOG, demo_chain, generate, payoff
 from modules.ui import configure_page
@@ -114,7 +115,7 @@ def render():
                             errors.append('Underlying bid/ask is missing or suspect. Last-price research remains available; execution-sensitive analysis is not supported by this underlying quote.')
                         spot = q["last"]
                         quote_time = str(q.get("updated_at") or "Unavailable")
-                        if symbol in ('SPY','QQQ'):
+                        if symbol in SYMBOLS:
                             try:
                                 research_snapshot = build_scan_research(symbol,spot,research_horizon,quote_time,now.isoformat())
                             except Exception:
@@ -182,8 +183,8 @@ def render():
             st.warning(error)
         if result.get('research_snapshot') is not None:
             render_market_context(result['research_snapshot'])
-        elif result['source'].startswith('Demo') or result['symbol'] not in ('SPY','QQQ'):
-            st.caption('Completed-state structural and threshold research is available for Public SPY/QQQ scans. Other strategies and symbols retain the existing scanner workflow.')
+        elif result['source'].startswith('Demo') or result['symbol'] not in SYMBOLS:
+            st.caption('Completed-state structural and threshold research is available for Public SPY/QQQ/SPX/XSP scans. Other strategies and symbols retain the existing scanner workflow.')
         if not rows:
             st.info("No eligible trades match. Try more strategies, another risk budget, or a wider expiration range.")
             return

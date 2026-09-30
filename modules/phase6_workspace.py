@@ -4,6 +4,7 @@ import hashlib
 from zoneinfo import ZoneInfo
 import pandas as pd
 import streamlit as st
+from modules.symbol_registry import SYMBOLS
 from modules.research_session import get_research_session, save_research_session
 from modules.selector_research import valid_saved_snapshot, candidate_fingerprint, context_from_dataset
 from modules.market_state_research import load_market_state
@@ -52,7 +53,7 @@ def render_phase6():
         active=dict(history=data['features'][['date','symbol','open','high','low','close']],metadata=data['metadata'])
     refresh_symbol=saved['symbol'] if saved else str(active['history'].symbol.iloc[-1]) if active else None
     refresh_token=token if source=='Selected Strategy Selector candidate' else digest(dict(source=source,symbol=refresh_symbol,saved=saved))
-    if refresh_symbol in ('SPY','QQQ') and st.button('Refresh market research',key='p6_refresh_button'):
+    if refresh_symbol in SYMBOLS and st.button('Refresh market research',key='p6_refresh_button'):
         try:
             data=load_market_state(refresh_symbol,'FIVE_YEARS')
             refreshed_horizon=context.get('horizon',3)
@@ -74,7 +75,7 @@ def render_phase6():
     elif context and snapshot is None:
         st.info('Refresh market research to replace the invalid context before running this candidate. Manual entry remains available.'); return
     if active is None:
-        st.info('Generate Market State Research for SPY or QQQ first. The completed daily dataset is reused here.'); return
+        st.info('Generate Market State Research for SPY, QQQ, SPX or XSP first. The completed daily dataset is reused here.'); return
     bars=active['history']; metadata=active.get('metadata',{})
     symbol=str(bars.symbol.iloc[-1]); today=datetime.now(ZoneInfo('America/New_York')).date()
     if saved and saved['symbol']!=symbol:
