@@ -1,0 +1,23 @@
+name: Intraday capability gate
+on:
+  push:
+    branches: [phase10a-intraday-engine]
+    paths:
+      - scripts/audit_intraday_capabilities.py
+      - .github/workflows/intraday-capability.yml
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - run: pip install -r requirements-api.txt
+      - name: Read-only intraday capability audit
+        env:
+          PUBLIC_API_SECRET: ${{ secrets.PUBLIC_API }}
+        run: python scripts/audit_intraday_capabilities.py
