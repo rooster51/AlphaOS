@@ -15,6 +15,7 @@ from modules.public_provider import provider_error
 from modules.history_diagnostics import HistoryError
 from modules.symbol_registry import SYMBOLS, instrument, metadata as instrument_metadata
 from .contracts import APIError,SCHEMA_VERSION,CAVEATS
+from modules.option_quote_quality import option_quality
 from .cache import TTLStore
 from .provider import MarketProvider
 from modules.quote_freshness import freshness, normalize_timestamp
@@ -41,12 +42,7 @@ def finite(value):
 
 
 def stamp(value):
-    if value is None:return None
-    try:
-        t=pd.Timestamp(value)
-        if pd.isna(t) or t.tzinfo is None:return None
-        return t.tz_convert('UTC').isoformat()
-    except (ValueError,TypeError):return None
+    return normalize_timestamp(value)
 
 
 def required_credits(trade,economics):
@@ -139,7 +135,10 @@ class ResearchService:
                 incomplete_quote_count=sum(not all(finite(l.get(k)) for k in ('bid','ask','strike')) for l in legs),
                 timing=self.timing(None,legs)))
         key=('chain',symbol,expiration)
-        return self.data.put(key,load(),30) if refresh else self.data.load(key,30,load)
+        result=self.data.put(key,load(),30) if refresh else self.data.load(key,30,load)
+        legs=result['chain']['puts']+result['chain']['calls']
+        return {**result,'quality':{**result['quality'],**option_quality(legs,self.clock(),result['retrieved_at'],'entire_chain'),
+            'timing':self.timing(None,legs)}}
 
     def snapshot(self,symbol,horizon=3,spot=None,snapshot_id=None,refresh=False,quote_bundle=None):
         symbol=symbol_value(symbol);horizon=horizon_value(horizon)
@@ -185,11 +184,11 @@ class ResearchService:
 
     def timing(self,quote,legs=()):
         values=([quote.get('updated_at')] if quote is not None else [])+[leg.get(k) for leg in legs for k in ('bid_timestamp','ask_timestamp')]
-        ages=[(self.clock()-pd.Timestamp(v).to_pydatetime()).total_seconds() for v in values if stamp(v)]
+        ages=[(self.clock()-pd.Timestamp(stamp(v)).to_pydatetime()).total_seconds() for v in values if stamp(v)]
         return dict(timestamps_incomplete=any(not stamp(v) for v in values),
             oldest_quote_age_seconds=max(ages) if ages else None,
             stale_quote=(freshness(quote,self.clock())['data_status']=='stale' if quote else False) or any(
-                (self.clock()-pd.Timestamp(v).to_pydatetime()).total_seconds()>900 for leg in legs for v in (leg.get('bid_timestamp'),leg.get('ask_timestamp')) if stamp(v)),
+                (self.clock()-pd.Timestamp(stamp(v)).to_pydatetime()).total_seconds()>900 for leg in legs for v in (leg.get('bid_timestamp'),leg.get('ask_timestamp')) if stamp(v)),
             future_timestamp=any(age < -60 for age in ages),
             note='Underlying uses the shared calendar freshness contract. Option-leg ages retain the 15-minute warning; option session/delay status is unverified.')
 
@@ -231,6 +230,7 @@ class ResearchService:
         bundle=self.snapshot(symbol,horizon,quote_bundle=q)
         if bundle['quote']['quote']!=q['quote'] or bundle['quote']['retrieved_at']!=q['retrieved_at']:raise APIError('snapshot_mismatch',409)
         return bundle,trade,dict(underlying=q,chain_retrieved_at=chain['retrieved_at'],chain_quality=chain['quality'],short_contract=short,long_contract=long,
+            consumed_contract_quality=option_quality([short,long],self.clock(),chain['retrieved_at']),
             pricing_method='short bid minus long ask; hypothetical natural fill',timing=self.timing(q['quote'],[short,long]))
 
     def manual_trade(self,req):
@@ -335,7 +335,8 @@ class ResearchService:
                 historical_finish_beyond=stat['terminal_breach_frequency'],historical_scenario_EV=net['expected_payoff'],
                 EV_max_risk=net['expected_payoff_on_max_risk'],positive_payoff_frequency=net['positive_frequency'],analog_N=net['n'],
                 quote_timestamps=[{k:leg.get(k) for k in ('contract','bid_timestamp','ask_timestamp')} for leg in row['legs']],
-                timing=self.timing(bundle['quote']['quote'],row['legs']),required_credit=required_credits(row,ev)))
+                timing=self.timing(bundle['quote']['quote'],row['legs']),
+                consumed_contract_quality=option_quality(row['legs'],self.clock(),scope='candidate_legs'),required_credit=required_credits(row,ev)))
         existing=self.scans.get(sid)
         if existing is None:self.scans.put(sid,dict(bundle=bundle,candidates=stored),120)
         return self.envelope(dict(scan_id=sid,candidates=candidates,total_generated=total,truncated=total>max_candidates,

@@ -15,6 +15,8 @@ from mcp_types import CallToolResult, TextContent, ToolAnnotations
 from .contracts import TradeRequest, CompareRequest, SCHEMA_VERSION
 from .mcp_auth import OwnerOAuth, SCOPE
 from .protocol_diagnostics import ProtocolDiagnostics
+from .positions import EntryRequest, CloseRequest
+from uuid import UUID
 
 INSTRUCTIONS = '''For symbol research requests (Run QQQ/SPY/SPX/XSP), use run_symbol_research for one coherent workflow.
 Use mode=overview for market context and mode=find for candidate discovery. For Refresh SYMBOL alone use mode=overview, refresh=true; scan only when requested.
@@ -24,12 +26,12 @@ AlphaOS provides read-only market research, never trade execution or a recommend
 Preserve sample sizes, timestamps and caveats. Candidate generator order is not a ranking.
 Historical frequencies are descriptive, not calibrated forecasts. Threshold survival is not option probability of profit.
 Scenario EV is historical scenario economics, not guaranteed expectancy. Current quote and completed research session differ.
-Calendar DTE and observed-session research horizon differ. A 0–2 DTE scan with research_horizon=3 is NOT expiration-matched profitability evidence.
+Calendar DTE and observed-session research horizon differ. A 0â€“2 DTE scan with research_horizon=3 is NOT expiration-matched profitability evidence.
 Support/resistance describes historical price structure, not guaranteed floors or ceilings. Daily OHLC cannot reconstruct exact intraday paths.
 Reuse snapshot_id for related context and candidate_id for saved scan research. Stale IDs require an explicit fresh scan.
-For exact spread follow-ups prefer unified_candidate_research with a returned candidate_id, or unified_vertical_research with explicit expiration and strikes. PCS is short higher put/long lower put; CCS short lower call/long higher call. Do not silently choose expiration. For Compare those two, reuse existing compare_trades only with matching explicit symbol, scenario spot, horizon, method and friction; otherwise refresh/clarify the common context. Prices supplied for comparison are explicit scenarios, not verified fills. No winner selection or position management.
+For exact spread follow-ups prefer unified_candidate_research with a returned candidate_id, or unified_vertical_research with explicit expiration and strikes. PCS is short higher put/long lower put; CCS short lower call/long higher call. Do not silently choose expiration. For Compare those two, reuse existing compare_trades only with matching explicit symbol, scenario spot, horizon, method and friction; otherwise refresh/clarify the common context. Prices supplied for comparison are explicit scenarios, not verified fills. No winner selection. Use separate local tracking tools only for user-declared entries and closures.
 For SPX use actual SPX data and SPXW PM-settled contracts; other roots including SPX are unverified and unsupported. For XSP use actual XSP data. Default wings are 5 points for SPX and 1 for SPY/QQQ/XSP; never substitute a requested unavailable width. A 0DTE request must use the current America/New_York date and dte_min=dte_max=0. Historical sessions are not intraday expiration probabilities.
-Never request credentials in conversation or tool arguments. Authentication occurs only in the AlphaOS browser consent page.'''
+Local tracking is distinct from research: record_position and close_position change only AlphaOS records, never brokerage positions. Resolve ambiguous matches with get_active_positions before selecting an ID. Monitor descriptors are not recommendations or probabilities. Never request credentials in conversation or tool arguments. Authentication occurs only in the AlphaOS browser consent page.'''
 
 Horizon = Literal[1,2,3,5,10]
 Symbol = Annotated[str, Field(min_length=1,max_length=5,pattern=r'^[A-Za-z]+$')]
@@ -147,6 +149,29 @@ def build_mcp(app, sanitize):
     @tool('Use this for unified non-live historical scenario research of a user-entered vertical with explicit spot and credit, including when markets are closed. Prices are user inputs, not verified live fills or held-position P&L. Returns the same five trade-centered sections. No position management or execution.')
     async def unified_explicit_trade_research(trade: TradeRequest,include_advanced: bool=False) -> CallToolResult:
         return await invoke('/v1/research/trade',dict(include_advanced=include_advanced),body=trade.model_dump(mode='json'))
+
+    tracking_annotations = ToolAnnotations(read_only_hint=False,destructive_hint=False,
+        idempotent_hint=True,open_world_hint=False)
+
+    @server.tool(description='Record only an explicitly user-declared PCS/CCS entry in AlphaOS local tracking. Never infer execution from research. Supply a UUID request_id and reuse it for retries. Entry timestamp must include timezone. Captured evidence is observed now, not reconstructed historically. No brokerage order is submitted.',annotations=tracking_annotations,meta=security)
+    async def record_position(entry: EntryRequest) -> CallToolResult:
+        return await invoke('/v1/positions',body=entry.model_dump(mode='json'))
+
+    @tool('List locally recorded active positions, optionally filtered by symbol. If multiple positions match, present matches and ask for selection; never guess a position_id.')
+    async def get_active_positions(symbol: Symbol|None=None) -> CallToolResult:
+        return await invoke('/v1/positions',dict(symbol=symbol))
+
+    @tool('Refresh exact contracts for an active position_id and compare with its frozen entry evidence. Values are quote estimates, not fills. Preserve quality limitations and individual state reasons. No recommendations or execution. Does not rerun historical research.')
+    async def monitor_position(position_id: UUID) -> CallToolResult:
+        return await invoke('/v1/positions/'+str(position_id)+'/monitor')
+
+    @server.tool(description='Record explicit user-declared closure of a selected position_id in local tracking only. Requires close amount per share, debit/credit direction, and timestamp with timezone. Never infer closure from expiration or quotes. No brokerage order is submitted.',annotations=tracking_annotations,meta=security)
+    async def close_position(position_id: UUID,closure: CloseRequest) -> CallToolResult:
+        return await invoke('/v1/positions/'+str(position_id)+'/close',body=closure.model_dump(mode='json'))
+
+    @tool('Retrieve a locally tracked active or closed position by position_id, including immutable entry evidence and any explicit declared closure.')
+    async def get_position(position_id: UUID) -> CallToolResult:
+        return await invoke('/v1/positions/'+str(position_id))
 
     host=urlsplit(oauth.base).netloc
     mcp_app=server.streamable_http_app(stateless_http=True,json_response=True,max_request_body_size=131072,

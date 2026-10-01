@@ -1,4 +1,4 @@
-"""Authenticated read-only HTTP surface over the existing AlphaOS research engine."""
+"""Authenticated research and owner-local tracking; no brokerage execution."""
 import hmac
 import os
 from datetime import date
@@ -18,7 +18,7 @@ from .config import load_secret_files
 load_secret_files()
 
 app=FastAPI(title='AlphaOS Research API',version=SCHEMA_VERSION,debug=False,
-    description='Read-only descriptive research using the same AlphaOS engine as Streamlit. No order execution or recommendations.')
+    description='Read-only descriptive market research plus user-declared local position tracking. No brokerage execution or recommendations.')
 app.state.service=ResearchService()
 security=HTTPBearer(auto_error=False)
 
@@ -83,7 +83,7 @@ async def safe_boundary(request,call_next):
 
 
 @app.get('/health')
-def health():return {'status':'ok','schema_version':SCHEMA_VERSION,'read_only':True,'authentication_configured':bool(os.environ.get('ALPHAOS_API_TOKEN'))}
+def health():return {'status':'ok','schema_version':SCHEMA_VERSION,'read_only':True,'local_position_tracking':True,'read_only_scope':'Market/brokerage access; local position records can be created and closed','authentication_configured':bool(os.environ.get('ALPHAOS_API_TOKEN'))}
 
 
 @router.get('/market/{symbol}',response_model=ResearchResponse,operation_id='get_market_snapshot')
@@ -178,6 +178,8 @@ def compare_trades(req:CompareRequest):
 
 from .phase9_routes import register_phase9
 register_phase9(router,lambda:app.state.service,respond)
+from .positions import register_positions
+register_positions(router,lambda:app.state.service,respond)
 app.include_router(router)
 
 from .mcp_server import build_mcp
