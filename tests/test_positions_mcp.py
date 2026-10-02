@@ -6,7 +6,7 @@ def test_tracking_tools_end_to_end(env,position_db):
     c,provider,_,clock=env
     _,tokens=login(c);token=tokens['access_token']
     listed=rpc(c,token,'tools/list').json()['result']['tools']
-    assert len(listed)==19
+    assert len(listed)==22
     for tool in listed:
         assert tool['annotations']['readOnlyHint']==(tool['name'] not in {'record_position','close_position'})
     response=call(c,token,'record_position',dict(entry=entry()))

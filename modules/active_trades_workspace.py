@@ -22,10 +22,10 @@ def render_active_trades():
     if urlsplit(base).scheme!='https':
         st.error('The tracking API requires an HTTPS server URL.')
         return
-    def api(path,body=None):
+    def api(path,body=None,*,resource='positions',params=None):
         try:
-            r=httpx.request('POST' if body is not None else 'GET',base+'/v1/positions'+path,
-                json=body,headers={'Authorization':'Bearer '+credential},timeout=120)
+            r=httpx.request('POST' if body is not None else 'GET',base+'/v1/'+resource+path,
+                json=body,params=params,headers={'Authorization':'Bearer '+credential},timeout=120)
             if r.status_code>=400:
                 st.error(f'Tracking request failed ({r.status_code}). Check inputs and API availability.')
                 return None
@@ -33,6 +33,11 @@ def render_active_trades():
         except (httpx.HTTPError,ValueError):
             st.error('Tracking API is unavailable. Your existing records have not been removed.')
             return None
+    view=st.radio('Workspace',['Active trades','Trade journal / performance'],horizontal=True)
+    if view=='Trade journal / performance':
+        from .trade_journal_workspace import render_trade_journal
+        render_trade_journal(lambda path='',params=None:api(path,resource='journal',params=params))
+        return
     with st.expander('Record an entered spread'):
         with st.form('record_active_position'):
             symbol=st.selectbox('Symbol',['SPY','QQQ','SPX','XSP'])
@@ -100,13 +105,17 @@ def render_active_trades():
                     consumed_contracts=current.get('consumed_contract_quality'),limitations=current['errors']))
         with st.expander('Record closure'):
             with st.form('close_'+selected):
-                amount=st.number_input('Actual close amount per share',min_value=0.,value=.05,step=.01)
+                basis=st.selectbox('Exit evidence',['actual','estimated','unknown'],format_func=lambda s:{'actual':'Actual user-declared fill','estimated':'Estimate only','unknown':'Fill unavailable'}[s])
+                amount=st.number_input('Close amount per share (unused for unavailable fill)',min_value=0.,value=.05,step=.01)
                 flow=st.selectbox('Close cashflow',['debit','credit'])
+                reason=st.selectbox('Exit reason',['not_provided','profit_target','risk_management','short_strike_pressure','breakeven_pressure','thesis_changed','expiration','manual_discretionary','other'],format_func=lambda s:s.replace('_',' ').capitalize())
+                close_note=st.text_area('Closure note',max_chars=2000)
                 closed_at=st.text_input('Close timestamp with timezone',value=datetime.now(timezone.utc).isoformat(timespec='seconds'))
                 confirmed=st.checkbox('I confirm this position was closed.')
                 close_submit=st.form_submit_button('Record closure')
             if close_submit and confirmed:
-                if api('/'+selected+'/close',dict(amount=amount,cashflow=flow,timestamp=closed_at)):
+                if api('/'+selected+'/close',dict(amount=amount if basis!='unknown' else None,cashflow=flow,timestamp=closed_at,
+                        exit_basis=basis,exit_reason=None if reason=='not_provided' else reason,user_note=close_note)):
                     st.session_state.pop('position_monitor_'+selected,None)
                     st.rerun()
     with st.expander('Retrieve an active or closed record'):
