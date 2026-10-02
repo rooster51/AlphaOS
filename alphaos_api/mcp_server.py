@@ -26,7 +26,7 @@ AlphaOS provides read-only market research, never trade execution or a recommend
 Preserve sample sizes, timestamps and caveats. Candidate generator order is not a ranking.
 Historical frequencies are descriptive, not calibrated forecasts. Threshold survival is not option probability of profit.
 Scenario EV is historical scenario economics, not guaranteed expectancy. Current quote and completed research session differ.
-Calendar DTE and observed-session research horizon differ. A 0â€“2 DTE scan with research_horizon=3 is NOT expiration-matched profitability evidence.
+Calendar DTE and observed-session research horizon differ. A 0–2 DTE scan with research_horizon=3 is NOT expiration-matched profitability evidence.
 Support/resistance describes historical price structure, not guaranteed floors or ceilings. Daily OHLC cannot reconstruct exact intraday paths.
 Reuse snapshot_id for related context and candidate_id for saved scan research. Stale IDs require an explicit fresh scan.
 For exact spread follow-ups prefer unified_candidate_research with a returned candidate_id, or unified_vertical_research with explicit expiration and strikes. PCS is short higher put/long lower put; CCS short lower call/long higher call. Do not silently choose expiration. For Compare those two, reuse existing compare_trades only with matching explicit symbol, scenario spot, horizon, method and friction; otherwise refresh/clarify the common context. Prices supplied for comparison are explicit scenarios, not verified fills. No winner selection. Use separate local tracking tools only for user-declared entries and closures.
