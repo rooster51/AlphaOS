@@ -7,7 +7,7 @@ from alphaos_api.phase9_contracts import SymbolResearchResponse,UnifiedTradeResp
 def test_mcp_natural_orchestration_and_granular_compatibility(env):
     c,p,app,clock=env;qqq(p);_,tokens=login(c);token=tokens['access_token']
     tools=rpc(c,token,'tools/list').json()['result']['tools'];named={t['name']:t for t in tools}
-    assert len(named)==14
+    assert len(named)==19
     assert {'market_snapshot','price_structure','forward_distribution','live_quote','option_expirations','scan_credit_spreads',
         'research_candidate','research_vertical','research_explicit_trade','compare_trades'}<=set(named)
     new=named['run_symbol_research']

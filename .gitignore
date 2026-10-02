@@ -15,3 +15,4 @@ data/.manifest-*
 
 # Local market-data diagnostic artifacts (never commit observations).
 diagnostics/
+data/active-positions.sqlite3*

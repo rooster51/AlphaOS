@@ -196,8 +196,9 @@ def test_discovery_auth_handshake_and_list(env):
     listed=rpc(c,token,'tools/list').json()['result']['tools']
     assert {t['name'] for t in listed}=={'market_snapshot','price_structure','forward_distribution','live_quote','option_expirations',
         'scan_credit_spreads','research_candidate','research_vertical','research_explicit_trade','compare_trades',
-        'run_symbol_research','unified_candidate_research','unified_vertical_research','unified_explicit_trade_research'}
-    assert all(t['annotations']['readOnlyHint'] and not t['annotations']['destructiveHint'] for t in listed)
+        'run_symbol_research','unified_candidate_research','unified_vertical_research','unified_explicit_trade_research',
+        'record_position','get_active_positions','monitor_position','close_position','get_position'}
+    assert all(t['annotations']['readOnlyHint'] == (t['name'] not in {'record_position','close_position'}) and not t['annotations']['destructiveHint'] for t in listed)
     assert all(t['_meta']['securitySchemes'][0]['scopes']==['research:read'] for t in listed)
     modern=rpc(c,token,'tools/list',version='2026-07-28')
     assert modern.status_code==200,modern.text

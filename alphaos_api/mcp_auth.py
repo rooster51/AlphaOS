@@ -288,15 +288,15 @@ class OwnerOAuth:
             client_id = escape(pending['client'].client_id)
             redirect = escape(str(pending['params'].redirect_uri))
             html = f'''<!doctype html><html><head><title>Connect AlphaOS research</title></head><body>
-<h1>Allow read-only AlphaOS research</h1>
-<p>This client can access Public market data and historical research. It cannot place orders or access portfolio endpoints.</p>
+<h1>Allow AlphaOS research and local tracking</h1>
+<p>This client can read Public market data and historical research, and record or close user-declared positions in AlphaOS local tracking. It cannot place orders or access brokerage portfolio endpoints.</p>
 <p>Client: {client_id}<br>Return address: {redirect}</p>
 <p>Enter your AlphaOS API token here on AlphaOS only. Never enter your Public secret or paste credentials into a conversation.</p>
 <form method="post" action="/oauth/consent">
 <input type="hidden" name="ticket" value="{escape(ticket)}">
 <input type="hidden" name="csrf" value="{escape(csrf)}">
 <label>AlphaOS owner token <input type="password" name="owner_token" required autocomplete="off"></label>
-<button name="decision" value="allow">Allow research access</button>
+<button name="decision" value="allow">Allow research and local tracking</button>
 <button name="decision" value="deny" formnovalidate>Cancel</button></form></body></html>'''
             # The SDK has already validated this exact callback. Browsers apply
             # form-action to the POST's redirect as well as its initial target.
