@@ -43,9 +43,19 @@ class EntryRequest(BaseModel):
 
 class CloseRequest(BaseModel):
     model_config = ConfigDict(extra='forbid', allow_inf_nan=False)
-    amount: float = Field(ge=0)
+    amount: float|None = Field(default=None,ge=0)
     cashflow: Literal['debit', 'credit'] = 'debit'
     timestamp: AwareDatetime
+    exit_basis: Literal['actual','estimated','unknown'] = 'actual'
+    exit_reason: Literal['profit_target','risk_management','short_strike_pressure','breakeven_pressure',
+        'thesis_changed','expiration','manual_discretionary','other']|None = None
+    user_note: str = Field(default='',max_length=2000)
+
+    @model_validator(mode='after')
+    def exit_evidence(self):
+        if (self.amount is None) != (self.exit_basis=='unknown'):
+            raise ValueError('Actual/estimated exits require an explicit amount; unknown exits omit it')
+        return self
 
 
 class PositionStore:
@@ -55,10 +65,20 @@ class PositionStore:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         with self.connect() as db:
             db.execute('CREATE TABLE IF NOT EXISTS positions (id TEXT PRIMARY KEY, request_id TEXT UNIQUE NOT NULL, request_json TEXT NOT NULL, entry_json TEXT NOT NULL, close_json TEXT)')
+            # Additive migration: no rewrites of legacy positions or fabricated events.
+            db.execute('''CREATE TABLE IF NOT EXISTS position_events (
+                sequence INTEGER PRIMARY KEY AUTOINCREMENT, event_id TEXT UNIQUE NOT NULL,
+                position_id TEXT NOT NULL REFERENCES positions(id), kind TEXT NOT NULL,
+                observed_at TEXT NOT NULL, recorded_at TEXT NOT NULL, payload_json TEXT NOT NULL)''')
+            db.execute('CREATE INDEX IF NOT EXISTS position_events_position ON position_events(position_id,sequence)')
+            for operation in ('UPDATE','DELETE'):
+                db.execute(f'''CREATE TRIGGER IF NOT EXISTS position_events_no_{operation.lower()}
+                    BEFORE {operation} ON position_events BEGIN SELECT RAISE(ABORT,'Journal events are append-only'); END''')
 
     @contextmanager
     def connect(self):
         db = sqlite3.connect(str(self.path), timeout=10)
+        db.execute('PRAGMA foreign_keys=ON')
         try:
             with db:
                 yield db
@@ -92,14 +112,32 @@ class PositionStore:
             rows = db.execute('SELECT id FROM positions WHERE close_json IS NULL ORDER BY rowid DESC').fetchall()
         return [p for row in rows if (p:=self.get(row[0])) and (symbol is None or p['symbol']==symbol)]
 
-    def close(self, position_id, value):
+    def close(self, position_id, value, recorded_at=None):
         with self.connect() as db:
-            db.execute('UPDATE positions SET close_json=? WHERE id=? AND close_json IS NULL',
+            changed = db.execute('UPDATE positions SET close_json=? WHERE id=? AND close_json IS NULL',
                 (json.dumps(value, allow_nan=False), str(position_id)))
+            if changed.rowcount:
+                self._event(db,position_id,'close',value['timestamp'],recorded_at or value['timestamp'],value)
         result = self.get(position_id)
         if result['close'] != value:
             raise APIError('position_already_closed', 409)
         return result
+
+    @staticmethod
+    def _event(db, position_id, kind, observed_at, recorded_at, payload):
+        event_id = str(uuid4())
+        db.execute('INSERT INTO position_events (event_id,position_id,kind,observed_at,recorded_at,payload_json) VALUES (?,?,?,?,?,?)',
+            (event_id,str(position_id),kind,observed_at,recorded_at,json.dumps(json_value(payload),allow_nan=False)))
+        return event_id
+
+    def append_monitor(self, position_id, current, state, recorded_at):
+        with self.connect() as db:
+            db.execute('BEGIN IMMEDIATE')
+            row = db.execute('SELECT close_json FROM positions WHERE id=?',(str(position_id),)).fetchone()
+            if not row or row[0] is not None:
+                raise APIError('position_closed_during_refresh',409)
+            return self._event(db,position_id,'monitor',current['captured_at'],recorded_at,
+                dict(current_snapshot=current,monitoring_state=state))
 
 
 def distances(position, spot):
@@ -228,6 +266,9 @@ class PositionMonitor:
             s = bundle['prepared']
             observed['structure'] = json_value(dict(levels=nearest_levels(s['structure'],1),
                 config=s['structure']['config'],research_close=s['research_close'],source='Entry completed-session research'))
+            observed['captured_context'] = json_value(dict(completed_session_ema_structure=s['analog']['target'].get('ema_structure'),
+                research_session=s['research_date'],regime=None,vwap_relationship=None,
+                note='Completed-session context observed at recording time, not reconstructed at the declared entry time. Regime and VWAP were not captured.'))
         except APIError as exc:
             observed['historical_evidence_unavailable'] = exc.code
         p['entry_snapshot'] = observed
@@ -273,21 +314,31 @@ class PositionMonitor:
         if current['errors'] and not entry['errors']:
             pressure.append('quote_quality_deteriorated')
         state = 'BOUNDARY_BREACHED' if breaches else 'UNDER_PRESSURE' if pressure else None if current['errors'] else 'THESIS_INTACT'
-        return dict(position=p,current_snapshot=current,entry_vs_current=changes,
+        result = dict(position=p,current_snapshot=current,entry_vs_current=changes,
             monitoring_state=dict(state=state,breached_boundaries=breaches,reasons=pressure,
                 assessment_complete=not bool(current['errors']),data_limitations=current['errors'],
                 rule_version='explicit-boundaries-and-buffers-v1',note='Descriptive observations only. No recommendation or probability. Boundary equality counts as reached.'),
             monitor_latency_ms=round((time.perf_counter()-start)*1000,2))
+        result['monitor_event_id'] = self.store.append_monitor(position_id,current,result['monitoring_state'],self.service.clock().isoformat())
+        result['monitor_latency_ms'] = round((time.perf_counter()-start)*1000,2)
+        return result
 
     def close(self, position_id, request):
         p = self.store.get(position_id)
         if not datetime.fromisoformat(p['entry_timestamp']) <= request.timestamp <= self.service.clock():
             raise APIError('invalid_close_timestamp')
-        debit = request.amount*(1 if request.cashflow=='debit' else -1)
-        value = request.model_dump(mode='json')
-        value.update(signed_close_debit=debit,declared_pl=(p['entry_credit']-debit)*p['quantity']*p['contract_multiplier'],
+        debit = request.amount*(1 if request.cashflow=='debit' else -1) if request.amount is not None else None
+        pl = (p['entry_credit']-debit)*p['quantity']*p['contract_multiplier'] if debit is not None else None
+        # Preserve exact legacy actual-close shape/idempotency when no new fields supplied.
+        value = request.model_dump(mode='json',exclude={'exit_basis','exit_reason','user_note'})
+        value.update(signed_close_debit=debit,declared_pl=pl if request.exit_basis=='actual' else None,
             note='User-declared closure; no brokerage verification; excludes fees.')
-        return self.store.close(position_id,value)
+        if request.exit_basis!='actual':
+            value.update(exit_basis=request.exit_basis,estimated_pl=pl if request.exit_basis=='estimated' else None,
+                note='User-declared closure without an actual fill; excluded from realized performance.')
+        if request.exit_reason is not None:value['exit_reason']=request.exit_reason
+        if request.user_note:value['user_note']=request.user_note
+        return self.store.close(position_id,value,self.service.clock().isoformat())
 
 
 def register_positions(router, service, respond):

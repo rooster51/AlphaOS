@@ -16,6 +16,7 @@ from .contracts import TradeRequest, CompareRequest, SCHEMA_VERSION
 from .mcp_auth import OwnerOAuth, SCOPE
 from .protocol_diagnostics import ProtocolDiagnostics
 from .positions import EntryRequest, CloseRequest
+from .journal import JournalFilters, Group
 from uuid import UUID
 
 INSTRUCTIONS = '''For symbol research requests (Run QQQ/SPY/SPX/XSP), use run_symbol_research for one coherent workflow.
@@ -165,13 +166,27 @@ def build_mcp(app, sanitize):
     async def monitor_position(position_id: UUID) -> CallToolResult:
         return await invoke('/v1/positions/'+str(position_id)+'/monitor')
 
-    @server.tool(description='Record explicit user-declared closure of a selected position_id in local tracking only. Requires close amount per share, debit/credit direction, and timestamp with timezone. Never infer closure from expiration or quotes. No brokerage order is submitted.',annotations=tracking_annotations,meta=security)
+    @server.tool(description='Record explicit user-declared closure of a selected position_id in local tracking only. Supply timestamp with timezone and classify exit_basis: actual (default; explicit fill amount), estimated (explicit estimate, excluded from realized results), or unknown (omit amount). Optional exit_reason/user_note. Never infer closure or a fill from quotes. No brokerage order is submitted.',annotations=tracking_annotations,meta=security)
     async def close_position(position_id: UUID,closure: CloseRequest) -> CallToolResult:
         return await invoke('/v1/positions/'+str(position_id)+'/close',body=closure.model_dump(mode='json'))
 
     @tool('Retrieve a locally tracked active or closed position by position_id, including immutable entry evidence and any explicit declared closure.')
     async def get_position(position_id: UUID) -> CallToolResult:
         return await invoke('/v1/positions/'+str(position_id))
+
+    @tool('List closed recorded trades with filters and pagination, newest closure first. Always preserve n_closed and per-trade evidence availability. Actual user-declared outcomes differ from estimates and historical scenario EV. Missing monitoring/regime/VWAP evidence is unknown; never invent it.')
+    async def get_trade_journal(filters: JournalFilters|None=None,limit: Annotated[int,Field(ge=1,le=100)]=20,
+            offset: Annotated[int,Field(ge=0)]=0) -> CallToolResult:
+        return await invoke('/v1/journal',dict(**(filters or JournalFilters()).model_dump(mode='json',exclude_none=True),limit=limit,offset=offset))
+
+    @tool('Review a recorded position by explicit position_id: immutable entry evidence, paginated append-only monitoring timeline, declared outcome and metrics. MFE/MAE describe recorded observations only, never continuous paths. No market data or historical research is rerun. Use journal filters to resolve ambiguous requests first.')
+    async def get_trade_review(position_id: UUID,event_limit: Annotated[int,Field(ge=1,le=500)]=100,
+            event_offset: Annotated[int,Field(ge=0)]=0) -> CallToolResult:
+        return await invoke('/v1/journal/'+str(position_id),dict(event_limit=event_limit,event_offset=event_offset))
+
+    @tool('Summarize actual user-declared closed outcomes, optionally grouped by symbol/strategy/DTE/time/context/reason/history. Every metric includes n; disclose small samples and missing evidence. Realized Expectancy Per Recorded Trade is not Historical Scenario EV or forecast POP. Estimates/unknown fills are excluded from realized metrics. Groups are labels, never rankings. Recorded 50% mark comparisons do not establish causality or continuous profit giveback.')
+    async def get_trade_performance(filters: JournalFilters|None=None,group_by: Group|None=None) -> CallToolResult:
+        return await invoke('/v1/journal/performance',dict(**(filters or JournalFilters()).model_dump(mode='json',exclude_none=True),group_by=group_by))
 
     host=urlsplit(oauth.base).netloc
     mcp_app=server.streamable_http_app(stateless_http=True,json_response=True,max_request_body_size=131072,

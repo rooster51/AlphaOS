@@ -180,6 +180,8 @@ from .phase9_routes import register_phase9
 register_phase9(router,lambda:app.state.service,respond)
 from .positions import register_positions
 register_positions(router,lambda:app.state.service,respond)
+from .journal import register_journal
+register_journal(router,respond)
 app.include_router(router)
 
 from .mcp_server import build_mcp
