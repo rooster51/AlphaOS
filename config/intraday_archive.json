@@ -1,0 +1,11 @@
+{
+  "schema_version": "intraday-archive-config-v1",
+  "symbols": ["SPY", "QQQ"],
+  "option_snapshot_minutes": 5,
+  "min_dte": 0,
+  "max_dte": 7,
+  "strike_band": 0.05,
+  "market_timezone": "America/New_York",
+  "regular_session": {"open": "09:30", "close": "16:00"},
+  "storage_root": "data/intraday"
+}
