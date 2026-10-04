@@ -22,8 +22,8 @@ Goal: evolve `Run QQQ` / `Run SPY` from a credit-spread-oriented workflow into a
 | Public long-option discovery | COMPLETE v1 | Unranked candidates from normalized Public chain; ask-based entry assumption |
 | Opportunity Engine | FOUNDATION COMPLETE v1 | Validated simultaneous direction, premium, movement, time and volatility state envelope; unknown evidence remains unknown |
 | Strategy Router | FOUNDATION COMPLETE v1 | Deterministic overlapping research routes; no ranking/winner; insufficient-evidence output supported |
-| Debit-spread research/discovery | EXISTING PARTIAL | Existing Strategy Selector already constructs call/put debit spreads; next step is normalized AlphaOS 2.0 research/discovery integration |
-| Butterfly / BWB research | NOT STARTED | Preserve strategy-specific destination/body context |
+| Debit-spread research/discovery | EXISTING PARTIAL | Existing Strategy Selector constructs call/put debit spreads; normalized adapter design is complete but repository write is currently tool-blocked |
+| Butterfly / BWB research | EXISTING FOUNDATION | Generic payoff engine already supports symmetric and broken-wing butterflies; premium engine already generates iron/BWB structures; needs AlphaOS 2.0 normalized research context |
 | Iron condor research | EXISTING PARTIAL | Existing vertical infrastructure; needs AlphaOS 2.0 normalized integration |
 | Generic multi-leg Strategy Factory | PLANNED | Likely Codex handoff when repo-wide integration becomes worthwhile |
 | Universal Analyze | PLANNED | Common research envelope plus strategy-specific evidence |
@@ -69,6 +69,7 @@ Implemented:
 - Strategy Router v1 covering directional/premium, range, pin, large-move, volatility and late-0DTE routes.
 - Router tests verifying overlapping routes, deterministic non-ranking behavior, no-route/insufficient-evidence behavior and fail-closed invalid states.
 - Confirmed existing Strategy Selector already constructs call/put debit spreads, so AlphaOS 2.0 will integrate rather than duplicate that capability.
+- Confirmed the shared payoff engine already analyzes symmetric butterflies and BWBs, and the premium engine already constructs iron butterflies plus put/call BWBs; AlphaOS 2.0 can normalize these existing capabilities rather than rebuilding payoff math.
 
 ## Architecture decisions
 
@@ -147,7 +148,8 @@ A change is not complete until:
 
 - PR #12 remains the active draft integration PR.
 - AlphaOS 2.0 test runs through the build-tracker checkpoint were green.
-- Opportunity Engine state envelope and Strategy Router v1 have now been committed; CI for the newest router commits must be verified before marking tests green for this checkpoint.
-- Existing debit-spread construction was identified for reuse rather than replacement.
+- Opportunity Engine state envelope and Strategy Router v1 are committed and their latest GitHub Actions runs passed.
+- Existing debit-spread construction was identified for reuse rather than replacement. A normalized shared-payoff adapter was designed, but the repository write was blocked by the tool safety layer; no partial code was committed.
+- Existing butterfly/BWB payoff and generation support was verified for reuse in the next normalized strategy-research layer.
 - No production Supabase migration or AlphaOS 2.0 deployment has been applied.
 - Public credentials and credential-dependent archive work remain intentionally deferred.
