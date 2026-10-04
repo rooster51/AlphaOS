@@ -22,9 +22,9 @@ Goal: evolve `Run QQQ` / `Run SPY` from a credit-spread-oriented workflow into a
 | Public long-option discovery | COMPLETE v1 | Unranked candidates from normalized Public chain; ask-based entry assumption |
 | Opportunity Engine | FOUNDATION COMPLETE v1 | Validated simultaneous direction, premium, movement, time and volatility state envelope; unknown evidence remains unknown |
 | Strategy Router | FOUNDATION COMPLETE v1 | Deterministic overlapping research routes; no ranking/winner; insufficient-evidence output supported |
-| Debit-spread research/discovery | EXISTING PARTIAL | Existing Strategy Selector constructs call/put debit spreads; normalized adapter design is complete but repository write is currently tool-blocked |
-| Butterfly / BWB research | EXISTING FOUNDATION | Generic payoff engine already supports symmetric and broken-wing butterflies; premium engine already generates iron/BWB structures; needs AlphaOS 2.0 normalized research context |
-| Iron condor research | EXISTING PARTIAL | Existing vertical infrastructure; needs AlphaOS 2.0 normalized integration |
+| Debit-spread research/discovery | COMPLETE ADAPTER v1 | Reuses existing constructor; observed delta and valid quotes required; midpoint assumption explicit; no ranking |
+| Butterfly / BWB research | COMPLETE ADAPTER v1 | Symmetric long call/put and iron butterflies; bullish put / bearish call BWBs; shared deterministic payoff |
+| Iron condor research | COMPLETE ADAPTER v1 | Normalizes existing selector/premium-engine candidates, including asymmetric wings; construction unchanged |
 | Generic multi-leg Strategy Factory | PLANNED | Likely Codex handoff when repo-wide integration becomes worthwhile |
 | Universal Analyze | PLANNED | Common research envelope plus strategy-specific evidence |
 | Cross-strategy Compare | PLANNED | Same thesis/context; normalize tradeoffs; no winner/ranking |
@@ -149,7 +149,11 @@ A change is not complete until:
 - PR #12 remains the active draft integration PR.
 - AlphaOS 2.0 test runs through the build-tracker checkpoint were green.
 - Opportunity Engine state envelope and Strategy Router v1 are committed and their latest GitHub Actions runs passed.
-- Existing debit-spread construction was identified for reuse rather than replacement. A normalized shared-payoff adapter was designed, but the repository write was blocked by the tool safety layer; no partial code was committed.
-- Existing butterfly/BWB payoff and generation support was verified for reuse in the next normalized strategy-research layer.
+- Limited strategy integration implemented in `modules/structure_research.py`: debit candidates reuse the existing constructor; butterfly/BWB/IC candidates reuse `options_payoff.trade_analysis`. No duplicate payoff/pricing engine.
+- `research_routed_structures` filters supplied candidates through existing overlapping routes in input order. Generic directional routes require known direction; malformed/insufficient candidates are excluded. Existing route contracts are unchanged.
+- Normalized results include legs, cashflow, capital/risk, profit, breakevens/signed move distances, optional DTE/expected-move context, scenarios, observed evidence and caveats. Cached scores/probabilities/recommendations are discarded.
+- Debit discovery requires observed delta rather than inheriting the legacy selector's missing-delta-to-zero fallback. It preserves midpoint rounding and nearest-available wing selection, explicitly disclosed; no executable fill is claimed.
+- Missing evidence remains unavailable. No symmetric butterfly discovery factory was added: research accepts existing/explicit supported candidates. Native quantities use the shared engine's package cashflow convention; legacy selector action-format candidates require one-unit legs.
+- Focused validation: 69 tests + 7 subtests passed (27 new adapter/routing cases); full local suite: 300 tests + 40 subtests passed. Exact-commit CI results are recorded in PR #12.
 - No production Supabase migration or AlphaOS 2.0 deployment has been applied.
 - Public credentials and credential-dependent archive work remain intentionally deferred.

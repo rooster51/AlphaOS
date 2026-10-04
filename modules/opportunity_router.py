@@ -132,3 +132,31 @@ def route_strategies(state):
             "Unknown evidence does not trigger rich/cheap or elevated/depressed routes.",
         ],
     }
+
+
+def research_routed_structures(state, candidates, **context):
+    """Research supplied supported candidates; no construction or winner selection.
+
+    Generic directional routes require observed bullish/bearish direction. Existing
+    family routing remains unchanged; missing candidate economics fail closed.
+    """
+    from modules.structure_research import research_structure
+    routing=route_strategies(state)
+    allowed=set(routing['routes'])
+    if 'vertical' in allowed or 'directional_debit_spread' in allowed:
+        if state['direction']=='bullish':allowed.add('call_debit_spread')
+        if state['direction']=='bearish':allowed.add('put_debit_spread')
+    if 'bwb' in allowed:allowed.update(('bullish_bwb','bearish_bwb'))
+    if 'directional_bwb' in allowed:
+        if state['direction']=='bullish':allowed.add('bullish_bwb')
+        if state['direction']=='bearish':allowed.add('bearish_bwb')
+    results=[];excluded=[]
+    for index,candidate in enumerate(candidates):
+        try:result=research_structure(candidate,**context)
+        except ValueError:
+            excluded.append(dict(input_index=index,reason='invalid_or_insufficient_candidate'));continue
+        if result['strategy_family'] not in allowed:
+            excluded.append(dict(input_index=index,reason='family_not_routed'));continue
+        results.append(dict(input_index=index,research=result))
+    return dict(routing=routing,candidates=results,excluded=excluded,
+        no_candidate=not results,candidate_order='supplied input order; not a ranking')
