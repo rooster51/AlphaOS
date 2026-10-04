@@ -20,9 +20,9 @@ Goal: evolve `Run QQQ` / `Run SPY` from a credit-spread-oriented workflow into a
 | Trade ledger schema | FOUNDATION COMPLETE | Additive position/event/snapshot schema; not deployed to production |
 | Long call / put research | COMPLETE v1 | Risk, breakeven, required move, DTE, expected-move and structure context |
 | Public long-option discovery | COMPLETE v1 | Unranked candidates from normalized Public chain; ask-based entry assumption |
-| Opportunity Engine | NEXT | Typed direction, premium, movement, time and volatility states with evidence/caveats |
-| Strategy Router | NEXT | Route relevant strategy families without ranking or selecting a winner |
-| Debit-spread research/discovery | NOT STARTED | Reuse generalized payoff/economics where possible |
+| Opportunity Engine | FOUNDATION COMPLETE v1 | Validated simultaneous direction, premium, movement, time and volatility state envelope; unknown evidence remains unknown |
+| Strategy Router | FOUNDATION COMPLETE v1 | Deterministic overlapping research routes; no ranking/winner; insufficient-evidence output supported |
+| Debit-spread research/discovery | EXISTING PARTIAL | Existing Strategy Selector already constructs call/put debit spreads; next step is normalized AlphaOS 2.0 research/discovery integration |
 | Butterfly / BWB research | NOT STARTED | Preserve strategy-specific destination/body context |
 | Iron condor research | EXISTING PARTIAL | Existing vertical infrastructure; needs AlphaOS 2.0 normalized integration |
 | Generic multi-leg Strategy Factory | PLANNED | Likely Codex handoff when repo-wide integration becomes worthwhile |
@@ -65,6 +65,10 @@ Implemented:
   - capital, breakeven, required move and expected-move context
   - eligibility filters without scoring/ranking
 - Tests for normalized Public-chain discovery.
+- AlphaOS 2.0 opportunity-state envelope with validated simultaneous dimensions and evidence sufficiency.
+- Strategy Router v1 covering directional/premium, range, pin, large-move, volatility and late-0DTE routes.
+- Router tests verifying overlapping routes, deterministic non-ranking behavior, no-route/insufficient-evidence behavior and fail-closed invalid states.
+- Confirmed existing Strategy Selector already constructs call/put debit spreads, so AlphaOS 2.0 will integrate rather than duplicate that capability.
 
 ## Architecture decisions
 
@@ -141,10 +145,9 @@ A change is not complete until:
 
 ## Latest verified checkpoint
 
-Before this tracker was added:
-
-- PR #12 was open and draft.
-- Branch was 6 commits ahead of `main`, 0 behind.
-- Previous CI run on the earlier PR head passed.
-- The newest Public-backed discovery commits were awaiting a new GitHub Actions result.
-- No production Supabase migration or AlphaOS 2.0 deployment had been applied.
+- PR #12 remains the active draft integration PR.
+- AlphaOS 2.0 test runs through the build-tracker checkpoint were green.
+- Opportunity Engine state envelope and Strategy Router v1 have now been committed; CI for the newest router commits must be verified before marking tests green for this checkpoint.
+- Existing debit-spread construction was identified for reuse rather than replacement.
+- No production Supabase migration or AlphaOS 2.0 deployment has been applied.
+- Public credentials and credential-dependent archive work remain intentionally deferred.
