@@ -27,7 +27,7 @@ Goal: evolve `Run QQQ` / `Run SPY` from a credit-spread-oriented workflow into a
 | Iron condor research | COMPLETE ADAPTER v1 | Normalizes existing selector/premium-engine candidates, including asymmetric wings; construction unchanged |
 | Generic multi-leg Strategy Factory | PLANNED | Likely Codex handoff when repo-wide integration becomes worthwhile |
 | Universal Analyze | PLANNED | Common research envelope plus strategy-specific evidence |
-| Cross-strategy Compare | PLANNED | Same thesis/context; normalize tradeoffs; no winner/ranking |
+| Cross-strategy Compare | COMPLETE v1 | Shared descriptive evidence matrix across researched strategy families; preserves input order; no score, winner or recommendation |
 | Account-aware filtering | PLANNED | Capital/risk constraints filter eligibility only |
 | Position Monitor | PLANNED | Refresh original thesis/evidence against current state |
 | Scenario Engine | PLANNED | Price/time/IV scenarios with explicit assumptions |
@@ -69,7 +69,7 @@ Implemented:
 - Strategy Router v1 covering directional/premium, range, pin, large-move, volatility and late-0DTE routes.
 - Router tests verifying overlapping routes, deterministic non-ranking behavior, no-route/insufficient-evidence behavior and fail-closed invalid states.
 - Confirmed existing Strategy Selector already constructs call/put debit spreads, so AlphaOS 2.0 will integrate rather than duplicate that capability.
-- Confirmed the shared payoff engine already analyzes symmetric butterflies and BWBs, and the premium engine already constructs iron butterflies plus put/call BWBs; AlphaOS 2.0 can normalize these existing capabilities rather than rebuilding payoff math.
+- Confirmed the shared payoff engine already analyzes symmetric butterflies and BWBs, and the premium engine already constructs iron butterflies plus put/call BWBs; AlphaOS 2.0 can normalize these existing capabilities rather than rebuilding payoff math.\n- Cross-strategy comparison v1 normalizes capital at risk, profit/loss shape, breakevens, DTE, expected-move context and market-evidence availability across researched families without scoring or ranking.
 
 ## Architecture decisions
 
@@ -154,6 +154,6 @@ A change is not complete until:
 - Normalized results include legs, cashflow, capital/risk, profit, breakevens/signed move distances, optional DTE/expected-move context, scenarios, observed evidence and caveats. Cached scores/probabilities/recommendations are discarded.
 - Debit discovery requires observed delta rather than inheriting the legacy selector's missing-delta-to-zero fallback. It preserves midpoint rounding and nearest-available wing selection, explicitly disclosed; no executable fill is claimed.
 - Missing evidence remains unavailable. No symmetric butterfly discovery factory was added: research accepts existing/explicit supported candidates. Native quantities use the shared engine's package cashflow convention; legacy selector action-format candidates require one-unit legs.
-- Focused validation: 69 tests + 7 subtests passed (27 new adapter/routing cases); full local suite: 300 tests + 40 subtests passed. Exact-commit CI results are recorded in PR #12.
+- Focused validation through the structure-integration checkpoint: 69 tests + 7 subtests passed (27 new adapter/routing cases); full local suite: 300 tests + 40 subtests passed. Exact-commit CI passed.\n- Cross-strategy comparison v1 is committed with focused tests; CI for the latest comparison commit is pending/has not yet appeared at this checkpoint.
 - No production Supabase migration or AlphaOS 2.0 deployment has been applied.
 - Public credentials and credential-dependent archive work remain intentionally deferred.
