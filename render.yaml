@@ -1,0 +1,19 @@
+services:
+  - type: cron
+    name: alphaos-intraday-archive
+    runtime: python
+    plan: starter
+    schedule: "*/5 13-21 * * 1-5"
+    buildCommand: pip install -r requirements-daily.txt
+    startCommand: timeout --signal=TERM --kill-after=10s 240s python -u -m scripts.run_intraday_snapshot
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.10
+      - key: PUBLIC_API_SECRET
+        sync: false
+      - key: PUBLIC_ACCOUNT_NUMBER
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false

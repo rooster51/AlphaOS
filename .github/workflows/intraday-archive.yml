@@ -2,11 +2,7 @@ name: Intraday Market Archive
 
 on:
   workflow_dispatch:
-  schedule:
-    # Registered 5-minute heartbeat. Broad UTC window covers NYSE regular
-    # hours in both EST and EDT; Python exchange-calendar gating rejects
-    # holidays, premarket, after-hours, and early-close overflow.
-    - cron: "*/5 13-21 * * 1-5"
+  # Scheduled execution moved to standalone Render Cron; manual recovery only.
 
 permissions:
   contents: read
