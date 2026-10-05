@@ -149,3 +149,51 @@ def load_public_observations(symbol, expiration, *, observed_at,
         symbol, expiration, quote, chain, observed_at=observed_at,
         max_quote_age_seconds=max_quote_age_seconds,
     )
+
+
+def research_public_opportunities(symbol, expiration, *, observed_at,
+                                  opportunity_state=None, expected_move=None,
+                                  available_capital=None, objective=None, width=5,
+                                  max_quote_age_seconds=120):
+    """Load fresh Public observations and feed the provider-free session.
+
+    Stale/missing/future observations return a no-research payload rather than
+    entering the opportunity engine as current evidence.
+    """
+    snapshot = load_public_observations(
+        symbol, expiration, observed_at=observed_at,
+        max_quote_age_seconds=max_quote_age_seconds,
+    )
+    if not snapshot["fresh"]:
+        return {
+            "version": "public-opportunity-session-v1",
+            "symbol": snapshot["symbol"],
+            "as_of": snapshot["observed_at"],
+            "expiration": snapshot["expiration"],
+            "status": "stale_or_incomplete_observations",
+            "observation": snapshot["market_research"]["observation"],
+            "issues": snapshot["issues"],
+            "candidates": [],
+            "comparison": None,
+            "caveats": [
+                "AlphaOS did not run strategy research because current Public observations failed freshness validation.",
+                "No stale observation is silently treated as current market evidence.",
+            ],
+        }
+    from modules.opportunity_session import research_market_opportunities
+
+    market = deepcopy(snapshot["market_research"])
+    market["opportunity_state"] = deepcopy(opportunity_state or {})
+    if expected_move is not None:
+        market["expected_move"] = expected_move
+    session = research_market_opportunities(
+        snapshot["symbol"], market, snapshot["chain"],
+        as_of=snapshot["observed_at"], expiration=snapshot["expiration"],
+        available_capital=available_capital, objective=objective, width=width,
+    )
+    return {
+        "version": "public-opportunity-session-v1",
+        "provider_observation": snapshot["market_research"]["observation"],
+        "research_session": session,
+        "status": session["status"],
+    }
