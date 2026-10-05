@@ -1,9 +1,8 @@
 name: Daily research and options archive
 
 on:
-  schedule:
-    # 18:23 EDT / 17:23 EST. Runner also checks NYSE holidays and session close.
-    - cron: '23 22 * * 1-5'
+  # Automatic daily archive paused in favor of the Supabase intraday archive.
+  # Keep manual dispatch available for legacy validation/recovery only.
   workflow_dispatch:
 
 permissions:
