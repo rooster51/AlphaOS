@@ -180,3 +180,12 @@ A change is not complete until:
 - Expected-move evidence retains its supplied interval; comparison requires an explicit start matching research time and end on expiration. Unknown/mismatched intervals do not enter breakeven comparisons. No horizon rescaling.
 - Freshness additionally rejects partially missing contract timestamps and checks the oldest provided quote side. Completed-history validation excludes current/future sessions and retains its audit.
 - Focused validation: 57 tests passed. Full local suite before the final quote-side regression: 356 tests + 40 subtests passed. Exact-commit full CI is checked after push. No deployment, API/MCP, persistence or UI changes.
+
+
+## Safe 0DTE premium construction
+
+- Same-day premium structures now use zero time in the existing premium constructor instead of being blocked outright.
+- Quote-based construction/payoff economics remain available at 0DTE; modeled POP intentionally remains unavailable because the probability model requires positive time.
+- Opportunity-session routing can now produce 0DTE premium candidates when the existing routing/evidence rules and quoted economics support them.
+- No ranking, recommendation, API/MCP integration, deployment, persistence, or broker action was added.
+- Focused 0DTE regression added. Latest CI is pending at this checkpoint.
