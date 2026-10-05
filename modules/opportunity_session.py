@@ -154,16 +154,15 @@ def research_market_opportunities(symbol, market_research, chain, *, as_of,
                 except ValueError:
                     construction_errors.append('Debit constructor returned insufficient economics.')
             if allowed & set(PREMIUM.values()):
-                if expiry == research_date:
-                    construction_errors.append('Premium constructor requires positive time; 0DTE construction unavailable.')
-                else:
-                    # IV is deliberately absent: constructor quotes/legs do not
-                    # require a volatility model, and no probability is imported.
-                    for trade in generate(clean, spot, (expiry-research_date).days/365,
-                                          None, width=width, as_of=research_date):
-                        if PREMIUM.get(trade['strategy']) in allowed:
-                            raw.append(dict(trade, symbol=symbol, source='Public normalized chain',
-                                            pricing_assumption='Natural bid/ask; existing $0.65 per-contract fee and $50 net-credit floor'))
+                # IV is deliberately absent: constructor quotes/legs do not
+                # require a volatility model, and no probability is imported.
+                # Same-day expiry uses zero time; payoff construction remains
+                # valid while modeled POP intentionally stays unavailable.
+                for trade in generate(clean, spot, max(0, (expiry-research_date).days)/365,
+                                      None, width=width, as_of=research_date):
+                    if PREMIUM.get(trade['strategy']) in allowed:
+                        raw.append(dict(trade, symbol=symbol, source='Public normalized chain',
+                                        pricing_assumption='Natural bid/ask; existing $0.65 per-contract fee and $50 net-credit floor'))
         for index, candidate in enumerate(raw):
             try:
                 if not isinstance(candidate, dict) or candidate.get('expiration') != expiration:
