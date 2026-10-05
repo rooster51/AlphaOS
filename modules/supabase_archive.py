@@ -9,6 +9,8 @@ import gzip
 import hashlib
 import json
 import os
+import urllib.error
+import urllib.request
 
 
 class ArchiveUnavailable(RuntimeError):
@@ -68,14 +70,33 @@ def persist_option_snapshot(client, payload):
     stamp = observed.replace(":", "").replace("-", "")
     path = f"options/symbol={symbol}/date={date}/{stamp}.json.gz"
 
+    # Use Storage's HTTP API directly here. The Python Storage client can mask
+    # non-JSON gateway/error responses as JSONDecodeError, which prevents safe
+    # diagnosis in unattended collectors.
+    base_url = os.environ["SUPABASE_URL"].rstrip("/")
+    service_key = os.environ["SUPABASE_SERVICE_ROLE_KEY"]
+    upload_url = f"{base_url}/storage/v1/object/market-archive/{path}"
+    request = urllib.request.Request(
+        upload_url,
+        data=compressed,
+        method="POST",
+        headers={
+            "Authorization": f"Bearer {service_key}",
+            "apikey": service_key,
+            "Content-Type": "application/gzip",
+            "x-upsert": "false",
+        },
+    )
     try:
-        client.storage.from_("market-archive").upload(
-            path=path,
-            file=compressed,
-            file_options={"content-type": "application/gzip", "upsert": "false"},
-        )
-    except Exception as exc:
-        raise ArchiveStageError("storage_upload", exc) from None
+        with urllib.request.urlopen(request, timeout=30) as response:
+            if not 200 <= response.status < 300:
+                raise ArchiveUnavailable(f"Storage upload returned HTTP {response.status}.")
+    except urllib.error.HTTPError as exc:
+        raise ArchiveUnavailable(
+            f"Storage upload failed with HTTP {exc.code}."
+        ) from None
+    except urllib.error.URLError:
+        raise ArchiveUnavailable("Storage upload transport failed.") from None
 
     options = payload.get("options") or {}
     observations = options.get("observations") or options.get("contracts") or []
