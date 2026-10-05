@@ -15,6 +15,20 @@ class ArchiveUnavailable(RuntimeError):
     pass
 
 
+class ArchiveStageError(RuntimeError):
+    def __init__(self, stage, exc):
+        self.stage = stage
+        self.error_type = type(exc).__name__
+        status = getattr(exc, "status_code", None) or getattr(exc, "status", None)
+        code = getattr(exc, "code", None)
+        parts = [f"stage={stage}", f"error={self.error_type}"]
+        if status is not None:
+            parts.append(f"status={status}")
+        if code is not None:
+            parts.append(f"code={code}")
+        super().__init__("; ".join(parts))
+
+
 def archive_client():
     url = os.environ.get("SUPABASE_URL")
     key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
@@ -54,11 +68,14 @@ def persist_option_snapshot(client, payload):
     stamp = observed.replace(":", "").replace("-", "")
     path = f"options/symbol={symbol}/date={date}/{stamp}.json.gz"
 
-    client.storage.from_("market-archive").upload(
-        path=path,
-        file=compressed,
-        file_options={"content-type": "application/gzip", "upsert": "false"},
-    )
+    try:
+        client.storage.from_("market-archive").upload(
+            path=path,
+            file=compressed,
+            file_options={"content-type": "application/gzip", "upsert": "false"},
+        )
+    except Exception as exc:
+        raise ArchiveStageError("storage_upload", exc) from None
 
     options = payload.get("options") or {}
     observations = options.get("observations") or options.get("contracts") or []
@@ -74,6 +91,9 @@ def persist_option_snapshot(client, payload):
         "archive_sha256": digest,
         "quality_status": options.get("status"),
     }
-    result = client.table("option_snapshots").insert(row).execute()
+    try:
+        result = client.table("option_snapshots").insert(row).execute()
+    except Exception as exc:
+        raise ArchiveStageError("option_snapshot_insert", exc) from None
     data = getattr(result, "data", None) or []
     return data[0] if data else row
