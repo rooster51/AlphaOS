@@ -152,6 +152,22 @@ def test_expired_and_missing_spot_contexts_fail_closed():
     assert run(chain={'symbol': 'QQQ', 'expiration': '2029-01-01'})['context_error'] == 'expired_chain'
 
 
+def test_alphaos2_does_not_require_fifty_dollar_net_credit():
+    chain = {
+        'symbol': 'QQQ',
+        'expiration': '2030-01-01',
+        'calls': [],
+        'puts': [
+            {'type': 'Put', 'strike': 490, 'bid': .10, 'ask': .15, 'delta': -.10},
+            {'type': 'Put', 'strike': 495, 'bid': .35, 'ask': .40, 'delta': -.20},
+        ],
+    }
+    result = run(chain=chain)
+    premium = [x for x in result['candidates'] if x['strategy_family'] == 'put_credit_spread']
+    assert premium
+    assert all(x['research']['entry_economics']['net_credit'] < 50 for x in premium)
+
+
 def test_zero_dte_constructs_premium_without_modeled_probability():
     # Explicit observed-style quotes isolate zero-time construction from the
     # synthetic demo-chain pricing model and satisfy the existing credit floor.
