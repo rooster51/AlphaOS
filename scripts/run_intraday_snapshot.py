@@ -46,7 +46,7 @@ def main():
             payload = collect_symbol(provider, symbol, config, now=observed)
 
             stage = "supabase_option_snapshot"
-            snapshot = persist_option_snapshot(database, payload)
+            snapshot = persist_option_snapshot(database, payload, config)
 
             print(
                 f"archived {symbol}: candles={candle_count}; "
