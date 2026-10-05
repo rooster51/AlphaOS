@@ -57,6 +57,20 @@ def persist_candles(client, rows):
     client.table("market_candles").upsert(
         payload, on_conflict="provider,symbol,aggregation,bar_time"
     ).execute()
+    symbol = payload[0]["symbol"]
+    aggregation = payload[0]["aggregation"]
+    verify = (
+        client.table("market_candles")
+        .select("id", count="exact")
+        .eq("provider", payload[0]["provider"])
+        .eq("symbol", symbol)
+        .eq("aggregation", aggregation)
+        .execute()
+    )
+    count = getattr(verify, "count", None)
+    data = getattr(verify, "data", None)
+    if not ((isinstance(count, int) and count > 0) or (isinstance(data, list) and data)):
+        raise ArchiveUnavailable(f"Candle persistence verification failed for {symbol}.")
     return len(payload)
 
 
@@ -122,5 +136,15 @@ def persist_option_snapshot(client, payload, archive_config=None):
         result = client.table("option_snapshots").insert(row).execute()
     except Exception as exc:
         raise ArchiveStageError("option_snapshot_insert", exc) from None
-    data = getattr(result, "data", None) or []
-    return data[0] if data else row
+    verify = (
+        client.table("option_snapshots")
+        .select("id,archive_path")
+        .eq("provider", payload["provider"])
+        .eq("symbol", symbol)
+        .eq("observed_at", observed)
+        .execute()
+    )
+    verified = getattr(verify, "data", None)
+    if not isinstance(verified, list) or not verified:
+        raise ArchiveUnavailable(f"Option snapshot persistence verification failed for {symbol}.")
+    return verified[0]
