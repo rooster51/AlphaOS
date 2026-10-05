@@ -55,9 +55,12 @@ def main():
             stage = "supabase_option_snapshot"
             snapshot = persist_option_snapshot(database, payload, config)
 
+            if isinstance(snapshot, dict):
+                snapshot_ref = snapshot.get("id") or snapshot.get("archive_path") or "stored"
+            else:
+                snapshot_ref = "stored"
             print(
-                f"archived {symbol}: candles={candle_count}; "
-                f"snapshot={snapshot.get('id', snapshot.get('archive_path'))}"
+                f"archived {symbol}: candles={candle_count}; snapshot={snapshot_ref}"
             )
         except Exception as exc:
             failures.append(symbol)
