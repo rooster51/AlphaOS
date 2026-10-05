@@ -16,7 +16,7 @@ Goal: evolve `Run QQQ` / `Run SPY` from a credit-spread-oriented workflow into a
 | Area | Status | Notes |
 |---|---|---|
 | Existing Quant Lab / market research | COMPLETE | Preserve existing market state, structure, distributions, analogs and vertical research |
-| Public market-data layer | COMPLETE | Canonical provider; do not silently replace |
+| Public market-data layer | COMPLETE + OBSERVATION GATE v1 | Canonical provider; live quote/chain snapshots now carry provenance and fail-closed freshness validation before research |
 | Trade ledger schema | FOUNDATION COMPLETE | Additive position/event/snapshot schema; not deployed to production |
 | Long call / put research | COMPLETE v1 | Risk, breakeven, required move, DTE, expected-move and structure context |
 | Public long-option discovery | COMPLETE v1 | Unranked candidates from normalized Public chain; ask-based entry assumption |
@@ -71,7 +71,7 @@ Implemented:
 - Strategy Router v1 covering directional/premium, range, pin, large-move, volatility and late-0DTE routes.
 - Router tests verifying overlapping routes, deterministic non-ranking behavior, no-route/insufficient-evidence behavior and fail-closed invalid states.
 - Confirmed existing Strategy Selector already constructs call/put debit spreads, so AlphaOS 2.0 will integrate rather than duplicate that capability.
-- Confirmed the shared payoff engine already analyzes symmetric butterflies and BWBs, and the premium engine already constructs iron butterflies plus put/call BWBs; AlphaOS 2.0 can normalize these existing capabilities rather than rebuilding payoff math.\n- Cross-strategy comparison v1 normalizes capital at risk, profit/loss shape, breakevens, DTE, expected-move context and market-evidence availability across researched families without scoring or ranking.
+- Confirmed the shared payoff engine already analyzes symmetric butterflies and BWBs, and the premium engine already constructs iron butterflies plus put/call BWBs; AlphaOS 2.0 can normalize these existing capabilities rather than rebuilding payoff math.\n- Cross-strategy comparison v1 normalizes capital at risk, profit/loss shape, breakevens, DTE, expected-move context and market-evidence availability across researched families without scoring or ranking.\n- Public observation snapshot v1 normalizes underlying/option timestamps, symbol/expiration context and provenance; stale, missing, future-dated or mismatched observations fail closed before strategy research.\n- `research_public_opportunities` provides the thin Public-to-provider-free-session bridge while keeping market classification supplied by AlphaOS research rather than invented from raw quotes.
 
 ## Architecture decisions
 
@@ -158,7 +158,7 @@ A change is not complete until:
 - Missing evidence remains unavailable. No symmetric butterfly discovery factory was added: research accepts existing/explicit supported candidates. Native quantities use the shared engine's package cashflow convention; legacy selector action-format candidates require one-unit legs.
 - Focused validation through the structure-integration checkpoint: 69 tests + 7 subtests passed (27 new adapter/routing cases); full local suite: 300 tests + 40 subtests passed. Exact-commit CI passed.\n- Cross-strategy comparison v1 is committed with focused tests; CI for the latest comparison commit is pending/has not yet appeared at this checkpoint.
 - No production Supabase migration or AlphaOS 2.0 deployment has been applied.
-- Public credentials and credential-dependent archive work remain intentionally deferred.
+- Public credentials and credential-dependent archive work remain intentionally deferred. The new observation layer is testable without credentials; a live Public call still requires configured credentials.\n- Public observation loader/freshness gate is committed; latest CI is pending at this checkpoint.
 
 ## Research-session integration checkpoint
 
