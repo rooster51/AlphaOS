@@ -13,7 +13,7 @@ ALLOWED = {
         "range_bound", "directional", "breakout", "large_move_expected",
         "pin_candidate", "unknown",
     },
-    "time_state": {"standard", "late_0dte"},
+    "time_state": {"standard", "late_0dte", "unknown"},
     "volatility_state": {"elevated", "normal", "depressed", "unknown"},
 }
 

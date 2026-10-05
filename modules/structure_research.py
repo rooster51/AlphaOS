@@ -28,6 +28,8 @@ def _family(legs):
         if low['qty']==-high['qty']:
             if low['type']=='Call' and low['qty']>0:return 'call_debit_spread','bullish'
             if low['type']=='Put' and high['qty']>0:return 'put_debit_spread','bearish'
+            if low['type']=='Put' and low['qty']>0:return 'put_credit_spread','bullish'
+            if low['type']=='Call' and high['qty']>0:return 'call_credit_spread','bearish'
     if len(legs)==3 and len(kinds)==1:
         low,body,high=legs
         if low['qty']>0 and high['qty']==low['qty'] and body['qty']==-2*low['qty']:
@@ -88,7 +90,7 @@ def research_structure(candidate,*,symbol=None,spot=None,as_of=None,expected_mov
     if trade['shares']!=0:raise ValueError('Only option-only structures are supported.')
     family,direction=_family(trade['legs'])
     if family.endswith('debit_spread') and trade['credit']>=0:raise ValueError('Debit spread requires a debit.')
-    if family=='iron_condor' and trade['credit']<=0:raise ValueError('Iron condor requires a credit.')
+    if family in ('iron_condor','put_credit_spread','call_credit_spread') and trade['credit']<=0:raise ValueError('Iron condor requires a credit.')
     trade['strategy_family']=family
     trade['strategy']=family
     analysis=trade_analysis(trade)

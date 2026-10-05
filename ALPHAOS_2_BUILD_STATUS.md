@@ -5,7 +5,7 @@
 
 ## Current milestone
 
-**Opportunity Engine + Strategy Router**
+**Provider-free research-session orchestration**
 
 Goal: evolve `Run QQQ` / `Run SPY` from a credit-spread-oriented workflow into an interface-agnostic options research workflow:
 
@@ -25,10 +25,12 @@ Goal: evolve `Run QQQ` / `Run SPY` from a credit-spread-oriented workflow into a
 | Debit-spread research/discovery | COMPLETE ADAPTER v1 | Reuses existing constructor; observed delta and valid quotes required; midpoint assumption explicit; no ranking |
 | Butterfly / BWB research | COMPLETE ADAPTER v1 | Symmetric long call/put and iron butterflies; bullish put / bearish call BWBs; shared deterministic payoff |
 | Iron condor research | COMPLETE ADAPTER v1 | Normalizes existing selector/premium-engine candidates, including asymmetric wings; construction unchanged |
+| Generic position normalization | COMPLETE v1 | Existing same-expiration strategies; signed legs, observed quotes/Greeks/timestamps and shared economics |
+| Research-session orchestration | COMPLETE v1 | Supplied normalized market/chain evidence through routing, existing constructors, research and descriptive comparison; no provider/API calls |
 | Generic multi-leg Strategy Factory | PLANNED | Likely Codex handoff when repo-wide integration becomes worthwhile |
 | Universal Analyze | PLANNED | Common research envelope plus strategy-specific evidence |
 | Cross-strategy Compare | COMPLETE v1 | Shared descriptive evidence matrix across researched strategy families; preserves input order; no score, winner or recommendation |
-| Account-aware filtering | PLANNED | Capital/risk constraints filter eligibility only |
+| Account-aware filtering | COMPLETE v1 | Optional max-loss capital ceiling; explicit exclusions; no ranking or broker-margin claim |
 | Position Monitor | PLANNED | Refresh original thesis/evidence against current state |
 | Scenario Engine | PLANNED | Price/time/IV scenarios with explicit assumptions |
 | Conversational journal writes | FOUNDATION ONLY | Ledger exists; service/API/MCP persistence not wired |
@@ -157,3 +159,14 @@ A change is not complete until:
 - Focused validation through the structure-integration checkpoint: 69 tests + 7 subtests passed (27 new adapter/routing cases); full local suite: 300 tests + 40 subtests passed. Exact-commit CI passed.\n- Cross-strategy comparison v1 is committed with focused tests; CI for the latest comparison commit is pending/has not yet appeared at this checkpoint.
 - No production Supabase migration or AlphaOS 2.0 deployment has been applied.
 - Public credentials and credential-dependent archive work remain intentionally deferred.
+
+## Research-session integration checkpoint
+
+- `research_market_opportunities` accepts symbol, normalized market research (`spot`, optional dollar `expected_move`, classified `opportunity_state`), Public-shaped chain, expiration, timestamp, optional objective and capital ceiling. Supplied candidates can replace discovery in input order.
+- Existing long/debit/premium constructors feed shared research and `strategy_compare`; no new pricing, payoff or probability model. Positions retain observed leg fields and timestamps; absent evidence remains unknown. Unknown time is accepted explicitly while existing caller defaults remain compatible.
+- Supported: long call/put, call/put debit spreads, put/call credit spreads, symmetric butterflies, bullish/bearish BWBs and iron condors. Automatic butterfly discovery uses existing iron butterflies; symmetric long butterflies require supplied candidates.
+- Input contract validation excludes malformed, crossed, duplicate and conflicting-expiration observations. Context mismatch, missing spot, expired chains and unsupported routes return explicit no-candidate/unavailable results.
+- Capital filtering runs after shared max-loss economics and preserves candidate order, excluded research and reasons. JSON-safe output retains unlimited profit as `unlimited`. No winner or score is added.
+- Limits: one expiration, standard 100-share multiplier; no fresh provider fetch or raw-feature classification. Existing long discovery distance limit and premium $50 net-credit floor/$0.65 fee remain disclosed assumptions. Premium automatic construction requires positive DTE; no fabricated 0DTE time input. Missing observed delta prevents debit discovery.
+- Focused validation: 98 tests + 7 subtests passed. Full regression: 329 tests + 40 subtests passed in one full run. Exact-commit CI will be checked after push and reported with the commit.
+- API/MCP integration, persistence, journal writes, migrations and production deployment remain unimplemented in this milestone.
