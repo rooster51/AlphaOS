@@ -101,7 +101,7 @@ the symbol's chosen slot; a pre-options slot-boundary crossing still fails safel
 
 The shell timeout is 720 seconds (12 minutes), with 10 seconds kill grace.
 The job ceiling is 15 minutes including checkout, Python and dependency install.
-This provides room for the reported 5–10 minute full-chain work, while bounding
+This provides room for the reported 5â€“10 minute full-chain work, while bounding
 hung runs. It is a conservative initial budget, not a measured latency SLA;
 review actual step durations after rollout. Setup exceeding roughly three minutes
 reduces available collector time under the outer job ceiling. Pip download caching

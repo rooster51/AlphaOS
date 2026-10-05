@@ -121,7 +121,7 @@ def test_dispatch_execution_configuration():
         assert runtime + ': ${{ secrets.' + secret + ' }}' in workflow
     assert not Path('render.yaml').exists()
     assert not Path('docs/intraday_render.md').exists()
-    doc=Path('docs/intraday_scheduler.md').read_text()
+    doc=Path('docs/intraday_scheduler.md').read_text(encoding='utf-8')
     assert 'https://api.github.com/repos/rooster51/AlphaOS/actions/workflows/intraday-archive.yml/dispatches' in doc
     assert '{"ref":"main"}' in doc
     assert '*/5 13-21 * * 1-5' in doc
