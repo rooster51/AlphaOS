@@ -159,10 +159,11 @@ def research_market_opportunities(symbol, market_research, chain, *, as_of,
                 # Same-day expiry uses zero time; payoff construction remains
                 # valid while modeled POP intentionally stays unavailable.
                 for trade in generate(clean, spot, max(0, (expiry-research_date).days)/365,
-                                      None, width=width, as_of=research_date):
+                                      None, width=width, as_of=research_date,
+                                      min_net_credit=0):
                     if PREMIUM.get(trade['strategy']) in allowed:
                         raw.append(dict(trade, symbol=symbol, source='Public normalized chain',
-                                        pricing_assumption='Natural bid/ask; existing $0.65 per-contract fee and $50 net-credit floor'))
+                                        pricing_assumption='Natural bid/ask; existing $0.65 per-contract fee; no AlphaOS 2.0 minimum net-credit floor'))
         for index, candidate in enumerate(raw):
             try:
                 if not isinstance(candidate, dict) or candidate.get('expiration') != expiration:
