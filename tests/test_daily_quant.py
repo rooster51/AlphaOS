@@ -353,7 +353,9 @@ class DailyProviderTests(unittest.TestCase):
 
     def test_workflow_timing_and_no_force(self):
         workflow=(Path(__file__).resolve().parents[1]/'.github/workflows/daily-quant.yml').read_text()
-        self.assertIn("23 22 * * 1-5",workflow)
+        self.assertIn('workflow_dispatch:',workflow)
+        self.assertNotIn('schedule:',workflow)
+        self.assertNotIn("23 22 * * 1-5",workflow)
         self.assertIn('cancel-in-progress: false',workflow)
         self.assertIn('secrets.PUBLIC_API_SECRET',workflow)
         self.assertNotIn('--force-rebuild',workflow)
