@@ -153,8 +153,17 @@ def test_expired_and_missing_spot_contexts_fail_closed():
 
 
 def test_zero_dte_constructs_premium_without_modeled_probability():
-    chain = demo_chain(0, as_of=date(2030, 1, 1))
-    chain['symbol'] = 'QQQ'
+    # Explicit observed-style quotes isolate zero-time construction from the
+    # synthetic demo-chain pricing model and satisfy the existing credit floor.
+    chain = {
+        'symbol': 'QQQ',
+        'expiration': '2030-01-01',
+        'calls': [],
+        'puts': [
+            {'type': 'Put', 'strike': 490, 'bid': .40, 'ask': .50, 'delta': -.15},
+            {'type': 'Put', 'strike': 495, 'bid': 1.50, 'ask': 1.60, 'delta': -.25},
+        ],
+    }
     result = run(chain=chain)
     premium = [x for x in result['candidates'] if x['strategy_family'] == 'put_credit_spread']
     assert premium
