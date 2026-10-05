@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 from datetime import datetime, timezone
+from math import isfinite
 
 from modules.public_data import get_public_option_chain, get_public_quotes
 
@@ -35,7 +36,7 @@ def _iso(value):
 def _latest_timestamp(row):
     stamps = [_dt(row.get(key)) for key in ("quote_timestamp", "bid_timestamp", "ask_timestamp")]
     stamps = [stamp for stamp in stamps if stamp is not None]
-    return max(stamps) if stamps else None
+    return min(stamps) if stamps else None
 
 
 def normalize_public_observations(symbol, expiration, quote, chain, *, observed_at,
@@ -49,7 +50,7 @@ def normalize_public_observations(symbol, expiration, quote, chain, *, observed_
         max_age = float(max_quote_age_seconds)
     except (TypeError, ValueError):
         raise ValueError("Freshness threshold must be numeric.") from None
-    if max_age < 0:
+    if not isfinite(max_age) or max_age < 0:
         raise ValueError("Freshness threshold must be nonnegative.")
     if not isinstance(quote, dict) or not isinstance(chain, dict):
         raise ValueError("Public quote and chain mappings required.")
@@ -92,13 +93,16 @@ def normalize_public_observations(symbol, expiration, quote, chain, *, observed_
             else:
                 contract_times.append(stamp)
                 age = (now - stamp).total_seconds()
-                if age < 0:
+                if any(_dt(row.get(key)) is not None and _dt(row.get(key)) > now
+                       for key in ("quote_timestamp", "bid_timestamp", "ask_timestamp")):
                     future_contract_timestamps += 1
                 elif age > max_age:
                     stale_contracts += 1
             normalized_chain[pool].append(row)
 
-    if not contract_times:
+    if missing_contract_timestamps:
+        issues.append("missing_option_quote_timestamps")
+    if not contract_times and not missing_contract_timestamps:
         issues.append("missing_option_quote_timestamps")
     if future_contract_timestamps:
         issues.append("future_option_quote_timestamp")
@@ -154,12 +158,18 @@ def load_public_observations(symbol, expiration, *, observed_at,
 def research_public_opportunities(symbol, expiration, *, observed_at,
                                   opportunity_state=None, expected_move=None,
                                   available_capital=None, objective=None, width=5,
-                                  max_quote_age_seconds=120):
+                                  max_quote_age_seconds=120, history=None, session_context=None,
+                                  expected_move_horizon=None, late_minutes=60):
     """Load fresh Public observations and feed the provider-free session.
 
     Stale/missing/future observations return a no-research payload rather than
     entering the opportunity engine as current evidence.
     """
+    from modules.opportunity_classifier import aware_time, classify_opportunity, history_evidence, expected_move_context
+    from datetime import date
+    if aware_time(observed_at) is None:
+        raise ValueError("Timezone-aware research timestamp required.")
+    date.fromisoformat(str(expiration))
     snapshot = load_public_observations(
         symbol, expiration, observed_at=observed_at,
         max_quote_age_seconds=max_quote_age_seconds,
@@ -183,9 +193,24 @@ def research_public_opportunities(symbol, expiration, *, observed_at,
     from modules.opportunity_session import research_market_opportunities
 
     market = deepcopy(snapshot["market_research"])
-    market["opportunity_state"] = deepcopy(opportunity_state or {})
-    if expected_move is not None:
-        market["expected_move"] = expected_move
+    evidence = {}
+    if opportunity_state is None:
+        try:
+            if history is None:
+                from modules.public_data import get_public_research_bars
+                history = get_public_research_bars(snapshot["symbol"], "FIVE_YEARS")
+            evidence = history_evidence(history, snapshot["symbol"], observed_at)
+        except (ValueError, RuntimeError):
+            evidence = {"unavailable": "Completed market history unavailable or invalid."}
+        market["opportunity_state"] = classify_opportunity(evidence, observed_at=observed_at,
+            expiration=expiration, session=session_context, late_minutes=late_minutes)
+    else:
+        market["opportunity_state"] = deepcopy(opportunity_state)
+    market["classification_evidence"] = evidence
+    market["classification_source"] = 'classifier' if opportunity_state is None else 'caller_supplied_legacy'
+    context, comparable = expected_move_context(expected_move, expected_move_horizon, observed_at, expiration)
+    market["expected_move_evidence"] = context
+    market["expected_move"] = comparable
     session = research_market_opportunities(
         snapshot["symbol"], market, snapshot["chain"],
         as_of=snapshot["observed_at"], expiration=snapshot["expiration"],

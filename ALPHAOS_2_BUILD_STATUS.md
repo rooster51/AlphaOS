@@ -170,3 +170,13 @@ A change is not complete until:
 - Limits: one expiration, standard 100-share multiplier; no fresh provider fetch or raw-feature classification. Existing long discovery distance limit and premium $50 net-credit floor/$0.65 fee remain disclosed assumptions. Premium automatic construction requires positive DTE; no fabricated 0DTE time input. Missing observed delta prevents debit discovery.
 - Focused validation: 98 tests + 7 subtests passed. Full regression: 329 tests + 40 subtests passed in one full run. Exact-commit CI will be checked after push and reported with the commit.
 - API/MCP integration, persistence, journal writes, migrations and production deployment remain unimplemented in this milestone.
+
+## Opportunity Classifier v1
+
+- Dedicated classifier reuses the existing Opportunity State contract and strict completed close/EMA9/EMA21/EMA50 ordering. Mixed or conflicting breakout evidence remains unknown. A completed close outside the previous 20-session high/low is a descriptive breakout, superseding generic directional movement. Raw feature values, rules, conflicts and unavailable evidence are returned.
+- Public orchestration obtains Public history (or accepts fixture history), builds existing market-state features using the research timestamp cutoff, classifies, then invokes the existing session. Legacy caller-supplied states remain explicitly labeled. No provider interpretation or production integration.
+- Premium rich/fair/cheap, volatility elevated/normal/depressed, range-bound, large-move and pin states remain unknown: this branch has no established calibrated rules. IV/RV ordering alone is not treated as premium value.
+- Time state requires timezone-aware timestamps and explicit exchange session bounds; the configurable late-0DTE convention is 60 minutes before session close. After-hours and missing session context remain unknown. Premium-constructor 0DTE restriction is unchanged.
+- Expected-move evidence retains its supplied interval; comparison requires an explicit start matching research time and end on expiration. Unknown/mismatched intervals do not enter breakeven comparisons. No horizon rescaling.
+- Freshness additionally rejects partially missing contract timestamps and checks the oldest provided quote side. Completed-history validation excludes current/future sessions and retains its audit.
+- Focused validation: 57 tests passed. Full local suite before the final quote-side regression: 356 tests + 40 subtests passed. Exact-commit full CI is checked after push. No deployment, API/MCP, persistence or UI changes.
