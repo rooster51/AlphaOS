@@ -89,7 +89,7 @@ def valid_contract(c):
 def generate(chain, spot, years, iv, width=5, fee=0.65, pricing="Natural", as_of=None,
              min_net_credit=50.0, max_short_distance=0.05):
     as_of = as_of or date.today()
-    if not isfinite(spot) or spot <= 0 or width <= 0 or years <= 0:
+    if not isfinite(spot) or spot <= 0 or width <= 0 or years < 0:
         return []
     if date.fromisoformat(chain["expiration"][:10]) < as_of:
         return []
