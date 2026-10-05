@@ -1,5 +1,6 @@
 """Collect one point-in-time SPY/QQQ market archive snapshot."""
 import sys
+import traceback
 
 from modules.daily_public import DailyPublicProvider
 from modules.intraday_archive import collect_symbol, load_config
@@ -10,8 +11,14 @@ from modules.supabase_archive import archive_client, persist_candles, persist_op
 def _safe_failure(symbol, stage, exc):
     # Type + stage only. Never print provider response bodies, request headers,
     # URLs containing credentials, database errors, or secret values.
+    frames = traceback.extract_tb(exc.__traceback__)
+    location = "unknown"
+    if frames:
+        frame = frames[-1]
+        location = f"{frame.filename.rsplit('/', 1)[-1]}:{frame.lineno}:{frame.name}"
     print(
-        f"failed {symbol}: stage={stage}; error={type(exc).__name__}; detail={str(exc)}",
+        f"failed {symbol}: stage={stage}; error={type(exc).__name__}; "
+        f"location={location}; detail={str(exc)}",
         file=sys.stderr,
     )
 
