@@ -102,3 +102,36 @@ def test_input_is_not_mutated():
     )
     assert c["calls"][0] == original
     assert "quote_timestamp" not in c["calls"][0]
+
+
+def test_stale_snapshot_gate_contract(monkeypatch):
+    import modules.public_observations as module
+    stale = normalize_public_observations(
+        "QQQ", "2030-01-04", quote("2030-01-02T14:20:00Z"),
+        chain("2030-01-02T14:20:00Z"),
+        observed_at="2030-01-02T14:30:30Z", max_quote_age_seconds=120,
+    )
+    monkeypatch.setattr(module, "load_public_observations", lambda *args, **kwargs: stale)
+    result = module.research_public_opportunities(
+        "QQQ", "2030-01-04", observed_at="2030-01-02T14:30:30Z",
+        opportunity_state={"direction": "bullish"},
+    )
+    assert result["status"] == "stale_or_incomplete_observations"
+    assert result["candidates"] == []
+    assert result["comparison"] is None
+
+
+def test_fresh_snapshot_feeds_provider_free_session(monkeypatch):
+    import modules.public_observations as module
+    fresh = normalize_public_observations(
+        "QQQ", "2030-01-04", quote(), chain(),
+        observed_at="2030-01-02T14:30:30Z", max_quote_age_seconds=120,
+    )
+    monkeypatch.setattr(module, "load_public_observations", lambda *args, **kwargs: fresh)
+    result = module.research_public_opportunities(
+        "QQQ", "2030-01-04", observed_at="2030-01-02T14:30:30Z",
+        opportunity_state={"direction": "bullish"},
+    )
+    assert result["provider_observation"]["fresh"] is True
+    assert result["research_session"]["symbol"] == "QQQ"
+    assert result["research_session"]["opportunity_state"]["direction"] == "bullish"
