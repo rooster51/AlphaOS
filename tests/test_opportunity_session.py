@@ -152,9 +152,11 @@ def test_expired_and_missing_spot_contexts_fail_closed():
     assert run(chain={'symbol': 'QQQ', 'expiration': '2029-01-01'})['context_error'] == 'expired_chain'
 
 
-def test_zero_dte_does_not_invent_positive_time_for_premium_constructor():
+def test_zero_dte_constructs_premium_without_modeled_probability():
     chain = demo_chain(0, as_of=date(2030, 1, 1))
     chain['symbol'] = 'QQQ'
     result = run(chain=chain)
-    assert not any(x['strategy_family'] == 'put_credit_spread' for x in result['candidates'])
-    assert any('0DTE construction unavailable' in c for c in result['caveats'])
+    premium = [x for x in result['candidates'] if x['strategy_family'] == 'put_credit_spread']
+    assert premium
+    assert all(x['research']['payoff']['pop'] is None for x in premium)
+    assert not any('0DTE construction unavailable' in c for c in result['caveats'])
