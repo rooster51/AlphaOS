@@ -60,7 +60,7 @@ def persist_candles(client, rows):
     return len(payload)
 
 
-def persist_option_snapshot(client, payload):
+def persist_option_snapshot(client, payload, archive_config=None):
     raw = json.dumps(payload, separators=(",", ":"), sort_keys=True).encode()
     compressed = gzip.compress(raw)
     digest = hashlib.sha256(compressed).hexdigest()
@@ -110,9 +110,9 @@ def persist_option_snapshot(client, payload):
         "observed_at": observed,
         "session_date": date,
         "underlying_price": underlying.get("last"),
-        "min_dte": options.get("universe", {}).get("min_dte"),
-        "max_dte": options.get("universe", {}).get("max_dte"),
-        "strike_band": options.get("universe", {}).get("strike_band"),
+        "min_dte": int(archive_config["min_dte"]) if archive_config else None,
+        "max_dte": int(archive_config["max_dte"]) if archive_config else None,
+        "strike_band": float(archive_config["strike_band"]) if archive_config else None,
         "contract_count": options.get("received_contract_count", 0),
         "archive_path": path,
         "archive_sha256": digest,
