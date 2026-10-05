@@ -55,8 +55,9 @@ def persist_option_snapshot(client, payload):
     path = f"options/symbol={symbol}/date={date}/{stamp}.json.gz"
 
     client.storage.from_("market-archive").upload(
-        path, compressed,
-        {"content-type": "application/gzip", "upsert": "false"},
+        path=path,
+        file=compressed,
+        file_options={"content-type": "application/gzip", "upsert": "false"},
     )
 
     options = payload.get("options") or {}
