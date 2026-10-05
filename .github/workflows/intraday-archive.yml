@@ -1,0 +1,26 @@
+name: Intraday Market Archive
+
+on:
+  workflow_dispatch:
+  # Automatic five-minute collection will be enabled after one successful
+  # credentialed validation run against Public + Supabase.
+
+permissions:
+  contents: read
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements-daily.txt
+      - name: Collect Public market data into private Supabase archive
+        env:
+          PUBLIC_API_SECRET: ${{ secrets.PUBLIC_API_SECRET }}
+          PUBLIC_ACCOUNT_NUMBER: ${{ secrets.PUBLIC_ACCOUNT_NUMBER }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: python scripts/run_intraday_snapshot.py
