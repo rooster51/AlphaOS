@@ -165,12 +165,12 @@ def test_alphaos2_does_not_require_fifty_dollar_net_credit():
     result = run(chain=chain)
     premium = [x for x in result['candidates'] if x['strategy_family'] == 'put_credit_spread']
     assert premium
-    assert all(x['research']['entry_economics']['net_credit'] < 50 for x in premium)
+    assert all(0 < x['research']['entry_credit'] < 50 for x in premium)
 
 
 def test_zero_dte_constructs_premium_without_modeled_probability():
     # Explicit observed-style quotes isolate zero-time construction from the
-    # synthetic demo-chain pricing model and satisfy the existing credit floor.
+    # synthetic demo-chain pricing model.
     chain = {
         'symbol': 'QQQ',
         'expiration': '2030-01-01',
@@ -183,5 +183,5 @@ def test_zero_dte_constructs_premium_without_modeled_probability():
     result = run(chain=chain)
     premium = [x for x in result['candidates'] if x['strategy_family'] == 'put_credit_spread']
     assert premium
-    assert all(x['research']['payoff']['pop'] is None for x in premium)
+    assert all('pop' not in x['research']['payoff'] for x in premium)
     assert not any('0DTE construction unavailable' in c for c in result['caveats'])
