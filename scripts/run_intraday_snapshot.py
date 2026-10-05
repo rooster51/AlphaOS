@@ -4,6 +4,7 @@ import traceback
 
 from modules.daily_public import DailyPublicProvider
 from modules.intraday_archive import collect_symbol, load_config
+from modules.market_session_gate import regular_session_slot
 from modules.public_intraday import fetch_intraday_bars
 from modules.supabase_archive import archive_client, persist_candles, persist_option_snapshot
 
@@ -25,6 +26,10 @@ def _safe_failure(symbol, stage, exc):
 
 def main():
     config = load_config()
+    slot = regular_session_slot(cadence_minutes=int(config["option_snapshot_minutes"]))
+    if slot is None:
+        print("NYSE regular session is closed; no archive snapshot collected.")
+        return 0
     try:
         provider = DailyPublicProvider.from_environment()
     except Exception as exc:
@@ -41,7 +46,7 @@ def main():
     for symbol in config["symbols"]:
         stage = "start"
         try:
-            observed = provider.now()
+            observed = slot
 
             stage = "public_intraday_bars"
             bars = fetch_intraday_bars(provider, symbol, "ONE_MINUTE")
