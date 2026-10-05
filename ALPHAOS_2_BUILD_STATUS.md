@@ -185,6 +185,7 @@ A change is not complete until:
 ## Safe 0DTE premium construction
 
 - Same-day premium structures now use zero time in the existing premium constructor instead of being blocked outright.
+- AlphaOS 2.0 opportunity sessions explicitly set the premium constructor minimum net-credit floor to $0; valid low-credit structures remain researchable. The legacy/shared constructor default is unchanged.
 - Quote-based construction/payoff economics remain available at 0DTE; modeled POP intentionally remains unavailable because the probability model requires positive time.
 - Opportunity-session routing can now produce 0DTE premium candidates when the existing routing/evidence rules and quoted economics support them.
 - No ranking, recommendation, API/MCP integration, deployment, persistence, or broker action was added.
