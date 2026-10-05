@@ -2,14 +2,14 @@ name: Intraday Market Archive
 
 on:
   workflow_dispatch:
-  # Scheduled execution moved to standalone Render Cron; manual recovery only.
+  # External scheduler invokes workflow_dispatch; native schedule intentionally disabled.
 
 permissions:
   contents: read
 
 concurrency:
   group: intraday-market-archive
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   snapshot:
@@ -20,6 +20,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-daily.txt
       - run: pip install -r requirements-daily.txt
       - name: Collect Public market data into private Supabase archive
         env:
@@ -27,4 +29,4 @@ jobs:
           PUBLIC_ACCOUNT_NUMBER: ${{ secrets.PUBLIC_ACCOUNT }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_API }}
-        run: python -m scripts.run_intraday_snapshot
+        run: timeout --signal=TERM --kill-after=10s 240s python -u -m scripts.run_intraday_snapshot

@@ -97,3 +97,29 @@ def test_workflows_remain_manual_only():
     from pathlib import Path
     for name in ('daily-quant','intraday-archive'):
         assert '  schedule:' not in Path(f'.github/workflows/{name}.yml').read_text()
+
+
+@pytest.mark.parametrize('status',['partial','empty'])
+def test_new_incomplete_snapshot_fails(monkeypatch,status):
+    setup(monkeypatch)
+    monkeypatch.setattr(runner,'persist_option_snapshot',lambda db,p,c:dict(p,quality_status=status))
+    assert runner.main(clock=lambda:NOW,sleep=lambda s:None)==1
+
+
+def test_dispatch_execution_configuration():
+    from pathlib import Path
+    workflow=Path('.github/workflows/intraday-archive.yml').read_text()
+    daily=Path('.github/workflows/daily-quant.yml').read_text()
+    assert '  workflow_dispatch:' in workflow and '  workflow_dispatch:' in daily
+    assert 'cancel-in-progress: true' in workflow
+    assert 'group: intraday-market-archive' in workflow
+    assert '240s python -u -m scripts.run_intraday_snapshot' in workflow
+    for runtime,secret in [('PUBLIC_API_SECRET','PUBLIC_API'),('PUBLIC_ACCOUNT_NUMBER','PUBLIC_ACCOUNT'),
+                           ('SUPABASE_URL','SUPABASE_URL'),('SUPABASE_SERVICE_ROLE_KEY','SUPABASE_API')]:
+        assert runtime + ': ${{ secrets.' + secret + ' }}' in workflow
+    assert not Path('render.yaml').exists()
+    assert not Path('docs/intraday_render.md').exists()
+    doc=Path('docs/intraday_scheduler.md').read_text()
+    assert 'https://api.github.com/repos/rooster51/AlphaOS/actions/workflows/intraday-archive.yml/dispatches' in doc
+    assert '{"ref":"main"}' in doc
+    assert '*/5 13-21 * * 1-5' in doc
