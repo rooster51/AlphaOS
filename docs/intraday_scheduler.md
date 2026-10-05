@@ -75,7 +75,7 @@ calendar is authoritative: weekends, holidays, premarket, after-hours and
 post-early-close calls skip without authentication. The collector gates again
 before options collection and before writing a snapshot after market close.
 
-Slot time is the deterministic five-minute floor of actual collector invocation,
+Slot time is the deterministic five-minute floor of each symbol's actual collection turn,
 not the scheduler's nominal fire time. Actual observed_at, collection_finished_at,
 per-chain responses and Public quote timestamps remain separate. A late job
 collects the current slot only; it never pretends to observe a missed past slot.
@@ -88,14 +88,38 @@ are not guarantees. One-minute candle rows are separate, upserted by bar time.
 
 ## Concurrency, duplicates and interruption
 
-A fixed GitHub concurrency group with cancel-in-progress: true makes newer
-heartbeats supersede old runs rather than accumulate old jobs. It can interrupt
-an active collection, including when a duplicate dispatch arrives. This favors
-fresh work over waiting. GitHub cancellation is not an instantaneous distributed
-lock: Supabase/Storage idempotency remains authoritative. The collector command
-has a 240-second timeout plus 10-second kill grace; the job has a 12-minute limit
-including dependency setup. Pip caching reduces startup cost. A canceled or
-runner-delayed run can leave a gap; the scheduler is not a real-time guarantee.
+A fixed GitHub concurrency group with cancel-in-progress: false preserves the
+active run. Default single-pending behavior retains at most one pending run;
+new heartbeats replace older pending runs, not the running collector. Do not set
+queue: max. See https://docs.github.com/en/actions/concepts/workflows-and-actions/concurrency .
+Pending work uses current wall time after runner startup, never dispatch time.
+Each symbol chooses its slot when its collection turn begins, so a six-minute
+SPY collection does not force QQQ to use SPY's older slot. A started option fetch
+may finish across a slot boundary while the market remains open; it retains its
+start slot and actual observation/finish timestamps. Retries remain limited to
+the symbol's chosen slot; a pre-options slot-boundary crossing still fails safely.
+
+The shell timeout is 720 seconds (12 minutes), with 10 seconds kill grace.
+The job ceiling is 15 minutes including checkout, Python and dependency install.
+This provides room for the reported 5–10 minute full-chain work, while bounding
+hung runs. It is a conservative initial budget, not a measured latency SLA;
+review actual step durations after rollout. Setup exceeding roughly three minutes
+reduces available collector time under the outer job ceiling. Pip download caching
+is retained; packages still install on each ephemeral runner. No packaging/runtime
+redesign is needed. Workflow elapsed time includes setup and does not establish
+that Public collection itself exceeded five minutes.
+
+- Under five minutes: typically finishes before the next heartbeat, subject to setup.
+- Five to ten minutes: active collection continues; only one heartbeat waits.
+  Intermediate pending heartbeats can be replaced. The next run collects current
+  slots and skips completed duplicates, leaving genuine missed slots as gaps.
+- Beyond twelve collector minutes (or fifteen job minutes): bounded termination
+  is a failure, not success. Previously committed symbols remain intact; inspect
+  orphan Storage objects using the recovery procedure below. The pending run may
+  then start against its own current slots, or skip if NYSE is closed.
+
+Long sequential collections cannot guarantee 78 samples per symbol per day. Prefer
+complete real observations; no backlog drains into fabricated historical samples.
 
 Complete provider/symbol/slot metadata skips duplicate collection. Immutable
 Storage paths are slot-based. Collision recovery downloads the first stored
@@ -135,7 +159,7 @@ validation report; never manufacture backfill. This PR does not add an automated
 gap-monitoring service.
 
 For a transient failure in the current active slot, manually dispatch the same
-workflow on main (beware it cancels an active run). For old gaps, retain the gap,
+workflow on main (it waits behind an active run and may replace the pending heartbeat). For old gaps, retain the gap,
 inspect orphan objects, and reconcile only existing observations. Repair expired
 GitHub credentials in scheduler settings; repair collector credentials only in
 GitHub repository secrets. Re-enable a scheduler disabled by repeated HTTP errors.

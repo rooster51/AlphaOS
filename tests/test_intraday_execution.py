@@ -111,9 +111,11 @@ def test_dispatch_execution_configuration():
     workflow=Path('.github/workflows/intraday-archive.yml').read_text()
     daily=Path('.github/workflows/daily-quant.yml').read_text()
     assert '  workflow_dispatch:' in workflow and '  workflow_dispatch:' in daily
-    assert 'cancel-in-progress: true' in workflow
+    assert 'cancel-in-progress: false' in workflow
     assert 'group: intraday-market-archive' in workflow
-    assert '240s python -u -m scripts.run_intraday_snapshot' in workflow
+    assert 'timeout-minutes: 15' in workflow
+    assert 'queue: max' not in workflow
+    assert '720s python -u -m scripts.run_intraday_snapshot' in workflow
     for runtime,secret in [('PUBLIC_API_SECRET','PUBLIC_API'),('PUBLIC_ACCOUNT_NUMBER','PUBLIC_ACCOUNT'),
                            ('SUPABASE_URL','SUPABASE_URL'),('SUPABASE_SERVICE_ROLE_KEY','SUPABASE_API')]:
         assert runtime + ': ${{ secrets.' + secret + ' }}' in workflow
@@ -123,3 +125,47 @@ def test_dispatch_execution_configuration():
     assert 'https://api.github.com/repos/rooster51/AlphaOS/actions/workflows/intraday-archive.yml/dispatches' in doc
     assert '{"ref":"main"}' in doc
     assert '*/5 13-21 * * 1-5' in doc
+
+
+def test_long_spy_finishes_and_qqq_uses_current_slot(monkeypatch):
+    from datetime import timedelta
+    setup(monkeypatch)
+    current=[NOW]
+    saved=[]
+    def collect(provider,symbol,config):
+        observed=current[0]
+        if symbol=='SPY': current[0]+=timedelta(minutes=6)
+        return dict(observed_at=observed.isoformat(),symbol=symbol)
+    def persist(db,p,c):
+        saved.append(p)
+        return dict(p,quality_status='complete')
+    monkeypatch.setattr(runner,'collect_symbol',collect)
+    monkeypatch.setattr(runner,'persist_option_snapshot',persist)
+    assert runner.main(clock=lambda:current[0],sleep=lambda s:None)==0
+    assert [p['symbol'] for p in saved]==['SPY','QQQ']
+    assert saved[0]['slot_time'].endswith('14:30:00+00:00')
+    assert saved[0]['observed_at']==NOW.isoformat()
+    assert saved[0]['collection_finished_at'].endswith('14:38:00+00:00')
+    assert saved[1]['slot_time'].endswith('14:35:00+00:00')
+    assert saved[1]['observed_at'].endswith('14:38:00+00:00')
+
+
+def test_delayed_run_ignores_old_dispatch_time(monkeypatch):
+    from datetime import timedelta
+    setup(monkeypatch)
+    monkeypatch.setenv('GITHUB_EVENT_PATH','dispatch-from-an-earlier-slot.json')
+    current=NOW+timedelta(minutes=11)
+    saved={}
+    monkeypatch.setattr(runner,'collect_symbol',lambda provider,symbol,config:dict(symbol=symbol,observed_at=current.isoformat()))
+    def find(db,provider,symbol,slot): return saved.get((symbol,slot))
+    def persist(db,p,c):
+        saved[(p['symbol'],p['slot_time'])]=dict(p,quality_status='complete')
+        return saved[(p['symbol'],p['slot_time'])]
+    monkeypatch.setattr(runner,'find_slot_snapshot',find)
+    monkeypatch.setattr(runner,'persist_option_snapshot',persist)
+    assert runner.main(clock=lambda:current,sleep=lambda s:None)==0
+    assert len(saved)==2
+    assert all(slot.endswith('14:40:00+00:00') for symbol,slot in saved)
+    monkeypatch.setattr(runner,'collect_symbol',lambda *a:pytest.fail('duplicate recollection'))
+    assert runner.main(clock=lambda:current,sleep=lambda s:None)==0
+    assert len(saved)==2

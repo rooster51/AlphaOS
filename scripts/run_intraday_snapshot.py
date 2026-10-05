@@ -46,12 +46,15 @@ def main(clock=lambda: datetime.now(timezone.utc), sleep=time.sleep):
 
     failures = []
     for symbol in config["symbols"]:
+        # A preceding symbol may span multiple heartbeats. Never label this
+        # symbol with that earlier slot or the scheduler dispatch timestamp.
+        slot = regular_session_slot(now=clock(), cadence_minutes=int(config["option_snapshot_minutes"]))
         succeeded = False
         for attempt in range(1, 3):
             stage = "session_gate"
             try:
                 observed = clock()
-                if regular_session_slot(observed, int(config["option_snapshot_minutes"])) != slot:
+                if slot is None or regular_session_slot(observed, int(config["option_snapshot_minutes"])) != slot:
                     raise RuntimeError("Slot no longer active")
                 stage = "duplicate_check"
                 prior = find_slot_snapshot(database, provider.name, symbol, slot.isoformat())

@@ -9,12 +9,13 @@ permissions:
 
 concurrency:
   group: intraday-market-archive
-  cancel-in-progress: true
+  cancel-in-progress: false
+  # Default single-pending behavior replaces old pending runs, not active work.
 
 jobs:
   snapshot:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -29,4 +30,4 @@ jobs:
           PUBLIC_ACCOUNT_NUMBER: ${{ secrets.PUBLIC_ACCOUNT }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_API }}
-        run: timeout --signal=TERM --kill-after=10s 240s python -u -m scripts.run_intraday_snapshot
+        run: timeout --signal=TERM --kill-after=10s 720s python -u -m scripts.run_intraday_snapshot
