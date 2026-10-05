@@ -2,15 +2,11 @@ name: Intraday Market Archive
 
 on:
   workflow_dispatch:
-  schedule:
-    # GitHub cron is UTC. These windows intentionally cover the U.S. regular
-    # session across EDT/EST; the script itself will be hardened with an
-    # exchange-calendar/session gate before automatic collection is enabled.
-    # Kept manual-only in v1 until that gate and API cadence are verified.
-    # - cron: "*/5 13-21 * * 1-5"
+  # Automatic five-minute collection will be enabled after one successful
+  # credentialed validation run against Public + Supabase.
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   snapshot:
@@ -21,15 +17,10 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install -r requirements-daily.txt
-      - name: Collect Public snapshot
+      - name: Collect Public market data into private Supabase archive
         env:
           PUBLIC_API_SECRET: ${{ secrets.PUBLIC_API_SECRET }}
           PUBLIC_ACCOUNT_NUMBER: ${{ secrets.PUBLIC_ACCOUNT_NUMBER }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: python scripts/run_intraday_snapshot.py
-      - name: Commit observations
-        run: |
-          git config user.name "alphaos-archive"
-          git config user.email "actions@users.noreply.github.com"
-          git add data/intraday
-          git diff --cached --quiet || git commit -m "archive intraday market snapshot"
-          git push
