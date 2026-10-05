@@ -11,7 +11,7 @@ def _safe_failure(symbol, stage, exc):
     # Type + stage only. Never print provider response bodies, request headers,
     # URLs containing credentials, database errors, or secret values.
     print(
-        f"failed {symbol}: stage={stage}; error={type(exc).__name__}",
+        f"failed {symbol}: stage={stage}; error={type(exc).__name__}; detail={str(exc)}",
         file=sys.stderr,
     )
 
