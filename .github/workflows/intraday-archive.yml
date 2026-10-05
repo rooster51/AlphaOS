@@ -2,15 +2,22 @@ name: Intraday Market Archive
 
 on:
   workflow_dispatch:
-  # Automatic five-minute collection will be enabled after one successful
-  # credentialed validation run against Public + Supabase.
+  schedule:
+    # Broad UTC window covers NYSE regular hours in both EST and EDT.
+    # Python exchange-calendar gating rejects non-session runs.
+    - cron: "*/5 13-21 * * 1-5"
 
 permissions:
   contents: read
 
+concurrency:
+  group: intraday-market-archive
+  cancel-in-progress: false
+
 jobs:
   snapshot:
     runs-on: ubuntu-latest
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
