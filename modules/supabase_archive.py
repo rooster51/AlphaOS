@@ -98,16 +98,22 @@ def persist_option_snapshot(client, payload):
     except urllib.error.URLError:
         raise ArchiveUnavailable("Storage upload transport failed.") from None
 
-    options = payload.get("options") or {}
-    observations = options.get("observations") or options.get("contracts") or []
-    underlying = payload.get("underlying") or {}
+    options = payload.get("options")
+    if not isinstance(options, dict):
+        raise ArchiveUnavailable("Option snapshot payload does not match options-archive-v1.")
+    underlying = payload.get("underlying")
+    if not isinstance(underlying, dict):
+        raise ArchiveUnavailable("Underlying snapshot payload is invalid.")
     row = {
         "provider": payload["provider"],
         "symbol": symbol,
         "observed_at": observed,
         "session_date": date,
         "underlying_price": underlying.get("last"),
-        "contract_count": len(observations),
+        "min_dte": options.get("universe", {}).get("min_dte"),
+        "max_dte": options.get("universe", {}).get("max_dte"),
+        "strike_band": options.get("universe", {}).get("strike_band"),
+        "contract_count": options.get("received_contract_count", 0),
         "archive_path": path,
         "archive_sha256": digest,
         "quality_status": options.get("status"),
