@@ -1,4 +1,5 @@
 """Provider orchestration and auditable exports, separate from calculations."""
+from modules.symbol_registry import SYMBOLS
 from datetime import datetime
 from zoneinfo import ZoneInfo
 import hashlib
@@ -21,8 +22,8 @@ def build_research_dataset(history, completed_before, metadata=None, expected_se
 
 
 def load_market_state(symbol, period):
-    if symbol not in ('SPY','QQQ') or period not in ('FIVE_YEARS','TEN_YEARS'):
-        raise ValueError('Select SPY/QQQ and FIVE_YEARS/TEN_YEARS.')
+    if symbol not in SYMBOLS or period not in ('FIVE_YEARS','TEN_YEARS'):
+        raise ValueError('Select registered-symbol and FIVE_YEARS/TEN_YEARS.')
     from modules.public_data import get_public_research_bars
     from modules.history_diagnostics import HistoryError, history_diagnostics
     try:
