@@ -80,6 +80,65 @@ def find_slot_snapshot(client, provider, symbol, slot):
     return rows[0] if rows else None
 
 
+def read_latest_option_snapshot(client, symbol, as_of, *, max_age_seconds, provider='Public'):
+    """Read verified persisted evidence; client/credentials belong to the caller.
+
+    Freshness is an explicit caller policy. Partial latest evidence is returned,
+    never silently replaced with an older complete snapshot. No writes or fetches
+    from the market provider occur, and historical objects are not modified.
+    """
+    from math import isfinite
+    from modules.options_archive import timestamp
+    now = timestamp(as_of)
+    symbol = str(symbol).strip().upper()
+    if symbol not in ('SPY', 'QQQ'):
+        raise ValueError('Select an archived SPY/QQQ symbol.')
+    if (isinstance(max_age_seconds, bool) or not isinstance(max_age_seconds, (int, float))
+            or not isfinite(max_age_seconds) or max_age_seconds < 0):
+        raise ValueError('Explicit finite nonnegative freshness window required.')
+    try:
+        rows = (client.table('option_snapshots').select('*').eq('provider', provider)
+                .eq('symbol', symbol).lte('observed_at', now.isoformat())
+                .lte('created_at', now.isoformat()).order('observed_at', desc=True)
+                .order('id', desc=True).limit(1).execute()).data
+        if not rows:
+            raise ValueError('No archived snapshot available.')
+        row = rows[0]
+        observed = timestamp(row['observed_at'])
+        if not 0 <= (now-observed).total_seconds() <= max_age_seconds:
+            raise ValueError('Archived snapshot is stale or future-dated.')
+        if timestamp(row['created_at']) > now:
+            raise ValueError('Snapshot was not yet available.')
+        path = row['archive_path']
+        if not path.startswith(f'options/symbol={symbol}/date={row["session_date"]}/') or '..' in path:
+            raise ValueError('Archive path mismatch.')
+        raw = client.storage.from_('market-archive').download(path)
+        if hashlib.sha256(raw).hexdigest() != row.get('archive_sha256'):
+            raise ValueError('Archive checksum mismatch.')
+        payload = json.loads(gzip.decompress(raw))
+        if (payload['symbol'] != symbol or payload['provider'] != provider
+                or payload['session'] != row['session_date']
+                or timestamp(payload['observed_at']) != observed):
+            raise ValueError('Archive metadata mismatch.')
+        slot = payload.get('slot_time')
+        if (slot is None) != (row.get('slot_time') is None):
+            raise ValueError('Slot metadata mismatch.')
+        if slot is not None and timestamp(slot) != timestamp(row['slot_time']):
+            raise ValueError('Slot metadata mismatch.')
+        finished = payload.get('collection_finished_at') or payload['options'].get('generated_at')
+        if finished is not None and timestamp(finished) > now:
+            raise ValueError('Archive collection was not yet complete at as_of.')
+        if payload['options'].get('status') != row['quality_status']:
+            raise ValueError('Archive quality mismatch.')
+    except Exception:
+        # DB/Storage errors can contain URLs/credentials; callers receive a safe
+        # boundary error and must not proceed with an unverified fallback.
+        raise ArchiveUnavailable('Latest archive missing, stale, invalid or unreadable.') from None
+    return {'payload': payload, 'metadata': row,
+            'freshness': {'as_of': now.isoformat(), 'age_seconds': (now-observed).total_seconds(),
+                          'max_age_seconds': max_age_seconds, 'basis': 'collection_start'}}
+
+
 def persist_option_snapshot(client, payload, archive_config=None):
     raw = json.dumps(payload, separators=(",", ":"), sort_keys=True).encode()
     compressed = gzip.compress(raw, mtime=0)
