@@ -5,7 +5,7 @@
 
 ## Current milestone
 
-**Pre-merge market archive / AlphaOS 2.0 reconciliation**
+**AlphaOS 2.0 read-only API/MCP integration (not deployed)**
 
 Goal: evolve `Run QQQ` / `Run SPY` from a credit-spread-oriented workflow into an interface-agnostic options research workflow:
 
@@ -226,3 +226,32 @@ A change is not complete until:
 ### NEXT MILESTONE
 
 - Review this reconciled feature branch, then separately authorize a thin read-only interface integration with the existing API/MCP lineage. Preserve approved authentication and the existing market archive. No automatic merge or deployment.
+
+
+## API/MCP integration checkpoint
+
+### COMPLETED
+
+- Based on main `249be6e` in new branch `alphaos2/api-mcp-integration`; Phase 7-10 lineage inspected, compatible read-only infrastructure selected rather than wholesale merged.
+- New `run_market`, `research_structure`, `compare_structures` MCP tools and authenticated POST endpoints expose the current research modules. Full evidence remains in the versioned JSON-safe envelope.
+- Lazy injected server wiring uses the existing verified Supabase archive reader. Capital, expiration, objective and width flow into `run_latest_market`; objective remains context rather than market classification.
+- Existing 14 read-only tools remain compatible. Legacy live vertical/scenario research is explicit and separate from archive research; Phase 10b/10c journal mutations are not enabled.
+- Approved Phase 8 OAuth is byte-for-byte unchanged. No grants database, identity change or authentication redesign.
+- Current archive/collector and AlphaOS 2.0 classifiers, routing, payoff and $0-credit/zero-time construction remain unchanged. Shared historical symbol validation retains compatible index support.
+- Testing: 27 new integration tests and 191 historical API/MCP compatibility tests passed within the complete run (including 49 MCP/auth/protocol tests). Full suite: 623 tests plus 40 subtests passed. Targeted integration/compatibility rerun: 64 passed. Final-commit CI is tracked in the draft PR and completion report.
+
+### REMAINING
+
+- Live Supabase/Public verification and real ChatGPT OAuth/tool invocation; deployment is separate and not performed.
+- Configure existing server environment for archive access and review the default 600-second collection-age policy. No secrets or production settings changed.
+- Ledger SQL remains unapplied; no conversational journal writes, backfill, trades or production mutations.
+
+### INTENTIONALLY UNKNOWN / NOT YET MODELED
+
+- Missing daily evidence, IV, Greeks, liquidity, expected move, premium and volatility regimes remain unknown. No fabricated POP at expiration.
+- No winner, score, ranking or recommendation. User thesis is not proof of direction; no thesis-based strategy filtering added.
+- Archive freshness is not executable quote freshness; capital is expiration risk, not broker margin.
+
+### NEXT MILESTONE
+
+- Review the draft integration PR and separately authorize production verification/deployment. See `docs/ALPHAOS2_API_MCP.md` for exact contracts, compatibility decisions, limitations and server setup.
