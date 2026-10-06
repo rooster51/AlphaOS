@@ -7,7 +7,8 @@ from modules.structure_research import research_structure
 
 OBSERVATIONS = ('contract', 'bid', 'ask', 'mid', 'delta', 'gamma', 'theta',
                 'vega', 'rho', 'iv', 'volume', 'open_interest', 'bid_timestamp',
-                'ask_timestamp', 'quote_timestamp', 'observation_timestamp')
+                'ask_timestamp', 'last_timestamp', 'quote_timestamp', 'observation_timestamp',
+                'observed_at', 'archive_quality', 'quality_warnings', 'missing_fields')
 
 
 def research_position(candidate, *, symbol, spot, as_of, expected_move=None):

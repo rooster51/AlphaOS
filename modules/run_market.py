@@ -1,9 +1,12 @@
 """Read-only AlphaOS 2.0 orchestration for one persisted market snapshot."""
 from copy import deepcopy
+from datetime import date
+from zoneinfo import ZoneInfo
 
 from modules.market_archive_adapter import normalize_archive_snapshot
-from modules.opportunity_classifier import classify_opportunity, expected_move_context, history_evidence
+from modules.opportunity_classifier import aware_time, classify_opportunity, expected_move_context, history_evidence
 from modules.opportunity_session import research_market_opportunities
+from modules.market_session_gate import regular_session_bounds
 
 VERSION = "alphaos-run-market-v1"
 
@@ -13,6 +16,16 @@ def run_market(payload, *, expiration=None, history=None, session_context=None,
                available_capital=None, objective=None, width=5, late_minutes=60):
     """Research one archive snapshot without provider calls, persistence or execution."""
     archived = normalize_archive_snapshot(payload, expiration)
+    bounds = regular_session_bounds(aware_time(archived['observed_at']))
+    if bounds is None:
+        raise ValueError('Archive date is not an NYSE session.')
+    authoritative_session = {'open': bounds[0].isoformat(), 'close': bounds[1].isoformat()}
+    if not bounds[0] <= aware_time(archived['observed_at']) < bounds[1]:
+        raise ValueError('Archive observation is outside the NYSE regular session.')
+    if session_context is not None and any(
+            aware_time(session_context.get(k)) != aware_time(v) for k, v in authoritative_session.items()):
+        raise ValueError('Supplied session disagrees with the archive calendar.')
+    session_context = authoritative_session
     evidence = {}
     if history is not None:
         try:
@@ -63,3 +76,31 @@ def run_market(payload, *, expiration=None, history=None, session_context=None,
             "Unknown evidence remains unknown.",
         ],
     }
+
+
+def run_latest_market(symbol, *, as_of, read_snapshot, **research_context):
+    """Read-only I/O boundary; injected reader owns storage and freshness policy.
+
+    Bind supabase_archive.read_latest_option_snapshot to a client and an explicit
+    max_age_seconds outside this module. Completed daily history remains supplied:
+    incomplete intraday candles are not silently aggregated into daily evidence.
+    """
+    symbol = str(symbol).strip().upper()
+    now = aware_time(as_of)
+    if now is None:
+        raise ValueError('Timezone-aware request time required.')
+    record = read_snapshot(symbol, as_of)
+    payload = record['payload']
+    if payload.get('symbol') != symbol:
+        raise ValueError('Reader returned a different symbol.')
+    observed = aware_time(payload.get('observed_at'))
+    finished = aware_time(payload.get('collection_finished_at') or payload.get('options', {}).get('generated_at'))
+    if observed is None or observed > now or (finished and finished > now):
+        raise ValueError('Reader returned future observations.')
+    result = run_market(payload, **research_context)
+    if date.fromisoformat(result['expiration']) < now.astimezone(ZoneInfo('America/New_York')).date():
+        raise ValueError('Latest archive expiration precedes the request date; use historical run_market explicitly.')
+    result['requested_as_of'] = now.isoformat()
+    result['archive']['storage'] = deepcopy(record.get('metadata'))
+    result['archive']['freshness'] = deepcopy(record.get('freshness'))
+    return result

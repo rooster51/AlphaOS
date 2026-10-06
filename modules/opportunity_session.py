@@ -107,6 +107,8 @@ def research_market_opportunities(symbol, market_research, chain, *, as_of,
                   for k, allowed in ALLOWED.items()}
     state = opportunity_state(**dimensions, evidence=raw_state.get('evidence'),
                               caveats=raw_state.get('caveats'))
+    if raw_state.get('classifier_version'):
+        state['classifier_version'] = raw_state['classifier_version']
     routing = route_strategies(state)
     route_families = {r: _families(r, state['direction']) for r in routing['routes']}
     allowed = {f for families in route_families.values() for f in families}
