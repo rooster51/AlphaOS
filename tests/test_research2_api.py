@@ -222,12 +222,19 @@ def test_invalid_structure_is_rejected_without_data_access(boundary, change):
     loader.assert_not_called()
 
 
-def test_new_secret_values_are_redacted_at_boundary(boundary, monkeypatch):
+@pytest.mark.parametrize('variable', ['SUPABASE_SERVICE_ROLE_KEY', 'SUPABASE_URL'])
+def test_new_secret_values_are_redacted_at_boundary(boundary, monkeypatch, variable):
     c, _, _, _ = boundary
-    monkeypatch.setenv('SUPABASE_SERVICE_ROLE_KEY','private-test-key')
-    r = post(c, 'market',dict(symbol='QQQ',objective='private-test-key'))
+    sentinel = 'private-test-value'
+    monkeypatch.setenv(variable, sentinel)
+    request = dict(symbol='QQQ', objective=sentinel)
+    r = post(c, 'market', request)
     assert r.status_code == 200
-    assert 'private-test-key' not in r.text
+    assert sentinel not in r.text
+    _, tokens = login(c)
+    result = call(c, tokens['access_token'], 'run_market', request)
+    assert not result.get('isError'), result
+    assert sentinel not in json.dumps(result)
 
 
 def test_questionable_quote_warnings_cross_boundary(boundary):
