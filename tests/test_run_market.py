@@ -21,7 +21,7 @@ def test_run_qqq_archive_to_research_session_is_read_only_and_unranked():
     )
     assert result["command"] == "Run QQQ"
     assert result["read_only"] is True
-    assert result["status"] == "research_complete"
+    assert result["status"] == "complete"
     session = result["research_session"]
     assert session["opportunity_state"]["direction"] == "bullish"
     assert session["opportunity_state"]["time_state"] == "late_0dte"
