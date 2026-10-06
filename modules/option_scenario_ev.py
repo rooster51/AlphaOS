@@ -10,6 +10,7 @@ from math import isfinite
 
 import numpy as np
 import pandas as pd
+from modules.symbol_registry import SYMBOLS
 
 from modules.market_outcomes import HORIZONS
 from modules.options_payoff import trade_analysis, validate_trade
@@ -44,7 +45,7 @@ def _prepare_analogs(analog_result, horizon):
         frame['date'] = pd.to_datetime(frame['date'], utc=True, errors='raise').dt.tz_convert(None).dt.normalize()
     except (KeyError, TypeError, ValueError, AttributeError):
         raise ValueError("Supply a valid Phase 3 analog result with target and attached outcomes.") from None
-    if symbol not in ("SPY", "QQQ") or not isfinite(research_spot) or research_spot <= 0:
+    if symbol not in SYMBOLS or not isfinite(research_spot) or research_spot <= 0:
         raise ValueError("Phase 3 target symbol/spot is invalid.")
     if frame.date.isna().any() or frame.date.duplicated().any() or (frame.date >= target_date).any():
         raise ValueError("Analog dates must be unique, valid sessions strictly before the target date.")
