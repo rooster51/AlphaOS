@@ -1,6 +1,34 @@
 # AlphaOS 2.0 Trade Ledger
 
-The AlphaOS trade ledger is the authoritative record of positions and trading activity across every interface.
+**Status: FOUNDATION ONLY — NOT DEPLOYED.**
+
+This document describes the intended future journal. The existing
+`supabase/alphaos2_trade_ledger.sql` foundation is not applied by API startup or
+Render deployment. This milestone does not apply it or enable journal tools.
+Live database state has not been independently inspected in the readiness audit.
+
+The future AlphaOS trade ledger will be the authoritative server-side record of
+positions and trading activity across every interface. It must persist across
+separate ChatGPT conversations, MCP sessions, and future web/mobile interfaces;
+ChatGPT memory must never be the system of record.
+
+## Intended future capability
+
+Support opening, closing, partial closes, adjustments and rolls of multi-leg
+positions. Persist entry and exit credit/debit, fees, quantity, symbol, strategy,
+strikes, expiration, timestamps, user thesis/notes, realized P&L and final outcome.
+Retain position lifecycle events and frozen research snapshots both at entry and
+during the position's life.
+
+Future queries should show open and closed trades, running P&L, iron-condor
+performance, win rate by strategy, average winner/loser, expectancy, performance
+by symbol and DTE, capital efficiency, drawdown, and research-at-entry versus
+actual outcome. These are planned capabilities, not available API/MCP tools.
+
+Implementation order: Persistent Trade Journal -> Journal Analytics -> Position
+Monitor -> Portfolio/Scenario Risk Engine -> Calibration / research-vs-outcome
+analysis. No part of that implementation is included in the production-readiness
+documentation task.
 
 ## Principles
 

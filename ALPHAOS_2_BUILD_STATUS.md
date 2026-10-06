@@ -7,6 +7,17 @@
 
 **AlphaOS 2.0 read-only API/MCP integration (not deployed)**
 
+Production-readiness audit (2026-10-06): approved main is
+`81478618edd1757c3a509291c379badbcb3a6a01`; Render remains on `4ef8d5b`.
+Deployment is **NO-GO** until the missing Render `SUPABASE_URL` and
+`SUPABASE_SERVICE_ROLE_KEY` settings are configured under separate approval and
+the runtime fix is reviewed and included in a newly approved target. The
+`alphaos2/production-runtime` follow-up pins Render and regression CI to Python
+3.12.14 via `.python-version`; production itself remains unchanged. No deployment
+is authorized. The user must enter the two Supabase values directly in Render,
+never in ChatGPT/Codex/GitHub.
+See [production audit and deployment procedure](docs/PRODUCTION_READINESS.md).
+
 Goal: evolve `Run QQQ` / `Run SPY` from a credit-spread-oriented workflow into an interface-agnostic options research workflow:
 
 `Public market data -> AlphaOS market research -> opportunity classification -> strategy routing -> candidate construction -> research/compare -> position lifecycle -> journal/calibration`
@@ -34,11 +45,33 @@ Goal: evolve `Run QQQ` / `Run SPY` from a credit-spread-oriented workflow into a
 | Account-aware filtering | COMPLETE v1 | Optional max-loss capital ceiling; explicit exclusions; no ranking or broker-margin claim |
 | Position Monitor | PLANNED | Refresh original thesis/evidence against current state |
 | Scenario Engine | PLANNED | Price/time/IV scenarios with explicit assumptions |
-| Conversational journal writes | FOUNDATION ONLY | Ledger exists; service/API/MCP persistence not wired |
+| Persistent Trade Journal | FOUNDATION ONLY — NOT DEPLOYED | SQL foundation only; service/API/MCP persistence not wired; see journal roadmap below |
 | Performance analytics | PLANNED | P&L, win rate, expectancy by strategy after durable journal |
 | Calibration | PLANNED | Compare frozen entry classifications with realized outcomes |
-| API/MCP AlphaOS 2.0 integration | LATER / CODEX CANDIDATE | Existing Phase 7-10 work lives on later branches; reconcile deliberately |
-| Production deployment | BLOCKED BY APPROVAL | No production DB migration or deployment without explicit approval |
+| API/MCP AlphaOS 2.0 integration | MERGED / NOT DEPLOYED | PR #16: three read-only interfaces plus 14 legacy tools; approved main above |
+| Production deployment | BLOCKED BY CONFIGURATION AND APPROVAL | Missing Render archive credentials; repository runtime fix awaits review; no migration or deployment authorized |
+
+## Persistent Trade Journal roadmap
+
+**FOUNDATION ONLY — NOT DEPLOYED.** The existing
+`supabase/alphaos2_trade_ledger.sql` is an unapplied deployment artifact for this
+milestone, not an enabled journal. No mutation tools are exposed by this integration.
+
+Future implementation must use authoritative Supabase/server-side persistence across
+separate ChatGPT conversations, MCP sessions, and future web/mobile interfaces.
+ChatGPT memory is not the system of record. Intended lifecycle, fields and analytics
+are specified in [the journal design](docs/alphaos2_trade_ledger.md).
+
+Downstream milestone order:
+
+1. Persistent Trade Journal.
+2. Journal Analytics.
+3. Position Monitor.
+4. Portfolio/Scenario Risk Engine.
+5. Calibration / research-vs-outcome analysis.
+
+These milestones are documentation only here; implementation, migrations and
+production enablement require separate work and authorization.
 
 ## Completed in current AlphaOS 2.0 branch
 
