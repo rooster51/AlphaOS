@@ -87,3 +87,25 @@ create policy "Users can manage legs for own positions" on public.trade_position
 drop trigger if exists set_trade_positions_updated_at on public.trade_positions;
 create trigger set_trade_positions_updated_at before update on public.trade_positions
 for each row execute function public.set_updated_at();
+
+-- Cross-owner references must be rejected even when the child row's user_id
+-- matches the caller. Composite keys make the ownership invariant structural.
+create unique index if not exists trade_positions_user_id_id_unique
+  on public.trade_positions(user_id,id);
+create unique index if not exists trade_snapshots_user_id_id_unique
+  on public.trade_research_snapshots(user_id,id);
+
+alter table public.trade_events
+  add constraint trade_events_same_owner_position
+  foreign key (user_id,position_id)
+  references public.trade_positions(user_id,id) on delete cascade;
+
+alter table public.trade_events
+  add constraint trade_events_same_owner_snapshot
+  foreign key (user_id,research_snapshot_id)
+  references public.trade_research_snapshots(user_id,id);
+
+alter table public.trade_positions
+  add constraint trade_positions_same_owner_entry_snapshot
+  foreign key (user_id,entry_snapshot_id)
+  references public.trade_research_snapshots(user_id,id);
