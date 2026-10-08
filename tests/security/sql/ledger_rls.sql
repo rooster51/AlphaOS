@@ -4,7 +4,8 @@
 
 insert into auth.users(id) values
  ('00000000-0000-0000-0000-000000000101'),
- ('00000000-0000-0000-0000-000000000102');
+ ('00000000-0000-0000-0000-000000000102')
+on conflict (id) do nothing;
 insert into public.trade_positions(id,user_id,symbol,strategy_family,opened_at)
 values
  ('00000000-0000-0000-0000-000000000201','00000000-0000-0000-0000-000000000101','QQQ','vertical',now()),
