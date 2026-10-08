@@ -75,7 +75,7 @@ class AccountLinkStore:
         entry = self._pending.pop(self._digest(ticket), None)
         if (entry is None or not isinstance(grant, VerifiedGrant)
                 or not isinstance(principal, LedgerPrincipal)
-                or not explicit_consent):
+                or explicit_consent is not True):
             raise LinkDenied("link_denied")
         original, expiry = entry
         if expiry <= self.clock() or original != grant:
