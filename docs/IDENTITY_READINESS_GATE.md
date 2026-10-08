@@ -34,6 +34,21 @@ owner-scoped trade-ledger writes. A UUID passed in request data is untrusted.
 argument is only safe when supplied by a future trusted server-side verifier,
 never from request data. It is not wired to any API route.
 
+## Supabase Auth verifier (isolated implementation)
+
+`alphaos_api/supabase_identity.py` introduces `verify_supabase_access_token`.
+It sends the presented access token to Supabase Auth `get_user` using a public
+anon/publishable key, and accepts only a user returned by that authenticated
+provider response. The provider handles token signature, expiry and session
+validation. A server-side failure rejects access without reflecting provider
+errors. This is **not** local JWKS verification and is not connected to any
+route or MCP tool.
+
+Future integration requires configuring `SUPABASE_ANON_KEY` (or an explicitly
+validated publishable key) in the server environment and designing account
+linking for ChatGPT OAuth separately. Do not infer that existing research grants
+identify a Supabase user. No write authorization is enabled.
+
 ## Deployment gate
 `assess_readiness` checks local presence of five required configuration
 values and HTTPS origin syntax, returning only missing/invalid field names.
