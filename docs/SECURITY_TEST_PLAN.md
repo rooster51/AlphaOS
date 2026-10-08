@@ -69,3 +69,23 @@ tables, and live endpoint integration still need separate tests.
 To run: open GitHub Actions, choose `security-integration`, select
 `alphaos2/identity-readiness-gate`, and run the workflow. Or inspect the
 PR's `postgres-rls` check. No merge or production migration is required.
+
+## Account-linking state machine prototype
+
+`alphaos_api/account_link_state.py` is a **non-wired, process-local**
+prototype. It uses opaque one-time tickets, grant/client binding, a required
+explicit consent flag, expiry, revocation, and restart-fails-closed semantics.
+`tests/security/test_account_link_state.py` tests replay, mismatch, consent,
+expiry, revocation, and restart.
+
+**This is not an authenticated account-linking flow.** `VerifiedGrant` and
+`LedgerPrincipal` are plain Python objects; their construction does not prove
+the caller verified an OAuth token or Supabase session. Before any route uses
+this prototype, the trusted OAuth provider must resolve the actual token to a
+grant identity and the browser session must be verified by Supabase Auth.
+Bind approval to the browser's CSRF-protected session and independently
+validated grant; do not accept grant fingerprints, verified flags, user IDs,
+or consent values from arbitrary API request payloads. Confirm re-link and
+account-switch behavior, token renewal, and grant revocation in HTTP-level
+tests. A linked identity alone must never authorize private data: check
+current grant scopes and user-owned database RLS at every operation.
