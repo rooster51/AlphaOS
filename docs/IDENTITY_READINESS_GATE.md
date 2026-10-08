@@ -1,5 +1,12 @@
 # AlphaOS 2.0 identity and deployment gate (draft)
 
+## Commercial architecture update
+AlphaOS targets advanced options traders as a multi-user platform. See
+[COMMERCIAL_ARCHITECTURE.md](COMMERCIAL_ARCHITECTURE.md) for tenancy,
+private-data boundaries, proposed schema, commercial release gates, and
+account-linking requirements. The legacy literal `owner` is not a tenant.
+The new `tenancy.py` model is isolated and does not authorize live requests.
+
 ## Scope
 This branch introduces an **isolated, unused** identity boundary and a local,
 side-effect-free deployment configuration assessor. No existing REST or MCP
