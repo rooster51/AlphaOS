@@ -50,3 +50,22 @@ integration job can be added once an isolated test database is available.
 
 **Deployment and migration status:** no production migrations, no deployment,
 no Render settings changes, and no merge authorized by this document.
+
+## Disposable local PostgreSQL integration job (added)
+
+The `security-integration` GitHub Actions workflow starts a fresh PostgreSQL
+16 service on the GitHub-hosted runner, creates a minimal local `auth.users`
+and `auth.uid()` compatibility harness, applies the draft ledger SQL, and
+executes `tests/security/sql/ledger_rls.sql` as an `authenticated` database
+role. It verifies two-user row visibility, unauthorized updates/deletes and
+inserts, and rejection of cross-owner event/snapshot references. It requires
+no Supabase cloud project, paid plan, production credentials, or deployment.
+
+**Limitations:** this is real PostgreSQL RLS enforcement but not the full
+Supabase stack. The local `auth.uid()` shim is not a signed JWT verifier.
+Actual Supabase Auth, PostgREST, account-linking OAuth, tenant membership
+tables, and live endpoint integration still need separate tests.
+
+To run: open GitHub Actions, choose `security-integration`, select
+`alphaos2/identity-readiness-gate`, and run the workflow. Or inspect the
+PR's `postgres-rls` check. No merge or production migration is required.
