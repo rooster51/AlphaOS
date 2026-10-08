@@ -36,5 +36,9 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f tests/security/sql/local_auth_harness.sql
       - name: Apply ledger schema to disposable database only
         run: psql -v ON_ERROR_STOP=1 -f supabase/alphaos2_trade_ledger.sql
+      - name: Apply draft workspace membership schema to disposable database
+        run: psql -v ON_ERROR_STOP=1 -f supabase/alphaos2_tenancy.sql
+      - name: Verify cross-tenant membership isolation
+        run: psql -v ON_ERROR_STOP=1 -f tests/security/sql/tenant_rls.sql
       - name: Verify cross-user row-level security
         run: psql -v ON_ERROR_STOP=1 -f tests/security/sql/ledger_rls.sql
