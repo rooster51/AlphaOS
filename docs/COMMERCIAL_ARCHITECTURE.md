@@ -101,3 +101,26 @@ unwired, dependency-free models/tests. They do not establish an authenticated
 request context, persist memberships, authorize database queries, or enable
 customer registration. The existing Supabase token verifier is also unwired.
 No production-readiness claim is implied.
+
+## PR #18 follow-on: workspace RLS draft
+
+`supabase/alphaos2_tenancy.sql` now defines customer workspaces and
+memberships with RLS. Users can read their own membership and active
+workspaces; clients cannot grant, revoke, or modify memberships. An isolated
+PostgreSQL integration test exercises cross-tenant visibility, membership
+mutation denial, and revocation. This is not deployed.
+
+**Important bootstrap constraint:** creating a workspace does not automatically
+create its owner membership. Provisioning must be implemented as a reviewed
+transaction in a trusted server component with authenticated creator binding,
+idempotency, auditing, and rollback. Never expose a generic service-role
+membership mutation endpoint. The legacy MCP research grant remains
+research-only.
+
+**Account-linking design gate:** the current process-local OAuth grant's
+literal `owner` subject is not a Supabase user. No ChatGPT-to-Supabase link
+can be inferred from that token. A future link must authenticate the user
+through Supabase, verify the requesting OAuth grant and client, require
+explicit user approval, bind only that grant to the verified Supabase user,
+and enforce expiry/revocation. Do not enable private MCP routes before those
+end-to-end negative tests pass.
