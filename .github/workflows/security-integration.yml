@@ -38,6 +38,9 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f supabase/alphaos2_trade_ledger.sql
       - name: Apply draft workspace membership schema to disposable database
         run: psql -v ON_ERROR_STOP=1 -f supabase/alphaos2_tenancy.sql
+      - name: Seed two isolated test identities
+        run: |
+          psql -v ON_ERROR_STOP=1 -c "insert into auth.users(id) values ('00000000-0000-0000-0000-000000000101'), ('00000000-0000-0000-0000-000000000102');"
       - name: Verify cross-tenant membership isolation
         run: psql -v ON_ERROR_STOP=1 -f tests/security/sql/tenant_rls.sql
       - name: Verify cross-user row-level security
