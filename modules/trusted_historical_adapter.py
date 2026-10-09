@@ -6,8 +6,11 @@ It never generates or guesses missing provenance.
 """
 from datetime import date, datetime, timezone
 from math import isfinite
+import json
+from zoneinfo import ZoneInfo
 
 import pandas as pd
+import pandas_market_calendars as mcal
 
 from modules.historical_economics import HistoricalScenario, ScenarioEvidence
 from modules.market_outcomes import HORIZONS
@@ -39,7 +42,7 @@ def build_scenario_evidence(
     session dates strictly after the research session, through expiration.
     completed_session_times maps historical session dates to actual timezone-aware
     completed observation timestamps; timestamps are never inferred from dates.
-    The caller is responsible for validating the archive and exchange calendar.\n    Archive identifiers are caller assertions, not independently authenticated.
+    The archive identifiers remain caller assertions; the calendar is rechecked.
     """
     config = analog_result["config"]
     target = analog_result["target"]
@@ -73,6 +76,13 @@ def build_scenario_evidence(
     if "target_date" in config and _day(config["target_date"]) != target_day:
         raise ValueError("Analog selection target mismatch.")
     expiry = date.fromisoformat(expiration)
+    calendar = mcal.get_calendar('NYSE')
+    schedule = calendar.schedule(start_date=target_day, end_date=expiry)
+    if schedule.empty or schedule.index[0].date() != target_day:
+        raise ValueError('Target is not an exchange session.')
+    if (target_day != cutoff.astimezone(ZoneInfo('America/New_York')).date()
+            or cutoff < schedule.iloc[0]['market_close'].to_pydatetime()):
+        raise ValueError('Completed-session expiration alignment required.')
     future = tuple(_day(s) for s in future_exchange_sessions)
     if not future or len(set(future)) != len(future) or tuple(sorted(future)) != future:
         raise ValueError("Authoritative future exchange sessions required.")
@@ -80,12 +90,17 @@ def build_scenario_evidence(
         raise ValueError("Session calendar does not end at expiration.")
     if len(future) != horizon:
         raise ValueError("Expiration and analog trading-session horizons differ.")
+    if future != tuple(x.date() for x in schedule.index[1:]):
+        raise ValueError('Future sessions disagree with NYSE calendar.')
 
     frame = prepared_outcomes(analog_result, horizon)
     sessions = tuple(_day(s) for s in analog_result["session_dates"])
     if len(set(sessions)) != len(sessions) or tuple(sorted(sessions)) != sessions:
         raise ValueError("Historical session sequence must be unique and chronological.")
     positions = {day: i for i, day in enumerate(sessions)}
+    history_schedule = calendar.schedule(start_date=sessions[0], end_date=sessions[-1])
+    if sessions != tuple(x.date() for x in history_schedule.index):
+        raise ValueError('Historical session sequence has exchange gaps or non-session dates.')
     scenarios = []
     for row in frame.itertuples(index=False):
         value = row.terminal_return
@@ -100,7 +115,9 @@ def build_scenario_evidence(
         if not timestamp:
             raise ValueError("Missing verified outcome completion timestamp.")
         completed = _aware(timestamp)
-        if completed.astimezone(timezone.utc).date() != completion_day or completed > observed:
+        market_close = history_schedule.loc[str(completion_day), 'market_close'].to_pydatetime()
+        if (completed.astimezone(timezone.utc).date() != completion_day
+                or completed < market_close or completed > cutoff):
             raise ValueError("Historical outcome not matured at observed cutoff.")
         scenarios.append(HistoricalScenario(
             observation_id=origin.isoformat(),
@@ -115,6 +132,7 @@ def build_scenario_evidence(
         max_age_seconds=float(max_age_seconds), horizon_sessions=horizon,
         expiration_sessions=len(future),
         source="caller-supplied-archive:" + archive_id + ":" + archive_checksum,
-        selection_method="phase3:" + str(config),
+        selection_method="phase3:" + json.dumps(config, sort_keys=True, default=str),
         scenarios=tuple(scenarios),
+        history_as_of=cutoff.isoformat(),
     )

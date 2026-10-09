@@ -99,3 +99,33 @@ def test_reject_duplicate_historical_sessions():
 def test_provenance_does_not_claim_authentication():
     evidence = build_scenario_evidence(analog(), **kwargs())
     assert evidence.source.startswith("caller-supplied-archive:")
+
+
+def test_config_key_order_does_not_change_fingerprint():
+    a=analog(); b=analog(); b['config']=dict(reversed(list(b['config'].items())))
+    assert build_scenario_evidence(a,**kwargs()).fingerprint==build_scenario_evidence(b,**kwargs()).fingerprint
+
+
+def test_intraday_target_and_false_calendar_rejected():
+    p=kwargs();p.update(as_of='2026-10-08T18:00:00Z',observed_at='2026-10-08T17:59:00Z')
+    with pytest.raises(ValueError,match='Completed-session'):
+        build_scenario_evidence(analog(),**p)
+    p=kwargs();p.update(expiration='2026-10-10',future_exchange_sessions=['2026-10-10'])
+    with pytest.raises(ValueError,match='NYSE calendar'):
+        build_scenario_evidence(analog(),**p)
+
+
+def test_completion_cannot_precede_actual_exchange_close():
+    p=kwargs();p['completed_session_times']['2026-10-06']='2026-10-06T19:00:00Z'
+    with pytest.raises(ValueError,match='not matured'):
+        build_scenario_evidence(analog(),**p)
+
+
+def test_thanksgiving_holiday_and_early_close_alignment():
+    a=analog(); dates=pd.to_datetime(['2026-11-23','2026-11-24','2026-11-25','2026-11-27'])
+    a['session_dates']=pd.Series(dates); a['analogs']['date']=dates[:2];a['target']['date']=dates[-1]
+    p=kwargs();p.update(expiration='2026-11-30',as_of='2026-11-27T18:00:00Z',
+        observed_at='2026-11-27T17:59:00Z',future_exchange_sessions=['2026-11-30'],
+        completed_session_times={'2026-11-24':'2026-11-24T21:00:00Z','2026-11-25':'2026-11-25T21:00:00Z'})
+    result=build_scenario_evidence(a,**p)
+    assert result.expiration_sessions==1
