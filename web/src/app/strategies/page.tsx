@@ -1,6 +1,7 @@
 import { Header } from "@/components/shell/Header";
 import { CandidateCard } from "@/components/ui/CandidateCard";
 import { getStrategyCandidatesServer } from "@/lib/alphaos-server";
+import { MOCK_MARKET_SNAPSHOTS } from "@/lib/mock-data";
 
 export default async function StrategyExplorerPage() {
   const result = await getStrategyCandidatesServer("ALL");
@@ -21,7 +22,7 @@ export default async function StrategyExplorerPage() {
         {candidates.length > 0 && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {candidates.map(candidate => (
-              <CandidateCard key={candidate.id} candidate={candidate} underlyingSpot={0} />
+              <CandidateCard key={candidate.id} candidate={candidate} underlyingSpot={MOCK_MARKET_SNAPSHOTS[candidate.symbol].current_spot} />
             ))}
           </div>
         )}
