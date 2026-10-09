@@ -4,6 +4,7 @@ Uses the existing archive reader, daily dataset builder and Phase 3 selector.
 Date-only explicit requests mean completed-session historical scenarios, never
 an implied intraday fill or a current quote. No writes or alternate providers.
 """
+from copy import deepcopy
 from datetime import date, timedelta
 from math import isfinite
 
@@ -17,15 +18,17 @@ from modules.historical_economics import evaluate_historical_economics
 from modules.trusted_historical_adapter import build_scenario_evidence
 
 
-def structure_historical_economics(position, *, as_of, now, read_snapshot, history_loader):
-    trade = position['trade']
-    result = evaluate_historical_economics(trade, as_of=as_of)
-    result['integration_version'] = 'structure-historical-v1'
-    result['temporal_basis'] = 'Explicit as_of completed NYSE session; historical, not live'
-    result['provenance'] = {'verification': 'unavailable', 'pricing': 'caller-supplied scenario'}
+def prepare_structure_evidence(trade, *, as_of, now, read_snapshot, history_loader):
+    """Build one request-local evidence bundle, independent of strikes and costs."""
+    result = dict(evidence=None, missing_reason=None,
+        integration_version='structure-historical-v1',
+        temporal_basis='Explicit as_of completed NYSE session; historical, not live',
+        provenance={'verification': 'unavailable', 'pricing': 'caller-supplied scenario'},
+        context=dict(symbol=trade['symbol'], as_of=as_of, expiration=trade['expiration'],
+                     spot=trade['spot'], research_cutoff=None, horizon_sessions=None))
 
     def unavailable(reason):
-        result['missing_evidence'] = [reason]
+        result['missing_reason'] = reason
         return result
 
     calendar = mcal.get_calendar('NYSE')
@@ -36,6 +39,7 @@ def structure_historical_economics(position, *, as_of, now, read_snapshot, histo
     if schedule.index[-1].date() != expiration:
         return unavailable('expiration_not_exchange_session')
     cutoff = schedule.iloc[0]['market_close'].to_pydatetime()
+    result['context'].update(research_cutoff=cutoff.isoformat(), horizon_sessions=len(schedule)-1)
     if now < cutoff:
         return unavailable('as_of_session_not_complete')
     horizon = len(schedule)-1
@@ -94,10 +98,74 @@ def structure_historical_economics(position, *, as_of, now, read_snapshot, histo
             future_exchange_sessions=schedule.index[1:], completed_session_times=completion_times)
     except Exception:
         return unavailable('historical_evidence_validation_failed')
-    economics = evaluate_historical_economics(trade, as_of=as_of, evidence=evidence)
-    economics.update(integration_version=result['integration_version'],
-        temporal_basis=result['temporal_basis'], provenance=result['provenance'])
-    economics['provenance']['history_ohlc_sha256'] = dataset['metadata']['source_ohlc_sha256']
-    economics['provenance']['history_completion_basis'] = 'Public completed daily bars; NYSE close bounds, not quote timestamps'
-    economics['provenance']['history_cutoff'] = cutoff.isoformat()
-    return economics
+    result['evidence'] = evidence
+    result['provenance']['history_ohlc_sha256'] = dataset['metadata']['source_ohlc_sha256']
+    result['provenance']['history_completion_basis'] = 'Public completed daily bars; NYSE close bounds, not quote timestamps'
+    result['provenance']['history_cutoff'] = cutoff.isoformat()
+    return result
+
+
+def evaluate_structure_evidence(position, *, as_of, bundle):
+    """Apply candidate-specific payoff/costs without mutating shared evidence."""
+    result = evaluate_historical_economics(position['trade'], as_of=as_of,
+                                         evidence=bundle['evidence'])
+    for key in ('integration_version', 'temporal_basis', 'provenance'):
+        result[key] = deepcopy(bundle[key])
+    if bundle['missing_reason']:
+        result['missing_evidence'] = [bundle['missing_reason']]
+    return result
+
+
+def structure_historical_economics(position, *, as_of, now, read_snapshot, history_loader):
+    bundle = prepare_structure_evidence(position['trade'], as_of=as_of, now=now,
+        read_snapshot=read_snapshot, history_loader=history_loader)
+    return evaluate_structure_evidence(position, as_of=as_of, bundle=bundle)
+
+
+def compare_historical_economics(positions, *, as_of_dates, now, read_snapshot, history_loader):
+    """Annotate in input order; only validated identical samples are comparable.
+
+    Dates determine the NYSE cutoff and horizon; exact spot is part of the key.
+    Failed evidence builds are reused too. Cache lifetime is this request only.
+    """
+    bundles, groups, assignments, results = {}, [], [], []
+    for index, (position, as_of) in enumerate(zip(positions, as_of_dates, strict=True)):
+        trade = position['trade']
+        key = (trade['symbol'], as_of, trade['expiration'], trade['spot'])
+        if key not in bundles:
+            bundle = prepare_structure_evidence(trade, as_of=as_of, now=now,
+                read_snapshot=read_snapshot, history_loader=history_loader)
+            group = dict(group_id=len(groups), context=bundle['context'], candidate_indices=[])
+            groups.append(group)
+            bundles[key] = (bundle, group)
+        bundle, group = bundles[key]
+        group['candidate_indices'].append(index)
+        result = evaluate_structure_evidence(position, as_of=as_of, bundle=bundle)
+        position['historical_economics'] = result
+        results.append(result)
+        assignments.append(group['group_id'])
+    pairs = []
+    for left in range(len(results)):
+        for right in range(left+1, len(results)):
+            a, b = results[left], results[right]
+            reason = None
+            if assignments[left] != assignments[right]:
+                reason = 'different_evidence_context'
+            elif any(r['historical_evidence_status'] != 'descriptive_only' for r in (a, b)):
+                reason = 'validated_historical_evidence_unavailable'
+            elif a['evidence']['fingerprint'] != b['evidence']['fingerprint']:
+                reason = 'different_evidence_fingerprint'
+            pairs.append(dict(candidate_indices=[left, right], directly_comparable=reason is None,
+                              missing_reason=reason))
+    for group in groups:
+        members = [results[i] for i in group['candidate_indices']]
+        fingerprints = sorted({r['evidence']['fingerprint'] for r in members if r['evidence']})
+        group.update(evidence_fingerprints=fingerprints,
+            evidence_available=all(r['historical_evidence_status']=='descriptive_only' for r in members),
+            missing_evidence=sorted({reason for r in members for reason in r['missing_evidence']}))
+    return dict(version='shared-historical-comparison-v1', groups=groups,
+        candidate_group_ids=assignments, pairwise_comparability=pairs,
+        candidate_order='supplied input order; not a ranking', winner=None, recommendation=None,
+        valuation='expiration',
+        caveats=['Same evidence does not establish executable prices or calibrated POP.',
+                 'Intraday and early-exit economics remain unavailable.'])
