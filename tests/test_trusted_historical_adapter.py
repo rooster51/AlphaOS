@@ -1,6 +1,4 @@
 """Contract tests for the provenance-preserving Phase 3 adapter."""
-from copy import deepcopy
-
 import pandas as pd
 import pytest
 
@@ -82,3 +80,22 @@ def test_does_not_guess_missing_completion_times():
     params["completed_session_times"] = {}
     with pytest.raises(ValueError):
         build_scenario_evidence(analog(), **params)
+
+
+def test_reject_selection_target_mismatch():
+    data = analog()
+    data["config"]["target_date"] = "2026-10-07"
+    with pytest.raises(ValueError, match="selection target mismatch"):
+        build_scenario_evidence(data, **kwargs())
+
+
+def test_reject_duplicate_historical_sessions():
+    data = analog()
+    data["session_dates"].iloc[1] = data["session_dates"].iloc[0]
+    with pytest.raises(ValueError):
+        build_scenario_evidence(data, **kwargs())
+
+
+def test_provenance_does_not_claim_authentication():
+    evidence = build_scenario_evidence(analog(), **kwargs())
+    assert evidence.source.startswith("caller-supplied-archive:")
