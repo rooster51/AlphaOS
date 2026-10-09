@@ -30,7 +30,7 @@ async function research(path: string): Promise<JsonObject> {
   });
   if (!response.ok) throw new Error(`Research API unavailable (HTTP ${response.status})`);
   const body = record(await response.json());
-  if (body.error || !body.meta || !body.evidence) {
+  if (body.error || Object.keys(record(body.meta)).length === 0 ||\n      Object.keys(record(body.evidence)).length === 0) {
     throw new Error("Research response schema is unavailable");
   }
   return body;
