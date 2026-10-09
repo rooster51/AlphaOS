@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import Link from "next/link";
 import { Header } from "@/components/shell/Header";
 import { getMarketSnapshotServer } from "@/lib/alphaos-server";
