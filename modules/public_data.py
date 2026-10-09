@@ -115,33 +115,18 @@ def _order_instrument(order_instrument: Any, instrument_type: Any, symbol: str) 
 
 
 @st.cache_data(ttl=30, show_spinner=False)
-def get_public_quotes(symbols: tuple[str, ...]) -> list[dict]:
-    from public_api_sdk import InstrumentType, OrderInstrument
+def _cached_public_quotes(symbols: tuple[str, ...]) -> list[dict]:
+    from modules.public_provider import get_public_quotes as shared
+    return shared(symbols, _context=_public_context)
 
-    client, account_id = _public_context()
-    instruments = [
-        _order_instrument(OrderInstrument, InstrumentType, symbol)
-        for symbol in symbols
-    ]
-    quotes = client.get_quotes(instruments, account_id=account_id)
-    return [
-        {
-            "symbol": quote.instrument.symbol,
-            "last": _as_float(quote.last),
-            "bid": _as_float(quote.bid),
-            "ask": _as_float(quote.ask),
-            "previous_close": _as_float(quote.previous_close),
-            "change": _as_float(
-                quote.one_day_change.change if quote.one_day_change else None
-            ),
-            "change_pct": _as_float(
-                quote.one_day_change.percent_change if quote.one_day_change else None
-            ),
-            "volume": quote.volume,
-            "updated_at": quote.last_timestamp,
-        }
-        for quote in quotes
-    ]
+
+def get_public_quotes(symbols: tuple[str, ...]) -> list[dict]:
+    from modules.quote_freshness import freshness
+    # Re-evaluate observation age on every read, including Streamlit cache hits.
+    return [{**q, 'freshness': freshness(q)} for q in _cached_public_quotes(symbols)]
+
+
+get_public_quotes.clear = _cached_public_quotes.clear
 
 
 @st.cache_data(ttl=300, show_spinner=False)

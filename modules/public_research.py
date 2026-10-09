@@ -57,7 +57,7 @@ def load_public_research(symbols, period):
     prices, audit = align_daily_histories(histories)
     try:
         quotes = get_public_quotes(tuple(symbols))
-        quotes = [{"Symbol":q['symbol'],"Last":q['last'],"Quote timestamp":str(q.get('updated_at') or 'Unavailable')} for q in quotes]
+        quotes = [{"Symbol":q['symbol'],"Last":q['last'],"Quote timestamp":str(q.get('updated_at') or 'Unavailable'),"Data status":q['freshness']['data_status'],"Market state":q['freshness']['market_state'],"Usable for live research":q['freshness']['usable_for_live_research']} for q in quotes]
     except Exception:
         quotes = []
     metadata = {"provider":"Public", "period":period,"aggregation":"ONE_DAY", "symbols":list(symbols),

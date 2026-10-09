@@ -125,3 +125,50 @@ def test_closed_quote_context_available_live_scan_blocked(env):
     assert r.json()['meta']['quote_freshness']['data_status']=='latest_available'
     assert c.get('/v1/options/SPY/scan?expiration=2026-09-25').json()['error']['code']=='market_closed_quote'
     assert vertical(c).json()['error']['code']=='market_closed_quote'
+
+
+def test_streamlit_cache_rechecks_shared_freshness(monkeypatch):
+    from modules import public_data
+    quote=q();quote['retrieved_at']='2026-09-25T14:00:00Z'
+    monkeypatch.setattr(public_data,'_cached_public_quotes',lambda symbols:[quote])
+    from modules import quote_freshness
+    actual=quote_freshness.freshness
+    monkeypatch.setattr(quote_freshness,'freshness',lambda value:actual(value,dt('2026-09-25T14:00:10Z')))
+    assert public_data.get_public_quotes(('QQQ',))[0]['freshness']['data_status']=='fresh'
+    monkeypatch.setattr(quote_freshness,'freshness',lambda value:actual(value,dt('2026-09-25T14:03:00Z')))
+    assert public_data.get_public_quotes(('QQQ',))[0]['freshness']['data_status']=='stale'
+
+
+@pytest.mark.parametrize('state',['closed','stale'])
+def test_strategy_selector_stops_before_candidate_generation(monkeypatch,state):
+    from streamlit.testing.v1 import AppTest
+    from modules import premium_workspace, public_data
+    monkeypatch.setattr(premium_workspace.st,'page_link',Mock())
+    original=require_research_quote
+    when=dt('2026-09-26T14:00:00Z' if state=='closed' else '2026-09-28T14:00:00Z')
+    monkeypatch.setattr(premium_workspace,'require_research_quote',lambda quote,**kw:original(quote,when,**kw))
+    monkeypatch.setattr(public_data,'get_public_quotes',lambda symbols:[dict(q('2026-09-25T19:59:55Z'),symbol='SPY')])
+    generator=Mock();monkeypatch.setattr(premium_workspace,'generate',generator)
+    app=AppTest.from_string('from modules.premium_workspace import render; render()',default_timeout=60).run()
+    next(r for r in app.radio if r.label=='Market data').set_value('Public · connected quotes').run()
+    next(b for b in app.button if b.label=='Find premium trades →').click().run()
+    assert not app.exception
+    assert any('not usable for new live research' in w.value for w in app.warning)
+    generator.assert_not_called()
+    assert 'premium_result' not in app.session_state
+
+
+def test_saved_trade_research_explicitly_non_live(monkeypatch):
+    from streamlit.testing.v1 import AppTest
+    from test_selector_quant_workflow import selected_state
+    from modules import phase6_workspace
+    actual=freshness
+    monkeypatch.setattr(phase6_workspace,'freshness',lambda quote:actual(quote,dt('2026-09-28T14:00:00Z')))
+    state,_,_=selected_state()
+    app=AppTest.from_string('from modules.phase6_workspace import render_phase6; render_phase6()',default_timeout=60)
+    for k,v in state.items():app.session_state[k]=v
+    app.run()
+    assert not app.exception
+    assert any('non-live historical scenario research' in w.value for w in app.warning)
+    assert any('not a verified live price' in c.value for c in app.caption)
+    assert any(b.label=='Run integrated trade research' for b in app.button)

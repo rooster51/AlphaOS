@@ -1,5 +1,5 @@
 from copy import deepcopy
-from datetime import date
+from datetime import date, datetime, timezone
 from pathlib import Path
 from unittest.mock import Mock, patch
 import numpy as np
@@ -161,11 +161,13 @@ def test_demo_scanner_preserves_columns_ranking_and_nonverticals():
     assert {'Est. POP','Net credit / unit ($)','Historical terminal survival','Research N'}<=set(table)
 
 
-def test_public_scan_fetches_once_and_history_failure_preserves_candidates():
+def test_public_scan_fetches_once_and_history_failure_preserves_candidates(monkeypatch):
+    from modules.quote_freshness import require_research_quote
+    monkeypatch.setattr('modules.premium_workspace.require_research_quote',lambda quote,**kw:require_research_quote(quote,datetime(2026,9,23,13,tzinfo=timezone.utc),**kw))
     app=AppTest.from_file(str(Path(__file__).resolve().parents[1]/'streamlit_app.py'),default_timeout=60).run()
     next(r for r in app.radio if r.label=='Market data').set_value('Public · connected quotes').run()
     chain=demo_chain(35)
-    with patch('modules.public_data.get_public_quotes',return_value=[dict(symbol='SPY',last=500,updated_at='quote-time')]), \
+    with patch('modules.public_data.get_public_quotes',return_value=[dict(symbol='SPY',last=500,updated_at='2026-09-23T13:00:00Z')]), \
          patch('modules.public_data.get_public_option_expirations',return_value=[chain['expiration']]), \
          patch('modules.public_data.get_public_option_chain',return_value=chain), \
          patch('modules.selector_research.load_market_state',return_value=dataset()) as loader:
@@ -192,7 +194,9 @@ def test_deep_research_reuses_saved_primary_and_default_population():
     assert r['evidence']['threshold']['summary']==t['research_context']['threshold_statistics']
 
 
-def test_selection_button_navigates_with_full_saved_candidate():
+def test_selection_button_navigates_with_full_saved_candidate(monkeypatch):
+    from modules.quote_freshness import require_research_quote
+    monkeypatch.setattr('modules.premium_workspace.require_research_quote',lambda quote,**kw:require_research_quote(quote,datetime(2026,9,23,13,tzinfo=timezone.utc),**kw))
     import streamlit as st
     from types import SimpleNamespace
     app=AppTest.from_file(str(Path(__file__).resolve().parents[1]/'streamlit_app.py'),default_timeout=60).run()
