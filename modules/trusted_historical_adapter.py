@@ -4,7 +4,7 @@ This module does not authenticate archive provenance. A trusted caller must
 supply verified archive metadata, timestamps, and an exchange-session schedule.
 It never generates or guesses missing provenance.
 """
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from math import isfinite
 
 import pandas as pd
@@ -39,7 +39,7 @@ def build_scenario_evidence(
     session dates strictly after the research session, through expiration.
     completed_session_times maps historical session dates to actual timezone-aware
     completed observation timestamps; timestamps are never inferred from dates.
-    The caller is responsible for validating the archive and exchange calendar.
+    The caller is responsible for validating the archive and exchange calendar.\n    Archive identifiers are caller assertions, not independently authenticated.
     """
     config = analog_result["config"]
     target = analog_result["target"]
@@ -66,8 +66,12 @@ def build_scenario_evidence(
     if horizon not in HORIZONS:
         raise ValueError("Unsupported analog horizon.")
     target_day = _day(target["date"])
-    if target_day > observed.date():
+    if target_day > observed.astimezone(timezone.utc).date():
         raise ValueError("Analog target is after archive observation.")
+    if target_day > cutoff.astimezone(timezone.utc).date():
+        raise ValueError("Analog target is after research cutoff.")
+    if _day(config["target_date"]) != target_day if "target_date" in config else False:
+        raise ValueError("Analog selection target mismatch.")
     expiry = date.fromisoformat(expiration)
     future = tuple(_day(s) for s in future_exchange_sessions)
     if not future or len(set(future)) != len(future) or tuple(sorted(future)) != future:
@@ -79,6 +83,8 @@ def build_scenario_evidence(
 
     frame = prepared_outcomes(analog_result, horizon)
     sessions = tuple(_day(s) for s in analog_result["session_dates"])
+    if len(set(sessions)) != len(sessions) or tuple(sorted(sessions)) != sessions:
+        raise ValueError("Historical session sequence must be unique and chronological.")
     positions = {day: i for i, day in enumerate(sessions)}
     scenarios = []
     for row in frame.itertuples(index=False):
@@ -94,7 +100,7 @@ def build_scenario_evidence(
         if not timestamp:
             raise ValueError("Missing verified outcome completion timestamp.")
         completed = _aware(timestamp)
-        if completed.date() != completion_day or completed > observed:
+        if completed.astimezone(timezone.utc).date() != completion_day or completed > observed:
             raise ValueError("Historical outcome not matured at observed cutoff.")
         scenarios.append(HistoricalScenario(
             observation_id=origin.isoformat(),
@@ -108,7 +114,7 @@ def build_scenario_evidence(
         observed_at=observed.isoformat(), as_of=cutoff.isoformat(),
         max_age_seconds=float(max_age_seconds), horizon_sessions=horizon,
         expiration_sessions=len(future),
-        source="verified-archive:" + archive_id + ":" + archive_checksum,
+        source="caller-supplied-archive:" + archive_id + ":" + archive_checksum,
         selection_method="phase3:" + str(config),
         scenarios=tuple(scenarios),
     )
