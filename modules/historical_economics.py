@@ -57,6 +57,7 @@ class ScenarioEvidence:
     source: str
     selection_method: str
     scenarios: tuple[HistoricalScenario, ...]
+    history_as_of: str | None = None  # independently validated history cutoff, not quote time
 
     def __post_init__(self):
         object.__setattr__(self, 'scenarios', tuple(self.scenarios))
@@ -67,6 +68,8 @@ class ScenarioEvidence:
             raise ValueError('Positive anchor spot required.')
         _number(self.max_age_seconds, minimum=0)
         _time(self.observed_at); _time(self.as_of)
+        if self.history_as_of is not None:
+            _time(self.history_as_of)
         for value in (self.horizon_sessions, self.expiration_sessions):
             if type(value) is not int or value < 0:
                 raise ValueError('Nonnegative whole session horizons required.')
@@ -132,6 +135,9 @@ def evaluate_historical_economics(candidate, *, as_of, evidence=None,
             max_profit_unlimited=not isfinite(profit), max_loss=risk, breakevens=roots,
             required_moves=[dict(dollars=b-trade['spot'], fraction=b/trade['spot']-1) for b in roots]),
         capital_requirement=dict(expiration_max_loss=risk, broker_buying_power=None),
+        capital_eligibility=dict(status='not_assessed' if capital is None else
+            ('ineligible' if risk > capital else 'within_expiration_loss_budget'),
+            available_capital=capital, basis='expiration max loss, not broker buying power'),
         assumptions=dict(multiplier=multiplier, premium='signed package per-share cashflow',
             fees_dollars=candidate['fees'], slippage_dollars=slip,
             cost_basis='total package costs once, not per leg or per scenario period',
@@ -171,7 +177,10 @@ def evaluate_historical_economics(candidate, *, as_of, evidence=None,
             missing.append('stale_or_future_evidence')
         if evidence.horizon_sessions <= 0 or evidence.horizon_sessions != evidence.expiration_sessions:
             missing.append('expiration_horizon_mismatch')
-        if any(_time(s.completed_at) > observed for s in evidence.scenarios):
+        history_cutoff = _time(evidence.history_as_of) if evidence.history_as_of else observed
+        if history_cutoff > now:
+            missing.append('future_history_cutoff')
+        if any(_time(s.completed_at) > history_cutoff for s in evidence.scenarios):
             missing.append('unmatured_historical_outcome')
         result['sample_size'] = len(evidence.scenarios)
         if result['sample_size'] < minimum_samples:
