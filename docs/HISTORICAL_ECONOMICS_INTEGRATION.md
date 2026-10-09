@@ -19,7 +19,9 @@ same workflow for up to 20 structures. Each `research.candidates` entry adds
 `research.historical_comparison` supplies context groups, zero-based candidate
 indices, fingerprints, availability and pairwise comparability with typed reasons.
 Candidate order is unchanged. No scores, rankings, winners or recommendations
-are introduced. `run_market` integration remains deferred.
+are introduced. `run_market` now attaches deterministic economics and explicit
+intraday evidence gaps; see [market integration](MARKET_ECONOMICS_INTEGRATION.md).
+Its intraday entries do not receive completed-session historical metrics.
 
 Within each request, exact symbol, as_of date, expiration and spot define groups.
 The validated NYSE calendar determines each group's cutoff and session horizon.

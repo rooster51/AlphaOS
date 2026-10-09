@@ -7,6 +7,7 @@ from modules.market_archive_adapter import normalize_archive_snapshot
 from modules.opportunity_classifier import aware_time, classify_opportunity, expected_move_context, history_evidence
 from modules.opportunity_session import research_market_opportunities
 from modules.market_session_gate import regular_session_bounds
+from modules.structure_economics import compare_historical_economics
 
 VERSION = "alphaos-run-market-v1"
 
@@ -54,6 +55,7 @@ def run_market(payload, *, expiration=None, history=None, session_context=None,
         expiration=archived["expiration"], available_capital=available_capital,
         objective=objective, width=width,
     )
+    attach_market_economics(research, observed_at=archived['observed_at'])
     return {
         "version": VERSION,
         "command": f"Run {archived['symbol']}",
@@ -104,3 +106,36 @@ def run_latest_market(symbol, *, as_of, read_snapshot, **research_context):
     result['archive']['storage'] = deepcopy(record.get('metadata'))
     result['archive']['freshness'] = deepcopy(record.get('freshness'))
     return result
+
+
+def attach_market_economics(session, *, observed_at):
+    """Annotate discovered structures without inventing close-aligned entry data.
+
+    run_market accepts only regular-session observations before the close. Daily
+    close-to-close analogs cannot describe those entries, even after the session
+    ends. Reuse the shared context gate/evaluator; no extra provider reads occur.
+    """
+    observed = aware_time(observed_at)
+    day = observed.astimezone(ZoneInfo('America/New_York')).date().isoformat()
+    positions = [candidate['research'] for candidate in session['candidates']]
+    comparison = compare_historical_economics(positions, as_of_dates=[day]*len(positions),
+        now=observed, read_snapshot=None, history_loader=None,
+        entry_observed_at=observed.isoformat(), available_capital=session['available_capital'],
+        holding_period='intraday', include_pairwise=False)
+    session['historical_comparison'] = comparison
+    session['holding_policy'] = dict(preference='avoid_overnight_exposure',
+        intraday_exit_economics='unavailable', expiration_selection='unchanged',
+        caveat='Expiration payoff does not establish the economics of exiting before close; no exit is scheduled or executed.')
+    for position in positions:
+        economics = position['historical_economics']
+        economics['provenance'].update(pricing=position.get('evidence', {}).get('pricing_assumption',
+            'Archived chain construction assumptions; not executable prices'),
+            entry_observed_at=observed.isoformat(), quote_age_seconds=None)
+        economics['temporal_basis'] = 'Intraday archive entry; completed-session distributions are not entry-aligned'
+        economics['assumptions']['cost_validation'] = 'Constructor fees and zero slippage are assumptions, not verified execution costs'
+        economics['intraday_economics'] = dict(status='unavailable', expected_value_dollars=None,
+            reason='validated_intraday_option_outcomes_unavailable')
+        economics['overnight_exposure'] = dict(
+            required_to_hold_to_expiration=position['trade']['expiration'] > day,
+            preferred=False, early_exit_economics_available=False)
+        economics['research_only_reasons'].append('Default holding preference avoids overnight exposure; early-exit economics unavailable.')
