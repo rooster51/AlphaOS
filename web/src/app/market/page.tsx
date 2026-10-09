@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import React from "react";
 import { Header } from "@/components/shell/Header";
 import { StatusPill } from "@/components/shell/StatusPill";
