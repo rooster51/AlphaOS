@@ -11,3 +11,6 @@ __pycache__/
 data/.daily-quant.lock
 data/**/.snapshot-*
 data/.manifest-*
+
+# Local market-data diagnostic artifacts (never commit observations).
+diagnostics/
