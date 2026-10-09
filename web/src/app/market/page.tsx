@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import React from "react";
 import { Header } from "@/components/shell/Header";
 import { StatusPill } from "@/components/shell/StatusPill";
@@ -20,7 +21,7 @@ export default async function MarketResearchPage({
         title={`Market Research — ${symbol}`}
         subtitle="Opportunity classification envelope, ATR structural levels, and historical analogs."
         badge={{
-          label: isLive ? "LIVE ARCHIVE" : "RESEARCH FIXTURE",
+          label: isLive ? "FRESH UNDERLYING" : "DEMO — NOT LIVE",
           variant: isLive ? "archive" : "mock",
         }}
       />
@@ -58,9 +59,9 @@ export default async function MarketResearchPage({
           <MetricCard
             label={`${symbol} Current Spot`}
             value={`$${snapshot.current_spot.toFixed(2)}`}
-            subValue="Archive Close"
+            subValue={isLive ? "Fresh provider observation" : "Synthetic demo value"}
             trend="neutral"
-            caption="Verified minute observation"
+            caption="Not an executable options quote"
           />
           <MetricCard
             label="ATR (14 Session)"
@@ -72,16 +73,16 @@ export default async function MarketResearchPage({
           <MetricCard
             label="Expected 1-Day Move"
             value={snapshot.expected_move ? `±$${snapshot.expected_move.toFixed(2)}` : "Unavailable"}
-            subValue="Market Implied"
+            subValue="Not verified"
             trend="neutral"
-            caption="Calendar expiration matched"
+            caption="Unavailable without matching option evidence"
           />
           <MetricCard
             label="Movement Regime"
             value={snapshot.opportunity_state.movement_state.toUpperCase()}
             subValue={snapshot.opportunity_state.direction.toUpperCase()}
-            trend="bullish"
-            caption="Classified completed session"
+            trend="neutral"
+            caption="Unknown until supported by evidence"
           />
         </div>
 
@@ -93,7 +94,7 @@ export default async function MarketResearchPage({
                 Simultaneous Market State Envelope
               </h2>
               <p className="text-xs font-mono text-terminal-400 mt-0.5">
-                Multi-dimensional state representation. Unknown evidence is preserved explicitly as unknown.
+                Only observed and validated dimensions are shown. Unverified classifications remain unknown.
               </p>
             </div>
             <StatusPill label="5-DIMENSIONAL" variant="neutral" />
@@ -105,7 +106,7 @@ export default async function MarketResearchPage({
               <span className="text-sm font-bold text-profit capitalize block mt-1">
                 {snapshot.opportunity_state.direction}
               </span>
-              <span className="text-[10px] text-terminal-500 mt-1 block">EMA 9 {">"} 21 {">"} 50</span>
+              <span className="text-[10px] text-terminal-500 mt-1 block">EMA alignment requires independently validated bars</span>
             </div>
 
             <div className="bg-terminal-950 p-3 rounded border border-terminal-850">
@@ -113,7 +114,7 @@ export default async function MarketResearchPage({
               <span className="text-sm font-bold text-warning capitalize block mt-1">
                 {snapshot.opportunity_state.premium_state}
               </span>
-              <span className="text-[10px] text-terminal-500 mt-1 block">Quoted vs Realized</span>
+              <span className="text-[10px] text-terminal-500 mt-1 block">IV/RV comparison not yet available</span>
             </div>
 
             <div className="bg-terminal-950 p-3 rounded border border-terminal-850">
@@ -121,7 +122,7 @@ export default async function MarketResearchPage({
               <span className="text-sm font-bold text-accent capitalize block mt-1">
                 {snapshot.opportunity_state.movement_state}
               </span>
-              <span className="text-[10px] text-terminal-500 mt-1 block">20-Session Range</span>
+              <span className="text-[10px] text-terminal-500 mt-1 block">Validated regime data required</span>
             </div>
 
             <div className="bg-terminal-950 p-3 rounded border border-terminal-850">
@@ -129,7 +130,7 @@ export default async function MarketResearchPage({
               <span className="text-sm font-bold text-terminal-200 capitalize block mt-1">
                 {snapshot.opportunity_state.volatility_state}
               </span>
-              <span className="text-[10px] text-terminal-500 mt-1 block">ATR Band Analysis</span>
+              <span className="text-[10px] text-terminal-500 mt-1 block">Regime validation pending</span>
             </div>
 
             <div className="bg-terminal-950 p-3 rounded border border-terminal-850">
@@ -137,7 +138,7 @@ export default async function MarketResearchPage({
               <span className="text-sm font-bold text-terminal-300 capitalize block mt-1">
                 {snapshot.opportunity_state.time_state}
               </span>
-              <span className="text-[10px] text-terminal-500 mt-1 block">NYSE Session Context</span>
+              <span className="text-[10px] text-terminal-500 mt-1 block">Session classifier pending</span>
             </div>
           </div>
 
@@ -163,7 +164,7 @@ export default async function MarketResearchPage({
                 Historical levels relative to current spot. Support/resistance describes structural zones, not guaranteed barriers.
               </p>
             </div>
-            <StatusPill label="ATR NORMALIZED" variant="archive" />
+            <StatusPill label="OBSERVED LEVELS ONLY" variant="neutral" />
           </div>
 
           <div className="overflow-x-auto">
