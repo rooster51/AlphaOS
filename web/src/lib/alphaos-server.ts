@@ -1,3 +1,4 @@
+import { validEnvelope, verifiedMarketPair } from "./research-evidence";
 import { MarketSnapshot, ResearchCandidate } from "@/types/research";
 import { MOCK_MARKET_SNAPSHOTS, MOCK_CANDIDATES } from "./mock-data";
 
@@ -12,10 +13,6 @@ function record(value: unknown): JsonObject {
 }
 function finitePositive(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value) && value > 0;
-}
-function timestamp(value: unknown): value is string {
-  return typeof value === "string" && value.trim() !== "" &&
-    Number.isFinite(Date.parse(value));
 }
 function symbolValue(symbol: string): "QQQ" | "SPY" {
   const norm = symbol.toUpperCase();
@@ -57,19 +54,12 @@ export async function getMarketSnapshotServer(symbol: string): Promise<{
     research(`/v1/structure/${normSymbol}?horizon=3`),
   ]);
   const meta = record(market.meta);
-  const structureMeta = record(structure.meta);
-  const quality = record(meta.quote_freshness);
   const marketEvidence = record(market.evidence);
   const structureEvidence = record(structure.evidence);
   const quotedSpot = meta.current_spot;
   const atr = structureEvidence.atr;
   const observedAt = meta.quote_as_of;
-  const sameSnapshot = typeof meta.snapshot_id === "string" &&
-    meta.snapshot_id !== "" && meta.snapshot_id === structureMeta.snapshot_id;
-  if (meta.symbol !== normSymbol || structureMeta.symbol !== normSymbol ||
-      meta.source !== "Public" || !sameSnapshot ||
-      quality.usable_for_live_research !== true ||
-      !finitePositive(quotedSpot) || !finitePositive(atr) || !timestamp(observedAt)) {
+  if (!verifiedMarketPair(market, structure, normSymbol)) {
     throw new Error("No verified, fresh, matching market/structure evidence available");
   }
   const state = record(marketEvidence.market_state);
