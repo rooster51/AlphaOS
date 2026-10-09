@@ -59,7 +59,9 @@ export async function getMarketSnapshotServer(symbol: string): Promise<{
   const quotedSpot = meta.current_spot;
   const atr = structureEvidence.atr;
   const observedAt = meta.quote_as_of;
-  if (!verifiedMarketPair(market, structure, normSymbol)) {
+  if (!verifiedMarketPair(market, structure, normSymbol) ||
+      !finitePositive(quotedSpot) || !finitePositive(atr) ||
+      typeof observedAt !== "string") {
     throw new Error("No verified, fresh, matching market/structure evidence available");
   }
   const state = record(marketEvidence.market_state);
