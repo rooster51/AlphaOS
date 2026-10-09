@@ -8,7 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from modules.position_research import research_position
 from modules.strategy_compare import compare_strategy_research
 from modules.run_market import run_latest_market
-from modules.structure_economics import structure_historical_economics
+from modules.structure_economics import structure_historical_economics, compare_historical_economics
 from modules.supabase_archive import archive_client, read_latest_option_snapshot, ArchiveUnavailable
 from .contracts import APIError
 
@@ -134,7 +134,10 @@ class ArchiveResearchService:
 
     def compare(self, request):
         researched = [self._structure(item) for item in request.structures]
-        return envelope(request, dict(candidates=researched,
+        historical = compare_historical_economics(researched,
+            as_of_dates=[item.as_of.isoformat() for item in request.structures], now=self.clock(),
+            read_snapshot=self.read_snapshot, history_loader=self.history_loader)
+        return envelope(request, dict(candidates=researched, historical_comparison=historical,
             comparison=compare_strategy_research(researched, thesis=request.thesis)),
             'Explicit user-supplied scenarios', ['Input order is not preference. Different dates, symbols and spots remain explicit per candidate.'])
 

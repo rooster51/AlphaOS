@@ -1,7 +1,7 @@
-# Historical economics integration: explicit structure slice
+# Historical economics integration: structures and shared comparisons
 
-Status: draft, not merged or deployed. Stacked on PR #21 at
-`aabd66065a31c56fcc6b23f683fde342e0e16e1b`.
+Status: draft, not merged or deployed. Comparison continuation stacked on PR #22 at
+`8077d47689fbfd3c30eec549a1503d420dde6a4b`.
 
 ## Actual integration
 
@@ -13,9 +13,24 @@ reuses the verified archive reader, Public daily history loader, existing
 dataset builder/Phase 3 selector, trusted adapter and historical evaluator.
 There is no alternate provider, analog selector, or options payoff engine.
 
-`compare_structures` and `run_market` are deliberately NOT integrated in this
-bounded slice. Their current contracts/behavior remain unchanged. Completing
-those integrations with one cached evidence bundle per comparison is next.
+`POST /v1/research/structures/compare` and MCP `compare_structures` share this
+same workflow for up to 20 structures. Each `research.candidates` entry adds
+`historical_economics`; the existing deterministic `comparison` remains intact.
+`research.historical_comparison` supplies context groups, zero-based candidate
+indices, fingerprints, availability and pairwise comparability with typed reasons.
+Candidate order is unchanged. No scores, rankings, winners or recommendations
+are introduced. `run_market` integration remains deferred.
+
+Within each request, exact symbol, as_of date, expiration and spot define groups.
+The validated NYSE calendar determines each group's cutoff and session horizon.
+Archive verification, daily history loading, dataset construction, analog selection
+and trusted adaptation occur once per group, including failed builds. Each candidate
+uses its own strikes, quantities, signed premium and fees against the frozen shared
+evidence. No cross-request cache bypasses freshness. Different contexts are explicitly
+not directly comparable even if returns coincide; within a group only successful
+historical results with identical fingerprints are directly comparable. Missing
+samples never establish comparability. Shared samples establish descriptive expiration
+comparability only, not executable pricing or investment suitability.
 
 ## Evidence semantics and gates
 
@@ -72,7 +87,7 @@ enforces an explicitly supplied max-loss budget; no new API input is invented.
 
 Completed-date structure requests can now perform archive/history reads, adding
 latency. Intraday, unsupported-horizon and invalid-calendar requests stop before
-I/O. Future work may share/cache evidence within a request, without bypassing
+I/O. Comparison evidence is reused within a request without bypassing
 freshness or changing the scenario fingerprint. Historical archive coverage and
 provider history availability remain prerequisites, so production may return
 typed missing evidence. Tests use fixture storage with real checksum verification
