@@ -70,7 +70,7 @@ def build_scenario_evidence(
         raise ValueError("Analog target is after archive observation.")
     if target_day > cutoff.astimezone(timezone.utc).date():
         raise ValueError("Analog target is after research cutoff.")
-    if _day(config["target_date"]) != target_day if "target_date" in config else False:
+    if "target_date" in config and _day(config["target_date"]) != target_day:
         raise ValueError("Analog selection target mismatch.")
     expiry = date.fromisoformat(expiration)
     future = tuple(_day(s) for s in future_exchange_sessions)
