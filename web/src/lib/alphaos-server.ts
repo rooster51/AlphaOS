@@ -27,11 +27,7 @@ async function research(path: string): Promise<JsonObject> {
   });
   if (!response.ok) throw new Error(`Research API unavailable (HTTP ${response.status})`);
   const body = record(await response.json());
-  if (
-    body.error ||
-    Object.keys(record(body.meta)).length === 0 ||
-    Object.keys(record(body.evidence)).length === 0
-  ) {
+  if (!validEnvelope(body)) {
     throw new Error("Research response schema is unavailable");
   }
   return body;
@@ -53,10 +49,14 @@ export async function getMarketSnapshotServer(symbol: string): Promise<{
   }
   // The original frontend expected context/structure fields that are not part
   // of the real API. Query both documented endpoints and validate the envelope.
-  const [market, structure] = await Promise.all([
-    research(`/v1/market/${normSymbol}?horizon=3`),
-    research(`/v1/structure/${normSymbol}?horizon=3`),
-  ]);
+  const market = await research(`/v1/market/${normSymbol}?horizon=3`);
+  const marketMeta = record(market.meta);
+  if (typeof marketMeta.snapshot_id !== "string" || !marketMeta.snapshot_id) {
+    throw new Error("No verified market snapshot identifier available");
+  }
+  const structure = await research(
+    `/v1/structure/${normSymbol}?horizon=3&snapshot_id=${encodeURIComponent(marketMeta.snapshot_id)}`
+  );
   const meta = record(market.meta);
   const marketEvidence = record(market.evidence);
   const structureEvidence = record(structure.evidence);
