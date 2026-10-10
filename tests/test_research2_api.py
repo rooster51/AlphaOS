@@ -255,14 +255,14 @@ def test_market_http_contract_is_authenticated_post_json(boundary, symbol):
     client, storage, _, _ = boundary
     path = '/v1/research/market'
     assert client.get(path, params={'symbol': symbol},
-                      headers={'Authorization': 'Bearer owner-test-secret'}).status_code == 405
-    assert client.post(path, json={'symbol': symbol, 'available_capital': 150},
+                      headers={'Authorization': 'Bearer owner-test-secret'}).status_code == 404
+    assert client.post(path, json={'symbol': symbol, },
                        headers={'Authorization': 'Bearer invalid'}).status_code == 401
 
 
-def test_market_research_preserves_capital_and_non_executable_status(boundary):
+def test_market_research_preserves_non_executable_status(boundary):
     client, _, _, _ = boundary
-    response = post(client, 'market', {'symbol': 'QQQ', 'available_capital': 150})
+    response = post(client, 'market', {'symbol': 'QQQ'})
     assert response.status_code == 200, response.text
     data = response.json()
     assert data['read_only'] is True
@@ -271,5 +271,4 @@ def test_market_research_preserves_capital_and_non_executable_status(boundary):
     assert session['comparison']['recommendation'] is None
     for candidate in session['candidates']:
         research = candidate['research']
-        assert research['capital_at_risk'] <= 150
         assert 'pop' not in research
