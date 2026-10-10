@@ -247,3 +247,35 @@ def test_questionable_quote_warnings_cross_boundary(boundary):
     legs = [leg for candidate in data['research_session']['candidates']
             for leg in candidate['research']['position']['legs'] if leg['contract'] == row['contract']]
     assert legs and all('open_interest_missing' in leg['quality_warnings'] for leg in legs)
+
+
+@pytest.mark.parametrize('symbol', ['SPY', 'QQQ'])
+def test_market_http_contract_is_authenticated_post_json(boundary, symbol):
+    """Protect the browser bridge from assuming a GET market endpoint."""
+    client, storage, _, _ = boundary
+    path = '/v1/research/market'
+    assert client.get(path, params={'symbol': symbol},
+                      headers={'Authorization': 'Bearer owner-test-secret'}).status_code == 404
+    # Missing credentials are 401; a supplied but invalid bearer token is
+    # deliberately rejected as 403 by alphaos_api.app.authenticate.
+    missing = client.post(path, json={'symbol': symbol})
+    assert missing.status_code == 401
+    assert missing.json()['error']['code'] == 'authentication_required'
+    invalid = client.post(path, json={'symbol': symbol},
+                          headers={'Authorization': 'Bearer invalid'})
+    assert invalid.status_code == 403
+    assert invalid.json()['error']['code'] == 'forbidden'
+
+
+def test_market_research_preserves_non_executable_status(boundary):
+    client, _, _, _ = boundary
+    response = post(client, 'market', {'symbol': 'QQQ'})
+    assert response.status_code == 200, response.text
+    data = response.json()
+    assert data['read_only'] is True
+    session = data['research']['research_session']
+    assert session['comparison']['winner'] is None
+    assert session['comparison']['recommendation'] is None
+    for candidate in session['candidates']:
+        research = candidate['research']
+        assert 'pop' not in research
