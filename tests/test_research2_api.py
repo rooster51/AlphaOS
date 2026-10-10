@@ -256,8 +256,15 @@ def test_market_http_contract_is_authenticated_post_json(boundary, symbol):
     path = '/v1/research/market'
     assert client.get(path, params={'symbol': symbol},
                       headers={'Authorization': 'Bearer owner-test-secret'}).status_code == 404
-    assert client.post(path, json={'symbol': symbol, },
-                       headers={'Authorization': 'Bearer invalid'}).status_code == 401
+    # Missing credentials are 401; a supplied but invalid bearer token is
+    # deliberately rejected as 403 by alphaos_api.app.authenticate.
+    missing = client.post(path, json={'symbol': symbol})
+    assert missing.status_code == 401
+    assert missing.json()['error']['code'] == 'authentication_required'
+    invalid = client.post(path, json={'symbol': symbol},
+                          headers={'Authorization': 'Bearer invalid'})
+    assert invalid.status_code == 403
+    assert invalid.json()['error']['code'] == 'forbidden'
 
 
 def test_market_research_preserves_non_executable_status(boundary):
