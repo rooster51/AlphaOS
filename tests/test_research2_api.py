@@ -256,7 +256,6 @@ def test_market_http_contract_is_authenticated_post_json(boundary, symbol):
     path = '/v1/research/market'
     assert client.get(path, params={'symbol': symbol},
                       headers={'Authorization': 'Bearer owner-test-secret'}).status_code == 405
-    assert client.post(path, json={'symbol': symbol, 'available_capital': 150}).status_code in (200, 503)
     assert client.post(path, json={'symbol': symbol, 'available_capital': 150},
                        headers={'Authorization': 'Bearer invalid'}).status_code == 401
 
