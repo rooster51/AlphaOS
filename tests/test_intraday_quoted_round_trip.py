@@ -143,3 +143,31 @@ def test_rejects_unsupported_leg_and_invalid_policy():
         compute(legs=[{"contract": CONTRACT, "side": "hold", "quantity": 1}])
     with pytest.raises(EvidenceRejected):
         compute(max_quote_age_seconds=float("inf"))
+
+
+def test_one_frozen_quote_side_rejected():
+    entry,exit=snapshot(),snapshot(exit=True)
+    exit['payload']['options']['valid_contracts'][0]['bid_timestamp']=entry['payload']['options']['valid_contracts'][0]['bid_timestamp']
+    with pytest.raises(EvidenceRejected):compute(entry=entry,exit=exit,max_quote_age_seconds=600)
+
+
+def test_row_after_collection_rejected():
+    entry=snapshot()
+    entry['payload']['options']['valid_contracts'][0]['observed_at']='2026-10-09T14:04:59Z'
+    with pytest.raises(EvidenceRejected):compute(entry=entry)
+
+
+def test_insertion_before_completion_rejected():
+    entry=snapshot()
+    entry['metadata']['created_at']='2026-10-09T14:04:01Z'
+    with pytest.raises(EvidenceRejected):compute(entry=entry)
+
+
+@pytest.mark.parametrize('day,time', [('2026-10-10','14'),('2026-12-25','14'),('2026-11-27','19'),('2026-10-09','12'),('2026-10-09','21')])
+def test_nyse_holiday_weekend_early_close_and_extended_hours_rejected(day,time):
+    import json
+    entry=json.loads(json.dumps(snapshot()).replace('2026-10-09',day).replace('T14:',f'T{time}:'))
+    exit=json.loads(json.dumps(snapshot(exit=True)).replace('2026-10-09',day).replace('T14:',f'T{time}:'))
+    with pytest.raises(EvidenceRejected):
+        reconstruct_quoted_round_trip(entry,exit,[{'contract':CONTRACT,'side':'long','quantity':1}],
+            entry_as_of=f'{day}T{time}:05:00Z',exit_as_of=f'{day}T{time}:10:00Z')
