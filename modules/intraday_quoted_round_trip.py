@@ -9,6 +9,9 @@ from __future__ import annotations
 from datetime import datetime, timezone
 import math
 import re
+from zoneinfo import ZoneInfo
+
+from modules.market_session_gate import regular_session_bounds
 
 
 class EvidenceRejected(ValueError):
@@ -62,7 +65,11 @@ def _envelope(verified, as_of):
     completed = _time(payload.get("collection_finished_at"))
     generated = _time(options.get("generated_at"))
     inserted = _time(meta.get("created_at"))
-    if not observed <= generated <= completed <= as_of or inserted > as_of:
+    bounds = regular_session_bounds(observed)
+    if (bounds is None or not bounds[0] <= observed <= generated <= completed <= as_of <= bounds[1]
+            or observed.astimezone(ZoneInfo("America/New_York")).date().isoformat() != payload.get("session")):
+        raise EvidenceRejected("outside_regular_session")
+    if not observed <= generated <= completed <= inserted <= as_of:
         raise EvidenceRejected("snapshot_not_available_as_of")
     return payload, completed
 
@@ -96,12 +103,17 @@ def _quotes(payload, contract, as_of, *, max_quote_age_seconds, max_spread_fract
         raise EvidenceRejected("spread_too_wide")
     bid_at, ask_at = _time(row.get("bid_timestamp")), _time(row.get("ask_timestamp"))
     row_at = _time(row.get("observed_at"))
+    bounds = regular_session_bounds(row_at)
+    if (bounds is None or not bounds[0] <= bid_at <= row_at <= bounds[1]
+            or not bounds[0] <= ask_at <= row_at
+            or not _time(payload["observed_at"]) <= row_at <= _time(options["generated_at"])):
+        raise EvidenceRejected("quote_outside_collection_or_session")
     if row_at > as_of or bid_at > row_at or ask_at > row_at:
         raise EvidenceRejected("future_quote")
     for quote_at in (bid_at, ask_at):
         if not 0 <= (as_of - quote_at).total_seconds() <= max_quote_age_seconds:
             raise EvidenceRejected("stale_or_future_quote")
-    if as_of.date().isoformat() > expiry:
+    if as_of.astimezone(ZoneInfo("America/New_York")).date().isoformat() > expiry:
         raise EvidenceRejected("contract_expired")
     return {"bid": bid, "ask": ask, "bid_at": bid_at, "ask_at": ask_at,
             "contract": contract, "expiry": expiry}
@@ -133,6 +145,7 @@ def reconstruct_quoted_round_trip(entry, exit, legs, *, entry_as_of, exit_as_of,
     exit_payload, exit_complete = _envelope(exit, exit_at)
     if (entry_payload.get("symbol") != exit_payload.get("symbol")
             or entry_payload.get("provider") != exit_payload.get("provider")
+            or entry_payload.get("session") != exit_payload.get("session")
             or not entry_complete < exit_complete):
         raise EvidenceRejected("snapshot_sequence_mismatch")
     seen = set()
@@ -153,7 +166,7 @@ def reconstruct_quoted_round_trip(entry, exit, legs, *, entry_as_of, exit_as_of,
                          max_quote_age_seconds=age, max_spread_fraction=spread)
         if opened["expiry"] != closed["expiry"]:
             raise EvidenceRejected("contract_changed")
-        if max(opened["bid_at"], opened["ask_at"]) >= max(closed["bid_at"], closed["ask_at"]):
+        if opened["bid_at"] >= closed["bid_at"] or opened["ask_at"] >= closed["ask_at"]:
             raise EvidenceRejected("quote_did_not_advance")
         entry_quote_times.extend((opened["bid_at"], opened["ask_at"]))
         exit_quote_times.extend((closed["bid_at"], closed["ask_at"]))
