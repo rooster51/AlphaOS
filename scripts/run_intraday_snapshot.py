@@ -1,4 +1,5 @@
 """Collect one point-in-time SPY/QQQ market archive snapshot."""
+import os
 import sys
 import traceback
 from datetime import datetime, timezone
@@ -6,6 +7,7 @@ import time
 
 from modules.daily_public import DailyPublicProvider
 from modules.intraday_archive import collect_symbol, load_config
+from modules.intraday_canary_universe import collection_symbols
 from modules.market_session_gate import regular_session_slot
 from modules.public_intraday import fetch_intraday_bars
 from modules.supabase_archive import archive_client, persist_candles, persist_option_snapshot, find_slot_snapshot
@@ -28,6 +30,13 @@ def _safe_failure(symbol, stage, exc):
 
 def main(clock=lambda: datetime.now(timezone.utc), sleep=time.sleep):
     config = load_config()
+    try:
+        canary = os.environ.get("ALPHAOS_INTRADAY_CANARY")
+        symbols = collection_symbols(config, canary)
+    except ValueError as exc:
+        _safe_failure("collector", "canary_configuration", exc)
+        return 1
+    config = dict(config, canary_symbol=canary)
     slot = regular_session_slot(now=clock(), cadence_minutes=int(config["option_snapshot_minutes"]))
     if slot is None:
         print("NYSE regular session is closed; no archive snapshot collected.")
@@ -45,7 +54,7 @@ def main(clock=lambda: datetime.now(timezone.utc), sleep=time.sleep):
         return 1
 
     failures = []
-    for symbol in config["symbols"]:
+    for symbol in symbols:
         # A preceding symbol may span multiple heartbeats. Never label this
         # symbol with that earlier slot or the scheduler dispatch timestamp.
         slot = regular_session_slot(now=clock(), cadence_minutes=int(config["option_snapshot_minutes"]))
