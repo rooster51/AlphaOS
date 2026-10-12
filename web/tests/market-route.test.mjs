@@ -93,6 +93,7 @@ test("invalid or malformed request bodies fail before contacting the backend", a
     { symbol: "DIA" },
     { symbol: "QQQ", unexpected: true },
     { symbol: "SPY", expiration: "2026-02-30" },
+    { symbol: "SPY", expiration: "0000-01-01" },
     { symbol: "SPY", available_capital: Number.NaN },
     { symbol: "SPY", width: 101 },
   ]) {
@@ -112,6 +113,30 @@ test("malformed upstream research envelopes fail closed", async () => {
   assert.deepEqual(await response.json(), { error: "Invalid research response" });
 });
 
+test("upstream symbol mismatch fails closed", async () => {
+  setBackendConfig();
+  globalThis.fetch = async () => Response.json(envelope("SPY"));
+
+  const response = await POST(request({ symbol: "QQQ" }));
+  assert.equal(response.status, 502);
+  assert.deepEqual(await response.json(), { error: "Invalid research response" });
+});
+
+test("unavailable and no-candidate research states remain explicit and non-tradable", async () => {
+  setBackendConfig();
+  for (const research of [
+    { status: "unavailable", candidates: [] },
+    { status: "no_candidate", candidates: [] },
+  ]) {
+    globalThis.fetch = async () => Response.json({ ...envelope(), research });
+    const response = await POST(request({ symbol: "QQQ" }));
+    const body = await response.json();
+    assert.equal(response.status, 200);
+    assert.deepEqual(body.research.research, research);
+    assert.equal(body.verified_for_trading, false);
+  }
+});
+
 test("upstream errors and invalid JSON fail closed", async () => {
   setBackendConfig();
   globalThis.fetch = async () => new Response("private backend failure", { status: 503 });
@@ -125,6 +150,11 @@ test("upstream errors and invalid JSON fail closed", async () => {
   const malformed = await POST(request({ symbol: "QQQ" }));
   assert.equal(malformed.status, 502);
   assert.deepEqual(await malformed.json(), { error: "Research request failed" });
+
+  globalThis.fetch = async () => { throw new Error("network unreachable"); };
+  const networkFailure = await POST(request({ symbol: "QQQ" }));
+  assert.equal(networkFailure.status, 502);
+  assert.deepEqual(await networkFailure.json(), { error: "Research request failed" });
 });
 
 test("missing or invalid backend configuration is unavailable without fetching", async () => {
