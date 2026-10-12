@@ -4,12 +4,14 @@ from math import isfinite
 import os
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 from modules.position_research import research_position
 from modules.strategy_compare import compare_strategy_research
 from modules.run_market import run_latest_market
 from modules.structure_economics import structure_historical_economics, compare_historical_economics
-from modules.supabase_archive import archive_client, read_latest_option_snapshot, ArchiveUnavailable
+from modules.historical_archive_research import evaluate_historical_archive_research
+from modules.supabase_archive import (archive_client, read_latest_option_snapshot,
+    read_option_snapshot_window, ArchiveUnavailable)
 from .contracts import APIError
 
 VERSION = 'alphaos-interface-v2'
@@ -48,6 +50,26 @@ class StructuresRequest(Request):
     thesis: str | None = Field(default=None, max_length=1000)
 
 
+class ResearchWindow(Request):
+    start: datetime
+    end: datetime
+
+    @model_validator(mode="after")
+    def timezone_aware_window(self):
+        if (self.start.tzinfo is None or self.start.utcoffset() is None
+                or self.end.tzinfo is None or self.end.utcoffset() is None):
+            raise ValueError("Research window timestamps must include a timezone.")
+        if self.end < self.start:
+            raise ValueError("Research window end must not precede its start.")
+        return self
+
+
+class HistoricalArchiveRequest(Request):
+    structure: StructureRequest
+    entry_window: ResearchWindow
+    exit_window: ResearchWindow
+
+
 def json_safe(value):
     """Preserve unbounded payoff meaning; never emit nonstandard JSON numbers."""
     if isinstance(value, dict):
@@ -65,22 +87,36 @@ def envelope(request, research, source, caveats=()):
 
 
 class ArchiveResearchService:
-    def __init__(self, *, read_snapshot=None, history_loader=None, clock=None):
+    def __init__(self, *, read_snapshot=None, read_snapshots=None, history_loader=None, clock=None):
         self.read_snapshot = read_snapshot or self._read
+        self.read_snapshots = read_snapshots or self._read_window
         self.history_loader = history_loader or self._history
         self.clock = clock or (lambda: datetime.now(timezone.utc))
+
+    @staticmethod
+    def _archive_age_seconds():
+        age = float(os.environ.get('ALPHAOS_ARCHIVE_MAX_AGE_SECONDS', '600'))
+        if not isfinite(age) or age < 0:
+            raise ValueError()
+        return age
 
     @staticmethod
     def _read(symbol, as_of):
         # Lazy trusted server wiring. No connection or secret loading on import.
         # Reader implements ALL selection, checksum, identity and freshness rules.
         try:
-            age = float(os.environ.get('ALPHAOS_ARCHIVE_MAX_AGE_SECONDS', '600'))
-            if not isfinite(age) or age < 0:
-                raise ValueError()
-            return read_latest_option_snapshot(archive_client(), symbol, as_of, max_age_seconds=age)
+            return read_latest_option_snapshot(archive_client(), symbol, as_of,
+                max_age_seconds=ArchiveResearchService._archive_age_seconds())
         except Exception:
             raise ArchiveUnavailable('Archive unavailable or invalid configuration.') from None
+
+    @staticmethod
+    def _read_window(symbol, start, end):
+        try:
+            return read_option_snapshot_window(archive_client(), symbol, start, end,
+                max_age_seconds=ArchiveResearchService._archive_age_seconds())
+        except Exception:
+            raise ArchiveUnavailable('Archive window unavailable or invalid configuration.') from None
 
     @staticmethod
     def _history(symbol):
@@ -141,6 +177,14 @@ class ArchiveResearchService:
             comparison=compare_strategy_research(researched, thesis=request.thesis)),
             'Explicit user-supplied scenarios', ['Input order is not preference. Different dates, symbols and spots remain explicit per candidate.'])
 
+    def historical_archive(self, request):
+        position = self._structure(request.structure)
+        result = evaluate_historical_archive_research(position['trade'],
+            entry_window=request.entry_window.model_dump(),
+            exit_window=request.exit_window.model_dump(),
+            read_snapshots=self.read_snapshots, now=self.clock())
+        return envelope(request, dict(structure=position, historical_archive_research=result),
+            'Verified Supabase option archive; conservative archived marks, not verified fills')
 
 def register_research2(router, service, respond):
     @router.post('/research/market', operation_id='run_market_v2')
@@ -154,3 +198,7 @@ def register_research2(router, service, respond):
     @router.post('/research/structures/compare', operation_id='compare_structures_v2')
     def compare_structures(request: StructuresRequest):
         return respond(service().compare(request))
+
+    @router.post('/research/structure/historical-archive', operation_id='research_historical_archive_v2')
+    def research_historical_archive(request: HistoricalArchiveRequest):
+        return respond(service().historical_archive(request))

@@ -12,12 +12,13 @@ from mcp.server.mcpserver import MCPServer
 from mcp.server.auth.settings import AuthSettings
 from mcp.server.transport_security import TransportSecuritySettings, RequestBodyLimitMiddleware
 from mcp_types import CallToolResult, TextContent, ToolAnnotations
-from .research2 import MarketRequest, StructureRequest, StructuresRequest
+from .research2 import HistoricalArchiveRequest, MarketRequest, StructureRequest, StructuresRequest
 from .contracts import TradeRequest, CompareRequest, SCHEMA_VERSION
 from .mcp_auth import OwnerOAuth, SCOPE
 from .protocol_diagnostics import ProtocolDiagnostics
 
 INSTRUCTIONS = '''For Run QQQ/SPY and general opportunity requests prefer run_market, the AlphaOS 2.0 archive-backed workflow. Pass available_capital, an explicit ISO expiration if supplied, and objective as context. Ask to resolve ambiguous dates such as Friday. Objective does not override classifier evidence or filter candidates. Preserve the full research evidence, unknown dimensions, exclusions, timestamps and quality warnings. Archive freshness is not executable quote freshness; max-loss capital is not broker buying power. Use research_structure and compare_structures for explicitly supplied long options or supported multi-leg structures, with explicit as_of, spot, signed cashflow and expiration. Do not infer fills, classify missing regimes, rank structures, or report expiration POP.
+Use research_historical_archive only with explicit timezone-aware entry and exit windows. It selects the latest checksum-verified snapshot with eligible quotes in each window and reports conservative archived mark estimates, not verified fills.
 The following legacy tools retain their original live/historical vertical semantics; use them when explicitly requested, not as a silent fallback for unavailable archive research.
 For legacy live vertical research and SPX/XSP use run_symbol_research; archive run_market currently supports SPY/QQQ only.
 Use mode=overview for market context and mode=find for candidate discovery. For Refresh SYMBOL alone use mode=overview, refresh=true; scan only when requested.
@@ -166,6 +167,11 @@ def build_mcp(app, sanitize):
     @tool('Research and compare explicit supported structures in supplied input order. Retains full economics plus descriptive cross-strategy comparison; no winner, ranking or recommendation. Different symbol/date/spot contexts remain explicit. No quote retrieval or journal writes.')
     async def compare_structures(comparison: StructuresRequest) -> CallToolResult:
         return await invoke('/v1/research/structures/compare',body=comparison.model_dump(mode='json'))
+
+    @tool('Evaluate an explicit option structure using checksum-verified archive quotes in caller-specified timezone-aware entry and exit windows. Both windows must fall within NYSE regular sessions. Contract identity and quote freshness are validated; ineligible snapshots are reported while the latest eligible snapshot in each window is selected. Uses conservative bid/ask sides and does not establish actual fills or recommend trades.')
+    async def research_historical_archive(research: HistoricalArchiveRequest) -> CallToolResult:
+        return await invoke('/v1/research/structure/historical-archive',
+            body=research.model_dump(mode='json'))
 
     host=urlsplit(oauth.base).netloc
     mcp_app=server.streamable_http_app(stateless_http=True,json_response=True,max_request_body_size=131072,
