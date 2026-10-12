@@ -76,12 +76,16 @@ def _envelope(verified, as_of):
 
 def _quotes(payload, contract, as_of, *, max_quote_age_seconds, max_spread_fraction):
     options = payload["options"]
-    rows = [r for bucket in ("valid_contracts", "questionable_contracts", "rejected_contracts")
+    buckets = ("valid_contracts", "questionable_contracts", "rejected_contracts")
+    if any(not isinstance(options.get(bucket), list) for bucket in buckets):
+        raise EvidenceRejected("contract_buckets_missing_or_invalid")
+    rows = [r for bucket in buckets
             for r in options.get(bucket, []) if isinstance(r, dict) and r.get("contract") == contract]
     if len(rows) != 1 or rows[0] not in options.get("valid_contracts", []):
         raise EvidenceRejected("contract_missing_duplicate_or_unusable")
     row = rows[0]
-    if row.get("quality_warnings") or row.get("rejection_reasons") or row.get("quote_outcome") != "SUCCESS":
+    if (row.get("quality_warnings") != [] or row.get("rejection_reasons") != []
+            or row.get("quote_outcome") != "SUCCESS"):
         raise EvidenceRejected("contract_quality_unusable")
     match = re.fullmatch(r"([A-Z]{1,6})\s*(\d{6})([CP])(\d{8})", contract)
     if match is None or match.group(1) != payload["symbol"]:
