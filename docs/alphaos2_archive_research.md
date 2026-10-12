@@ -49,7 +49,26 @@ minute archives. Missing history leaves direction unknown. Same-day economics us
 zero years, not artificial time or fabricated POP. AlphaOS construction explicitly
 passes min_net_credit=0; legacy premium callers retain their existing default.
 
-The read path does not call a broker, write the journal, apply the ledger SQL,
-change OAuth, or introduce API/MCP endpoints. Client authorization and production
-interface wiring are separate work. Live storage integration is fixture-tested,
-not credential-verified in this pass.
+## Historical option mark-to-market (REST and MCP)
+
+`POST /v1/research/structure/historical-archive` and the
+`research_historical_archive` MCP tool accept an explicit structure and separate
+timezone-aware entry and exit windows. Each window must fall within one NYSE
+regular session; the exit window must follow the entry window. For each window,
+checksum-verified snapshots are considered newest first. The latest snapshot
+with all requested contracts and fresh in-window quotes is selected; newer
+ineligible or unverifiable snapshots are reported in the rejection report.
+Snapshots outside the requested window are never used.
+
+The existing read-only Supabase archive reader verifies the compressed-object
+SHA-256 and row/payload identity. The evaluator additionally checks window and
+session membership, archive provenance, OSI contract identity, bid/ask quote
+timestamps and quote freshness. Entry uses ask for long legs and bid for short
+legs; exit uses bid for long legs and ask for short legs. Fees are charged once
+for the package. These are conservative historical mark estimates, not verified
+fills or execution evidence. Straddles and strangles reuse the existing
+deterministic payoff engine for expiration economics.
+
+The API additions are additive; existing request shapes and response fields are
+unchanged. No broker calls, writes, collector activation, or production data
+changes are performed.

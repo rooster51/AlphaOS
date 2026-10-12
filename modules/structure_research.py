@@ -1,4 +1,4 @@
-"""Small adapters for existing debit, butterfly/BWB and condor candidates.
+"""Small adapters for existing debit/credit option structures.
 
 No construction factory or pricing model: expiration economics come exclusively
 from options_payoff. Market observations are optional, never synthesized.
@@ -46,6 +46,14 @@ def _family(legs):
                 if ps['strike']<cs['strike']:return 'iron_condor','neutral'
                 if ps['strike']==cs['strike'] and isclose(ps['strike']-pl['strike'],cl['strike']-cs['strike']):
                     return 'butterfly','neutral'
+    if len(legs)==2 and kinds=={'Put','Call'}:
+        put=next(l for l in legs if l['type']=='Put')
+        call=next(l for l in legs if l['type']=='Call')
+        if put['strike']<=call['strike'] and abs(put['qty'])==abs(call['qty']):
+            if put['qty']>0 and call['qty']>0:
+                return ('long_straddle' if put['strike']==call['strike'] else 'long_strangle'),'neutral'
+            if put['qty']<0 and call['qty']<0:
+                return ('short_straddle' if put['strike']==call['strike'] else 'short_strangle'),'neutral'
     raise ValueError('Unsupported or malformed structure; explicit supported legs required.')
 
 
@@ -91,10 +99,18 @@ def research_structure(candidate,*,symbol=None,spot=None,as_of=None,expected_mov
     family,direction=_family(trade['legs'])
     if family.endswith('debit_spread') and trade['credit']>=0:raise ValueError('Debit spread requires a debit.')
     if family in ('iron_condor','put_credit_spread','call_credit_spread') and trade['credit']<=0:raise ValueError('Iron condor requires a credit.')
+    if family in ('long_straddle','long_strangle') and trade['credit']>=0:raise ValueError('Long straddle/strangle requires a debit.')
+    if family in ('short_straddle','short_strangle') and trade['credit']<=0:raise ValueError('Short straddle/strangle requires a credit.')
     trade['strategy_family']=family
     trade['strategy']=family
     analysis=trade_analysis(trade)
-    if not all(isfinite(analysis[k]) and analysis[k]>0 for k in ('max_profit','max_loss')):
+    finite_risk = isfinite(analysis['max_loss']) and analysis['max_loss']>0
+    finite_profit = isfinite(analysis['max_profit']) and analysis['max_profit']>0
+    unbounded_straddle = (family in ('long_straddle','long_strangle') and
+        isfinite(analysis['max_loss']) and analysis['max_loss']>0 and analysis['max_profit']==float('inf')
+        or family in ('short_straddle','short_strangle') and
+        isfinite(analysis['max_profit']) and analysis['max_profit']>0 and analysis['max_loss']==float('inf'))
+    if not (finite_risk and finite_profit or unbounded_straddle):
         raise ValueError('Candidate must have finite positive potential profit and risk.')
     dte=None if as_of is None else (expiry-date.fromisoformat(str(as_of))).days
     if dte is not None and dte<0:raise ValueError('Expiration precedes research date.')

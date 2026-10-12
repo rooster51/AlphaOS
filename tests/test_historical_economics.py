@@ -139,7 +139,7 @@ def test_comparisons_share_canonical_sample_identity():
 @pytest.mark.parametrize('change',[
     {'legs':[leg('Call',100,-1)]}, {'credit':2}, {'fees':True},
     {'legs':[leg('Call',100,.5)]}, {'multiplier':50},
-    {'legs':[leg('Call',100,1),leg('Put',100,1)]},
+    {'legs':[leg('Call',100,1),leg('Put',100,-1)]},
 ])
 def test_unsupported_or_ambiguous_trade(change):
     with pytest.raises(ValueError):run(dict(trade(),**change))

@@ -197,7 +197,7 @@ def test_discovery_auth_handshake_and_list(env):
     assert {t['name'] for t in listed}=={'market_snapshot','price_structure','forward_distribution','live_quote','option_expirations',
         'scan_credit_spreads','research_candidate','research_vertical','research_explicit_trade','compare_trades',
         'run_symbol_research','unified_candidate_research','unified_vertical_research','unified_explicit_trade_research',
-        'run_market','research_structure','compare_structures'}
+        'run_market','research_structure','compare_structures','research_historical_archive'}
     assert all(t['annotations']['readOnlyHint'] and not t['annotations']['destructiveHint'] for t in listed)
     assert all(t['_meta']['securitySchemes'][0]['scopes']==['research:read'] for t in listed)
     modern=rpc(c,token,'tools/list',version='2026-07-28')
