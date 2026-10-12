@@ -13,6 +13,5 @@ export default async function MarketResearchPage({
   if (!symbol) {
     return <MarketUnavailable symbol={requestedSymbol ?? "UNKNOWN"} reason="Unsupported market symbol." />;
   }
-
   return <MarketResearchPanel key={symbol} symbol={symbol} />;
 }
