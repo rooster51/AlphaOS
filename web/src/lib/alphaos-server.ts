@@ -1,4 +1,4 @@
-import { validEnvelope, verifiedMarketPair } from "./research-evidence";
+import { fetchResearchEnvelope, supportedMarketSymbol, verifiedMarketPair } from "./research-evidence";
 import { MarketSnapshot, ResearchCandidate } from "@/types/research";
 import { MOCK_MARKET_SNAPSHOTS, MOCK_CANDIDATES } from "./mock-data";
 
@@ -15,22 +15,10 @@ function finitePositive(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value) && value > 0;
 }
 function symbolValue(symbol: string): "QQQ" | "SPY" {
-  const norm = symbol.toUpperCase();
-  if (norm !== "QQQ" && norm !== "SPY") throw new Error("Unsupported market symbol");
-  return norm;
+  return supportedMarketSymbol(symbol);
 }
 async function research(path: string): Promise<JsonObject> {
-  if (!API_TOKEN) throw new Error("Research backend not configured");
-  const response = await fetch(`${API_BASE}${path}`, {
-    headers: { Authorization: `Bearer ${API_TOKEN}`, Accept: "application/json" },
-    cache: "no-store",
-  });
-  if (!response.ok) throw new Error(`Research API unavailable (HTTP ${response.status})`);
-  const body = record(await response.json());
-  if (!validEnvelope(body)) {
-    throw new Error("Research response schema is unavailable");
-  }
-  return body;
+  return await fetchResearchEnvelope(`${API_BASE}${path}`, API_TOKEN);
 }
 
 /** Only actual, explicitly verified provider observations can be displayed as live. */

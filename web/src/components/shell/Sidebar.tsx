@@ -79,17 +79,14 @@ export function Sidebar() {
         </nav>
       </div>
 
-      {/* Terminal System Footnote */}
+      {/* Runtime evidence is intentionally not inferred from page availability. */}
       <div className="p-4 border-t border-terminal-800/80 bg-terminal-950/60 font-mono text-[11px] text-terminal-500">
         <div className="flex items-center justify-between mb-1.5">
-          <span className="text-terminal-400 font-semibold">Engine Runtime</span>
-          <span className="text-profit flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-profit animate-pulse" />
-            Verified
-          </span>
+          <span className="text-terminal-400 font-semibold">Backend Status</span>
+          <span className="text-terminal-400">Not assessed</span>
         </div>
-        <div className="text-[10px] text-terminal-500 truncate">
-          SHA: <code className="text-terminal-300">6d6bb56</code> (Render)
+        <div className="text-[10px] text-terminal-500">
+          Health endpoint does not verify API access or market evidence.
         </div>
         <div className="text-[10px] text-terminal-500 mt-1">
           Read-only Mode: Active
