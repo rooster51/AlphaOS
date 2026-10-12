@@ -172,6 +172,8 @@ def reconstruct_quoted_round_trip(entry, exit, legs, *, entry_as_of, exit_as_of,
             raise EvidenceRejected("contract_changed")
         if opened["bid_at"] >= closed["bid_at"] or opened["ask_at"] >= closed["ask_at"]:
             raise EvidenceRejected("quote_did_not_advance")
+        if closed["bid_at"] <= entry_at or closed["ask_at"] <= entry_at:
+            raise EvidenceRejected("exit_quote_not_after_entry")
         entry_quote_times.extend((opened["bid_at"], opened["ask_at"]))
         exit_quote_times.extend((closed["bid_at"], closed["ask_at"]))
         opening = opened["ask"] if side == "long" else opened["bid"]

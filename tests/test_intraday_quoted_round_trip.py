@@ -163,6 +163,15 @@ def test_insertion_before_completion_rejected():
     with pytest.raises(EvidenceRejected):compute(entry=entry)
 
 
+@pytest.mark.parametrize('field', ['bid_timestamp', 'ask_timestamp'])
+@pytest.mark.parametrize('stamp', ['2026-10-09T14:04:45Z', '2026-10-09T14:05:00Z'])
+def test_exit_quote_must_follow_requested_entry(field, stamp):
+    closed = snapshot(exit=True)
+    closed['payload']['options']['valid_contracts'][0][field] = stamp
+    with pytest.raises(EvidenceRejected, match='exit_quote_not_after_entry'):
+        compute(exit=closed, max_quote_age_seconds=600, max_leg_skew_seconds=600)
+
+
 @pytest.mark.parametrize('day,time', [('2026-10-10','14'),('2026-12-25','14'),('2026-11-27','19'),('2026-10-09','12'),('2026-10-09','21')])
 def test_nyse_holiday_weekend_early_close_and_extended_hours_rejected(day,time):
     import json
