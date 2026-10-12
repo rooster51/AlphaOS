@@ -47,9 +47,11 @@ jobs:
           cache: npm
           cache-dependency-path: web/package-lock.json
       - run: npm ci
+      - run: npx playwright install --with-deps chromium
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
         env:
           ALPHAOS_DEMO_MODE: 'false'
           ALPHAOS_API_TOKEN: ''
+      - run: npm run test:e2e

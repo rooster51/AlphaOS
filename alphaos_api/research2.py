@@ -78,6 +78,8 @@ class ArchiveResearchService:
             if not isfinite(age) or age < 0:
                 raise ValueError()
             return read_latest_option_snapshot(archive_client(), symbol, as_of, max_age_seconds=age)
+        except ArchiveUnavailable:
+            raise
         except Exception:
             raise ArchiveUnavailable('Archive unavailable or invalid configuration.') from None
 
@@ -99,6 +101,8 @@ class ArchiveResearchService:
         now = self.clock()
         try:
             record = self.read_snapshot(request.symbol, now.isoformat())
+        except ArchiveUnavailable as error:
+            raise APIError(error.code, 503) from None
         except Exception:
             raise APIError('archive_unavailable', 503) from None
         try:

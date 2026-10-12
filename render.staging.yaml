@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: alphaos-api-staging
+    runtime: python
+    plan: free
+    branch: web/research-api-integration
+    buildCommand: pip install -r requirements-api.txt
+    startCommand: python -m alphaos_api
+    healthCheckPath: /health
+    envVars:
+      - key: ALPHAOS_API_TOKEN
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: ALPHAOS_ARCHIVE_MAX_AGE_SECONDS
+        value: "86400"
