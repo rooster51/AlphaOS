@@ -2,6 +2,13 @@ export type ResearchEnvelope = { meta: Record<string, unknown>; evidence: Record
 
 const RESEARCH_SCHEMA = "alphaos-research-v1";
 
+export class ResearchUnavailableError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "ResearchUnavailableError";
+  }
+}
+
 export function object(value: unknown): Record<string, unknown> | null {
   return value !== null && typeof value === "object" && !Array.isArray(value)
     ? value as Record<string, unknown> : null;
@@ -34,7 +41,7 @@ export async function fetchResearchEnvelope(
   request: typeof fetch = fetch,
   timeoutMs = 10_000,
 ): Promise<ResearchEnvelope> {
-  if (!token) throw new Error("Research backend not configured");
+  if (!token) throw new ResearchUnavailableError("Research backend not configured");
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
@@ -45,7 +52,7 @@ export async function fetchResearchEnvelope(
       signal: controller.signal,
     });
     if (!response.ok) {
-      throw new Error(`Research API unavailable (HTTP ${response.status})`);
+      throw new ResearchUnavailableError(`Research API unavailable (HTTP ${response.status})`);
     }
 
     const text = await response.text();
@@ -54,20 +61,20 @@ export async function fetchResearchEnvelope(
       body = JSON.parse(text);
     } catch (error) {
       if (error instanceof SyntaxError) {
-        throw new Error("Research response schema is unavailable");
+        throw new ResearchUnavailableError("Research response schema is unavailable");
       }
       throw error;
     }
     if (!validEnvelope(body)) {
-      throw new Error("Research response schema is unavailable");
+      throw new ResearchUnavailableError("Research response schema is unavailable");
     }
     return body;
   } catch (error) {
     if (controller.signal.aborted) {
-      throw new Error("Research API request timed out");
+      throw new ResearchUnavailableError("Research API request timed out");
     }
     if (error instanceof TypeError) {
-      throw new Error("Research API network request failed");
+      throw new ResearchUnavailableError("Research API network request failed");
     }
     throw error;
   } finally {

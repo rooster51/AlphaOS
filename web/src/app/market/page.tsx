@@ -6,14 +6,29 @@ import { MetricCard } from "@/components/ui/MetricCard";
 import { getMarketSnapshotServer } from "@/lib/alphaos-server";
 import Link from "next/link";
 import { ShieldAlert, BarChart3, Info } from "lucide-react";
+import { MarketUnavailable } from "@/components/market/MarketUnavailable";
+import { ResearchUnavailableError } from "@/lib/research-evidence";
 
 export default async function MarketResearchPage({
   searchParams,
 }: {
   searchParams?: { symbol?: string };
 }) {
-  const symbol = searchParams?.symbol?.toUpperCase() === "SPY" ? "SPY" : "QQQ";
-  const { data: snapshot, isLive, warning } = await getMarketSnapshotServer(symbol);
+  const requestedSymbol = searchParams?.symbol?.toUpperCase();
+  const symbol = requestedSymbol === undefined || requestedSymbol === "QQQ" || requestedSymbol === "SPY"
+    ? requestedSymbol ?? "QQQ" : null;
+  if (!symbol) {
+    return <MarketUnavailable symbol={requestedSymbol ?? "UNKNOWN"} reason="Unsupported market symbol." />;
+  }
+
+  let result;
+  try {
+    result = await getMarketSnapshotServer(symbol);
+  } catch (error) {
+    if (!(error instanceof ResearchUnavailableError)) throw error;
+    return <MarketUnavailable symbol={symbol} reason="Backend access or fresh matching evidence is unavailable." />;
+  }
+  const { data: snapshot, isLive, warning } = result;
 
   return (
     <div>

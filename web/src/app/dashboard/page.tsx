@@ -2,13 +2,15 @@ export const dynamic = "force-dynamic";
 import Link from "next/link";
 import { Header } from "@/components/shell/Header";
 import { getMarketSnapshotServer } from "@/lib/alphaos-server";
+import { ResearchUnavailableError } from "@/lib/research-evidence";
 
 export default async function DashboardPage() {
   const checks = await Promise.all(["QQQ", "SPY"].map(async (symbol) => {
     try {
       const response = await getMarketSnapshotServer(symbol);
       return { symbol, response };
-    } catch {
+    } catch (error) {
+      if (!(error instanceof ResearchUnavailableError)) throw error;
       return { symbol, response: null };
     }
   }));
@@ -50,7 +52,8 @@ export default async function DashboardPage() {
                 </>
               ) : (
                 <p className="font-mono text-xs text-warning">
-                  No verified matching current market evidence. Nothing has been substituted.
+                  Market research unavailable: backend access or fresh matching evidence could
+                  not be verified. Nothing has been substituted.
                 </p>
               )}
               <Link href={`/market?symbol=${symbol}`} className="text-xs text-accent underline">
