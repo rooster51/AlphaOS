@@ -90,3 +90,32 @@ test("mobile backdrop closes the navigation menu", async ({ page }) => {
   await page.getByRole("button", { name: "Close navigation menu" }).last().click();
   await expect(page.locator('button[aria-controls="mobile-primary-navigation"]')).toHaveAttribute("aria-expanded", "false");
 });
+
+test("v2 research bridge rejects invalid requests and never exposes backend credentials", async ({ page }) => {
+  const invalidSymbol = await page.request.post("/api/research/market", {
+    data: { symbol: "INVALID" },
+  });
+  expect(invalidSymbol.status()).toBe(400);
+  expect(await invalidSymbol.json()).toEqual({ error: "Invalid research request" });
+
+  const malformed = await page.request.post("/api/research/market", {
+    headers: { "Content-Type": "application/json" },
+    data: "{not valid json",
+  });
+  expect(malformed.status()).toBe(400);
+
+  const unsupportedField = await page.request.post("/api/research/market", {
+    data: { symbol: "SPY", force_live: true },
+  });
+  expect(unsupportedField.status()).toBe(400);
+
+  // In CI the backend credentials are deliberately absent. The bridge must
+  // return a controlled unavailable response rather than leaking a token.
+  const unavailable = await page.request.post("/api/research/market", {
+    data: { symbol: "SPY" },
+  });
+  expect(unavailable.status()).toBe(503);
+  const responseText = await unavailable.text();
+  expect(responseText).toContain("Research backend not configured");
+  expect(responseText).not.toMatch(/Bearer |ALPHAOS_API_TOKEN=/);
+});
