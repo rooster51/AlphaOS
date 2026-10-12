@@ -32,11 +32,12 @@ def main(clock=lambda: datetime.now(timezone.utc), sleep=time.sleep):
     config = load_config()
     try:
         canary = os.environ.get("ALPHAOS_INTRADAY_CANARY")
-        symbols = collection_symbols(config, canary)
+        additional = os.environ.get("ALPHAOS_INTRADAY_ADDITIONAL_SYMBOLS")
+        symbols = collection_symbols(config, canary, additional)
     except ValueError as exc:
         _safe_failure("collector", "canary_configuration", exc)
         return 1
-    config = dict(config, canary_symbol=canary)
+    config = dict(config, canary_symbol=canary, additional_symbols=additional)
     slot = regular_session_slot(now=clock(), cadence_minutes=int(config["option_snapshot_minutes"]))
     if slot is None:
         print("NYSE regular session is closed; no archive snapshot collected.")

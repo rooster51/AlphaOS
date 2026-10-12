@@ -52,6 +52,8 @@ def collect_symbol(provider, symbol, config, now=None):
     }
     if config.get("canary_symbol") not in (None, "", "none"):
         options_config["canary_symbol"] = config["canary_symbol"]
+    if config.get("additional_symbols") not in (None, "", "none"):
+        options_config["additional_symbols"] = config["additional_symbols"]
     options = build_options_snapshot(
         provider, symbol, session, options_config,
         config_version=config.get("schema_version", "intraday-archive-config-v1"),

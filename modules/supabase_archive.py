@@ -14,7 +14,9 @@ import urllib.request
 
 
 class ArchiveUnavailable(RuntimeError):
-    pass
+    def __init__(self, message, *, reason='archive_unavailable'):
+        super().__init__(message)
+        self.reason = reason  # Safe machine-readable category; never provider text.
 
 
 class ArchiveStageError(RuntimeError):
@@ -80,7 +82,7 @@ def find_slot_snapshot(client, provider, symbol, slot):
     return rows[0] if rows else None
 
 
-def read_latest_option_snapshot(client, symbol, as_of, *, max_age_seconds, provider='Public'):
+def read_latest_option_snapshot(client, symbol, as_of, *, max_age_seconds, provider='Public', additional_symbols=()):
     """Read verified persisted evidence; client/credentials belong to the caller.
 
     Freshness is an explicit caller policy. Partial latest evidence is returned,
@@ -89,31 +91,42 @@ def read_latest_option_snapshot(client, symbol, as_of, *, max_age_seconds, provi
     """
     from math import isfinite
     from modules.options_archive import timestamp
+    from modules.intraday_canary_universe import enabled_archive_symbols
     now = timestamp(as_of)
     symbol = str(symbol).strip().upper()
-    if symbol not in ('SPY', 'QQQ'):
-        raise ValueError('Select an archived SPY/QQQ symbol.')
+    if symbol not in enabled_archive_symbols(additional_symbols):
+        raise ValueError('Archive symbol is not explicitly enabled.')
     if (isinstance(max_age_seconds, bool) or not isinstance(max_age_seconds, (int, float))
             or not isfinite(max_age_seconds) or max_age_seconds < 0):
         raise ValueError('Explicit finite nonnegative freshness window required.')
+    reason = 'archive_unreadable'
     try:
         rows = (client.table('option_snapshots').select('*').eq('provider', provider)
                 .eq('symbol', symbol).lte('observed_at', now.isoformat())
                 .lte('created_at', now.isoformat()).order('observed_at', desc=True)
                 .order('id', desc=True).limit(1).execute()).data
         if not rows:
+            reason = 'archive_missing'
             raise ValueError('No archived snapshot available.')
         row = rows[0]
+        reason = 'archive_invalid'
         observed = timestamp(row['observed_at'])
         if not 0 <= (now-observed).total_seconds() <= max_age_seconds:
+            reason = 'archive_stale_or_future'
             raise ValueError('Archived snapshot is stale or future-dated.')
         if timestamp(row['created_at']) > now:
+            reason = 'archive_not_yet_available'
             raise ValueError('Snapshot was not yet available.')
+        if row.get('symbol') != symbol or row.get('provider') != provider:
+            raise ValueError('Archive row identity mismatch.')
         path = row['archive_path']
         if not path.startswith(f'options/symbol={symbol}/date={row["session_date"]}/') or '..' in path:
             raise ValueError('Archive path mismatch.')
+        reason = 'archive_unreadable'
         raw = client.storage.from_('market-archive').download(path)
+        reason = 'archive_invalid'
         if hashlib.sha256(raw).hexdigest() != row.get('archive_sha256'):
+            reason = 'archive_checksum_mismatch'
             raise ValueError('Archive checksum mismatch.')
         payload = json.loads(gzip.decompress(raw))
         if (payload['symbol'] != symbol or payload['provider'] != provider
@@ -133,7 +146,7 @@ def read_latest_option_snapshot(client, symbol, as_of, *, max_age_seconds, provi
     except Exception:
         # DB/Storage errors can contain URLs/credentials; callers receive a safe
         # boundary error and must not proceed with an unverified fallback.
-        raise ArchiveUnavailable('Latest archive missing, stale, invalid or unreadable.') from None
+        raise ArchiveUnavailable('Latest archive missing, stale, invalid or unreadable.', reason=reason) from None
     return {'payload': payload, 'metadata': row,
             'freshness': {'as_of': now.isoformat(), 'age_seconds': (now-observed).total_seconds(),
                           'max_age_seconds': max_age_seconds, 'basis': 'collection_start'}}

@@ -1,0 +1,4 @@
+{
+  "optional_symbols": ["NVDA", "IWM"],
+  "max_additional_symbols_per_run": 2
+}

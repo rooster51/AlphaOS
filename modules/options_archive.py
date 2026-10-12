@@ -129,7 +129,7 @@ def build_options_snapshot(provider,symbol,session,config,config_version,config_
     start=timestamp(provider.now())
     snapshot_date=start.astimezone(NY).date().isoformat()
     from modules.intraday_canary_universe import CORE_SYMBOLS, collection_symbols
-    allowed = collection_symbols({'symbols': list(CORE_SYMBOLS)}, config.get('canary_symbol'))
+    allowed = collection_symbols({'symbols': list(CORE_SYMBOLS)}, config.get('canary_symbol'), config.get('additional_symbols'))
     if symbol not in allowed or snapshot_date!=session:
         raise ValueError('Options collection must occur on the actual session date.')
     underlying=provider.underlying(symbol)
