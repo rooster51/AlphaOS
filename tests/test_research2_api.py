@@ -106,7 +106,8 @@ def test_bad_archive_fails_closed_without_history_fallback(boundary, defect):
     elif defect == 'path': storage.row['archive_path'] = 'wrong/path'
     else: storage.row = None
     r = post(c, 'market', dict(symbol='QQQ'))
-    assert r.status_code == 503 and r.json()['error']['code'] == 'archive_unavailable'
+    expected = {'stale': 'archive_stale', 'missing': 'archive_missing'}.get(defect, 'archive_unavailable')
+    assert r.status_code == 503 and r.json()['error']['code'] == expected
     loader.assert_not_called()
 
 

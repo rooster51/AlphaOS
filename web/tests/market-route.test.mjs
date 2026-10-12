@@ -23,12 +23,29 @@ function request(body) {
   });
 }
 
-function envelope(symbol = "QQQ") {
+function envelope(symbol = "QQQ", status = "complete") {
   return {
     schema_version: "alphaos-interface-v2",
     request: { symbol },
     read_only: true,
-    research: { status: "complete" },
+    research: {
+      version: "alphaos-run-market-v1",
+      symbol,
+      as_of: "2030-01-02T15:00:00+00:00",
+      expiration: "2030-01-02",
+      archive: {
+        session_date: "2030-01-02",
+        observation: { observed_at: "2030-01-02T15:00:00+00:00" },
+        freshness: { age_seconds: 120, max_age_seconds: 600 },
+      },
+      research_session: {
+        version: "opportunity-session-v1",
+        symbol,
+        status,
+        candidates: status === "complete" ? [{ strategy_family: "call_debit_spread" }] : [],
+        unavailable_routes: [],
+      },
+    },
     provenance: { source: "test" },
     caveats: [],
   };
@@ -66,6 +83,8 @@ test("forwards a valid authenticated JSON POST and preserves read-only response 
     objective: "research context", width: 7.5,
   });
   assert.equal(body.research.schema_version, "alphaos-interface-v2");
+  assert.equal(body.research.research.symbol, "QQQ");
+  assert.equal(body.research.research.research_session.status, "complete");
   assert.equal(body.verified_for_trading, false);
   assert.equal(response.headers.get("cache-control"), "no-store");
 });
@@ -77,7 +96,10 @@ test("upstream authentication failures do not leak response details", async () =
     const response = await POST(request({ symbol: "SPY" }));
     const body = await response.json();
     assert.equal(response.status, 502);
-    assert.deepEqual(body, { error: "Research backend unavailable" });
+    assert.equal(body.status, "unavailable");
+    assert.equal(body.code, status === 401
+      ? "backend_authentication_required"
+      : "backend_authentication_rejected");
     assert.equal(JSON.stringify(body).includes("secret"), false);
   }
 });
@@ -110,7 +132,9 @@ test("malformed upstream research envelopes fail closed", async () => {
 
   const response = await POST(request({ symbol: "QQQ" }));
   assert.equal(response.status, 502);
-  assert.deepEqual(await response.json(), { error: "Invalid research response" });
+  assert.deepEqual(await response.json(), {
+    status: "unavailable", code: "response_schema_mismatch",
+  });
 });
 
 test("upstream symbol mismatch fails closed", async () => {
@@ -119,42 +143,47 @@ test("upstream symbol mismatch fails closed", async () => {
 
   const response = await POST(request({ symbol: "QQQ" }));
   assert.equal(response.status, 502);
-  assert.deepEqual(await response.json(), { error: "Invalid research response" });
+  assert.deepEqual(await response.json(), {
+    status: "unavailable", code: "response_schema_mismatch",
+  });
 });
 
 test("unavailable and no-candidate research states remain explicit and non-tradable", async () => {
   setBackendConfig();
-  for (const research of [
-    { status: "unavailable", candidates: [] },
-    { status: "no_candidate", candidates: [] },
+  for (const status of [
+    "no_candidate",
   ]) {
-    globalThis.fetch = async () => Response.json({ ...envelope(), research });
+    const payload = envelope("QQQ", status);
+    globalThis.fetch = async () => Response.json(payload);
     const response = await POST(request({ symbol: "QQQ" }));
     const body = await response.json();
     assert.equal(response.status, 200);
-    assert.deepEqual(body.research.research, research);
+    assert.equal(body.research.research.research_session.status, status);
+    assert.deepEqual(body.research.research.research_session.candidates, []);
     assert.equal(body.verified_for_trading, false);
   }
 });
 
 test("upstream errors and invalid JSON fail closed", async () => {
   setBackendConfig();
-  globalThis.fetch = async () => new Response("private backend failure", { status: 503 });
+  globalThis.fetch = async () => Response.json(
+    { error: { code: "archive_unavailable" } },
+    { status: 503 },
+  );
   const unavailable = await POST(request({ symbol: "QQQ" }));
   assert.equal(unavailable.status, 502);
-  assert.deepEqual(await unavailable.json(), { error: "Research backend unavailable" });
+  assert.deepEqual(await unavailable.json(), {
+    status: "unavailable", code: "archive_unavailable",
+  });
 
   globalThis.fetch = async () => new Response("{", {
     status: 200, headers: { "Content-Type": "application/json" },
   });
   const malformed = await POST(request({ symbol: "QQQ" }));
   assert.equal(malformed.status, 502);
-  assert.deepEqual(await malformed.json(), { error: "Research request failed" });
-
-  globalThis.fetch = async () => { throw new Error("network unreachable"); };
-  const networkFailure = await POST(request({ symbol: "QQQ" }));
-  assert.equal(networkFailure.status, 502);
-  assert.deepEqual(await networkFailure.json(), { error: "Research request failed" });
+  assert.deepEqual(await malformed.json(), {
+    status: "unavailable", code: "response_schema_mismatch",
+  });
 });
 
 test("missing or invalid backend configuration is unavailable without fetching", async () => {
@@ -164,9 +193,56 @@ test("missing or invalid backend configuration is unavailable without fetching",
   setBackendConfig({ token: null });
   const missing = await POST(request({ symbol: "SPY" }));
   assert.equal(missing.status, 503);
+  assert.deepEqual(await missing.json(), {
+    status: "unavailable", code: "backend_not_configured",
+  });
 
   setBackendConfig({ url: "http://api.example.test" });
   const invalid = await POST(request({ symbol: "SPY" }));
   assert.equal(invalid.status, 503);
+  assert.deepEqual(await invalid.json(), {
+    status: "unavailable", code: "invalid_backend_configuration",
+  });
   assert.equal(calls, 0);
+});
+
+test("SPY archive research uses the same authenticated v2 response contract", async () => {
+  setBackendConfig();
+  globalThis.fetch = async () => Response.json(envelope("SPY"));
+  const response = await POST(request({ symbol: "SPY" }));
+  const body = await response.json();
+  assert.equal(response.status, 200);
+  assert.equal(body.research.request.symbol, "SPY");
+  assert.equal(body.research.research.research_session.symbol, "SPY");
+  assert.equal(body.research.research.research_session.candidates[0].strategy_family, "call_debit_spread");
+  assert.equal(body.verified_for_trading, false);
+});
+
+test("archive freshness, backend rejection, timeout, and network errors stay distinguishable", async () => {
+  setBackendConfig();
+  for (const [upstreamCode, upstreamStatus, expected] of [
+    ["archive_stale", 503, "archive_stale"],
+    ["archive_missing", 503, "archive_missing"],
+    ["archive_not_configured", 503, "archive_not_configured"],
+    ["archive_research_unavailable", 422, "archive_research_unavailable"],
+  ]) {
+    globalThis.fetch = async () => Response.json(
+      { error: { code: upstreamCode } },
+      { status: upstreamStatus },
+    );
+    const response = await POST(request({ symbol: "QQQ" }));
+    assert.deepEqual(await response.json(), { status: "unavailable", code: expected });
+  }
+
+  globalThis.fetch = async () => { throw new DOMException("timeout", "TimeoutError"); };
+  const timedOut = await POST(request({ symbol: "QQQ" }));
+  assert.deepEqual(await timedOut.json(), {
+    status: "unavailable", code: "backend_timeout",
+  });
+
+  globalThis.fetch = async () => { throw new TypeError("network unreachable"); };
+  const unreachable = await POST(request({ symbol: "QQQ" }));
+  assert.deepEqual(await unreachable.json(), {
+    status: "unavailable", code: "backend_unreachable",
+  });
 });

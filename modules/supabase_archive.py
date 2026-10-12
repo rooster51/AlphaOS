@@ -14,7 +14,9 @@ import urllib.request
 
 
 class ArchiveUnavailable(RuntimeError):
-    pass
+    def __init__(self, message, code='archive_unavailable'):
+        self.code = code
+        super().__init__(message)
 
 
 class ArchiveStageError(RuntimeError):
@@ -36,7 +38,8 @@ def archive_client():
     key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
     if not url or not key:
         raise ArchiveUnavailable(
-            "Supabase archive credentials are not configured for the collector."
+            "Supabase archive credentials are not configured for the collector.",
+            code='archive_not_configured',
         )
     from supabase import create_client
     return create_client(url, key)
@@ -102,11 +105,11 @@ def read_latest_option_snapshot(client, symbol, as_of, *, max_age_seconds, provi
                 .lte('created_at', now.isoformat()).order('observed_at', desc=True)
                 .order('id', desc=True).limit(1).execute()).data
         if not rows:
-            raise ValueError('No archived snapshot available.')
+            raise ArchiveUnavailable('No archived snapshot available.', code='archive_missing')
         row = rows[0]
         observed = timestamp(row['observed_at'])
         if not 0 <= (now-observed).total_seconds() <= max_age_seconds:
-            raise ValueError('Archived snapshot is stale or future-dated.')
+            raise ArchiveUnavailable('Archived snapshot is stale or future-dated.', code='archive_stale')
         if timestamp(row['created_at']) > now:
             raise ValueError('Snapshot was not yet available.')
         path = row['archive_path']
@@ -130,6 +133,8 @@ def read_latest_option_snapshot(client, symbol, as_of, *, max_age_seconds, provi
             raise ValueError('Archive collection was not yet complete at as_of.')
         if payload['options'].get('status') != row['quality_status']:
             raise ValueError('Archive quality mismatch.')
+    except ArchiveUnavailable:
+        raise
     except Exception:
         # DB/Storage errors can contain URLs/credentials; callers receive a safe
         # boundary error and must not proceed with an unverified fallback.

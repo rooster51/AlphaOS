@@ -43,17 +43,47 @@ function parseMarketPayload(value: unknown): MarketPayload | null {
   return payload;
 }
 
+function object(value: unknown): Record<string, unknown> | null {
+  return value !== null && typeof value === "object" && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : null;
+}
+
 function validResearchEnvelope(value: unknown, symbol: MarketPayload["symbol"]): value is Record<string, unknown> {
+  const envelope = object(value);
+  const request = object(envelope?.request);
+  const research = object(envelope?.research);
+  const archive = object(research?.archive);
+  const session = object(research?.research_session);
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
-  const envelope = value as Record<string, unknown>;
-  const request = envelope.request;
-  return envelope.schema_version === "alphaos-interface-v2" &&
+  return envelope?.schema_version === "alphaos-interface-v2" &&
     envelope.read_only === true &&
-    !!request && typeof request === "object" && !Array.isArray(request) &&
-    (request as Record<string, unknown>).symbol === symbol &&
-    !!envelope.research && typeof envelope.research === "object" && !Array.isArray(envelope.research) &&
-    !!envelope.provenance && typeof envelope.provenance === "object" && !Array.isArray(envelope.provenance) &&
+    request?.symbol === symbol &&
+    research?.symbol === symbol &&
+    typeof research.as_of === "string" &&
+    archive !== null &&
+    session?.symbol === symbol &&
+    Array.isArray(session.candidates) &&
+    Array.isArray(session.unavailable_routes) &&
+    (session.status === "complete" || session.status === "no_candidate") &&
+    object(envelope.provenance) !== null &&
     Array.isArray(envelope.caveats);
+}
+
+function upstreamErrorCode(value: unknown): string | null {
+  const envelope = object(value);
+  const error = object(envelope?.error);
+  const code = error?.code;
+  return typeof code === "string" && /^[a-z][a-z0-9_]{0,63}$/.test(code) ? code : null;
+}
+
+async function readErrorPayload(response: Response): Promise<unknown> {
+  try {
+    return await response.json();
+  } catch (error) {
+    if (error instanceof SyntaxError || error instanceof TypeError) return null;
+    throw error;
+  }
 }
 
 /**
@@ -75,7 +105,10 @@ export async function POST(request: Request) {
   const token = process.env.ALPHAOS_API_TOKEN;
   const base = process.env.ALPHAOS_API_URL;
   if (!token || !base) {
-    return Response.json({ error: "Research backend not configured" }, { status: 503 });
+    return Response.json(
+      { status: "unavailable", code: "backend_not_configured" },
+      { status: 503, headers: { "Cache-Control": "no-store" } },
+    );
   }
 
   let origin: URL;
@@ -84,11 +117,15 @@ export async function POST(request: Request) {
     if (origin.protocol !== "https:" || origin.username || origin.password ||
         origin.search || origin.hash) throw new Error("Invalid backend URL");
   } catch {
-    return Response.json({ error: "Invalid backend configuration" }, { status: 503 });
+    return Response.json(
+      { status: "unavailable", code: "invalid_backend_configuration" },
+      { status: 503, headers: { "Cache-Control": "no-store" } },
+    );
   }
 
+  let response: Response;
   try {
-    const response = await fetch(new URL("/v1/research/market", origin), {
+    response = await fetch(new URL("/v1/research/market", origin), {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -99,18 +136,60 @@ export async function POST(request: Request) {
       cache: "no-store",
       signal: AbortSignal.timeout(12000),
     });
-    if (!response.ok) {
-      return Response.json({ error: "Research backend unavailable" }, { status: 502 });
-    }
-    const responsePayload: unknown = await response.json();
-    if (!validResearchEnvelope(responsePayload, payload.symbol)) {
-      return Response.json({ error: "Invalid research response" }, { status: 502 });
-    }
+  } catch (error) {
+    const timedOut = error instanceof DOMException && error.name === "TimeoutError";
+    if (!timedOut && !(error instanceof TypeError)) throw error;
     return Response.json(
-      { research: responsePayload, verified_for_trading: false, source: "alphaos_research_api" },
-      { headers: { "Cache-Control": "no-store" } }
+      { status: "unavailable", code: timedOut ? "backend_timeout" : "backend_unreachable" },
+      { status: 502, headers: { "Cache-Control": "no-store" } },
     );
-  } catch {
-    return Response.json({ error: "Research request failed" }, { status: 502 });
   }
+
+  if (!response.ok) {
+    const code = upstreamErrorCode(await readErrorPayload(response));
+    const detail = response.status === 401
+      ? "backend_authentication_required"
+      : response.status === 403
+        ? "backend_authentication_rejected"
+        : code === "archive_stale"
+          ? "archive_stale"
+          : code === "archive_missing"
+            ? "archive_missing"
+            : code === "archive_not_configured"
+              ? "archive_not_configured"
+              : code === "archive_unavailable"
+                ? "archive_unavailable"
+                : code === "archive_research_unavailable"
+                  ? "archive_research_unavailable"
+                : response.status === 422
+                  ? "backend_rejected_request"
+                  : "backend_http_error";
+    return Response.json(
+      { status: "unavailable", code: detail },
+      { status: 502, headers: { "Cache-Control": "no-store" } },
+    );
+  }
+
+  let responsePayload: unknown;
+  try {
+    responsePayload = await response.json();
+  } catch (error) {
+    if (error instanceof SyntaxError || error instanceof TypeError) {
+      return Response.json(
+        { status: "unavailable", code: "response_schema_mismatch" },
+        { status: 502, headers: { "Cache-Control": "no-store" } },
+      );
+    }
+    throw error;
+  }
+  if (!validResearchEnvelope(responsePayload, payload.symbol)) {
+    return Response.json(
+      { status: "unavailable", code: "response_schema_mismatch" },
+      { status: 502, headers: { "Cache-Control": "no-store" } },
+    );
+  }
+  return Response.json(
+    { research: responsePayload, verified_for_trading: false, source: "alphaos_research_api" },
+    { headers: { "Cache-Control": "no-store" } }
+  );
 }
