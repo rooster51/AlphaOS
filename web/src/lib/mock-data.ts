@@ -1,0 +1,255 @@
+import {
+  MarketSnapshot,
+  ResearchCandidate,
+  JournalPosition,
+  RiskGuardrails,
+} from "@/types/research";
+
+export const MOCK_GUARDRAILS: RiskGuardrails = {
+  max_trades_per_day: 3,
+  max_daily_loss_pct: 2.0,
+  cooldown_after_losses: 2,
+  cooldown_minutes: 30,
+  min_backtest_win_rate: 65.0,
+  default_account_size: 25000,
+  default_risk_pct: 1.5,
+};
+
+export const MOCK_MARKET_SNAPSHOTS: Record<string, MarketSnapshot> = {
+  QQQ: {
+    symbol: "QQQ",
+    current_spot: 492.35,
+    as_of: "2026-10-07T15:45:00-04:00",
+    source: "verified_archive",
+    atr_14: 5.82,
+    expected_move: 4.15,
+    opportunity_state: {
+      direction: "bullish",
+      premium_state: "fair",
+      movement_state: "breakout",
+      time_state: "standard",
+      volatility_state: "normal",
+      evidence: {
+        completed_close: 492.35,
+        ema_9: 489.12,
+        ema_21: 485.4,
+        ema_50: 479.8,
+        prior_20d_high: 490.8,
+        prior_20d_low: 472.1,
+        breakout_status: "Active close outside 20-session high",
+      },
+      caveats: [
+        "Descriptive analog features based on daily closes; not intraday sequence guarantee.",
+        "Unknown evidence (IV regime calibration) preserved as unknown.",
+      ],
+      classified_at: "2026-10-07T15:45:00-04:00",
+    },
+    levels: [
+      { label: "R2 (Prior Swing)", price: 496.5, distance: 4.15, distance_pct: 0.84, kind: "resistance" },
+      { label: "R1 (Upper 1-ATR)", price: 494.26, distance: 1.91, distance_pct: 0.39, kind: "atr" },
+      { label: "Pivot / 20D High", price: 490.8, distance: -1.55, distance_pct: -0.31, kind: "support" },
+      { label: "S1 (EMA 9 Support)", price: 489.12, distance: -3.23, distance_pct: -0.66, kind: "support" },
+      { label: "S2 (Lower 1-ATR)", price: 486.53, distance: -5.82, distance_pct: -1.18, kind: "atr" },
+    ],
+    timing: {
+      exchange: "NYSE Arca",
+      session_open: "09:30:00-04:00",
+      session_close: "16:00:00-04:00",
+      is_regular_hours: true,
+      minutes_to_close: 15,
+    },
+  },
+  SPY: {
+    symbol: "SPY",
+    current_spot: 574.6,
+    as_of: "2026-10-07T15:45:00-04:00",
+    source: "verified_archive",
+    atr_14: 4.95,
+    expected_move: 3.4,
+    opportunity_state: {
+      direction: "bullish",
+      premium_state: "rich",
+      movement_state: "directional",
+      time_state: "standard",
+      volatility_state: "normal",
+      evidence: {
+        completed_close: 574.6,
+        ema_9: 571.25,
+        ema_21: 567.8,
+        ema_50: 561.1,
+      },
+      caveats: [
+        "Descriptive analog features based on daily closes; not predictive warranty.",
+      ],
+      classified_at: "2026-10-07T15:45:00-04:00",
+    },
+    levels: [
+      { label: "R1 (Upper 1-ATR)", price: 579.55, distance: 4.95, distance_pct: 0.86, kind: "atr" },
+      { label: "S1 (EMA 9 Support)", price: 571.25, distance: -3.35, distance_pct: -0.58, kind: "support" },
+      { label: "S2 (Lower 1-ATR)", price: 569.65, distance: -4.95, distance_pct: -0.86, kind: "atr" },
+    ],
+    timing: {
+      exchange: "NYSE Arca",
+      session_open: "09:30:00-04:00",
+      session_close: "16:00:00-04:00",
+      is_regular_hours: true,
+      minutes_to_close: 15,
+    },
+  },
+};
+
+export const MOCK_CANDIDATES: ResearchCandidate[] = [
+  {
+    id: "cand-qqq-cds-492-495-20261014",
+    family: "cds",
+    family_label: "Call Debit Spread (Bullish)",
+    symbol: "QQQ",
+    expiration: "2026-10-14",
+    dte: 7,
+    legs: [
+      { action: "buy", option_type: "call", strike: 492, expiration: "2026-10-14", bid: 4.2, ask: 4.3, mid: 4.25, delta: 0.52 },
+      { action: "sell", option_type: "call", strike: 495, expiration: "2026-10-14", bid: 2.6, ask: 2.7, mid: 2.65, delta: 0.38 },
+    ],
+    net_cashflow: 1.6, // $160 debit
+    max_loss: 160,
+    max_profit: 140,
+    breakevens: [493.6],
+    distance_to_breakeven_pct: [0.25],
+    risk_reward_ratio: 0.88,
+    modeled_pop: 48.5,
+    capital_required: 160,
+    disclosures: [
+      "Midpoint entry assumed; actual execution fills subject to bid/ask spread slippage.",
+      "Requires upward drift beyond $493.60 to reach profitability at expiration.",
+    ],
+  },
+  {
+    id: "cand-qqq-call-493-20261014",
+    family: "long_call",
+    family_label: "Long Call (Directional)",
+    symbol: "QQQ",
+    expiration: "2026-10-14",
+    dte: 7,
+    legs: [
+      { action: "buy", option_type: "call", strike: 493, expiration: "2026-10-14", bid: 3.65, ask: 3.75, mid: 3.7, delta: 0.47 },
+    ],
+    net_cashflow: 3.75, // $375 ask-based entry
+    max_loss: 375,
+    max_profit: "unlimited",
+    breakevens: [496.75],
+    distance_to_breakeven_pct: [0.89],
+    capital_required: 375,
+    disclosures: [
+      "Ask-based entry assumed for long option discovery conservatism.",
+      "Linear downside risk capped at total premium paid; theta decay accelerates with DTE < 14.",
+    ],
+  },
+  {
+    id: "cand-qqq-pcs-488-485-20261014",
+    family: "pcs",
+    family_label: "Put Credit Spread (Income / Bullish)",
+    symbol: "QQQ",
+    expiration: "2026-10-14",
+    dte: 7,
+    legs: [
+      { action: "sell", option_type: "put", strike: 488, expiration: "2026-10-14", bid: 1.85, ask: 1.95, mid: 1.9, delta: -0.32 },
+      { action: "buy", option_type: "put", strike: 485, expiration: "2026-10-14", bid: 1.15, ask: 1.25, mid: 1.2, delta: -0.22 },
+    ],
+    net_cashflow: -0.7, // $70 credit
+    max_loss: 230,
+    max_profit: 70,
+    breakevens: [487.3],
+    distance_to_breakeven_pct: [-1.03],
+    risk_reward_ratio: 3.28,
+    modeled_pop: 68.2,
+    capital_required: 230,
+    disclosures: [
+      "Short strike placed below EMA-9 support level ($489.12).",
+      "Model POP is theoretical Black-Scholes estimate; historical analog survival is descriptive.",
+    ],
+  },
+  {
+    id: "cand-qqq-ic-482-485-498-501-20261014",
+    family: "iron_condor",
+    family_label: "Iron Condor (Range-Bound / Neutral)",
+    symbol: "QQQ",
+    expiration: "2026-10-14",
+    dte: 7,
+    legs: [
+      { action: "buy", option_type: "put", strike: 482, expiration: "2026-10-14", bid: 0.75, ask: 0.85, mid: 0.8, delta: -0.15 },
+      { action: "sell", option_type: "put", strike: 485, expiration: "2026-10-14", bid: 1.15, ask: 1.25, mid: 1.2, delta: -0.22 },
+      { action: "sell", option_type: "call", strike: 498, expiration: "2026-10-14", bid: 1.45, ask: 1.55, mid: 1.5, delta: 0.25 },
+      { action: "buy", option_type: "call", strike: 501, expiration: "2026-10-14", bid: 0.75, ask: 0.85, mid: 0.8, delta: 0.14 },
+    ],
+    net_cashflow: -1.1, // $110 credit
+    max_loss: 190,
+    max_profit: 110,
+    breakevens: [483.9, 499.1],
+    distance_to_breakeven_pct: [-1.72, 1.37],
+    risk_reward_ratio: 1.73,
+    modeled_pop: 62.4,
+    capital_required: 190,
+    disclosures: [
+      "Range bounded between $483.90 and $499.10; sensitive to breakout expansion outside 1-ATR.",
+    ],
+  },
+];
+
+export const MOCK_JOURNAL_POSITIONS: JournalPosition[] = [
+  {
+    id: "pos-journal-001",
+    symbol: "SPY",
+    family: "pcs",
+    status: "open",
+    entry_time: "2026-10-06T10:15:00-04:00",
+    entry_spot: 572.1,
+    current_spot: 574.6,
+    net_entry_cost: -85, // $85 credit received
+    unrealized_pnl: 45, // $45 profit so far
+    target_profit: 85,
+    max_loss_budget: 215,
+    frozen_opportunity_state: {
+      direction: "bullish",
+      premium_state: "rich",
+      movement_state: "directional",
+      time_state: "standard",
+      volatility_state: "normal",
+      evidence: { completed_close: 571.8 },
+      caveats: ["Frozen at time of entry; immutable audit record."],
+      classified_at: "2026-10-06T10:15:00-04:00",
+    },
+    legs: [
+      { action: "sell", option_type: "put", strike: 568, expiration: "2026-10-11", bid: 1.4, ask: 1.5, mid: 1.45 },
+      { action: "buy", option_type: "put", strike: 565, expiration: "2026-10-11", bid: 0.55, ask: 0.65, mid: 0.6 },
+    ],
+  },
+  {
+    id: "pos-journal-002",
+    symbol: "QQQ",
+    family: "cds",
+    status: "closed",
+    entry_time: "2026-10-02T11:30:00-04:00",
+    exit_time: "2026-10-06T15:20:00-04:00",
+    entry_spot: 486.5,
+    current_spot: 492.35,
+    net_entry_cost: 140,
+    unrealized_pnl: 0,
+    realized_pnl: 110,
+    target_profit: 160,
+    max_loss_budget: 140,
+    frozen_opportunity_state: {
+      direction: "bullish",
+      premium_state: "cheap",
+      movement_state: "breakout",
+      time_state: "standard",
+      volatility_state: "normal",
+      evidence: { completed_close: 486.2 },
+      caveats: ["Frozen at time of entry."],
+      classified_at: "2026-10-02T11:30:00-04:00",
+    },
+    legs: [
+      { action: "buy", option_type: "call", strike: 487, expiration: "2026-10-07", bid: 3.2, ask: 3.3, mid: 3.25 },
+      { action: "sell", option_type: "call", strike: 490, expiration: "2026-10-07", bid: 1.8, ask: 1.9, mid: 1.85 },
+    ],
+  },
+];

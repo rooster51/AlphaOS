@@ -131,9 +131,12 @@ def research_market_opportunities(symbol, market_research, chain, *, as_of,
             or market_research.get('symbol', symbol) != symbol):
         context_error = 'market_chain_context_mismatch'
     excluded, researched, raw, construction_errors = [], [], [], []
+    construction_diagnostics = []
+    chain_counts = dict(calls=0, puts=0)
     if not context_error:
         clean, contract_exclusions = _clean_chain(chain, symbol, expiration)
         excluded.extend(dict(stage='chain', **x) for x in contract_exclusions)
+        chain_counts = {pool: len(clean[pool]) for pool in ('calls', 'puts')}
         if candidates is not None:
             raw = deepcopy(candidates)
         else:
@@ -150,9 +153,22 @@ def research_market_opportunities(symbol, market_research, chain, *, as_of,
             directions = [d for f, d in (('call_debit_spread', 'bullish'), ('put_debit_spread', 'bearish')) if f in allowed]
             if directions:
                 try:
-                    raw.extend(r['trade'] for r in discover_debit_spreads(clean, spot,
+                    discovery = discover_debit_spreads(clean, spot,
                         directions=directions, width=width, as_of=research_date,
-                        expected_move=expected_move)['candidates'])
+                        expected_move=expected_move)
+                    raw.extend(r['trade'] for r in discovery['candidates'])
+                    for direction in directions:
+                        pool = 'calls' if direction == 'bullish' else 'puts'
+                        family = 'call_debit_spread' if direction == 'bullish' else 'put_debit_spread'
+                        usable = sum(1 for row in clean[pool] if row.get('delta') is not None
+                            and (0 < row['delta'] <= 1 if pool == 'calls' else -1 <= row['delta'] < 0))
+                        count = sum(r['strategy_family'] == family for r in discovery['candidates'])
+                        construction_diagnostics.append(dict(strategy_family=family,
+                            generated_count=count, quoted_contract_count=len(clean[pool]),
+                            delta_eligible_contract_count=usable, requested_width=width,
+                            reason=None if count else 'missing_valid_quotes' if not clean[pool]
+                            else 'insufficient_observed_delta_contracts' if usable < 2
+                            else 'no_valid_debit_pair_at_requested_width'))
                 except ValueError:
                     construction_errors.append('Debit constructor returned insufficient economics.')
             if allowed & set(PREMIUM.values()):
@@ -191,10 +207,28 @@ def research_market_opportunities(symbol, market_research, chain, *, as_of,
     present = {x['strategy_family'] for x in researched}
     unavailable = [dict(route=r, reason=context_error or ('unsupported_or_requires_known_direction' if not fs else 'no_eligible_candidate'),
                         supported_families=fs) for r, fs in route_families.items() if not present.intersection(fs)]
+    blocking = []
+    if context_error:
+        blocking.append(context_error)
+    if not routing['routes']:
+        blocking.append('no_evidence_supported_routes')
+        if market.get('classification_evidence', {}).get('unavailable'):
+            blocking.append('completed_history_unavailable_or_invalid')
+    reason_counts = dict(Counter(x['reason'] for x in excluded))
+    diagnostics = dict(generated_count=len(raw), accepted_count=len(researched),
+        candidate_rejection_count=sum(x['stage'] != 'chain' for x in excluded),
+        contract_rejection_count=sum(x['stage'] == 'chain' for x in excluded),
+        capital_rejection_count=reason_counts.get('exceeds_available_capital', 0),
+        rejection_counts=reason_counts, blocking_reasons=blocking,
+        route_count=len(routing['routes']), clean_contract_counts=chain_counts,
+        construction=construction_diagnostics,
+        expiration_selection=dict(selected=expiration,
+            available=market.get('archive_observation', {}).get('requested_expirations', [])),
+        counts_scope='this snapshot and routed constructors; not all theoretically possible structures')
     comparison = compare_strategy_research([x['research'] for x in researched], thesis=state)
     return _serializable(dict(version='opportunity-session-v1', symbol=symbol, as_of=str(as_of),
         expiration=expiration, market=market, opportunity_state=state, strategy_routes=routing,
-        candidates=researched, comparison=comparison, excluded=excluded,
+        candidates=researched, comparison=comparison, excluded=excluded, diagnostics=diagnostics,
         unavailable_routes=unavailable, status='complete' if researched else 'no_candidate',
         context_error=context_error, objective=objective, available_capital=available_capital,
         candidate_order='supplied order, or existing long/debit/premium generator order; not a ranking',

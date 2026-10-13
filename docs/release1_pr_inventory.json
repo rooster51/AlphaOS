@@ -1,0 +1,855 @@
+[
+  {
+    "n": 39,
+    "title": "Release 1: Expand candidate details on market research page",
+    "state": "open",
+    "merged": null,
+    "head": "fix/release1-candidate-details",
+    "sha": "415cd27d6003027b541370527587e56c26b875d6",
+    "base": "fix/release1-history-validation",
+    "merge": "b41c94a371345977c1d242b337b24ac9f5efb281",
+    "disposition": "Excluded; separate later review",
+    "rationale": "Candidate details UI only, stacked on #38; no code incorporated or branch modified.",
+    "checks": [
+      {
+        "name": "pytest",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/rooster51/AlphaOS/actions/runs/38465775107/job/115532088292"
+      },
+      {
+        "name": "web",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/rooster51/AlphaOS/actions/runs/38465775107/job/115532087983"
+      },
+      {
+        "name": "Supabase Preview",
+        "status": "completed",
+        "conclusion": "skipped",
+        "url": "https://github.com/rooster51/AlphaOS/runs/115532085921"
+      }
+    ]
+  },
+  {
+    "n": 38,
+    "title": "Release 1: declare Public history dependencies and verify configuration failure",
+    "state": "open",
+    "merged": null,
+    "head": "fix/release1-history-validation",
+    "sha": "6e116ca1dfe790b32bba8c1cb89ce66a72058a3c",
+    "base": "fix/release1-safe-history-reasons",
+    "merge": "a6a40b66034af98fdfe111f8ee01fd8e3bd9a20a",
+    "disposition": "Incorporated",
+    "rationale": "Canonical Public configuration declarations and regression tests.",
+    "checks": [
+      {
+        "name": "Supabase Preview",
+        "status": "completed",
+        "conclusion": "skipped",
+        "url": "https://github.com/rooster51/AlphaOS/runs/115532005157"
+      },
+      {
+        "name": "web",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/rooster51/AlphaOS/actions/runs/38464337879/job/115527272365"
+      },
+      {
+        "name": "pytest",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/rooster51/AlphaOS/actions/runs/38464337879/job/115527272070"
+      }
+    ]
+  },
+  {
+    "n": 37,
+    "title": "Release 1: Safe Public history failure diagnostics",
+    "state": "open",
+    "merged": null,
+    "head": "fix/release1-safe-history-reasons",
+    "sha": "8a36a49843a27a442153e8a67672d27b197f02c6",
+    "base": "backend/release1-history-recovery",
+    "merge": "9f41a10c8fdb9c8a9be9241fa1fa2599aae630d4",
+    "disposition": "Incorporated",
+    "rationale": "Safe fixed-code history failure classification.",
+    "checks": [
+      {
+        "name": "Supabase Preview",
+        "status": "completed",
+        "conclusion": "skipped",
+        "url": "https://github.com/rooster51/AlphaOS/runs/115454977046"
+      },
+      {
+        "name": "web",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/rooster51/AlphaOS/actions/runs/38443256570/job/115454974328"
+      },
+      {
+        "name": "pytest",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/rooster51/AlphaOS/actions/runs/38443256570/job/115454973848"
+      }
+    ]
+  },
+  {
+    "n": 36,
+    "title": "Release 1: Diagnose missing history and zero-candidate research",
+    "state": "open",
+    "merged": null,
+    "head": "backend/release1-history-recovery",
+    "sha": "81ce3f1c51ed90e082a03e5012f0aff31a520bbb",
+    "base": "web/research-api-integration",
+    "merge": "5e299247517d5c7b5e056616b7d3766e68a3a299",
+    "disposition": "Incorporated",
+    "rationale": "Routing sufficiency and structured no-candidate/history diagnostics.",
+    "checks": [
+      {
+        "name": "Supabase Preview",
+        "status": "completed",
+        "conclusion": "skipped",
+        "url": "https://github.com/rooster51/AlphaOS/runs/115454799598"
+      },
+      {
+        "name": "pytest",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/rooster51/AlphaOS/actions/runs/38438244740/job/115437773729"
+      },
+      {
+        "name": "web",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/rooster51/AlphaOS/actions/runs/38438244740/job/115437773465"
+      }
+    ]
+  },
+  {
+    "n": 35,
+    "title": "Add historical archive option evaluation",
+    "state": "open",
+    "merged": null,
+    "head": "feature/historical-archive-evaluator-integration",
+    "sha": "2fbbe5e146bb6e4993e5a9f2d6d87ee48c5d1f10",
+    "base": "main",
+    "merge": "71ecb29a12f9d9cdaf1b835c8dcbe00a3e202fa7",
+    "disposition": "Deferred outside Release 1",
+    "rationale": "Historical API/evaluator integration overlaps #33/#34 and needs separate policy/normalization reconciliation.",
+    "checks": [
+      {
+        "name": "Supabase Preview",
+        "status": "completed",
+        "conclusion": "skipped",
+        "url": "https://github.com/rooster51/AlphaOS/runs/114906557741"
+      },
+      {
+        "name": "pytest",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/rooster51/AlphaOS/actions/runs/38277529834/job/114906546853"
+      }
+    ]
+  },
+  {
+    "n": 34,
+    "title": "Recognize unlabeled long straddles and strangles in strategy comparisons",
+    "state": "open",
+    "merged": null,
+    "head": "strategy/shape-normalization-straddles",
+    "sha": "1a4f8b988a6c6dc0931692e2fccb94deac598c36",
+    "base": "main",
+    "merge": "87e9aa01943ceac4e401c69a860cf549e4f0af07",
+    "disposition": "Independent; ready for later review",
+    "rationale": "CI green; shape recognition is strategy expansion outside Release 1.",
+    "checks": [
+      {
+        "name": "pytest",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/rooster51/AlphaOS/actions/runs/38257575972/job/114839505863"
+      },
+      {
+        "name": "Supabase Preview",
+        "status": "completed",
+        "conclusion": "skipped",
+        "url": "https://github.com/rooster51/AlphaOS/runs/114839505267"
+      }
+    ]
+  },
+  {
+    "n": 33,
+    "title": "Integrate opt-in collector canaries and session-safe intraday evaluation",
+    "state": "open",
+    "merged": null,
+    "head": "integration/canary-intraday-safety",
+    "sha": "d9b828758f07e066daac6a4b0805c117865e1a6f",
+    "base": "main",
+    "merge": "7a55b6c492b490391be497af2850bcb24e9652bc",
+    "disposition": "Independent; ready for later review",
+    "rationale": "CI green; collector/evaluator integration and private-payload evidence gates remain separate.",
+    "checks": [
+      {
+        "name": "pytest",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/rooster51/AlphaOS/actions/runs/38251817716/job/114819785004"
+      },
+      {
+        "name": "Supabase Preview",
+        "status": "completed",
+        "conclusion": "skipped",
+        "url": "https://github.com/rooster51/AlphaOS/runs/114819778279"
+      }
+    ]
+  },
+  {
+    "n": 32,
+    "title": "Harden existing quoted intraday round trips with NYSE session integrity",
+    "state": "open",
+    "merged": null,
+    "head": "research/intraday-session-integrity",
+    "sha": "e2bb6109c1adc7dcc81956f41251cfe8349c0d41",
+    "base": "main",
+    "merge": "dbdf428a74c90aee00e6bd4c2f88f85e012360d2",
+    "disposition": "Deferred; covered by #33",
+    "rationale": "Session-safe evaluator included in #33 with further temporal hardening.",
+    "checks": [
+      {
+        "name": "Supabase Preview",
+        "status": "completed",
+        "conclusion": "skipped",
+        "url": "https://github.com/rooster51/AlphaOS/runs/114349104254"
+      },
+      {
+        "name": "pytest",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/rooster51/AlphaOS/actions/runs/38098424712/job/114349103572"
+      }
+    ]
+  },
+  {
+    "n": 31,
+    "title": "Wire opt-in NVDA/IWM canary into existing intraday collector",
+    "state": "open",
+    "merged": null,
+    "head": "collector/verified-canary-wiring",
+    "sha": "b2bd429b4c5db919b417e8cf942bb4f65cb222aa",
+    "base": "main",
+    "merge": "440796b313e90375f43be0925ece00ca5e4c9bf2",
+    "disposition": "Deferred; covered by #33",
+    "rationale": "Opt-in canary collector included in #33; no activation in this release.",
+    "checks": [
+      {
+        "name": "Supabase Preview",
+        "status": "completed",
+        "conclusion": "skipped",
+        "url": "https://github.com/rooster51/AlphaOS/runs/114348580120"
+      },
+      {
+        "name": "pytest",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/rooster51/AlphaOS/actions/runs/38098245919/job/114348574286"
+      }
+    ]
+  },
+  {
+    "n": 30,
+    "title": "Plan: guarded NVDA/IWM intraday archive expansion",
+    "state": "open",
+    "merged": null,
+    "head": "research/expanded-symbol-collection-plan",
+    "sha": "27a9812d61269f0c1fda347f26fd43a5c6fc1178",
+    "base": "main",
+    "merge": "198c495ee95c6d508a80a495348d3db76ec81868",
+    "disposition": "Deferred; covered by #33",
+    "rationale": "Foundation incorporated in #31/#33, not main; close only after later approved #33 integration.",
+    "checks": [
+      {
+        "name": "pytest",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/rooster51/AlphaOS/actions/runs/38069905227/job/114265027915"
+      },
+      {
+        "name": "Supabase Preview",
+        "status": "completed",
+        "conclusion": "skipped",
+        "url": "https://github.com/rooster51/AlphaOS/runs/114265016764"
+      }
+    ]
+  },
+  {
+    "n": 29,
+    "title": "Test: lock market research HTTP contract and capital gates",
+    "state": "open",
+    "merged": null,
+    "head": "research/market-contract-regression",
+    "sha": "b9c4f3be36e929e0052b1d118093d84243bde9e4",
+    "base": "main",
+    "merge": "4a5728a40daedf2064c17cc44187090054cd46f6",
+    "disposition": "Incorporated",
+    "rationale": "Three HTTP/auth/non-executable contract regression cases; no runtime change.",
+    "checks": [
+      {
+        "name": "Supabase Preview",
+        "status": "completed",
+        "conclusion": "skipped",
+        "url": "https://github.com/rooster51/AlphaOS/runs/114251341719"
+      },
+      {
+        "name": "pytest",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/rooster51/AlphaOS/actions/runs/38065194323/job/114251308219"
+      }
+    ]
+  },
+  {
+    "n": 28,
+    "title": "Web: introduce read-only research API bridge",
+    "state": "open",
+    "merged": null,
+    "head": "web/research-api-integration",
+    "sha": "c2d4645afdf2da361a2b8df6e7fc78f1d1864563",
+    "base": "web/fail-closed-data-boundary",
+    "merge": "1cfca4f30ea9a47c550a16fa2e9a0a076e68ac03",
+    "disposition": "Incorporated",
+    "rationale": "Authenticated read-only POST bridge, navigation, market page, archive errors, staging template.",
+    "checks": [
+      {
+        "name": "web",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/rooster51/AlphaOS/actions/runs/38320921597/job/115048546135"
+      },
+      {
+        "name": "pytest",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/rooster51/AlphaOS/actions/runs/38320921597/job/115048545693"
+      },
+      {
+        "name": "web",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/rooster51/AlphaOS/actions/runs/38320917574/job/115048533460"
+      },
+      {
+        "name": "Supabase Preview",
+        "status": "completed",
+        "conclusion": "skipped",
+        "url": "https://github.com/rooster51/AlphaOS/runs/115048527732"
+      }
+    ]
+  },
+  {
+    "n": 26,
+    "title": "Web: fail closed on market evidence and remove production fixture candidates",
+    "state": "open",
+    "merged": null,
+    "head": "web/fail-closed-data-boundary",
+    "sha": "6d025ad2ff93b46a3acfa1d554810e2bc165bfed",
+    "base": "feature/web-frontend-foundation",
+    "merge": "e770639eb1f1c290633c94d9439e8d66b1061199",
+    "disposition": "Incorporated",
+    "rationale": "Evidence gates, no production fixture candidates, tests; duplicate branch-only CI excluded.",
+    "checks": [
+      {
+        "name": "web",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/rooster51/AlphaOS/actions/runs/38288558794/job/114942736364"
+      },
+      {
+        "name": "pytest",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/rooster51/AlphaOS/actions/runs/38288558794/job/114942736142"
+      },
+      {
+        "name": "web",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/rooster51/AlphaOS/actions/runs/38288552610/job/114942716845"
+      },
+      {
+        "name": "Supabase Preview",
+        "status": "completed",
+        "conclusion": "skipped",
+        "url": "https://github.com/rooster51/AlphaOS/runs/114942710372"
+      }
+    ]
+  },
+  {
+    "n": 25,
+    "title": "Release: reconcile production quote freshness with historical economics",
+    "state": "closed",
+    "merged": "2026-10-09T16:25:21Z",
+    "head": "release/reconcile-quote-freshness-economics",
+    "sha": "6a46074a29bae24a8803d0ebe6ba471066c11b4a",
+    "base": "main",
+    "merge": "7f7ef53c85151711ef5fdc3c5d092a7a3e6d84cb",
+    "disposition": "Already merged",
+    "rationale": "Merge recorded by GitHub; retain current main.",
+    "checks": []
+  },
+  {
+    "n": 24,
+    "title": "Expose market discovery economics with fail-closed intraday evidence gates",
+    "state": "closed",
+    "merged": "2026-10-09T15:20:17Z",
+    "head": "alphaos3/market-economics-integration",
+    "sha": "29d5365b41aaf36f1afbd0fbcf3e1905d6eb7908",
+    "base": "main",
+    "merge": "b39495808d51474ee5f35f13cc8575347f858653",
+    "disposition": "Already merged",
+    "rationale": "Merge recorded by GitHub; retain current main.",
+    "checks": []
+  },
+  {
+    "n": 23,
+    "title": "Share historical expiration evidence across REST/MCP structure comparisons",
+    "state": "closed",
+    "merged": "2026-10-09T15:20:08Z",
+    "head": "alphaos3/shared-evidence-comparison",
+    "sha": "ba173006498896682fcfe038a1205d7a14b12ad0",
+    "base": "main",
+    "merge": "5f7111f0b3ca684af40710e3243cc8be8cb19133",
+    "disposition": "Already merged",
+    "rationale": "Merge recorded by GitHub; retain current main.",
+    "checks": []
+  },
+  {
+    "n": 22,
+    "title": "Integrate validated historical economics into REST/MCP structure research",
+    "state": "closed",
+    "merged": "2026-10-09T15:20:00Z",
+    "head": "alphaos3/economics-integration",
+    "sha": "8077d47689fbfd3c30eec549a1503d420dde6a4b",
+    "base": "main",
+    "merge": "dc0ac71e8ad2d879970878274a52f52b2dd7d5c5",
+    "disposition": "Already merged",
+    "rationale": "Merge recorded by GitHub; retain current main.",
+    "checks": []
+  },
+  {
+    "n": 21,
+    "title": "Add fail-closed adapter for historical scenario evidence",
+    "state": "closed",
+    "merged": "2026-10-09T15:19:51Z",
+    "head": "alphaos3/trusted-evidence-adapter",
+    "sha": "aabd66065a31c56fcc6b23f683fde342e0e16e1b",
+    "base": "main",
+    "merge": "97e62961c154e3efdb5d6737461b51d97da1b267",
+    "disposition": "Already merged",
+    "rationale": "Merge recorded by GitHub; retain current main.",
+    "checks": []
+  },
+  {
+    "n": 20,
+    "title": "Add shared historical economics contract and multi-leg scenario evaluator",
+    "state": "closed",
+    "merged": "2026-10-09T15:19:39Z",
+    "head": "alphaos3/historical-economics",
+    "sha": "2c99a965dbef6b07a25e921405bf84271aa3007e",
+    "base": "main",
+    "merge": "eaede86ce8d95306786eab8d8983eae1347641e5",
+    "disposition": "Already merged",
+    "rationale": "Merge recorded by GitHub; retain current main.",
+    "checks": []
+  },
+  {
+    "n": 19,
+    "title": "AlphaOS website: Next.js frontend foundation (draft)",
+    "state": "open",
+    "merged": null,
+    "head": "feature/web-frontend-foundation",
+    "sha": "2de3577433ab42ee974d99d1d2e16888ff6415d1",
+    "base": "main",
+    "merge": "b54da3976013b2c3b30fab74005122a6fa01607c",
+    "disposition": "Incorporated",
+    "rationale": "Website foundation through #26/#28; production fixture fallbacks removed by #26.",
+    "checks": [
+      {
+        "name": "Supabase Preview",
+        "status": "completed",
+        "conclusion": "skipped",
+        "url": "https://github.com/rooster51/AlphaOS/runs/113937802619"
+      },
+      {
+        "name": "pytest",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/rooster51/AlphaOS/actions/runs/37724175508/job/113138447728"
+      }
+    ]
+  },
+  {
+    "n": 18,
+    "title": "AlphaOS 2.0: isolated identity boundary and MCP readiness preflight",
+    "state": "open",
+    "merged": null,
+    "head": "alphaos2/identity-readiness-gate",
+    "sha": "e7118435edfbe2c6407cc6ff91eee5a933545b49",
+    "base": "main",
+    "merge": "ca92bc5d61f1ae09fd6b19dc48651e01490ff0c5",
+    "disposition": "Deferred outside Release 1",
+    "rationale": "Identity/tenancy work and SQL require separate security review and approval.",
+    "checks": [
+      {
+        "name": "postgres-rls",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/rooster51/AlphaOS/actions/runs/37716780164/job/113114954192"
+      },
+      {
+        "name": "pytest",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/rooster51/AlphaOS/actions/runs/37716780162/job/113114954191"
+      },
+      {
+        "name": "Supabase Preview",
+        "status": "completed",
+        "conclusion": "skipped",
+        "url": "https://github.com/rooster51/AlphaOS/runs/113114937920"
+      }
+    ]
+  },
+  {
+    "n": 17,
+    "title": "Pin Render and CI to Python 3.12.14",
+    "state": "closed",
+    "merged": "2026-10-06T18:31:36Z",
+    "head": "alphaos2/production-runtime",
+    "sha": "af7feb1377dda1e8151a62ad202f8be07a66b1ed",
+    "base": "main",
+    "merge": "6d6bb56193fed94db1daecf3078c0d8718322d81",
+    "disposition": "Already merged",
+    "rationale": "Merge recorded by GitHub; retain current main.",
+    "checks": []
+  },
+  {
+    "n": 16,
+    "title": "Expose AlphaOS 2.0 archive research through read-only API and MCP",
+    "state": "closed",
+    "merged": "2026-10-06T12:57:39Z",
+    "head": "alphaos2/api-mcp-integration",
+    "sha": "1d06aee4c82332d4cfef0987e5e96e09cc4ee73e",
+    "base": "main",
+    "merge": "81478618edd1757c3a509291c379badbcb3a6a01",
+    "disposition": "Already merged",
+    "rationale": "Merge recorded by GitHub; retain current main.",
+    "checks": []
+  },
+  {
+    "n": 15,
+    "title": "Preserve active intraday collection across scheduler heartbeats",
+    "state": "closed",
+    "merged": "2026-10-05T20:17:18Z",
+    "head": "collector/noncanceling-heartbeat",
+    "sha": "f6cdb7a295c73553cdafbb0ea5352bfac7cbaad6",
+    "base": "main",
+    "merge": "f70806100174223e7e7d0cc5000ef6bb1d81ffa6",
+    "disposition": "Already merged",
+    "rationale": "Merge recorded by GitHub; retain current main.",
+    "checks": []
+  },
+  {
+    "n": 14,
+    "title": "Use external scheduling for the existing GitHub intraday collector",
+    "state": "closed",
+    "merged": "2026-10-05T18:58:48Z",
+    "head": "collector/render-cron",
+    "sha": "2ec6ec8fdd256bbbc290fffd0003d3bd3818f2bd",
+    "base": "main",
+    "merge": "31974310b10e1ceb815e554654aa25410a20fbd2",
+    "disposition": "Already merged",
+    "rationale": "Merge recorded by GitHub; retain current main.",
+    "checks": []
+  },
+  {
+    "n": 13,
+    "title": "Add Public intraday market archive v1",
+    "state": "closed",
+    "merged": "2026-10-05T14:42:25Z",
+    "head": "market-data-v1",
+    "sha": "6ca69e0ce7606cd4fad34d2b61c1595f9eb19ce1",
+    "base": "main",
+    "merge": "7aa11748938a951fab0ad9ef368776d862fd91db",
+    "disposition": "Already merged",
+    "rationale": "Merge recorded by GitHub; retain current main.",
+    "checks": []
+  },
+  {
+    "n": 12,
+    "title": "AlphaOS 2.0: trade ledger foundation and archive-backed research",
+    "state": "closed",
+    "merged": "2026-10-06T01:09:25Z",
+    "head": "alphaos2/trade-ledger-foundation",
+    "sha": "0409230a904911ad7269acca4960d6b7214af7dd",
+    "base": "main",
+    "merge": "249be6e5721522e1c8df3e21f4e821ddb55587d7",
+    "disposition": "Already merged",
+    "rationale": "Merge recorded by GitHub; retain current main.",
+    "checks": []
+  },
+  {
+    "n": 11,
+    "title": "Phase 10C: Trade journal and descriptive realized performance",
+    "state": "open",
+    "merged": null,
+    "head": "phase10c-trade-journal",
+    "sha": "7755b7e2a7ff1fb48cb990025c5ff331f3510553",
+    "base": "phase10b-active-trade-monitor",
+    "merge": "2398267b08f046ed98cbd9cb220d38cd8664302a",
+    "disposition": "Deferred outside Release 1",
+    "rationale": "Journal depends on #10; identity/persistence approval still separate.",
+    "checks": [
+      {
+        "name": "Supabase Preview",
+        "status": "completed",
+        "conclusion": "skipped",
+        "url": "https://github.com/rooster51/AlphaOS/runs/110950411971"
+      },
+      {
+        "name": "pytest",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/rooster51/AlphaOS/actions/runs/37040866342/job/110950357314"
+      }
+    ]
+  },
+  {
+    "n": 10,
+    "title": "Phase 10B: Active Trade Monitor with immutable entry evidence",
+    "state": "open",
+    "merged": null,
+    "head": "phase10b-active-trade-monitor",
+    "sha": "3e9455c8ba700b6f2359bad0041650ad6cd5de3f",
+    "base": "phase9-index-support",
+    "merge": "2511684600b3d6b965c2396c20df398e9867372c",
+    "disposition": "Deferred outside Release 1",
+    "rationale": "Active trade monitoring, not website release.",
+    "checks": [
+      {
+        "name": "pytest",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/rooster51/AlphaOS/actions/runs/37028644287/job/110909603536"
+      },
+      {
+        "name": "Supabase Preview",
+        "status": "completed",
+        "conclusion": "skipped",
+        "url": "https://github.com/rooster51/AlphaOS/runs/110909570023"
+      }
+    ]
+  },
+  {
+    "n": 9,
+    "title": "Phase 10A gate: explicit option quote coverage and intraday capability audit",
+    "state": "open",
+    "merged": null,
+    "head": "phase10a-intraday-engine",
+    "sha": "c22366f6237e19a7d88196a1dc5f7f384edad004",
+    "base": "phase9-index-support",
+    "merge": "904b47792609f84c5e2c99732d5e4c2378744964",
+    "disposition": "Deferred outside Release 1",
+    "rationale": "Intraday capability/quality gate; do not merge historical branch wholesale.",
+    "checks": [
+      {
+        "name": "pytest",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/rooster51/AlphaOS/actions/runs/36912754106/job/110539204887"
+      },
+      {
+        "name": "Supabase Preview",
+        "status": "completed",
+        "conclusion": "skipped",
+        "url": "https://github.com/rooster51/AlphaOS/runs/110539162576"
+      }
+    ]
+  },
+  {
+    "n": 8,
+    "title": "Phase 9: direct SPX and XSP unified trade research",
+    "state": "open",
+    "merged": null,
+    "head": "phase9-index-support",
+    "sha": "4ef8d5bb1487af1612d8be33cf53f2b2c3be7124",
+    "base": "phase9-unified-trade-research",
+    "merge": "9f1908587f7820e0441a5cd899bee1cd2f8f3c5d",
+    "disposition": "Deferred; partially incorporated",
+    "rationale": "Index research/registry retained in main; unique index audit scripts/workflows remain outside release; preserve branch.",
+    "checks": [
+      {
+        "name": "pytest",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/rooster51/AlphaOS/actions/runs/36729209081/job/109933999245"
+      },
+      {
+        "name": "Supabase Preview",
+        "status": "completed",
+        "conclusion": "skipped",
+        "url": "https://github.com/rooster51/AlphaOS/runs/109933995922"
+      },
+      {
+        "name": "validate",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/rooster51/AlphaOS/actions/runs/36729166134/job/109933848811"
+      }
+    ]
+  },
+  {
+    "n": 7,
+    "title": "Phase 9A: unified vertical research and symbol orchestration",
+    "state": "open",
+    "merged": null,
+    "head": "phase9-unified-trade-research",
+    "sha": "92ed1104edd30d9077a3267332902e495cb9fe20",
+    "base": "phase8-mcp",
+    "merge": "b001d914c1ca97039c1b1f685c29d08e043a00ec",
+    "disposition": "Superseded; safe to close after integration",
+    "rationale": "Unified research retained in main, subsequently extended with index metadata.",
+    "checks": [
+      {
+        "name": "Supabase Preview",
+        "status": "completed",
+        "conclusion": "skipped",
+        "url": "https://github.com/rooster51/AlphaOS/runs/108962018414"
+      },
+      {
+        "name": "pytest",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/rooster51/AlphaOS/actions/runs/36432509810/job/108962005657"
+      }
+    ]
+  },
+  {
+    "n": 6,
+    "title": "Clarify missing Public API secret in daily archive",
+    "state": "open",
+    "merged": null,
+    "head": "fix/daily-archive-secret-diagnostic",
+    "sha": "c5365e40a6e810c41ee5da4582fa28de24cfab91",
+    "base": "main",
+    "merge": "73deadcc89096226a005e0c7e5fcdb4f8cd9ac6e",
+    "disposition": "Deferred outside Release 1",
+    "rationale": "Legacy daily-workflow diagnostic has unique changes; old automatic schedule remains disabled.",
+    "checks": [
+      {
+        "name": "Supabase Preview",
+        "status": "completed",
+        "conclusion": "skipped",
+        "url": "https://github.com/rooster51/AlphaOS/runs/108084833764"
+      },
+      {
+        "name": "pytest",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/rooster51/AlphaOS/actions/runs/36139274195/job/108084822162"
+      }
+    ]
+  },
+  {
+    "n": 5,
+    "title": "Phase 8: read-only MCP research with quote freshness safeguards",
+    "state": "open",
+    "merged": null,
+    "head": "phase8-mcp",
+    "sha": "cd59c2c4026a9505ecd25e1976da241b2dc4c534",
+    "base": "phase7-research-api",
+    "merge": "1c3ee1a342739eeac05438d7f9688e3320b8f5a6",
+    "disposition": "Superseded; safe to close after integration",
+    "rationale": "MCP/OAuth and quote protections reconciled by #16/#25; authentication/freshness files match.",
+    "checks": [
+      {
+        "name": "pytest",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/rooster51/AlphaOS/actions/runs/36247121242/job/108418258858"
+      },
+      {
+        "name": "Supabase Preview",
+        "status": "completed",
+        "conclusion": "skipped",
+        "url": "https://github.com/rooster51/AlphaOS/runs/108418249130"
+      }
+    ]
+  },
+  {
+    "n": 4,
+    "title": "Phase 7: authenticated read-only AlphaOS research API",
+    "state": "open",
+    "merged": null,
+    "head": "phase7-research-api",
+    "sha": "51289ce9f5455eae3c230088c07abc12cecadc08",
+    "base": "main",
+    "merge": null,
+    "disposition": "Superseded; safe to close after integration",
+    "rationale": "API foundation reused by #16; current main supersedes old implementation.",
+    "checks": [
+      {
+        "name": "pytest",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/rooster51/AlphaOS/actions/runs/36009627001/job/107666676225"
+      },
+      {
+        "name": "Supabase Preview",
+        "status": "completed",
+        "conclusion": "skipped",
+        "url": "https://github.com/rooster51/AlphaOS/runs/107666664526"
+      }
+    ]
+  },
+  {
+    "n": 3,
+    "title": "Phase 6 MVP: price structure and forward distribution research",
+    "state": "closed",
+    "merged": "2026-09-23T15:06:30Z",
+    "head": "phase6-price-structure",
+    "sha": "8de7fbd38b164fc8146179903d5d1504e0760352",
+    "base": "main",
+    "merge": "8de7fbd38b164fc8146179903d5d1504e0760352",
+    "disposition": "Already merged",
+    "rationale": "Merge recorded by GitHub; retain current main.",
+    "checks": []
+  },
+  {
+    "n": 2,
+    "title": "Phase 5.2: Option Economics robustness UI",
+    "state": "closed",
+    "merged": "2026-09-23T15:06:30Z",
+    "head": "phase5-2-robustness-ui",
+    "sha": "82a7aa375ba99408d8b91eb376bc8b61354ef708",
+    "base": "main",
+    "merge": "82a7aa375ba99408d8b91eb376bc8b61354ef708",
+    "disposition": "Already merged",
+    "rationale": "Merge recorded by GitHub; retain current main.",
+    "checks": []
+  },
+  {
+    "n": 1,
+    "title": "Phase 5: distribution-conditioned option economics",
+    "state": "closed",
+    "merged": "2026-09-22T18:22:49Z",
+    "head": "phase5-option-economics",
+    "sha": "aa98f8b97d069116e7b0e7dd82cb98c8de8167fe",
+    "base": "main",
+    "merge": "0f7480f1a17c06935ce8d6e0bdde0749870ecdfd",
+    "disposition": "Already merged",
+    "rationale": "Merge recorded by GitHub; retain current main.",
+    "checks": []
+  }
+]
