@@ -74,3 +74,28 @@ def test_history_error_is_allowlisted_and_secret_safe(boundary,error,reason):
     d = response.json()['research']['research_session']['diagnostics']
     assert d['history_loading'] == dict(status='unavailable',reason=reason)
     assert 'private-secret-value' not in json.dumps(response.json())
+
+
+@pytest.mark.parametrize('stage,status,reason', [
+    ('provider_request', 401, 'public_authentication_failure'),
+    ('provider_request', 429, 'public_rate_limit'),
+    ('provider_request', 400, 'public_history_request_failed'),
+    ('provider_schema', None, 'public_history_schema_or_empty'),
+    ('normalization', None, 'public_history_schema_or_empty'),
+    ('ohlc_validation', None, 'public_history_validation_failed'),
+    ('coverage_validation', None, 'public_history_validation_failed'),
+    ('unknown_private_stage', None, 'completed_history_unavailable'),
+])
+def test_history_stage_diagnostics_are_safe(boundary, stage, status, reason):
+    from modules.history_diagnostics import HistoryError
+    client, _, _, loader = boundary
+    loader.side_effect = HistoryError('private-secret-value', {
+        'symbol': 'QQQ', 'requested_period': 'FIVE_YEARS',
+        'stage': stage, 'http_status': status,
+        'provider_reason_terms': ['private-secret-value'],
+    })
+    response = post(client, 'market', dict(symbol='QQQ'))
+    assert response.status_code == 200
+    diagnostics = response.json()['research']['research_session']['diagnostics']
+    assert diagnostics['history_loading'] == dict(status='unavailable', reason=reason)
+    assert 'private-secret-value' not in json.dumps(response.json())
