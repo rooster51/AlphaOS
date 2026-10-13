@@ -73,7 +73,7 @@ def opportunity_state(*, direction="unknown", premium_state="unknown",
             "known_dimensions": known,
             "total_dimensions": len(values),
             "unknown_dimensions": unknown,
-            "sufficient_for_routing": known > 0,
+            "sufficient_for_routing": bool(route_strategies(values)["routes"]),
         },
         "caveats": caveats,
     }

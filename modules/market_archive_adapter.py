@@ -14,6 +14,12 @@ from modules.structure_research import _number
 VERSION = "market-archive-adapter-v1"
 
 
+class ArchiveExpirationUnavailable(ValueError):
+    """Requested expiration is absent; never substitute another expiration."""
+    code = "archive_expiration_unavailable"
+
+
+
 def normalize_archive_snapshot(payload, expiration=None):
     if not isinstance(payload, dict) or payload.get("schema_version") != "intraday-archive-v1":
         raise ValueError("intraday-archive-v1 payload required.")
@@ -60,7 +66,7 @@ def normalize_archive_snapshot(payload, expiration=None):
     except ValueError:
         raise ValueError("Valid archive expiration required.") from None
     if expiration not in requested:
-        raise ValueError("Expiration was not requested in this archive snapshot.")
+        raise ArchiveExpirationUnavailable("Expiration was not requested in this archive snapshot.")
 
     rows = []
     excluded = []
