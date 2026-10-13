@@ -119,6 +119,21 @@ class ArchiveResearchService:
                     'public_not_configured', 'public_authentication_failure',
                     'public_rate_limit', 'provider_unavailable'}:
                 history_loading['reason'] = error.code
+            else:
+                from modules.history_diagnostics import HistoryError
+                if isinstance(error, HistoryError):
+                    stage = error.diagnostics.get('stage')
+                    status = error.diagnostics.get('http_status')
+                    if stage == 'provider_request' and status in (401, 403):
+                        history_loading['reason'] = 'public_authentication_failure'
+                    elif stage == 'provider_request' and status == 429:
+                        history_loading['reason'] = 'public_rate_limit'
+                    elif stage == 'provider_request':
+                        history_loading['reason'] = 'public_history_request_failed'
+                    elif stage in ('provider_schema', 'normalization'):
+                        history_loading['reason'] = 'public_history_schema_or_empty'
+                    elif stage in ('ohlc_validation', 'coverage_validation'):
+                        history_loading['reason'] = 'public_history_validation_failed'
             caveats.append('Completed daily history unavailable; missing classifier evidence stays unknown.')
         try:
             result = run_latest_market(request.symbol, as_of=now.isoformat(),
