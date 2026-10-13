@@ -224,8 +224,22 @@ function ResearchResult({ bundle, symbol }: { bundle: ResearchBundle; symbol: "S
               ? item.strategy_family.replaceAll("_", " ")
               : "Unspecified structure";
             return (
-              <li key={`${family}-${index}`} className="rounded border border-terminal-800 bg-terminal-900 p-4 font-mono text-sm text-terminal-200">
-                {family}
+              <li key={`${family}-${index}`} className="rounded border border-terminal-800 bg-terminal-900 font-mono text-sm text-terminal-200">
+                <details className="group">
+                  <summary className="cursor-pointer p-4 hover:bg-terminal-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-profit">
+                    <span className="capitalize">{family}</span>
+                    <span className="ml-3 text-xs text-terminal-400 group-open:hidden">View research details</span>
+                    <span className="ml-3 hidden text-xs text-terminal-400 group-open:inline">Hide details</span>
+                  </summary>
+                  <div className="border-t border-terminal-800 p-4 space-y-3">
+                    <p className="text-xs text-terminal-400">
+                      Archived research only. Values are supplied by the research API and are not executable quotes.
+                    </p>
+                    <pre className="overflow-x-auto whitespace-pre-wrap break-words text-xs text-terminal-200">
+                      {JSON.stringify(item, null, 2)}
+                    </pre>
+                  </div>
+                </details>
               </li>
             );
           })}
