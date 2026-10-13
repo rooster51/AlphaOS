@@ -10,6 +10,10 @@ services:
     envVars:
       - key: ALPHAOS_API_TOKEN
         sync: false
+      - key: PUBLIC_API_SECRET
+        sync: false
+      - key: PUBLIC_ACCOUNT_NUMBER
+        sync: false
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_SERVICE_ROLE_KEY
