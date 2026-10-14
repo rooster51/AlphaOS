@@ -5,9 +5,10 @@ import { MarketResearchPanel } from "@/components/market/MarketResearchPanel";
 export default async function MarketResearchPage({
   searchParams,
 }: {
-  searchParams?: { symbol?: string };
+  searchParams: Promise<{ symbol?: string }>;
 }) {
-  const requestedSymbol = searchParams?.symbol?.toUpperCase();
+  const params = await searchParams;
+  const requestedSymbol = params?.symbol?.toUpperCase();
   const symbol = requestedSymbol === undefined || requestedSymbol === "QQQ" || requestedSymbol === "SPY"
     ? requestedSymbol ?? "QQQ" : null;
   if (!symbol) {
@@ -15,3 +16,4 @@ export default async function MarketResearchPage({
   }
   return <MarketResearchPanel key={symbol} symbol={symbol} />;
 }
+
