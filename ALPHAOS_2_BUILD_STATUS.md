@@ -1,55 +1,42 @@
 # AlphaOS 2.0 Build Status
 
-> Living implementation tracker. Update this file with every AlphaOS 2.0 code change.
-> Candidate generation and strategy routing are research workflows, not recommendations or rankings.
+> Current release status updated 2026-10-14. Research outputs are not rankings or execution recommendations.
 
-## Current milestone
+## Current milestone: Release 1 SPY/QQQ acceptance
 
-**AlphaOS 2.0 read-only API/MCP integration (not deployed)**
+Main: `7f7ef53c85151711ef5fdc3c5d092a7a3e6d84cb`.
+Existing draft PR #40: `release/release1-consolidation`, reviewed head
+`da3adb0794b0426ea8c4b5db14b039c28cf53047`; open and unmerged at review.
 
-Production-readiness audit (2026-10-06): approved main is
-`81478618edd1757c3a509291c379badbcb3a6a01`; Render remains on `4ef8d5b`.
-Deployment is **NO-GO** until the missing Render `SUPABASE_URL` and
-`SUPABASE_SERVICE_ROLE_KEY` settings are configured under separate approval and
-the runtime fix is reviewed and included in a newly approved target. The
-`alphaos2/production-runtime` follow-up pins Render and regression CI to Python
-3.12.14 via `.python-version`; production itself remains unchanged. No deployment
-is authorized. The user must enter the two Supabase values directly in Render,
-never in ChatGPT/Codex/GitHub.
-See [production audit and deployment procedure](docs/PRODUCTION_READINESS.md).
+The October 6 pre-deployment status previously shown here is historical and no longer the current release gate. API/MCP integration and Python 3.12.14 runtime work were subsequently merged (#16/#17), and historical economics was merged through #20-25. Do not rebuild those components. Runtime deployment history does not establish that PR #40 is staged or deployed.
 
-Goal: evolve `Run QQQ` / `Run SPY` from a credit-spread-oriented workflow into an interface-agnostic options research workflow:
+[CI on the reviewed head](https://github.com/rooster51/AlphaOS/actions/runs/38507746724) passed: 760 backend tests plus 40 subtests, 38 website tests, 9 browser tests, typecheck and production build. No live market-data validation is implied. Next.js is 16.4.0. Seven remaining npm findings are build dependencies; production-only audit reports zero. See the [dependency assessment and exact acceptance gates](docs/RELEASE1_GATE.md).
 
-`Public market data -> AlphaOS market research -> opportunity classification -> strategy routing -> candidate construction -> research/compare -> position lifecycle -> journal/calibration`
+## Capability and delivery status
 
-## Status dashboard
+Implemented means code exists in the stated baseline; tested means automated evidence, not live acceptance. Staged/deployed requires an observed service revision and successful real requests. Historical milestones below preserve their original evidence and must not override this current table.
 
-| Area | Status | Notes |
-|---|---|---|
-| Existing Quant Lab / market research | COMPLETE | Preserve existing market state, structure, distributions, analogs and vertical research |
-| Public market-data layer | COMPLETE + OBSERVATION GATE v1 | Canonical provider; live quote/chain snapshots now carry provenance and fail-closed freshness validation before research |
-| Trade ledger schema | FOUNDATION COMPLETE | Additive position/event/snapshot schema; not deployed to production |
-| Long call / put research | COMPLETE v1 | Risk, breakeven, required move, DTE, expected-move and structure context |
-| Public long-option discovery | COMPLETE v1 | Unranked candidates from normalized Public chain; ask-based entry assumption |
-| Opportunity Engine | FOUNDATION COMPLETE v1 | Validated simultaneous direction, premium, movement, time and volatility state envelope; unknown evidence remains unknown |
-| Strategy Router | FOUNDATION COMPLETE v1 | Deterministic overlapping research routes; no ranking/winner; insufficient-evidence output supported |
-| Debit-spread research/discovery | COMPLETE ADAPTER v1 | Reuses existing constructor; observed delta and valid quotes required; midpoint assumption explicit; no ranking |
-| Butterfly / BWB research | COMPLETE ADAPTER v1 | Symmetric long call/put and iron butterflies; bullish put / bearish call BWBs; shared deterministic payoff |
-| Iron condor research | COMPLETE ADAPTER v1 | Normalizes existing selector/premium-engine candidates, including asymmetric wings; construction unchanged |
-| Generic position normalization | COMPLETE v1 | Existing same-expiration strategies; signed legs, observed quotes/Greeks/timestamps and shared economics |
-| Research-session orchestration | COMPLETE v1 | Supplied normalized market/chain evidence through routing, existing constructors, research and descriptive comparison; no provider/API calls |
-| Generic multi-leg Strategy Factory | PLANNED | Likely Codex handoff when repo-wide integration becomes worthwhile |
-| Run Market / archive read path | COMPLETE v1 | Verified injected archive reads, authoritative NYSE session context, read-only research and JSON-safe response |
-| Universal Analyze | PLANNED | Broader common research envelope plus strategy-specific evidence |
-| Cross-strategy Compare | COMPLETE v1 | Shared descriptive evidence matrix across researched strategy families; preserves input order; no score, winner or recommendation |
-| Account-aware filtering | COMPLETE v1 | Optional max-loss capital ceiling; explicit exclusions; no ranking or broker-margin claim |
-| Position Monitor | PLANNED | Refresh original thesis/evidence against current state |
-| Scenario Engine | PLANNED | Price/time/IV scenarios with explicit assumptions |
-| Persistent Trade Journal | FOUNDATION ONLY — NOT DEPLOYED | SQL foundation only; service/API/MCP persistence not wired; see journal roadmap below |
-| Performance analytics | PLANNED | P&L, win rate, expectancy by strategy after durable journal |
-| Calibration | PLANNED | Compare frozen entry classifications with realized outcomes |
-| API/MCP AlphaOS 2.0 integration | MERGED / NOT DEPLOYED | PR #16: three read-only interfaces plus 14 legacy tools; approved main above |
-| Production deployment | BLOCKED BY CONFIGURATION AND APPROVAL | Missing Render archive credentials; repository runtime fix awaits review; no migration or deployment authorized |
+| Capability | Implemented / tested | Staged / deployed evidence | Remaining gate |
+|---|---|---|---|
+| Existing research, quote safeguards and Public provider | In main; regression tested | Existing service history, not re-inspected here | Current real SPY/QQQ history and quote availability |
+| Archive reader and session/freshness/provenance gates | In main; verified-fixture regression coverage | No current private-byte or collector-health check in this task | Real archive read with timestamps and checksum |
+| Long calls/puts, verticals, butterflies/BWBs, iron condors | Supported core construction/payoff research tested | Not proof of all families discovered live | Valid observed inputs and reachable classifier routes |
+| Classifier/router and capital filters | Tested; unknown evidence remains unknown; max-loss ceiling is not broker buying power | Live acceptance pending | Demonstrate classification, candidates and explicit exclusions |
+| Historical expiration economics and shared comparisons | In main through #20-25; tested | Current live evidence availability unverified | Mature, aligned samples; unsupported intraday/early-exit metrics remain null |
+| Read-only API/MCP | In main from #16; 17 tools; REST/MCP regression coverage | Previously deployed architecture; current exact service SHAs not checked here | Equivalent real requests on approved backend revision |
+| Website and history/no-candidate diagnostics | Consolidated in unmerged PR #40; website/build/browser CI passes | Earlier staging services exist; PR #40 deployment not established | Authorized staging revision, real data and interface acceptance |
+| Dependency gate | Next 16.4.0 tested; seven dev/build findings assessed | Deployed dependency installation not inspected | Build-time risk accepted for controlled staging only; reassess before production approval; see RELEASE1_GATE.md |
+| Persistent journal | SQL foundation; separate identity work not integrated into this release | No new journal enablement verified or authorized | Identity, persistence review and separate migration/deployment approval |
+| Performance/calibration | Legacy metrics exist; shared journal analytics/calibration incomplete | No unified cross-client acceptance | Deferred until reliable research and approved durable journal |
+| Additional tickers / strategies | Separate unfinished PR work excluded | No activation in this milestone | Deferred; SPY/QQQ first |
+
+Release 1 is **CI-tested, not launch-verified**. Earlier staging configuration/history, timeout and archive failures require fresh verification; do not describe old findings as current missing secrets. No service/configuration/database changes were made in this gate review.
+
+Build-time dependency risk is accepted for controlled staging under the documented constraints; the findings are not remediated. Staging verification is pending and production readiness is not established. Immediate order: review the pinned release, then separately authorize staging validation. Journal, monitoring, calibration and expansion remain later milestones. Generic Strategy Factory, Universal Analyze and broader scenario workflows remain planned; this release does not introduce another engine.
+
+## Historical milestone records
+
+The following sections retain earlier implementation reports. References to old branches, draft PRs, deployment state or test counts are historical, not the current release status. No database inspection in this review establishes whether a SQL artifact was applied externally.
 
 ## Persistent Trade Journal roadmap
 

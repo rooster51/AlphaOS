@@ -121,3 +121,7 @@ Full local backend run: 757 passed, 40 subtests passed (353.62s), zero failures.
 The three #29 cases were added after that run's collection and passed in the
 211-test focused run. Final-commit CI runs all 760 together on Linux.
 No test expectations or evidence safeguards were weakened.
+
+## Current gate review (2026-10-14)
+
+The current reviewed PR #40 head is da3adb0794b0426ea8c4b5db14b039c28cf53047 (Next.js 16.4.0). See [Release 1 gate](RELEASE1_GATE.md) for the superseding dependency assessment, current CI and remaining acceptance criteria. Earlier Next 14 audit findings and old head/test references in historical reports must not be treated as the current gate. Passing CI applies to the reviewed code SHA. Build-time dependency risk is accepted for controlled staging only; the seven findings are not fixed. Real staging verification remains pending, and production readiness is not established. No push, merge or deployment occurred during this review.
