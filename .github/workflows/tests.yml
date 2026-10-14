@@ -72,7 +72,7 @@ jobs:
             .filter(v => typeof v === 'object');
           const unexpected = advisories.filter(v => ![...allowed].some(id => v.url?.includes(id)));
           const counts = audit.metadata.vulnerabilities;
-          const total = Object.values(counts).reduce((sum, n) => sum + n, 0);
+          const total = counts.total;
           if (unexpected.length || total > 7 || !advisories.length) {
             console.error('Unapproved audit findings or changed report:', JSON.stringify({unexpected, counts}));
             process.exit(1);
