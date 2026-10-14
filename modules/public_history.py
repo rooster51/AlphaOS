@@ -24,19 +24,24 @@ def research_request(symbol, period, kind, as_of):
 
 
 def validate_coverage(frame, symbol, period, as_of, diagnostic):
-    """Fail closed for older equities: no shorter fallback, resampling or repair.
+    """Validate every period's OHLC; additionally check long-history coverage.
 
     Seven calendar days at each endpoint allow exchange closures, not missing
     years. Interior gaps >7 days or median spacing >3 reject coarse data.
     This is a gross-truncation guard, not an authoritative exchange calendar.
     """
-    if period not in ('FIVE_YEARS','TEN_YEARS'):
-        return
     diagnostic['stage'] = 'ohlc_validation'
     try:
         clean, audit = validate_ohlc(frame.assign(symbol=symbol),as_of)
     except ValueError as exc:
         raise HistoryError(str(exc),diagnostic) from None
+    diagnostic.update(completed_rows=len(clean),excluded_uncompleted=audit['excluded_uncompleted'],
+                      first_completed_date=str(clean.date.iloc[0].date()),last_completed_date=str(clean.date.iloc[-1].date()),
+                      max_calendar_gap_days=audit['max_calendar_gap_days'],calendar_verified=False)
+    # A shorter requested period must not bypass price/ordering validation.
+    # Preserve original observations; downstream research applies its own cutoff.
+    if period not in ('FIVE_YEARS','TEN_YEARS'):
+        return
     diagnostic['stage'] = 'coverage_validation'
     target = pd.Timestamp(as_of).normalize()-pd.DateOffset(years=10 if period=='TEN_YEARS' else 5)
     dates = clean.date
@@ -47,9 +52,6 @@ def validate_coverage(frame, symbol, period, as_of, diagnostic):
     spacing = dates.diff().dt.days.dropna()
     if spacing.empty or spacing.median()>3 or spacing.max()>7:
         raise HistoryError('Provider history is sparse or not daily; requested daily coverage was not supplied.',diagnostic)
-    diagnostic.update(completed_rows=len(clean),excluded_uncompleted=audit['excluded_uncompleted'],
-                      first_completed_date=str(dates.iloc[0].date()),last_completed_date=str(dates.iloc[-1].date()),
-                      max_calendar_gap_days=audit['max_calendar_gap_days'],calendar_verified=False)
 
 
 def fetch_research_bars(client, symbol, period, kind='EQUITY', as_of=None):

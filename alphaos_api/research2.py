@@ -6,6 +6,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 from modules.position_research import research_position
+from modules.market_archive_adapter import ArchiveExpirationUnavailable
 from modules.strategy_compare import compare_strategy_research
 from modules.run_market import run_latest_market
 from modules.structure_economics import structure_historical_economics, compare_historical_economics
@@ -79,6 +80,8 @@ class ArchiveResearchService:
             if not isfinite(age) or age < 0:
                 raise ValueError()
             return read_latest_option_snapshot(archive_client(), symbol, as_of, max_age_seconds=age)
+        except ArchiveUnavailable:
+            raise
         except Exception:
             raise ArchiveUnavailable('Archive unavailable or invalid configuration.') from None
 
@@ -92,6 +95,7 @@ class ArchiveResearchService:
 
     def run(self, request):
         history = None
+        history_loading = dict(status="unavailable", reason="completed_history_unavailable")
         caveats = ['Archive observations are not executable live quotes.',
             'Capital is expiration max-loss eligibility, not broker buying power or margin.',
             'Objective is recorded context; it does not override evidence or filter strategy routes.',
@@ -100,19 +104,48 @@ class ArchiveResearchService:
         now = self.clock()
         try:
             record = self.read_snapshot(request.symbol, now.isoformat())
+        except ArchiveUnavailable as error:
+            raise APIError(error.code, 503) from None
         except Exception:
             raise APIError('archive_unavailable', 503) from None
         try:
             history = self.history_loader(request.symbol)
-        except Exception:
+            if history is not None:
+                history_loading = dict(status="loaded", reason=None)
+        except Exception as error:
+            # Fixed provider codes only. Never return exception text, credentials,
+            # SDK diagnostics, headers or arbitrary caller-supplied attributes.
+            from modules.public_provider import PublicProviderError
+            if isinstance(error, PublicProviderError) and error.code in {
+                    'public_not_configured', 'public_authentication_failure',
+                    'public_rate_limit', 'provider_unavailable'}:
+                history_loading['reason'] = error.code
+            else:
+                from modules.history_diagnostics import HistoryError
+                if isinstance(error, HistoryError):
+                    stage = error.diagnostics.get('stage')
+                    status = error.diagnostics.get('http_status')
+                    if stage == 'provider_request' and status in (401, 403):
+                        history_loading['reason'] = 'public_authentication_failure'
+                    elif stage == 'provider_request' and status == 429:
+                        history_loading['reason'] = 'public_rate_limit'
+                    elif stage == 'provider_request':
+                        history_loading['reason'] = 'public_history_request_failed'
+                    elif stage in ('provider_schema', 'normalization'):
+                        history_loading['reason'] = 'public_history_schema_or_empty'
+                    elif stage in ('ohlc_validation', 'coverage_validation'):
+                        history_loading['reason'] = 'public_history_validation_failed'
             caveats.append('Completed daily history unavailable; missing classifier evidence stays unknown.')
         try:
             result = run_latest_market(request.symbol, as_of=now.isoformat(),
                 read_snapshot=lambda symbol, as_of: record, history=history,
                 expiration=request.expiration.isoformat() if request.expiration else None,
                 available_capital=request.available_capital, objective=request.objective, width=request.width)
+        except ArchiveExpirationUnavailable:
+            raise APIError('archive_expiration_unavailable', 422) from None
         except (ValueError, TypeError, KeyError, OverflowError):
             raise APIError('archive_research_unavailable', 422) from None
+        result['research_session']['diagnostics']['history_loading'] = history_loading
         return envelope(request, result, 'Verified Supabase archive; completed Public daily history when available', caveats)
 
     @staticmethod

@@ -79,6 +79,41 @@ class PublicHistoryTests(unittest.TestCase):
         self.assertEqual(caught.exception.diagnostics['duplicate_dates'],1)
         self.assertEqual(caught.exception.diagnostics['stage'],'ohlc_validation')
 
+    def test_short_history_integrity_is_not_skipped(self):
+        for symbol in ('SPY', 'QQQ'):
+            for period in ('MONTH', 'YEAR'):
+                for defect in ('bounds', 'duplicate', 'nonpositive', 'order', 'uncompleted'):
+                    with self.subTest(symbol=symbol, period=period, defect=defect):
+                        raw = response(symbol, period, start='2026-09-01')
+                        bars = raw['regularMarket']['bars']
+                        if defect == 'bounds':
+                            bars[0]['high'] = '100'
+                        elif defect == 'duplicate':
+                            bars[1]['timestamp'] = bars[0]['timestamp']
+                        elif defect == 'nonpositive':
+                            bars[0]['low'] = '0'
+                        elif defect == 'order':
+                            bars[0], bars[1] = bars[1], bars[0]
+                        else:
+                            raw['regularMarket']['bars'] = bars[-1:]
+                        with self.assertRaises(HistoryError) as caught:
+                            self.fetch(raw, period, symbol)
+                        self.assertEqual(caught.exception.diagnostics['stage'], 'ohlc_validation')
+
+    def test_valid_short_history_preserves_observations_and_reports_cutoff(self):
+        for symbol in ('SPY', 'QQQ'):
+            for period in ('MONTH', 'YEAR'):
+                with self.subTest(symbol=symbol, period=period):
+                    raw = response(symbol, period, start='2026-09-01')
+                    frame = self.fetch(raw, period, symbol)
+                    diagnostic = frame.attrs['provider_diagnostics']
+                    self.assertEqual(len(frame), len(raw['regularMarket']['bars']))
+                    self.assertTrue((frame.close == 101).all())
+                    self.assertEqual(diagnostic['completed_rows'], len(frame) - 1)
+                    self.assertEqual(diagnostic['excluded_uncompleted'], 1)
+                    self.assertEqual(diagnostic['last_completed_date'], '2026-09-21')
+                    self.assertFalse(diagnostic['calendar_verified'])
+
     def test_timezone_normalized_duplicate(self):
         raw=response();raw['regularMarket']['bars'][1]['timestamp']='2016-09-21T20:00:00-04:00'
         with self.assertRaisesRegex(HistoryError,'duplicate session dates'):

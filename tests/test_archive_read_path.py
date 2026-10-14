@@ -75,8 +75,34 @@ def test_invalid_storage_evidence_fails_closed(defect):
 
 
 def test_stale_snapshot_not_silently_used():
-    with pytest.raises(ArchiveUnavailable):
+    with pytest.raises(ArchiveUnavailable) as error:
         read_latest_option_snapshot(ReadOnlyClient(), 'QQQ', AS_OF, max_age_seconds=60)
+    assert error.value.code == 'archive_stale'
+
+
+def test_closed_market_can_use_recent_verified_archive_without_live_quote_gate():
+    client = ReadOnlyClient()
+    client.payload['observed_at'] = '2030-01-02T20:55:00+00:00'
+    client.payload['slot_time'] = '2030-01-02T20:50:00+00:00'
+    client.payload['collection_finished_at'] = '2030-01-02T20:56:00+00:00'
+    client.row.update(observed_at=client.payload['observed_at'],
+                      slot_time=client.payload['slot_time'],
+                      created_at='2030-01-02T20:57:00+00:00')
+    client.raw = gzip.compress(json.dumps(client.payload).encode(), mtime=0)
+    client.row['archive_sha256'] = hashlib.sha256(client.raw).hexdigest()
+    result = run_latest_market('QQQ', as_of='2030-01-02T21:00:00+00:00',
+        read_snapshot=partial(read_latest_option_snapshot, client, max_age_seconds=600),
+        history=history())
+    assert result['as_of'] == client.payload['observed_at']
+    assert result['archive']['freshness']['age_seconds'] == 300
+
+
+def test_missing_snapshot_has_a_distinct_safe_status():
+    client = ReadOnlyClient()
+    client.row = None
+    with pytest.raises(ArchiveUnavailable) as error:
+        read_latest_option_snapshot(client, 'QQQ', AS_OF, max_age_seconds=300)
+    assert error.value.code == 'archive_missing'
 
 
 def test_latest_partial_is_not_replaced_or_hidden():
