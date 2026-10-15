@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { buyingPower, archiveExpirations, candidateViews } from "@/lib/market-candidates";
 import { Header } from "@/components/shell/Header";
 import { StatusPill } from "@/components/shell/StatusPill";
 
@@ -12,6 +13,7 @@ type ResearchBundle = {
   archive: Record<string, unknown>;
   session: Record<string, unknown>;
   provenance: Record<string, unknown>;
+  caveats: unknown;
 };
 
 type LoadState =
@@ -90,7 +92,7 @@ function parseResearchBundle(
     return null;
   }
 
-  return { archive, session, provenance };
+  return { archive, session, provenance, caveats: envelope.caveats };
 }
 
 function displayDate(value: unknown): string {
@@ -186,6 +188,11 @@ export function MarketResearchPanel({
   symbol: MarketSymbol;
 }) {
   const [attempt, setAttempt] = useState(0);
+  const [capital, setCapital] = useState("150");
+  const [expiration, setExpiration] = useState("");
+  const [expirations, setExpirations] = useState<string[]>([]);
+  const [inputError, setInputError] = useState("");
+  const [submitted, setSubmitted] = useState<{available_capital: number; expiration?: string}>({available_capital: 150});
   const [state, setState] = useState<LoadState>({
     kind: "loading",
   });
@@ -203,7 +210,7 @@ export function MarketResearchPanel({
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ symbol }),
+          body: JSON.stringify({ symbol, ...submitted }),
           cache: "no-store",
           signal: controller.signal,
         });
@@ -261,6 +268,7 @@ export function MarketResearchPanel({
         }
 
         if (active) {
+          setExpirations(archiveExpirations(bundle.session));
           setState({ kind: "result", bundle });
         }
       } catch (error) {
@@ -280,7 +288,7 @@ export function MarketResearchPanel({
       active = false;
       controller.abort();
     };
-  }, [attempt, symbol]);
+  }, [attempt, symbol, submitted]);
 
   return (
     <div>
@@ -315,6 +323,29 @@ export function MarketResearchPanel({
             </Link>
           ))}
         </nav>
+
+        <form className="flex flex-wrap items-end gap-4" onSubmit={(event) => {
+          event.preventDefault();
+          const amount = buyingPower(capital);
+          if (amount === null) { setInputError("Enter a finite positive dollar amount."); return; }
+          setInputError("");
+          setSubmitted({ available_capital: amount, ...(expiration ? {expiration} : {}) });
+        }}>
+          <label className="grid gap-2">Available Buying Power ($)
+            <input className="rounded bg-terminal-900 border border-terminal-600 p-2" aria-label="Available Buying Power ($)"
+              inputMode="decimal" value={capital} onChange={e => setCapital(e.target.value)} />
+          </label>
+          <label className="grid gap-2">Expiration
+            <select className="rounded bg-terminal-900 border border-terminal-600 p-2" aria-label="Expiration"
+              value={expiration} onChange={e => setExpiration(e.target.value)}>
+              <option value="">Backend archive selection</option>
+              {expirations.map(date => <option key={date} value={date}>{date}</option>)}
+            </select>
+          </label>
+          <button className="rounded border border-terminal-600 px-4 py-2" disabled={state.kind === "loading"}>Run Research</button>
+          {inputError && <p role="alert">{inputError}</p>}
+          <p className="text-xs text-terminal-400 w-full">Capital is an expiration maximum-loss ceiling, not account equity or broker margin. Expiration choices come from the last verified backend response; availability is rechecked on each run. Default spread width: 5 points, matching MCP.</p>
+        </form>
 
         <p className="border border-terminal-800 bg-terminal-900 p-4 font-mono text-xs text-terminal-300">
           This is point-in-time historical options research,
@@ -386,9 +417,7 @@ function ResearchResult({
     bundle.archive.observation
   );
 
-  const candidates = Array.isArray(session.candidates)
-    ? session.candidates
-    : [];
+  const candidates = candidateViews(session);
 
   const observationAt = displayDate(
     archiveObservation?.observed_at
@@ -414,10 +443,8 @@ function ResearchResult({
 
   const researchStatus =
     candidates.length === 0
-      ? "NO RESEARCH CANDIDATES"
-      : eligibleCandidateCount > 0
-        ? "ELIGIBLE CANDIDATES PRESENT"
-        : "RESEARCH ONLY - NONE ELIGIBLE";
+      ? object(session.diagnostics)?.generated_count === 0 ? "NO CANDIDATES GENERATED" : "NO EVALUABLE CANDIDATES"
+      : "RESEARCH ONLY — SEE CAPITAL AND EVIDENCE STATUS";
 
   return (
     <section
@@ -449,6 +476,40 @@ function ResearchResult({
         />
       </div>
 
+      <div className="grid gap-3 sm:grid-cols-3">
+        <ResearchMetric label="Generated structures" value={formatValue(object(session.diagnostics)?.generated_count)} />
+        <ResearchMetric label="Accepted by backend" value={formatValue(object(session.diagnostics)?.accepted_count)} />
+        <ResearchMetric label="Capital-rejected structures" value={formatValue(object(session.diagnostics)?.capital_rejection_count)} />
+      </div>
+      <ResearchMetric label="Available buying power used" value={formatMoney(session.available_capital)} />
+      <section className="rounded border border-terminal-800 p-4 space-y-3">
+        <h3>Backend exclusions and unavailable routes</h3>
+        <ul className="text-sm list-disc pl-5 space-y-2">
+          {(Array.isArray(session.excluded) ? session.excluded : []).map((item, i) => {
+            const row = object(item); return <li key={`excluded-${i}`}>{formatLabel(row?.stage)}: {formatLabel(row?.reason)}
+              {row?.required_capital !== undefined ? `; required capital ${formatMoney(row.required_capital)}` : ""}</li>;
+          })}
+          {(Array.isArray(session.unavailable_routes) ? session.unavailable_routes : []).map((item, i) => {
+            const row = object(item); return <li key={`route-${i}`}>{formatLabel(row?.route)}: {formatLabel(row?.reason)}</li>;
+          })}
+          {formatStringList(object(session.diagnostics)?.blocking_reasons).map(reason => <li key={reason}>{formatLabel(reason)}</li>)}
+        </ul>
+        <p className="text-xs">Only evidence-supported backend routes are evaluated. Automatic discovery supports long calls/puts, debit/credit verticals, iron condors, iron butterflies and broken-wing butterflies. Standard long butterflies require explicit structure research; they are not automatically discovered. No additional families are implied by this screen.</p>
+        <ul className="text-xs list-disc pl-5">{[...formatStringList(bundle.caveats), ...formatStringList(bundle.archive.caveats), ...formatStringList(session.caveats)].map((warning,i)=><li key={i}>{warning}</li>)}</ul>
+      </section>
+      <details className="rounded border border-terminal-800 p-4">
+        <summary>Research outcomes, strategy routes and exclusions</summary>
+        <p className="text-xs">Counts are backend-reported for this snapshot and routed constructors, not all possible structures. No candidates generated differs from all generated candidates being excluded.</p>
+        <pre className="whitespace-pre-wrap break-words text-xs mt-3">{JSON.stringify({
+          diagnostics: session.diagnostics ?? "Unavailable",
+          strategy_routes: session.strategy_routes ?? "Unavailable",
+          unavailable_routes: session.unavailable_routes ?? "Unavailable",
+          excluded: session.excluded ?? "Unavailable",
+          archive_exclusions: bundle.archive.excluded ?? "Unavailable",
+          warnings: [bundle.caveats, bundle.archive.caveats, session.caveats],
+          provenance: bundle.provenance,
+        }, null, 2)}</pre>
+      </details>
       <p className="font-mono text-xs text-terminal-400">
         This observation is historical archive evidence.
         Its freshness window is not a live-quote or
@@ -459,7 +520,7 @@ function ResearchResult({
         <div className="rounded border border-warning/30 bg-terminal-900 p-4 space-y-2">
           <p className="font-mono text-sm text-terminal-200">
             Research completed, but this archive snapshot
-            produced no candidates.
+            returned no evaluable candidate structures. See backend generated/rejected counts and evidence reasons above.
           </p>
 
           <p className="font-mono text-xs text-terminal-400">
@@ -504,8 +565,9 @@ function ResearchResult({
                     )}
                   </h3>
 
+                  <p className="font-mono text-sm">{formatValue(entry?.capital_status)}</p>
                   <p className="font-mono text-xs text-terminal-300">
-                    Direction:{" "}
+                    Underlying: {symbol}{" · "}Direction:{" "}
                     {formatLabel(research?.direction)}
                     {" · "}
                     Expiration:{" "}
@@ -523,7 +585,7 @@ function ResearchResult({
                   >
                     {eligible
                       ? "Backend eligibility reported: true. Not a trade recommendation."
-                      : "NOT ELIGIBLE FOR CONSIDERATION"}
+                      : "Evidence incomplete — NOT ELIGIBLE FOR CONSIDERATION"}
                   </p>
 
                   <p className="font-mono text-xs text-terminal-400">
@@ -603,9 +665,7 @@ function ResearchResult({
 
                     <ResearchMetric
                       label="Maximum profit"
-                      value={formatMoney(
-                        research?.max_profit
-                      )}
+                      value={research?.max_profit === "unlimited" ? "Unlimited" : formatMoney(research?.max_profit)}
                     />
                   </div>
 
@@ -624,6 +684,9 @@ function ResearchResult({
                   </p>
                 </div>
 
+                <details className="text-xs whitespace-pre-wrap break-words"><summary>Backend evidence, quote timestamps and quality limitations</summary><pre className="whitespace-pre-wrap break-words">{JSON.stringify(research, null, 2)}</pre></details>
+                <ResearchMetric label="Broker buying-power requirement" value="Unavailable — not supplied by backend" />
+                <ResearchMetric label="Risk/reward ratio" value={formatValue(research?.risk_reward_ratio)} />
                 <div className="rounded border border-warning/30 p-4 space-y-3">
                   <h4 className="font-mono text-sm font-bold text-terminal-100">
                     Historical evidence and eligibility
