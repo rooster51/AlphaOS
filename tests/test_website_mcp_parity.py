@@ -1,5 +1,6 @@
 """Fixed synthetic storage -> actual REST/OAuth MCP -> website fixture contract."""
 from copy import deepcopy
+import hashlib
 import json
 from pathlib import Path
 import pytest
@@ -26,13 +27,23 @@ def prepare_storage(storage, symbol):
     repack(storage)
 
 @pytest.mark.parametrize('case', CASES, ids=['spy150','spy500','qqq1dte','qqqweekly','spyweekly'])
-def test_website_fixture_matches_actual_rest_and_mcp(boundary, case):
+@pytest.mark.parametrize('gzip_os', [3, 10], ids=['linux-gzip', 'windows-gzip'])
+def test_website_fixture_matches_actual_rest_and_mcp(boundary, case, gzip_os):
     client, storage, _, _ = boundary
     prepare_storage(storage, case['request']['symbol'])
+    # Python 3.12 gzip.compress(mtime=0) delegates the OS header byte to zlib.
+    # Exercise both platforms; the archive reader must verify the actual bytes.
+    raw = bytearray(storage.raw)
+    raw[9] = gzip_os
+    storage.raw = bytes(raw)
+    checksum = hashlib.sha256(storage.raw).hexdigest()
+    storage.row['archive_sha256'] = checksum
+    expected = deepcopy(case['response'])
+    expected['research']['archive']['storage']['archive_sha256'] = checksum
     response = post(client, 'market', case['request'])
     assert response.status_code == 200
-    assert response.json() == case['response']
+    assert response.json() == expected
     _, tokens = login(client)
     result = call(client, tokens['access_token'], 'run_market', case['request'])
     assert not result.get('isError')
-    assert result['structuredContent'] == case['response']
+    assert result['structuredContent'] == expected
