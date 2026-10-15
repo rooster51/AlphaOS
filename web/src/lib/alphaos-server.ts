@@ -1,6 +1,6 @@
 import { fetchResearchEnvelope, supportedMarketSymbol, verifiedMarketPair } from "./research-evidence";
-import { MarketSnapshot, ResearchCandidate } from "@/types/research";
-import { MOCK_MARKET_SNAPSHOTS, MOCK_CANDIDATES } from "./mock-data";
+import { MarketSnapshot } from "@/types/research";
+import { MOCK_MARKET_SNAPSHOTS } from "./mock-data";
 
 const API_BASE = process.env.ALPHAOS_API_URL || "https://alphaos.onrender.com";
 const API_TOKEN = process.env.ALPHAOS_API_TOKEN || "";
@@ -91,22 +91,4 @@ export async function getMarketSnapshotServer(symbol: string): Promise<{
     isLive: true,
     warning: "Live underlying observation only. Unverified regime dimensions remain unknown.",
   };
-}
-
-/** No fixture candidate ever enters the normal research pathway. */
-export async function getStrategyCandidatesServer(symbol: string): Promise<{
-  candidates: ResearchCandidate[];
-  isLive: boolean;
-}> {
-  const normalized = symbol.toUpperCase();
-  if (normalized !== "ALL") symbolValue(normalized);
-  if (DEMO) {
-    return {
-      candidates: MOCK_CANDIDATES.filter(c => normalized === "ALL" || c.symbol === normalized),
-      isLive: false,
-    };
-  }
-  // The actual /v1/research/market contract is not interchangeable with the
-  // fixture ResearchCandidate schema. Show no candidates until an audited adapter exists.
-  return { candidates: [], isLive: false };
 }

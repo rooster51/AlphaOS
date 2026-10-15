@@ -28,7 +28,7 @@ function parseMarketPayload(value: unknown): MarketPayload | null {
   }
   if (input.available_capital !== undefined) {
     if (typeof input.available_capital !== "number" ||
-        !Number.isFinite(input.available_capital) || input.available_capital < 0) return null;
+        !Number.isFinite(input.available_capital) || input.available_capital <= 0) return null;
     payload.available_capital = input.available_capital;
   }
   if (input.objective !== undefined) {

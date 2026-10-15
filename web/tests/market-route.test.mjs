@@ -117,6 +117,7 @@ test("invalid or malformed request bodies fail before contacting the backend", a
     { symbol: "SPY", expiration: "2026-02-30" },
     { symbol: "SPY", expiration: "0000-01-01" },
     { symbol: "SPY", available_capital: Number.NaN },
+    ...[0, -1, "", "150", null, Infinity].map(available_capital => ({symbol:"SPY", available_capital})),
     { symbol: "SPY", width: 101 },
   ]) {
     const response = await POST(request(body));
@@ -268,4 +269,35 @@ test("consolidated historical economics and history diagnostics survive the webs
   const body = await response.json();
   assert.deepEqual(body.research, data);
   assert.equal(body.verified_for_trading, false);
+});
+
+for (const capital of [100,150,500,2000,150.75]) {
+  test(`forwards buying power ${capital} without altering backend research`, async () => {
+    setBackendConfig();
+    const expected = envelope("SPY");
+    expected.request.available_capital = capital;
+    expected.research.research_session.available_capital = capital;
+    expected.research.research_session.excluded = [{reason:"exceeds_available_capital",required_capital:2500}];
+    globalThis.fetch = async (_, options) => {
+      assert.equal(JSON.parse(options.body).available_capital, capital);
+      return Response.json(expected);
+    };
+    const result=await POST(request({symbol:"SPY",available_capital:capital}));
+    assert.deepEqual((await result.json()).research,expected);
+  });
+}
+
+test("website preserves exact fixed REST/MCP results across symbols and capital amounts", async () => {
+  const { readFileSync } = await import("node:fs");
+  const cases=JSON.parse(readFileSync(new URL("./fixtures/market-parity.json",import.meta.url),"utf8"));
+  setBackendConfig();
+  for (const fixture of cases) {
+    globalThis.fetch=async (_,options) => {
+      assert.deepEqual(JSON.parse(options.body),fixture.request);
+      return Response.json(fixture.response);
+    };
+    const result=await POST(request(fixture.request));
+    assert.equal(result.status,200);
+    assert.deepEqual((await result.json()).research,fixture.response);
+  }
 });

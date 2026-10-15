@@ -136,7 +136,7 @@ for (const symbol of ["SPY", "QQQ"] as const) {
     await expect(page.getByText("120 seconds at request time")).toBeVisible();
     await expect(page.getByText("call debit spread")).toBeVisible();
     await expect(page.getByText(/not a current market quote, executable price/)).toBeVisible();
-    expect(postedBody).toEqual({ symbol });
+    expect(postedBody).toEqual({ symbol, available_capital: 150 });
     await expect(page.getByText(/\bPOP\b|\bEV\b|\$[0-9]+\.[0-9]{2}/)).toHaveCount(0);
     expect(clientErrors).toEqual([]);
   });
@@ -178,6 +178,12 @@ test("v2 research bridge rejects invalid requests and never exposes backend cred
   });
   expect(unsupportedField.status()).toBe(400);
 
+  const legacy = await page.request.get("/api/strategies?symbol=SPY&available_capital=500");
+  expect(legacy.status()).toBe(503);
+  expect(await legacy.json()).toEqual({status:"unavailable",code:"backend_not_configured"});
+  const invalidCapital = await page.request.get("/api/strategies?symbol=SPY&available_capital=");
+  expect(invalidCapital.status()).toBe(400);
+
   // In CI the backend credentials are deliberately absent. The bridge must
   // return a controlled unavailable response rather than leaking a token.
   const unavailable = await page.request.post("/api/research/market", {
@@ -197,4 +203,29 @@ test("unarchived expiration remains specific in the consolidated UI", async ({ p
   }));
   await page.goto("/market?symbol=QQQ");
   await expect(page.getByText("The requested expiration is not present in the verified archive. No different expiration was substituted.")).toBeVisible();
+});
+
+test("buying power reruns use new backend eligibility and archive expiration on mobile", async ({page}) => {
+  await page.setViewportSize({width:390,height:844});
+  const requests: Array<Record<string,unknown>>=[];
+  await page.route("**/api/research/market", async route => {
+    const request=route.request().postDataJSON(); requests.push(request);
+    const { readFileSync } = await import("node:fs");
+    const fixtures=JSON.parse(readFileSync("tests/fixtures/market-parity.json","utf8"));
+    const fixture=fixtures.find((f: any) => f.request.symbol==="SPY" && f.request.available_capital===request.available_capital);
+    const body={source:"alphaos_research_api",verified_for_trading:false,research:fixture.response};
+    await route.fulfill({status:200,json:body});
+  });
+  await page.goto("/strategies?symbol=SPY");
+  await expect(page.getByText("Capital-ineligible",{exact:true}).first()).toBeVisible();
+  await page.getByLabel("Available Buying Power ($)").fill("500");
+  await page.getByLabel("Expiration",{exact:true}).selectOption("2030-01-02");
+  await page.getByRole("button",{name:"Run Research"}).click();
+  await expect(page.getByText("Capital-eligible (backend max-loss filter)",{exact:true}).first()).toBeVisible();
+  expect(requests.at(-1)).toEqual({symbol:"SPY",available_capital:500,expiration:"2030-01-02"});
+  await expect(page.getByText("$500.00",{exact:true})).toBeVisible();
+  await page.getByLabel("Available Buying Power ($)").fill("");
+  await page.getByRole("button",{name:"Run Research"}).click();
+  await expect(page.getByRole("alert").filter({hasText:"Enter a finite positive dollar amount."})).toBeVisible();
+  expect(requests).toHaveLength(2);
 });

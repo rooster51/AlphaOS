@@ -1,10 +1,13 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getStrategyCandidatesServer } from "@/lib/alphaos-server";
-
-export async function GET(request: NextRequest) {
-  const searchParams = request.nextUrl.searchParams;
-  const symbol = searchParams.get("symbol") || "ALL";
-
-  const result = await getStrategyCandidatesServer(symbol);
-  return NextResponse.json(result);
+// Legacy URL now delegates to the same authenticated Release 1 bridge.
+// Explicit symbol/capital/expiration use the same validation and response contract.
+export { POST } from "../research/market/route";
+import { POST } from "../research/market/route";
+export async function GET(request: Request) {
+  const params = new URL(request.url).searchParams;
+  const payload: Record<string, unknown> = {symbol: params.get("symbol")};
+  for (const key of ["available_capital", "width"]) {
+    if (params.has(key)) payload[key] = params.get(key)?.trim() ? Number(params.get(key)) : null;
+  }
+  if (params.has("expiration")) payload.expiration = params.get("expiration");
+  return POST(new Request(request.url, {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(payload)}));
 }
