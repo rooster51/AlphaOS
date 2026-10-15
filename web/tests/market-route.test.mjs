@@ -2,6 +2,78 @@ import assert from "node:assert/strict";
 import { afterEach, test } from "node:test";
 import { POST } from "../src/app/api/research/market/route.ts";
 
+test("historical mode is explicit and preserves the full backend envelope for SPY and QQQ", async () => {
+  setBackendConfig();
+  for (const symbol of ["SPY", "QQQ"]) {
+    for (const capital of [150, 500]) {
+      const data = envelope(symbol);
+      data.request.research_mode = "historical";
+      data.research.research_mode = "historical";
+      data.research.archive.provider = "Public";
+      data.research.archive.freshness = {age_seconds: 172800, max_age_seconds: null};
+      globalThis.fetch = async (_, options) => {
+        assert.deepEqual(JSON.parse(options.body), {symbol, research_mode:"historical", available_capital:capital});
+        return Response.json(data);
+      };
+      const result = await POST(request({symbol, research_mode:"historical", available_capital:capital}));
+      assert.equal(result.status, 200);
+      const body = await result.json();
+      assert.deepEqual(body.research, data);
+      assert.equal(body.verified_for_trading, false);
+    }
+  }
+});
+
+test("historical requests cannot accept a current response or missing archive provenance", async () => {
+  setBackendConfig();
+  const data = envelope();
+  for (const defect of ["mode", "age", "source"]) {
+    const response = structuredClone(data);
+    response.request.research_mode = "historical";
+    response.research.research_mode = "historical";
+    response.research.archive.provider = "Public";
+    response.research.archive.freshness = {age_seconds:10000,max_age_seconds:null};
+    if (defect === "mode") response.research.research_mode = "current";
+    if (defect === "age") response.research.archive.freshness.age_seconds = -1;
+    if (defect === "source") delete response.research.archive.provider;
+    globalThis.fetch = async () => Response.json(response);
+    const result = await POST(request({symbol:"QQQ",research_mode:"historical"}));
+    assert.equal(result.status, 502);
+    assert.equal((await result.json()).code, "response_schema_mismatch");
+  }
+  data.request.research_mode = "historical";
+  data.research.research_mode = "historical";
+  globalThis.fetch = async () => Response.json(data);
+  assert.equal((await POST(request({symbol:"QQQ"}))).status, 502);
+});
+
+test("invalid research modes fail before any backend access", async () => {
+  globalThis.fetch = async () => { throw new Error("Must not fetch"); };
+  for (const research_mode of ["auto", "live", "", null, 42]) {
+    assert.equal((await POST(request({symbol:"SPY",research_mode}))).status, 400);
+  }
+});
+
+for (const [status, upstreamCode, expectedCode] of [
+  [503, "archive_stale", "archive_stale"],
+  [503, "archive_missing", "archive_missing"],
+  [503, "archive_unavailable", "archive_unavailable"],
+  [503, "api_not_configured", "backend_api_not_configured"],
+  [500, "internal_error", "backend_internal_error"],
+  [404, "not_found", "backend_endpoint_unavailable"],
+  [429, "http_error", "backend_rate_limited"],
+  [503, null, "backend_service_unavailable"],
+]) {
+  test(`upstream ${status}/${upstreamCode} has a safe specific website error`, async () => {
+    setBackendConfig();
+    globalThis.fetch = async () => upstreamCode
+      ? Response.json({error:{code:upstreamCode,message:"sensitive diagnostic"}}, {status})
+      : new Response("sensitive gateway page", {status});
+    const response = await POST(request({symbol:"SPY"}));
+    assert.deepEqual(await response.json(), {status:"unavailable",code:expectedCode});
+  });
+}
+
 const originalToken = process.env.ALPHAOS_API_TOKEN;
 const originalUrl = process.env.ALPHAOS_API_URL;
 const originalFetch = globalThis.fetch;

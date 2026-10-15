@@ -80,7 +80,7 @@ def run_market(payload, *, expiration=None, history=None, session_context=None,
     }
 
 
-def run_latest_market(symbol, *, as_of, read_snapshot, **research_context):
+def run_latest_market(symbol, *, as_of, read_snapshot, research_mode='current', **research_context):
     """Read-only I/O boundary; injected reader owns storage and freshness policy.
 
     Bind supabase_archive.read_latest_option_snapshot to a client and an explicit
@@ -88,6 +88,8 @@ def run_latest_market(symbol, *, as_of, read_snapshot, **research_context):
     incomplete intraday candles are not silently aggregated into daily evidence.
     """
     symbol = str(symbol).strip().upper()
+    if research_mode not in ('current', 'historical'):
+        raise ValueError('Invalid research mode.')
     now = aware_time(as_of)
     if now is None:
         raise ValueError('Timezone-aware request time required.')
@@ -100,7 +102,7 @@ def run_latest_market(symbol, *, as_of, read_snapshot, **research_context):
     if observed is None or observed > now or (finished and finished > now):
         raise ValueError('Reader returned future observations.')
     result = run_market(payload, **research_context)
-    if date.fromisoformat(result['expiration']) < now.astimezone(ZoneInfo('America/New_York')).date():
+    if research_mode == 'current' and date.fromisoformat(result['expiration']) < now.astimezone(ZoneInfo('America/New_York')).date():
         raise ValueError('Latest archive expiration precedes the request date; use historical run_market explicitly.')
     result['requested_as_of'] = now.isoformat()
     result['archive']['storage'] = deepcopy(record.get('metadata'))

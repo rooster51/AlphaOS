@@ -1,5 +1,55 @@
 import { expect, test } from "@playwright/test";
 
+for (const symbol of ["SPY", "QQQ"] as const) {
+  test(`${symbol} stale current research requires explicit historical mode and stays non-executable`, async ({page}) => {
+    const requests: Array<Record<string, unknown>> = [];
+    await page.route("**/api/research/market", async route => {
+      const request = route.request().postDataJSON(); requests.push(request);
+      if (request.research_mode !== "historical") {
+        await route.fulfill({status:502,json:{status:"unavailable",code:"archive_stale"}});
+        return;
+      }
+      const {readFileSync} = await import("node:fs");
+      const fixtures = JSON.parse(readFileSync("tests/fixtures/market-parity.json", "utf8"));
+      const fixture = fixtures.find((f: any) => f.request.symbol === symbol && f.request.available_capital === request.available_capital);
+      const data = structuredClone(fixture.response);
+      data.request.research_mode = "historical";
+      data.research.research_mode = "historical";
+      data.research.archive.freshness = {age_seconds:172800, max_age_seconds:null};
+      await route.fulfill({json:{source:"alphaos_research_api",verified_for_trading:false,research:data}});
+    });
+    await page.goto(`/market?symbol=${symbol}`);
+    await expect(page.getByText("The latest verified options archive is stale. No older snapshot or live data was substituted.")).toBeVisible();
+    expect(requests).toHaveLength(1);
+    await page.getByLabel("Research mode",{exact:true}).selectOption("historical");
+    await page.getByRole("button",{name:"Run Research"}).click();
+    await expect(page.getByText(/HISTORICAL ARCHIVE RESEARCH — candidates describe/)).toBeVisible();
+    await expect(page.getByText("172800 seconds at request time")).toBeVisible();
+    await expect(page.getByText("Public",{exact:true}).first()).toBeVisible();
+    await expect(page.getByText(/^CURRENT-MARKET RESEARCH —/)).toHaveCount(0);
+    expect(requests.at(-1)).toEqual({symbol,research_mode:"historical",available_capital:150});
+    if (symbol === "SPY") {
+      await expect(page.getByText("Capital-ineligible",{exact:true}).first()).toBeVisible();
+      await page.getByLabel("Available Buying Power ($)").fill("500");
+      await page.getByRole("button",{name:"Run Research"}).click();
+      await expect(page.getByText("$500.00",{exact:true})).toBeVisible();
+      expect(requests.at(-1)).toEqual({symbol,research_mode:"historical",available_capital:500});
+    }
+    // Changing the control alone never relabels the already returned historical result.
+    await page.getByLabel("Research mode",{exact:true}).selectOption("current");
+    await expect(page.getByText(/HISTORICAL ARCHIVE RESEARCH — candidates describe/)).toBeVisible();
+    await page.getByRole("button",{name:"Run Research"}).click();
+    await expect(page.getByText("The latest verified options archive is stale. No older snapshot or live data was substituted.")).toBeVisible();
+  });
+}
+
+test("known backend service errors display specific safe messages", async ({page}) => {
+  await page.route("**/api/research/market", route => route.fulfill({status:502,
+    json:{status:"unavailable",code:"backend_service_unavailable"}}));
+  await page.goto("/market?symbol=SPY");
+  await expect(page.getByText("The backend service is temporarily unavailable or starting up. Wait briefly and retry.")).toBeVisible();
+});
+
 function collectBrowserErrors(page: import("@playwright/test").Page) {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));

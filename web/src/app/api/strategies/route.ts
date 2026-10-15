@@ -9,5 +9,6 @@ export async function GET(request: Request) {
     if (params.has(key)) payload[key] = params.get(key)?.trim() ? Number(params.get(key)) : null;
   }
   if (params.has("expiration")) payload.expiration = params.get("expiration");
+  if (params.has("research_mode")) payload.research_mode = params.get("research_mode");
   return POST(new Request(request.url, {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(payload)}));
 }

@@ -36,6 +36,13 @@ quality and availability. Missing, stale or inconsistent evidence fails closed;
 there is no direct Public fallback, archive repair or write. A partial latest
 snapshot remains visibly partial rather than being replaced with older evidence.
 
+Current mode remains the default and enforces that freshness ceiling. Explicit
+`research_mode='historical'` on the archive reader and `run_latest_market` allows
+the same verified latest snapshot to be researched after the age ceiling or its
+expiration has passed. All integrity and availability checks remain active.
+REST and MCP expose the same explicit mode through `MarketRequest`; see
+[Release 1 after-hours research](RELEASE1_AFTER_HOURS_RESEARCH.md).
+
 `requested_as_of` is separate from archive `as_of`, `slot_time`, collection finish,
 per-chain response times and provider quote timestamps. Freshness age is measured
 conservatively from collection start. No quote timestamp is invented when only

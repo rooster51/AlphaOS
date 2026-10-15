@@ -8,12 +8,14 @@ import { Header } from "@/components/shell/Header";
 import { StatusPill } from "@/components/shell/StatusPill";
 
 type MarketSymbol = "SPY" | "QQQ";
+type ResearchMode = "current" | "historical";
 
 type ResearchBundle = {
   archive: Record<string, unknown>;
   session: Record<string, unknown>;
   provenance: Record<string, unknown>;
   caveats: unknown;
+  mode: ResearchMode;
 };
 
 type LoadState =
@@ -44,6 +46,11 @@ const ERROR_MESSAGES: Record<string, string> = {
     "The requested expiration is not present in the verified archive. No different expiration was substituted.",
   backend_rejected_request:
     "The backend rejected the research request.",
+  backend_api_not_configured: "The research API is not configured on the backend.",
+  backend_internal_error: "The backend could not complete research. Retry; no research evidence was accepted.",
+  backend_endpoint_unavailable: "The configured backend does not provide this research endpoint. Check the backend deployment and URL.",
+  backend_rate_limited: "The backend is rate limiting research requests. Wait briefly and retry.",
+  backend_service_unavailable: "The backend service is temporarily unavailable or starting up. Wait briefly and retry.",
   backend_http_error:
     "The backend returned an unsuccessful research response.",
   response_schema_mismatch:
@@ -64,7 +71,8 @@ function object(value: unknown): Record<string, unknown> | null {
 
 function parseResearchBundle(
   value: unknown,
-  symbol: MarketSymbol
+  symbol: MarketSymbol,
+  mode: ResearchMode
 ): ResearchBundle | null {
   const outer = object(value);
   const envelope = object(outer?.research);
@@ -91,8 +99,10 @@ function parseResearchBundle(
   ) {
     return null;
   }
+  if (mode === "historical" && (request?.research_mode !== mode || research?.research_mode !== mode)) return null;
+  if (mode === "current" && research?.research_mode === "historical") return null;
 
-  return { archive, session, provenance, caveats: envelope.caveats };
+  return { archive, session, provenance, caveats: envelope.caveats, mode };
 }
 
 function displayDate(value: unknown): string {
@@ -189,10 +199,11 @@ export function MarketResearchPanel({
 }) {
   const [attempt, setAttempt] = useState(0);
   const [capital, setCapital] = useState("150");
+  const [mode, setMode] = useState<ResearchMode>("current");
   const [expiration, setExpiration] = useState("");
   const [expirations, setExpirations] = useState<string[]>([]);
   const [inputError, setInputError] = useState("");
-  const [submitted, setSubmitted] = useState<{available_capital: number; expiration?: string}>({available_capital: 150});
+  const [submitted, setSubmitted] = useState<{available_capital: number; expiration?: string; research_mode?: ResearchMode}>({available_capital: 150});
   const [state, setState] = useState<LoadState>({
     kind: "loading",
   });
@@ -254,7 +265,7 @@ export function MarketResearchPanel({
           return;
         }
 
-        const bundle = parseResearchBundle(body, symbol);
+        const bundle = parseResearchBundle(body, symbol, submitted.research_mode ?? "current");
 
         if (!bundle) {
           if (active) {
@@ -329,8 +340,15 @@ export function MarketResearchPanel({
           const amount = buyingPower(capital);
           if (amount === null) { setInputError("Enter a finite positive dollar amount."); return; }
           setInputError("");
-          setSubmitted({ available_capital: amount, ...(expiration ? {expiration} : {}) });
+          setSubmitted({ available_capital: amount, ...(expiration ? {expiration} : {}), ...(mode === "historical" ? {research_mode: mode} : {}) });
         }}>
+          <label className="grid gap-2">Research mode
+            <select className="rounded bg-terminal-900 border border-terminal-600 p-2" aria-label="Research mode"
+              value={mode} onChange={e => setMode(e.target.value as ResearchMode)}>
+              <option value="current">Current-market research (strict freshness)</option>
+              <option value="historical">Historical archive research</option>
+            </select>
+          </label>
           <label className="grid gap-2">Available Buying Power ($)
             <input className="rounded bg-terminal-900 border border-terminal-600 p-2" aria-label="Available Buying Power ($)"
               inputMode="decimal" value={capital} onChange={e => setCapital(e.target.value)} />
@@ -345,6 +363,7 @@ export function MarketResearchPanel({
           <button className="rounded border border-terminal-600 px-4 py-2" disabled={state.kind === "loading"}>Run Research</button>
           {inputError && <p role="alert">{inputError}</p>}
           <p className="text-xs text-terminal-400 w-full">Capital is an expiration maximum-loss ceiling, not account equity or broker margin. Expiration choices come from the last verified backend response; availability is rechecked on each run. Default spread width: 5 points, matching MCP.</p>
+          <p className="text-xs text-terminal-400 w-full">Historical archive research must be requested explicitly. It uses the latest verified snapshot at its original observation time, including after close, weekends and holidays. Historical candidates are not current trading opportunities or executable quotes.</p>
         </form>
 
         <p className="border border-terminal-800 bg-terminal-900 p-4 font-mono text-xs text-terminal-300">
@@ -463,8 +482,15 @@ function ResearchResult({
           }
         />
       </div>
+      <p className="rounded border border-warning/30 p-4 font-mono text-sm">
+        {bundle.mode === "historical"
+          ? "HISTORICAL ARCHIVE RESEARCH — candidates describe the archived observation, not current trading opportunities or executable quotes."
+          : "CURRENT-MARKET RESEARCH — strict archive freshness; archived observations are not executable quotes."}
+      </p>
 
       <div className="grid gap-3 sm:grid-cols-2">
+        <ResearchMetric label="Archive source" value={formatValue(bundle.archive.provider)} />
+        <ResearchMetric label="Archive expiration" value={formatValue(session.expiration)} />
         <ResearchMetric
           label="Archive observation"
           value={observationAt}
