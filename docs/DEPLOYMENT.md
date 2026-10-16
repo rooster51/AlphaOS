@@ -29,6 +29,16 @@ cache or fallback. The collector still uses raw-response `DailyPublicProvider` a
 See [the provider trace and migration boundaries](PROVIDER_CONSOLIDATION.md).
 This is a source-code update, not a fresh Render audit or deployment.
 
+## Release 1.5C dependency review
+
+No manifest, version, package scope or service configuration changed. The
+[legacy contract/dependency review](LEGACY_CONTRACTS_DEPENDENCIES.md) records
+actual direct imports currently supplied transitively and why isolated API/UI/
+collector installs are required before changing declarations in Release 1.5D.
+The existing development environment's Supabase 2.31.0 differs from the collector
+manifest's 2.32.0 pin; full fake-client tests are not a fresh collector install
+certification. This is not a new production service audit.
+
 ## Actual application dependencies
 
 ```mermaid
@@ -72,7 +82,7 @@ successful process-health response is not proof of authenticated market evidence
 | API deployment | `requirements-api.txt`: FastAPI, Uvicorn, pandas, NumPy, python-dateutil, publicdotcom-py 0.1.17, pandas-market-calendars 5.4.0, tzdata, MCP 2.2.0, Supabase 2.x. No Streamlit/Plotly install is required by the headless request path. |
 | Collector | `requirements-daily.txt`: NumPy, pandas, pinned Public SDK/calendar and Supabase 2.32.0. A distinct install scope, not a redundant copy of API requirements. |
 | Streamlit | `requirements.txt`: Streamlit, Plotly, Supabase, pandas, NumPy, dateutil, pinned Public SDK/calendar. Retained for legacy UI and UI tests. |
-| Shared/transitive imports | Application code also imports `pydantic`, `starlette`, `httpx`, `mcp_types` and `requests`, supplied transitively by current declared packages. Explicit direct constraints/locking need separate compatibility testing, not silent removal here. |
+| Shared/transitive imports | Application code also imports `pydantic`, `starlette`, `httpx` and `mcp_types`, supplied transitively by current declared packages. `requests` is an internal Public SDK dependency; no direct tracked Python import was found in the 1.5C review. Explicit direct constraints/locking need separate compatibility testing, not silent removal here. |
 | Python version | CI reads `.python-version` (3.12.14). `runtime.txt` says `python-3.12`; the legacy devcontainer still uses Python 3.11. Configuration is preserved; alignment is a separate migration. |
 | Website | Node 22 in CI/deployment instructions; Next 16.4.0, React/React DOM 18, clsx, lucide-react, tailwind-merge. TypeScript, Tailwind/PostCSS and Playwright are build/test dependencies; use committed `package-lock.json` and `npm ci`. React 18 deprecation and the legacy `next lint` script require separate tooling review. |
 | CI | `.github/workflows/tests.yml` installs both Python requirement scopes and pytest; the web job runs dependency audits, typecheck, unit/contract tests, production build and Chromium tests. Existing reviewed dev-tool audit exceptions remain unchanged. |

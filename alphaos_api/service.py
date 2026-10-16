@@ -14,7 +14,7 @@ from modules.premium_engine import generate
 from modules.public_provider import provider_error
 from modules.history_diagnostics import HistoryError
 from modules.symbol_registry import SYMBOLS, instrument, metadata as instrument_metadata
-from .contracts import APIError,SCHEMA_VERSION,CAVEATS
+from .contracts import APIError,SCHEMA_VERSION,CAVEATS,friction
 from modules.option_quote_quality import option_quality
 from .cache import TTLStore
 from .provider import MarketProvider
@@ -243,6 +243,13 @@ class ResearchService:
         if req.credit>=width:raise APIError('invalid_vertical_credit')
         return dict(symbol=symbol,expiration=expiration,spot=req.spot,stock_basis=req.spot,credit=req.credit,
             legs=legs,shares=0,fees=0,strategy='Explicit vertical credit spread',source='Explicit user input; no quote inferred')
+
+    def research_explicit_trade(self,req):
+        """Shared explicit-input workflow; callers retain their response contracts."""
+        trade=self.manual_trade(req)
+        bundle=self.snapshot(req.symbol,req.horizon,req.spot)
+        result=self.research(bundle,trade,req.method,**friction(req))
+        return bundle,trade,result
 
     def research(self,bundle,trade,method='tolerance',**friction):
         if bundle['source']=='Public':self.require_quote(bundle['quote'],live=True)

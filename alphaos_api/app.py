@@ -148,8 +148,7 @@ def research_candidate(candidate_id:str):return respond(app.state.service.candid
 
 @router.post('/trade/research',response_model=ResearchResponse,operation_id='research_explicit_trade')
 def research_explicit_trade(req:TradeRequest):
-    service=app.state.service;trade=service.manual_trade(req);s=service.snapshot(req.symbol,req.horizon,req.spot)
-    r=service.research(s,trade,req.method,**friction(req))
+    service=app.state.service;s,trade,r=service.research_explicit_trade(req)
     return respond(service.envelope(service.evidence(r,trade),s))
 
 
