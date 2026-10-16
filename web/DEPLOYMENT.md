@@ -1,5 +1,11 @@
 # Web hosting
 
+Current service, backend and dependency ownership is documented in
+[the audited deployment map](../docs/DEPLOYMENT.md) and
+[architecture inventory](../docs/ARCHITECTURE.md). The live website service is
+named `alphaos-web-staging`; its name alone does not identify an unused preview.
+This document describes setup, not authorization to deploy or change settings.
+
 Run this app as a Node.js 22 Next.js web service. Do not configure a static
 export: server-rendered pages and the `/api` routes need a server runtime.
 Render is the simplest fit with the existing backend; configure the web service
@@ -33,6 +39,13 @@ no `ALL` aggregate or legacy fixture candidate schema). Capital exclusions remai
 visible with their backend research objects. Capital eligibility is distinct from
 historical evidence eligibility, execution readiness, and broker buying power.
 All backend warnings remain available; missing metrics remain unavailable.
+
+### Historical PR #42 deployment note
+
+The paragraph below records the website-only scope of PR #42. Later PRs #43/#44
+changed the shared backend contract; do not use this dated note to decide that
+a future release needs only a website deployment. Review the current dependency
+map and both service commits before a separately authorized deployment.
 
 After review and approval, publish this feature commit and deploy the website
 only using `cd web && npm ci && npm run build` and `cd web && npm start`.

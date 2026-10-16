@@ -1,3 +1,12 @@
+# Historical staging setup record
+
+The setup below and `render.staging.yaml` are not a live Render configuration
+export. The audited staging branch/commit differs from that Blueprint; see
+[DEPLOYMENT.md](DEPLOYMENT.md). This consolidation does not reconcile or apply
+configuration and does not alter the retained staging service.
+
+---
+
 # AlphaOS staging research API on Render
 
 `render.staging.yaml` defines a separate, read-only API service on the `web/research-api-integration` branch. It uses the existing Python API deployment entry point (`python -m alphaos_api`), the API-only dependency manifest, and `/health` as its process health check. It does not define, change, or deploy the production API or MCP service.

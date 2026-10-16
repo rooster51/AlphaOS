@@ -11,7 +11,7 @@ from fastapi.responses import JSONResponse
 from modules.daily_archive import json_value
 from modules.price_structure import nearest_levels
 from modules.forward_distribution import summarize_forward_distribution
-from .contracts import APIError,TradeRequest,CompareRequest,ResearchResponse,ErrorResponse,SCHEMA_VERSION
+from .contracts import APIError,TradeRequest,CompareRequest,ResearchResponse,ErrorResponse,SCHEMA_VERSION,friction
 from .service import ResearchService,symbol_value,horizon_value
 from .config import load_secret_files
 
@@ -144,9 +144,6 @@ def scan_credit_spreads(symbol:str,strategy:Literal['pcs','ccs','both']='both',e
 
 @router.get('/candidates/{candidate_id}',response_model=ResearchResponse,operation_id='research_candidate')
 def research_candidate(candidate_id:str):return respond(app.state.service.candidate(candidate_id))
-
-
-def friction(req):return {k:getattr(req,k) for k in ('commission_per_contract','entry_slippage','terminal_friction')}
 
 
 @router.post('/trade/research',response_model=ResearchResponse,operation_id='research_explicit_trade')

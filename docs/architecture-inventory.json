@@ -1,0 +1,3326 @@
+{
+  "baseline": "d1c9e087a3dbf09490fd113d095c004fecdac738",
+  "counts": {
+    "mcp_tools": 17,
+    "python_files": 169,
+    "python_test_files": 57,
+    "rest_operations": 19,
+    "tracked_files": 272
+  },
+  "dependency_files": [
+    ".python-version",
+    "requirements-api.txt",
+    "requirements-daily.txt",
+    "requirements.txt",
+    "runtime.txt",
+    "web/package-lock.json",
+    "web/package.json"
+  ],
+  "disabled_pages": [
+    "disabled_pages/2_Market_Pulse.py",
+    "disabled_pages/3_Flow_and_Rotation.py",
+    "disabled_pages/6_Trade_Journal.py",
+    "disabled_pages/7_PnL_Dashboard.py"
+  ],
+  "docs": [
+    "ALPHAOS_2_BUILD_STATUS.md",
+    "README.md",
+    "docs/ALPHAOS2_API_MCP.md",
+    "docs/ARCHITECTURE.md",
+    "docs/DEPLOYMENT.md",
+    "docs/HISTORICAL_ECONOMICS.md",
+    "docs/HISTORICAL_ECONOMICS_INTEGRATION.md",
+    "docs/MARKET_ECONOMICS_INTEGRATION.md",
+    "docs/MCP.md",
+    "docs/MCP_AUDIT.md",
+    "docs/PRODUCTION_READINESS.md",
+    "docs/QUOTE_FRESHNESS.md",
+    "docs/RELEASE1_AFTER_HOURS_RESEARCH.md",
+    "docs/RELEASE1_CANDIDATE_GENERATION_DIAGNOSTICS.md",
+    "docs/RELEASE1_CONSOLIDATION.md",
+    "docs/RELEASE1_GATE.md",
+    "docs/RELEASE1_NO_CANDIDATE_DIAGNOSIS.md",
+    "docs/RELEASE_RECONCILIATION.md",
+    "docs/RESEARCH_API.md",
+    "docs/alphaos2_archive_research.md",
+    "docs/alphaos2_trade_ledger.md",
+    "docs/architecture-branches.json",
+    "docs/architecture-inventory.json",
+    "docs/daily_quant_schema.md",
+    "docs/historical_analogs.md",
+    "docs/intraday_scheduler.md",
+    "docs/market_state.md",
+    "docs/option_scenario_ev.md",
+    "docs/phase6_research.md",
+    "docs/public_history_debugging.md",
+    "docs/release1_pr_inventory.json",
+    "docs/render_staging_backend.md",
+    "docs/selector_quant_workflow.md",
+    "docs/threshold_survival.md",
+    "web/DEPLOYMENT.md"
+  ],
+  "duplicate_function_body_candidates": [
+    [
+      "modules/options_income.py:_mid",
+      "modules/options_suggestions.py:_mid"
+    ],
+    [
+      "modules/public_data.py:_as_float",
+      "modules/public_provider.py:_as_float"
+    ],
+    [
+      "modules/public_data.py:_normalize_public_symbol",
+      "modules/public_provider.py:_normalize_public_symbol"
+    ],
+    [
+      "modules/public_data.py:_option_quote_row",
+      "modules/public_provider.py:_option_quote_row"
+    ],
+    [
+      "modules/public_data.py:_order_instrument",
+      "modules/public_provider.py:_order_instrument"
+    ],
+    [
+      "modules/strategy_compare.py:_number",
+      "modules/structure_research.py:_number"
+    ]
+  ],
+  "limitations": [
+    "Static imports include lazy/conditional paths; reachability is not proof of runtime use.",
+    "Dynamic Streamlit page discovery is included as explicit roots.",
+    "String references, external consumers and compatibility contracts require manual review.",
+    "Duplicate function bodies may depend on different globals or validation rules; never auto-merge."
+  ],
+  "mcp": [
+    {
+      "name": "market_snapshot",
+      "signature": "symbol: Symbol, horizon: Horizon=3, snapshot_id: str | None=None",
+      "targets": [
+        "'/v1/market/' + quote(symbol, safe='')"
+      ]
+    },
+    {
+      "name": "price_structure",
+      "signature": "symbol: Symbol, levels: Annotated[int, Field(ge=1, le=10)]=3, horizon: Horizon=3, snapshot_id: str | None=None",
+      "targets": [
+        "'/v1/structure/' + quote(symbol, safe='')"
+      ]
+    },
+    {
+      "name": "forward_distribution",
+      "signature": "symbol: Symbol, horizon: Horizon=3, snapshot_id: str | None=None",
+      "targets": [
+        "'/v1/distribution/' + quote(symbol, safe='')"
+      ]
+    },
+    {
+      "name": "live_quote",
+      "signature": "symbol: Symbol",
+      "targets": [
+        "'/v1/quote/' + quote(symbol, safe='')"
+      ]
+    },
+    {
+      "name": "option_expirations",
+      "signature": "symbol: Symbol",
+      "targets": [
+        "'/v1/options/' + quote(symbol, safe='') + '/expirations'"
+      ]
+    },
+    {
+      "name": "scan_credit_spreads",
+      "signature": "symbol: Symbol, strategy: Literal['pcs', 'ccs', 'both']='both', expiration: date | None=None, dte_min: Annotated[int, Field(ge=0, le=180)]=1, dte_max: Annotated[int, Field(ge=0, le=180)]=7, research_horizon: Horizon=3, maximum_short_distance: Annotated[float, Field(gt=0, le=0.25, allow_inf_nan=False)]=0.05, minimum_credit: Annotated[float, Field(ge=0, allow_inf_nan=False)]=0.05, maximum_candidates: Annotated[int, Field(ge=1, le=100)]=20, wing_width: Annotated[float | None, Field(gt=0, le=100, allow_inf_nan=False)]=None, refresh: bool=False",
+      "targets": [
+        "'/v1/options/' + quote(symbol, safe='') + '/scan'"
+      ]
+    },
+    {
+      "name": "research_candidate",
+      "signature": "candidate_id: Annotated[str, Field(max_length=100)]",
+      "targets": [
+        "'/v1/candidates/' + quote(candidate_id, safe='')"
+      ]
+    },
+    {
+      "name": "research_vertical",
+      "signature": "symbol: Symbol, expiration: date, option_type: Literal['put', 'call'], short_strike: Positive, long_strike: Positive, horizon: Horizon=3, refresh: bool=False",
+      "targets": [
+        "'/v1/options/' + quote(symbol, safe='') + '/vertical'"
+      ]
+    },
+    {
+      "name": "research_explicit_trade",
+      "signature": "trade: TradeRequest",
+      "targets": [
+        "'/v1/trade/research'"
+      ]
+    },
+    {
+      "name": "compare_trades",
+      "signature": "comparison: CompareRequest",
+      "targets": [
+        "'/v1/trade/compare'"
+      ]
+    },
+    {
+      "name": "run_symbol_research",
+      "signature": "symbol: Symbol, mode: Literal['run', 'overview', 'find']='run', horizon: Horizon=3, strategy: Literal['pcs', 'ccs', 'both']='both', expiration: date | None=None, dte_min: Annotated[int, Field(ge=0, le=180)]=1, dte_max: Annotated[int, Field(ge=0, le=180)]=7, maximum_candidates: Annotated[int, Field(ge=1, le=10)]=4, minimum_credit: Annotated[float, Field(ge=0, allow_inf_nan=False)]=0.05, wing_width: Annotated[float | None, Field(gt=0, le=100, allow_inf_nan=False)]=None, refresh: bool=False",
+      "targets": [
+        "'/v1/research/' + quote(symbol, safe='') + '/run'"
+      ]
+    },
+    {
+      "name": "unified_candidate_research",
+      "signature": "candidate_id: Annotated[str, Field(max_length=100)], include_advanced: bool=False",
+      "targets": [
+        "'/v1/research/candidates/' + quote(candidate_id, safe='')"
+      ]
+    },
+    {
+      "name": "unified_vertical_research",
+      "signature": "symbol: Symbol, expiration: date, option_type: Literal['put', 'call'], short_strike: Positive, long_strike: Positive, horizon: Horizon=3, refresh: bool=False, include_advanced: bool=False",
+      "targets": [
+        "'/v1/research/' + quote(symbol, safe='') + '/vertical'"
+      ]
+    },
+    {
+      "name": "unified_explicit_trade_research",
+      "signature": "trade: TradeRequest, include_advanced: bool=False",
+      "targets": [
+        "'/v1/research/trade'"
+      ]
+    },
+    {
+      "name": "run_market",
+      "signature": "symbol: Literal['QQQ', 'SPY'], expiration: date | None=None, research_mode: Literal['current', 'historical']='current', available_capital: Annotated[float | None, Field(gt=0, strict=True, allow_inf_nan=False)]=None, objective: Annotated[str | None, Field(max_length=1000)]=None, width: Annotated[float, Field(gt=0, le=100, allow_inf_nan=False)]=5",
+      "targets": [
+        "'/v1/research/market'"
+      ]
+    },
+    {
+      "name": "research_structure",
+      "signature": "structure: StructureRequest",
+      "targets": [
+        "'/v1/research/structure'"
+      ]
+    },
+    {
+      "name": "compare_structures",
+      "signature": "comparison: StructuresRequest",
+      "targets": [
+        "'/v1/research/structures/compare'"
+      ]
+    }
+  ],
+  "missing_tracked_files": [],
+  "python": {
+    "alphaos_api": {
+      "external_import_roots": [],
+      "imports": [],
+      "lazy_imports": [],
+      "path": "alphaos_api/__init__.py",
+      "reached_from": []
+    },
+    "alphaos_api.__main__": {
+      "external_import_roots": [
+        "uvicorn"
+      ],
+      "imports": [
+        "alphaos_api.config"
+      ],
+      "lazy_imports": [],
+      "path": "alphaos_api/__main__.py",
+      "reached_from": [
+        "api",
+        "tests"
+      ]
+    },
+    "alphaos_api.app": {
+      "external_import_roots": [
+        "fastapi",
+        "starlette"
+      ],
+      "imports": [
+        "alphaos_api.config",
+        "alphaos_api.contracts",
+        "alphaos_api.mcp_server",
+        "alphaos_api.phase9_routes",
+        "alphaos_api.research2",
+        "alphaos_api.service",
+        "modules.daily_archive",
+        "modules.forward_distribution",
+        "modules.price_structure"
+      ],
+      "lazy_imports": [],
+      "path": "alphaos_api/app.py",
+      "reached_from": [
+        "api",
+        "tests"
+      ]
+    },
+    "alphaos_api.cache": {
+      "external_import_roots": [],
+      "imports": [],
+      "lazy_imports": [],
+      "path": "alphaos_api/cache.py",
+      "reached_from": [
+        "api",
+        "tests"
+      ]
+    },
+    "alphaos_api.config": {
+      "external_import_roots": [],
+      "imports": [],
+      "lazy_imports": [],
+      "path": "alphaos_api/config.py",
+      "reached_from": [
+        "api",
+        "cli",
+        "tests"
+      ]
+    },
+    "alphaos_api.contracts": {
+      "external_import_roots": [
+        "pydantic"
+      ],
+      "imports": [],
+      "lazy_imports": [],
+      "path": "alphaos_api/contracts.py",
+      "reached_from": [
+        "api",
+        "archive_contract",
+        "tests"
+      ]
+    },
+    "alphaos_api.mcp_auth": {
+      "external_import_roots": [
+        "httpx",
+        "mcp",
+        "pydantic",
+        "starlette"
+      ],
+      "imports": [
+        "alphaos_api.protocol_diagnostics"
+      ],
+      "lazy_imports": [],
+      "path": "alphaos_api/mcp_auth.py",
+      "reached_from": [
+        "api",
+        "tests"
+      ]
+    },
+    "alphaos_api.mcp_server": {
+      "external_import_roots": [
+        "httpx",
+        "mcp",
+        "mcp_types",
+        "pydantic"
+      ],
+      "imports": [
+        "alphaos_api.contracts",
+        "alphaos_api.mcp_auth",
+        "alphaos_api.protocol_diagnostics",
+        "alphaos_api.research2"
+      ],
+      "lazy_imports": [],
+      "path": "alphaos_api/mcp_server.py",
+      "reached_from": [
+        "api",
+        "tests"
+      ]
+    },
+    "alphaos_api.phase9": {
+      "external_import_roots": [],
+      "imports": [
+        "alphaos_api.contracts",
+        "alphaos_api.service",
+        "modules.price_structure",
+        "modules.quote_freshness",
+        "modules.symbol_registry",
+        "modules.unified_trade"
+      ],
+      "lazy_imports": [
+        "modules.quote_freshness"
+      ],
+      "path": "alphaos_api/phase9.py",
+      "reached_from": [
+        "api",
+        "tests"
+      ]
+    },
+    "alphaos_api.phase9_contracts": {
+      "external_import_roots": [
+        "pydantic"
+      ],
+      "imports": [],
+      "lazy_imports": [],
+      "path": "alphaos_api/phase9_contracts.py",
+      "reached_from": [
+        "api",
+        "tests"
+      ]
+    },
+    "alphaos_api.phase9_routes": {
+      "external_import_roots": [
+        "fastapi"
+      ],
+      "imports": [
+        "alphaos_api.contracts",
+        "alphaos_api.phase9",
+        "alphaos_api.phase9_contracts",
+        "modules.unified_trade"
+      ],
+      "lazy_imports": [],
+      "path": "alphaos_api/phase9_routes.py",
+      "reached_from": [
+        "api",
+        "tests"
+      ]
+    },
+    "alphaos_api.protocol_diagnostics": {
+      "external_import_roots": [],
+      "imports": [],
+      "lazy_imports": [],
+      "path": "alphaos_api/protocol_diagnostics.py",
+      "reached_from": [
+        "api",
+        "tests"
+      ]
+    },
+    "alphaos_api.provider": {
+      "external_import_roots": [],
+      "imports": [
+        "modules",
+        "modules.market_state_research",
+        "modules.public_provider"
+      ],
+      "lazy_imports": [],
+      "path": "alphaos_api/provider.py",
+      "reached_from": [
+        "api",
+        "tests"
+      ]
+    },
+    "alphaos_api.research2": {
+      "external_import_roots": [
+        "pydantic"
+      ],
+      "imports": [
+        "alphaos_api.contracts",
+        "modules.history_diagnostics",
+        "modules.market_archive_adapter",
+        "modules.position_research",
+        "modules.public_provider",
+        "modules.run_market",
+        "modules.strategy_compare",
+        "modules.structure_economics",
+        "modules.supabase_archive"
+      ],
+      "lazy_imports": [
+        "modules.history_diagnostics",
+        "modules.public_provider"
+      ],
+      "path": "alphaos_api/research2.py",
+      "reached_from": [
+        "api",
+        "archive_contract",
+        "tests"
+      ]
+    },
+    "alphaos_api.service": {
+      "external_import_roots": [
+        "pandas"
+      ],
+      "imports": [
+        "alphaos_api.cache",
+        "alphaos_api.contracts",
+        "alphaos_api.provider",
+        "modules.daily_archive",
+        "modules.forward_distribution",
+        "modules.history_diagnostics",
+        "modules.option_quote_quality",
+        "modules.option_scenario_ev",
+        "modules.phase6_research",
+        "modules.premium_engine",
+        "modules.price_structure",
+        "modules.public_provider",
+        "modules.quote_freshness",
+        "modules.selector_research",
+        "modules.symbol_registry"
+      ],
+      "lazy_imports": [],
+      "path": "alphaos_api/service.py",
+      "reached_from": [
+        "api",
+        "tests"
+      ]
+    },
+    "app": {
+      "external_import_roots": [],
+      "imports": [
+        "modules.premium_workspace"
+      ],
+      "lazy_imports": [],
+      "path": "app.py",
+      "reached_from": [
+        "streamlit"
+      ]
+    },
+    "disabled_pages.2_Market_Pulse": {
+      "external_import_roots": [
+        "plotly",
+        "streamlit"
+      ],
+      "imports": [
+        "modules.market_data",
+        "modules.ui"
+      ],
+      "lazy_imports": [],
+      "path": "disabled_pages/2_Market_Pulse.py",
+      "reached_from": [
+        "disabled_pages"
+      ]
+    },
+    "disabled_pages.3_Flow_and_Rotation": {
+      "external_import_roots": [
+        "plotly",
+        "streamlit"
+      ],
+      "imports": [
+        "modules.market_data",
+        "modules.ui"
+      ],
+      "lazy_imports": [],
+      "path": "disabled_pages/3_Flow_and_Rotation.py",
+      "reached_from": [
+        "disabled_pages"
+      ]
+    },
+    "disabled_pages.6_Trade_Journal": {
+      "external_import_roots": [
+        "streamlit"
+      ],
+      "imports": [
+        "modules.auth",
+        "modules.data",
+        "modules.strategies",
+        "modules.ui"
+      ],
+      "lazy_imports": [],
+      "path": "disabled_pages/6_Trade_Journal.py",
+      "reached_from": [
+        "disabled_pages"
+      ]
+    },
+    "disabled_pages.7_PnL_Dashboard": {
+      "external_import_roots": [
+        "pandas",
+        "plotly",
+        "streamlit"
+      ],
+      "imports": [
+        "modules.auth",
+        "modules.data",
+        "modules.market_data",
+        "modules.metrics",
+        "modules.ui"
+      ],
+      "lazy_imports": [],
+      "path": "disabled_pages/7_PnL_Dashboard.py",
+      "reached_from": [
+        "disabled_pages"
+      ]
+    },
+    "modules": {
+      "external_import_roots": [],
+      "imports": [],
+      "lazy_imports": [],
+      "path": "modules/__init__.py",
+      "reached_from": [
+        "api",
+        "tests"
+      ]
+    },
+    "modules.alpaca_data": {
+      "external_import_roots": [
+        "pandas",
+        "streamlit"
+      ],
+      "imports": [],
+      "lazy_imports": [],
+      "path": "modules/alpaca_data.py",
+      "reached_from": [
+        "streamlit"
+      ]
+    },
+    "modules.auth": {
+      "external_import_roots": [
+        "streamlit"
+      ],
+      "imports": [
+        "modules.supabase_client"
+      ],
+      "lazy_imports": [],
+      "path": "modules/auth.py",
+      "reached_from": [
+        "streamlit",
+        "disabled_pages"
+      ]
+    },
+    "modules.daily_archive": {
+      "external_import_roots": [
+        "numpy",
+        "pandas"
+      ],
+      "imports": [],
+      "lazy_imports": [],
+      "path": "modules/daily_archive.py",
+      "reached_from": [
+        "api",
+        "streamlit",
+        "cli",
+        "tests"
+      ]
+    },
+    "modules.daily_archive_workspace": {
+      "external_import_roots": [
+        "streamlit"
+      ],
+      "imports": [
+        "modules.daily_archive"
+      ],
+      "lazy_imports": [],
+      "path": "modules/daily_archive_workspace.py",
+      "reached_from": [
+        "streamlit"
+      ]
+    },
+    "modules.daily_public": {
+      "external_import_roots": [
+        "public_api_sdk"
+      ],
+      "imports": [
+        "modules.public_history",
+        "modules.public_session"
+      ],
+      "lazy_imports": [],
+      "path": "modules/daily_public.py",
+      "reached_from": [
+        "cli",
+        "tests"
+      ]
+    },
+    "modules.daily_quant": {
+      "external_import_roots": [
+        "pandas"
+      ],
+      "imports": [
+        "modules.daily_archive",
+        "modules.daily_public",
+        "modules.daily_sessions",
+        "modules.historical_analogs",
+        "modules.market_state",
+        "modules.market_state_research",
+        "modules.options_archive",
+        "modules.threshold_survival"
+      ],
+      "lazy_imports": [],
+      "path": "modules/daily_quant.py",
+      "reached_from": [
+        "cli",
+        "tests"
+      ]
+    },
+    "modules.daily_sessions": {
+      "external_import_roots": [
+        "pandas",
+        "pandas_market_calendars"
+      ],
+      "imports": [],
+      "lazy_imports": [],
+      "path": "modules/daily_sessions.py",
+      "reached_from": [
+        "cli",
+        "tests"
+      ]
+    },
+    "modules.data": {
+      "external_import_roots": [
+        "pandas",
+        "streamlit"
+      ],
+      "imports": [
+        "modules.supabase_client"
+      ],
+      "lazy_imports": [],
+      "path": "modules/data.py",
+      "reached_from": [
+        "streamlit",
+        "disabled_pages"
+      ]
+    },
+    "modules.forward_distribution": {
+      "external_import_roots": [
+        "numpy"
+      ],
+      "imports": [
+        "modules.phase6_sample"
+      ],
+      "lazy_imports": [],
+      "path": "modules/forward_distribution.py",
+      "reached_from": [
+        "api",
+        "streamlit",
+        "tests"
+      ]
+    },
+    "modules.historical_analogs": {
+      "external_import_roots": [
+        "numpy",
+        "pandas"
+      ],
+      "imports": [
+        "modules.market_outcomes",
+        "modules.symbol_registry"
+      ],
+      "lazy_imports": [],
+      "path": "modules/historical_analogs.py",
+      "reached_from": [
+        "api",
+        "archive_contract",
+        "streamlit",
+        "cli",
+        "tests"
+      ]
+    },
+    "modules.historical_analogs_workspace": {
+      "external_import_roots": [
+        "numpy",
+        "pandas",
+        "plotly",
+        "streamlit"
+      ],
+      "imports": [
+        "modules.historical_analogs",
+        "modules.market_state"
+      ],
+      "lazy_imports": [],
+      "path": "modules/historical_analogs_workspace.py",
+      "reached_from": [
+        "streamlit"
+      ]
+    },
+    "modules.historical_economics": {
+      "external_import_roots": [
+        "numpy"
+      ],
+      "imports": [
+        "modules.option_scenario_ev",
+        "modules.position_research",
+        "modules.premium_engine"
+      ],
+      "lazy_imports": [],
+      "path": "modules/historical_economics.py",
+      "reached_from": [
+        "api",
+        "archive_contract",
+        "tests"
+      ]
+    },
+    "modules.history_diagnostics": {
+      "external_import_roots": [
+        "numpy",
+        "pandas"
+      ],
+      "imports": [],
+      "lazy_imports": [],
+      "path": "modules/history_diagnostics.py",
+      "reached_from": [
+        "api",
+        "archive_contract",
+        "streamlit",
+        "cli",
+        "tests",
+        "disabled_pages"
+      ]
+    },
+    "modules.income_risk": {
+      "external_import_roots": [
+        "pandas"
+      ],
+      "imports": [],
+      "lazy_imports": [],
+      "path": "modules/income_risk.py",
+      "reached_from": []
+    },
+    "modules.intraday_archive": {
+      "external_import_roots": [],
+      "imports": [
+        "modules.options_archive"
+      ],
+      "lazy_imports": [],
+      "path": "modules/intraday_archive.py",
+      "reached_from": [
+        "cli",
+        "tests"
+      ]
+    },
+    "modules.level_behavior": {
+      "external_import_roots": [
+        "numpy",
+        "pandas"
+      ],
+      "imports": [
+        "modules.phase6_sample"
+      ],
+      "lazy_imports": [],
+      "path": "modules/level_behavior.py",
+      "reached_from": [
+        "api",
+        "streamlit",
+        "tests"
+      ]
+    },
+    "modules.long_option_discovery": {
+      "external_import_roots": [],
+      "imports": [
+        "modules.long_option_research"
+      ],
+      "lazy_imports": [],
+      "path": "modules/long_option_discovery.py",
+      "reached_from": [
+        "api",
+        "archive_contract",
+        "tests"
+      ]
+    },
+    "modules.long_option_research": {
+      "external_import_roots": [],
+      "imports": [
+        "modules.options_payoff"
+      ],
+      "lazy_imports": [],
+      "path": "modules/long_option_research.py",
+      "reached_from": [
+        "api",
+        "archive_contract",
+        "tests"
+      ]
+    },
+    "modules.manual_trade": {
+      "external_import_roots": [
+        "pandas",
+        "streamlit"
+      ],
+      "imports": [
+        "modules.premium_engine"
+      ],
+      "lazy_imports": [],
+      "path": "modules/manual_trade.py",
+      "reached_from": [
+        "streamlit",
+        "tests"
+      ]
+    },
+    "modules.market_archive_adapter": {
+      "external_import_roots": [],
+      "imports": [
+        "modules.opportunity_classifier",
+        "modules.structure_research"
+      ],
+      "lazy_imports": [],
+      "path": "modules/market_archive_adapter.py",
+      "reached_from": [
+        "api",
+        "archive_contract",
+        "tests"
+      ]
+    },
+    "modules.market_data": {
+      "external_import_roots": [
+        "pandas"
+      ],
+      "imports": [
+        "modules.public_data",
+        "modules.quote_freshness"
+      ],
+      "lazy_imports": [],
+      "path": "modules/market_data.py",
+      "reached_from": [
+        "streamlit",
+        "disabled_pages"
+      ]
+    },
+    "modules.market_outcomes": {
+      "external_import_roots": [
+        "pandas"
+      ],
+      "imports": [
+        "modules.market_state"
+      ],
+      "lazy_imports": [],
+      "path": "modules/market_outcomes.py",
+      "reached_from": [
+        "api",
+        "archive_contract",
+        "streamlit",
+        "cli",
+        "tests"
+      ]
+    },
+    "modules.market_session_gate": {
+      "external_import_roots": [
+        "pandas_market_calendars"
+      ],
+      "imports": [],
+      "lazy_imports": [],
+      "path": "modules/market_session_gate.py",
+      "reached_from": [
+        "api",
+        "archive_contract",
+        "cli",
+        "tests"
+      ]
+    },
+    "modules.market_state": {
+      "external_import_roots": [
+        "numpy",
+        "pandas"
+      ],
+      "imports": [],
+      "lazy_imports": [],
+      "path": "modules/market_state.py",
+      "reached_from": [
+        "api",
+        "archive_contract",
+        "streamlit",
+        "cli",
+        "tests",
+        "disabled_pages"
+      ]
+    },
+    "modules.market_state_research": {
+      "external_import_roots": [],
+      "imports": [
+        "modules.history_diagnostics",
+        "modules.market_outcomes",
+        "modules.market_state",
+        "modules.public_data",
+        "modules.symbol_registry"
+      ],
+      "lazy_imports": [
+        "modules.history_diagnostics",
+        "modules.public_data"
+      ],
+      "path": "modules/market_state_research.py",
+      "reached_from": [
+        "api",
+        "archive_contract",
+        "streamlit",
+        "cli",
+        "tests"
+      ]
+    },
+    "modules.market_state_workspace": {
+      "external_import_roots": [
+        "pandas",
+        "streamlit"
+      ],
+      "imports": [
+        "modules.market_state_research",
+        "modules.research_session"
+      ],
+      "lazy_imports": [],
+      "path": "modules/market_state_workspace.py",
+      "reached_from": [
+        "streamlit"
+      ]
+    },
+    "modules.metrics": {
+      "external_import_roots": [
+        "pandas"
+      ],
+      "imports": [],
+      "lazy_imports": [],
+      "path": "modules/metrics.py",
+      "reached_from": [
+        "disabled_pages"
+      ]
+    },
+    "modules.mock_market": {
+      "external_import_roots": [
+        "numpy",
+        "pandas"
+      ],
+      "imports": [],
+      "lazy_imports": [],
+      "path": "modules/mock_market.py",
+      "reached_from": []
+    },
+    "modules.opportunity_classifier": {
+      "external_import_roots": [],
+      "imports": [
+        "modules.market_state",
+        "modules.opportunity_router",
+        "modules.structure_research"
+      ],
+      "lazy_imports": [
+        "modules.market_state"
+      ],
+      "path": "modules/opportunity_classifier.py",
+      "reached_from": [
+        "api",
+        "archive_contract",
+        "tests"
+      ]
+    },
+    "modules.opportunity_router": {
+      "external_import_roots": [],
+      "imports": [
+        "modules.structure_research"
+      ],
+      "lazy_imports": [
+        "modules.structure_research"
+      ],
+      "path": "modules/opportunity_router.py",
+      "reached_from": [
+        "api",
+        "archive_contract",
+        "tests"
+      ]
+    },
+    "modules.opportunity_session": {
+      "external_import_roots": [],
+      "imports": [
+        "modules.long_option_discovery",
+        "modules.opportunity_router",
+        "modules.position_research",
+        "modules.premium_engine",
+        "modules.strategy_compare",
+        "modules.structure_research"
+      ],
+      "lazy_imports": [],
+      "path": "modules/opportunity_session.py",
+      "reached_from": [
+        "api",
+        "archive_contract",
+        "tests"
+      ]
+    },
+    "modules.option_economics_workspace": {
+      "external_import_roots": [
+        "numpy",
+        "pandas",
+        "plotly",
+        "streamlit"
+      ],
+      "imports": [
+        "modules.historical_analogs",
+        "modules.market_outcomes",
+        "modules.market_state",
+        "modules.option_scenario_ev",
+        "modules.options_payoff",
+        "modules.research_session"
+      ],
+      "lazy_imports": [],
+      "path": "modules/option_economics_workspace.py",
+      "reached_from": [
+        "streamlit"
+      ]
+    },
+    "modules.option_quote_quality": {
+      "external_import_roots": [],
+      "imports": [
+        "modules.quote_freshness"
+      ],
+      "lazy_imports": [],
+      "path": "modules/option_quote_quality.py",
+      "reached_from": [
+        "api",
+        "tests"
+      ]
+    },
+    "modules.option_scenario_ev": {
+      "external_import_roots": [
+        "numpy",
+        "pandas"
+      ],
+      "imports": [
+        "modules.market_outcomes",
+        "modules.options_payoff",
+        "modules.premium_engine",
+        "modules.symbol_registry",
+        "modules.threshold_survival"
+      ],
+      "lazy_imports": [],
+      "path": "modules/option_scenario_ev.py",
+      "reached_from": [
+        "api",
+        "archive_contract",
+        "streamlit",
+        "tests"
+      ]
+    },
+    "modules.options_archive": {
+      "external_import_roots": [],
+      "imports": [],
+      "lazy_imports": [],
+      "path": "modules/options_archive.py",
+      "reached_from": [
+        "api",
+        "archive_contract",
+        "cli",
+        "tests"
+      ]
+    },
+    "modules.options_income": {
+      "external_import_roots": [],
+      "imports": [],
+      "lazy_imports": [],
+      "path": "modules/options_income.py",
+      "reached_from": [
+        "api",
+        "archive_contract",
+        "tests"
+      ]
+    },
+    "modules.options_payoff": {
+      "external_import_roots": [],
+      "imports": [
+        "modules.premium_engine"
+      ],
+      "lazy_imports": [],
+      "path": "modules/options_payoff.py",
+      "reached_from": [
+        "api",
+        "archive_contract",
+        "streamlit",
+        "cli",
+        "tests"
+      ]
+    },
+    "modules.options_payoff_view": {
+      "external_import_roots": [
+        "pandas",
+        "plotly",
+        "streamlit"
+      ],
+      "imports": [
+        "modules.options_payoff",
+        "modules.premium_workspace"
+      ],
+      "lazy_imports": [],
+      "path": "modules/options_payoff_view.py",
+      "reached_from": [
+        "streamlit",
+        "tests"
+      ]
+    },
+    "modules.options_suggestions": {
+      "external_import_roots": [],
+      "imports": [
+        "modules.options_income"
+      ],
+      "lazy_imports": [],
+      "path": "modules/options_suggestions.py",
+      "reached_from": [
+        "api",
+        "archive_contract",
+        "tests"
+      ]
+    },
+    "modules.phase6_research": {
+      "external_import_roots": [
+        "numpy",
+        "pandas"
+      ],
+      "imports": [
+        "modules.daily_archive",
+        "modules.forward_distribution",
+        "modules.historical_analogs",
+        "modules.level_behavior",
+        "modules.market_outcomes",
+        "modules.market_state",
+        "modules.option_scenario_ev",
+        "modules.options_payoff",
+        "modules.price_structure",
+        "modules.threshold_survival"
+      ],
+      "lazy_imports": [],
+      "path": "modules/phase6_research.py",
+      "reached_from": [
+        "api",
+        "streamlit",
+        "tests"
+      ]
+    },
+    "modules.phase6_sample": {
+      "external_import_roots": [
+        "numpy"
+      ],
+      "imports": [
+        "modules.threshold_survival"
+      ],
+      "lazy_imports": [],
+      "path": "modules/phase6_sample.py",
+      "reached_from": [
+        "api",
+        "archive_contract",
+        "streamlit",
+        "tests"
+      ]
+    },
+    "modules.phase6_workspace": {
+      "external_import_roots": [
+        "pandas",
+        "streamlit"
+      ],
+      "imports": [
+        "modules.daily_archive",
+        "modules.historical_analogs",
+        "modules.market_state_research",
+        "modules.options_payoff",
+        "modules.phase6_research",
+        "modules.quote_freshness",
+        "modules.research_session",
+        "modules.selector_research"
+      ],
+      "lazy_imports": [],
+      "path": "modules/phase6_workspace.py",
+      "reached_from": [
+        "streamlit",
+        "tests"
+      ]
+    },
+    "modules.position_research": {
+      "external_import_roots": [],
+      "imports": [
+        "modules.long_option_research",
+        "modules.options_payoff",
+        "modules.structure_research"
+      ],
+      "lazy_imports": [],
+      "path": "modules/position_research.py",
+      "reached_from": [
+        "api",
+        "archive_contract",
+        "tests"
+      ]
+    },
+    "modules.premium_engine": {
+      "external_import_roots": [],
+      "imports": [],
+      "lazy_imports": [],
+      "path": "modules/premium_engine.py",
+      "reached_from": [
+        "api",
+        "archive_contract",
+        "streamlit",
+        "cli",
+        "tests"
+      ]
+    },
+    "modules.premium_workspace": {
+      "external_import_roots": [
+        "pandas",
+        "plotly",
+        "streamlit"
+      ],
+      "imports": [
+        "modules.premium_engine",
+        "modules.price_structure",
+        "modules.public_data",
+        "modules.quote_freshness",
+        "modules.selector_research",
+        "modules.ui"
+      ],
+      "lazy_imports": [
+        "modules.public_data"
+      ],
+      "path": "modules/premium_workspace.py",
+      "reached_from": [
+        "streamlit",
+        "tests"
+      ]
+    },
+    "modules.price_structure": {
+      "external_import_roots": [
+        "numpy",
+        "pandas"
+      ],
+      "imports": [
+        "modules.market_state",
+        "modules.symbol_registry"
+      ],
+      "lazy_imports": [
+        "modules.market_state"
+      ],
+      "path": "modules/price_structure.py",
+      "reached_from": [
+        "api",
+        "streamlit",
+        "tests"
+      ]
+    },
+    "modules.public_data": {
+      "external_import_roots": [
+        "pandas",
+        "public_api_sdk",
+        "streamlit"
+      ],
+      "imports": [
+        "modules.history_diagnostics",
+        "modules.public_history",
+        "modules.public_provider",
+        "modules.public_session",
+        "modules.quote_freshness"
+      ],
+      "lazy_imports": [
+        "modules.history_diagnostics",
+        "modules.public_history",
+        "modules.public_provider",
+        "modules.quote_freshness"
+      ],
+      "path": "modules/public_data.py",
+      "reached_from": [
+        "api",
+        "archive_contract",
+        "streamlit",
+        "cli",
+        "tests",
+        "disabled_pages"
+      ]
+    },
+    "modules.public_history": {
+      "external_import_roots": [
+        "pandas",
+        "public_api_sdk",
+        "pydantic"
+      ],
+      "imports": [
+        "modules.history_diagnostics",
+        "modules.market_state",
+        "modules.symbol_registry"
+      ],
+      "lazy_imports": [],
+      "path": "modules/public_history.py",
+      "reached_from": [
+        "api",
+        "archive_contract",
+        "streamlit",
+        "cli",
+        "tests",
+        "disabled_pages"
+      ]
+    },
+    "modules.public_intraday": {
+      "external_import_roots": [
+        "public_api_sdk"
+      ],
+      "imports": [],
+      "lazy_imports": [],
+      "path": "modules/public_intraday.py",
+      "reached_from": [
+        "cli",
+        "tests"
+      ]
+    },
+    "modules.public_observations": {
+      "external_import_roots": [],
+      "imports": [
+        "modules.opportunity_classifier",
+        "modules.opportunity_session",
+        "modules.public_data"
+      ],
+      "lazy_imports": [
+        "modules.opportunity_classifier",
+        "modules.opportunity_session",
+        "modules.public_data"
+      ],
+      "path": "modules/public_observations.py",
+      "reached_from": [
+        "tests"
+      ]
+    },
+    "modules.public_provider": {
+      "external_import_roots": [
+        "pandas",
+        "public_api_sdk"
+      ],
+      "imports": [
+        "modules.history_diagnostics",
+        "modules.public_history",
+        "modules.public_session",
+        "modules.quote_freshness",
+        "modules.symbol_registry"
+      ],
+      "lazy_imports": [
+        "modules.history_diagnostics",
+        "modules.public_history"
+      ],
+      "path": "modules/public_provider.py",
+      "reached_from": [
+        "api",
+        "archive_contract",
+        "streamlit",
+        "cli",
+        "tests",
+        "disabled_pages"
+      ]
+    },
+    "modules.public_research": {
+      "external_import_roots": [
+        "numpy",
+        "pandas"
+      ],
+      "imports": [
+        "modules.history_diagnostics",
+        "modules.public_data"
+      ],
+      "lazy_imports": [
+        "modules.history_diagnostics",
+        "modules.public_data"
+      ],
+      "path": "modules/public_research.py",
+      "reached_from": [
+        "streamlit",
+        "tests"
+      ]
+    },
+    "modules.public_session": {
+      "external_import_roots": [],
+      "imports": [],
+      "lazy_imports": [],
+      "path": "modules/public_session.py",
+      "reached_from": [
+        "api",
+        "archive_contract",
+        "streamlit",
+        "cli",
+        "tests",
+        "disabled_pages"
+      ]
+    },
+    "modules.pulse_backtest": {
+      "external_import_roots": [
+        "pandas"
+      ],
+      "imports": [],
+      "lazy_imports": [],
+      "path": "modules/pulse_backtest.py",
+      "reached_from": [
+        "streamlit"
+      ]
+    },
+    "modules.pulse_workspace": {
+      "external_import_roots": [
+        "pandas",
+        "streamlit"
+      ],
+      "imports": [
+        "modules.alpaca_data",
+        "modules.pulse_backtest",
+        "modules.ui"
+      ],
+      "lazy_imports": [
+        "modules.alpaca_data",
+        "modules.pulse_backtest",
+        "modules.ui"
+      ],
+      "path": "modules/pulse_workspace.py",
+      "reached_from": [
+        "streamlit"
+      ]
+    },
+    "modules.quant_engine": {
+      "external_import_roots": [
+        "numpy",
+        "pandas"
+      ],
+      "imports": [],
+      "lazy_imports": [],
+      "path": "modules/quant_engine.py",
+      "reached_from": [
+        "streamlit",
+        "tests"
+      ]
+    },
+    "modules.quant_workspace": {
+      "external_import_roots": [
+        "numpy",
+        "pandas",
+        "plotly",
+        "streamlit"
+      ],
+      "imports": [
+        "modules.daily_archive_workspace",
+        "modules.historical_analogs_workspace",
+        "modules.manual_trade",
+        "modules.market_state_workspace",
+        "modules.options_payoff",
+        "modules.options_payoff_view",
+        "modules.phase6_workspace",
+        "modules.public_data",
+        "modules.public_research",
+        "modules.pulse_workspace",
+        "modules.quant_engine",
+        "modules.threshold_workspace",
+        "modules.ui"
+      ],
+      "lazy_imports": [
+        "modules.daily_archive_workspace",
+        "modules.historical_analogs_workspace",
+        "modules.manual_trade",
+        "modules.market_state_workspace",
+        "modules.options_payoff",
+        "modules.options_payoff_view",
+        "modules.phase6_workspace",
+        "modules.public_data",
+        "modules.public_research",
+        "modules.pulse_workspace",
+        "modules.threshold_workspace"
+      ],
+      "path": "modules/quant_workspace.py",
+      "reached_from": [
+        "streamlit"
+      ]
+    },
+    "modules.quote_freshness": {
+      "external_import_roots": [
+        "pandas",
+        "pandas_market_calendars"
+      ],
+      "imports": [],
+      "lazy_imports": [],
+      "path": "modules/quote_freshness.py",
+      "reached_from": [
+        "api",
+        "archive_contract",
+        "streamlit",
+        "cli",
+        "tests",
+        "disabled_pages"
+      ]
+    },
+    "modules.quote_latency": {
+      "external_import_roots": [],
+      "imports": [
+        "modules.quote_freshness"
+      ],
+      "lazy_imports": [],
+      "path": "modules/quote_latency.py",
+      "reached_from": [
+        "cli",
+        "tests"
+      ]
+    },
+    "modules.research_session": {
+      "external_import_roots": [
+        "pandas"
+      ],
+      "imports": [],
+      "lazy_imports": [],
+      "path": "modules/research_session.py",
+      "reached_from": [
+        "api",
+        "streamlit",
+        "tests"
+      ]
+    },
+    "modules.risk_guardrails": {
+      "external_import_roots": [
+        "pandas"
+      ],
+      "imports": [],
+      "lazy_imports": [],
+      "path": "modules/risk_guardrails.py",
+      "reached_from": [
+        "streamlit"
+      ]
+    },
+    "modules.run_market": {
+      "external_import_roots": [],
+      "imports": [
+        "modules.market_archive_adapter",
+        "modules.market_session_gate",
+        "modules.opportunity_classifier",
+        "modules.opportunity_session",
+        "modules.structure_economics"
+      ],
+      "lazy_imports": [],
+      "path": "modules/run_market.py",
+      "reached_from": [
+        "api",
+        "archive_contract",
+        "tests"
+      ]
+    },
+    "modules.selector_research": {
+      "external_import_roots": [
+        "pandas"
+      ],
+      "imports": [
+        "modules.daily_archive",
+        "modules.historical_analogs",
+        "modules.market_state_research",
+        "modules.options_payoff",
+        "modules.phase6_research",
+        "modules.price_structure",
+        "modules.research_session",
+        "modules.threshold_survival"
+      ],
+      "lazy_imports": [],
+      "path": "modules/selector_research.py",
+      "reached_from": [
+        "api",
+        "streamlit",
+        "tests"
+      ]
+    },
+    "modules.signal_quality": {
+      "external_import_roots": [
+        "pandas"
+      ],
+      "imports": [],
+      "lazy_imports": [],
+      "path": "modules/signal_quality.py",
+      "reached_from": []
+    },
+    "modules.strategies": {
+      "external_import_roots": [],
+      "imports": [],
+      "lazy_imports": [],
+      "path": "modules/strategies.py",
+      "reached_from": [
+        "disabled_pages"
+      ]
+    },
+    "modules.strategy_compare": {
+      "external_import_roots": [],
+      "imports": [],
+      "lazy_imports": [],
+      "path": "modules/strategy_compare.py",
+      "reached_from": [
+        "api",
+        "archive_contract",
+        "tests"
+      ]
+    },
+    "modules.structure_economics": {
+      "external_import_roots": [
+        "pandas",
+        "pandas_market_calendars"
+      ],
+      "imports": [
+        "modules.historical_analogs",
+        "modules.historical_economics",
+        "modules.market_outcomes",
+        "modules.market_state_research",
+        "modules.trusted_historical_adapter"
+      ],
+      "lazy_imports": [],
+      "path": "modules/structure_economics.py",
+      "reached_from": [
+        "api",
+        "archive_contract",
+        "tests"
+      ]
+    },
+    "modules.structure_research": {
+      "external_import_roots": [],
+      "imports": [
+        "modules.options_payoff",
+        "modules.options_suggestions",
+        "modules.premium_engine"
+      ],
+      "lazy_imports": [
+        "modules.options_suggestions",
+        "modules.premium_engine"
+      ],
+      "path": "modules/structure_research.py",
+      "reached_from": [
+        "api",
+        "archive_contract",
+        "tests"
+      ]
+    },
+    "modules.supabase_archive": {
+      "external_import_roots": [
+        "supabase"
+      ],
+      "imports": [
+        "modules.options_archive"
+      ],
+      "lazy_imports": [
+        "modules.options_archive"
+      ],
+      "path": "modules/supabase_archive.py",
+      "reached_from": [
+        "api",
+        "archive_contract",
+        "cli",
+        "tests"
+      ]
+    },
+    "modules.supabase_client": {
+      "external_import_roots": [
+        "streamlit",
+        "supabase"
+      ],
+      "imports": [],
+      "lazy_imports": [],
+      "path": "modules/supabase_client.py",
+      "reached_from": [
+        "streamlit",
+        "disabled_pages"
+      ]
+    },
+    "modules.symbol_registry": {
+      "external_import_roots": [],
+      "imports": [],
+      "lazy_imports": [],
+      "path": "modules/symbol_registry.py",
+      "reached_from": [
+        "api",
+        "archive_contract",
+        "streamlit",
+        "cli",
+        "tests",
+        "disabled_pages"
+      ]
+    },
+    "modules.threshold_survival": {
+      "external_import_roots": [
+        "numpy",
+        "pandas"
+      ],
+      "imports": [
+        "modules.market_outcomes",
+        "modules.options_payoff"
+      ],
+      "lazy_imports": [],
+      "path": "modules/threshold_survival.py",
+      "reached_from": [
+        "api",
+        "archive_contract",
+        "streamlit",
+        "cli",
+        "tests"
+      ]
+    },
+    "modules.threshold_workspace": {
+      "external_import_roots": [
+        "pandas",
+        "plotly",
+        "streamlit"
+      ],
+      "imports": [
+        "modules.historical_analogs",
+        "modules.threshold_survival"
+      ],
+      "lazy_imports": [],
+      "path": "modules/threshold_workspace.py",
+      "reached_from": [
+        "streamlit"
+      ]
+    },
+    "modules.trade_analyzer": {
+      "external_import_roots": [],
+      "imports": [],
+      "lazy_imports": [],
+      "path": "modules/trade_analyzer.py",
+      "reached_from": []
+    },
+    "modules.trade_quality": {
+      "external_import_roots": [],
+      "imports": [],
+      "lazy_imports": [],
+      "path": "modules/trade_quality.py",
+      "reached_from": [
+        "streamlit"
+      ]
+    },
+    "modules.trusted_historical_adapter": {
+      "external_import_roots": [
+        "pandas",
+        "pandas_market_calendars"
+      ],
+      "imports": [
+        "modules.historical_economics",
+        "modules.market_outcomes",
+        "modules.phase6_sample"
+      ],
+      "lazy_imports": [],
+      "path": "modules/trusted_historical_adapter.py",
+      "reached_from": [
+        "api",
+        "archive_contract",
+        "tests"
+      ]
+    },
+    "modules.ui": {
+      "external_import_roots": [
+        "streamlit"
+      ],
+      "imports": [],
+      "lazy_imports": [],
+      "path": "modules/ui.py",
+      "reached_from": [
+        "streamlit",
+        "tests",
+        "disabled_pages"
+      ]
+    },
+    "modules.unified_trade": {
+      "external_import_roots": [],
+      "imports": [
+        "modules.daily_archive",
+        "modules.level_behavior",
+        "modules.symbol_registry",
+        "modules.threshold_survival"
+      ],
+      "lazy_imports": [],
+      "path": "modules/unified_trade.py",
+      "reached_from": [
+        "api",
+        "tests"
+      ]
+    },
+    "modules.unified_trade_view": {
+      "external_import_roots": [
+        "pandas",
+        "streamlit"
+      ],
+      "imports": [
+        "modules.unified_trade"
+      ],
+      "lazy_imports": [],
+      "path": "modules/unified_trade_view.py",
+      "reached_from": []
+    },
+    "pages.10_TradingView_Indicator": {
+      "external_import_roots": [
+        "streamlit"
+      ],
+      "imports": [
+        "modules.ui"
+      ],
+      "lazy_imports": [],
+      "path": "pages/10_TradingView_Indicator.py",
+      "reached_from": [
+        "streamlit"
+      ]
+    },
+    "pages.11_Option_Economics": {
+      "external_import_roots": [
+        "streamlit"
+      ],
+      "imports": [
+        "modules.option_economics_workspace",
+        "modules.ui"
+      ],
+      "lazy_imports": [],
+      "path": "pages/11_Option_Economics.py",
+      "reached_from": [
+        "streamlit"
+      ]
+    },
+    "pages.4_Scanner": {
+      "external_import_roots": [
+        "streamlit"
+      ],
+      "imports": [
+        "modules.market_data",
+        "modules.ui"
+      ],
+      "lazy_imports": [],
+      "path": "pages/4_Scanner.py",
+      "reached_from": [
+        "streamlit"
+      ]
+    },
+    "pages.5_Strategy_Selector": {
+      "external_import_roots": [],
+      "imports": [
+        "modules.premium_workspace"
+      ],
+      "lazy_imports": [],
+      "path": "pages/5_Strategy_Selector.py",
+      "reached_from": [
+        "streamlit"
+      ]
+    },
+    "pages.8_Quant_Lab": {
+      "external_import_roots": [],
+      "imports": [
+        "modules.quant_workspace"
+      ],
+      "lazy_imports": [],
+      "path": "pages/8_Quant_Lab.py",
+      "reached_from": [
+        "streamlit"
+      ]
+    },
+    "pages.9_Settings": {
+      "external_import_roots": [
+        "streamlit"
+      ],
+      "imports": [
+        "modules.alpaca_data",
+        "modules.auth",
+        "modules.data",
+        "modules.risk_guardrails",
+        "modules.supabase_client",
+        "modules.trade_quality",
+        "modules.ui"
+      ],
+      "lazy_imports": [],
+      "path": "pages/9_Settings.py",
+      "reached_from": [
+        "streamlit"
+      ]
+    },
+    "scripts.audit_public_indices": {
+      "external_import_roots": [
+        "public_api_sdk"
+      ],
+      "imports": [
+        "modules.public_session"
+      ],
+      "lazy_imports": [
+        "modules.public_session"
+      ],
+      "path": "scripts/audit_public_indices.py",
+      "reached_from": [
+        "cli",
+        "tests"
+      ]
+    },
+    "scripts.inventory_architecture": {
+      "external_import_roots": [],
+      "imports": [],
+      "lazy_imports": [],
+      "path": "scripts/inventory_architecture.py",
+      "reached_from": [
+        "cli",
+        "tests"
+      ]
+    },
+    "scripts.quote_latency": {
+      "external_import_roots": [
+        "httpx"
+      ],
+      "imports": [
+        "alphaos_api.config",
+        "modules.public_provider",
+        "modules.quote_freshness",
+        "modules.quote_latency"
+      ],
+      "lazy_imports": [
+        "alphaos_api.config",
+        "modules.public_provider",
+        "modules.quote_freshness"
+      ],
+      "path": "scripts/quote_latency.py",
+      "reached_from": [
+        "cli",
+        "tests"
+      ]
+    },
+    "scripts.run_daily_quant": {
+      "external_import_roots": [],
+      "imports": [
+        "modules.daily_quant"
+      ],
+      "lazy_imports": [],
+      "path": "scripts/run_daily_quant.py",
+      "reached_from": [
+        "cli",
+        "tests"
+      ]
+    },
+    "scripts.run_intraday_snapshot": {
+      "external_import_roots": [],
+      "imports": [
+        "modules.daily_public",
+        "modules.intraday_archive",
+        "modules.market_session_gate",
+        "modules.public_intraday",
+        "modules.supabase_archive"
+      ],
+      "lazy_imports": [],
+      "path": "scripts/run_intraday_snapshot.py",
+      "reached_from": [
+        "cli",
+        "tests"
+      ]
+    },
+    "streamlit_app": {
+      "external_import_roots": [],
+      "imports": [
+        "modules.premium_workspace"
+      ],
+      "lazy_imports": [],
+      "path": "streamlit_app.py",
+      "reached_from": [
+        "streamlit"
+      ]
+    },
+    "tests.test_after_hours_research": {
+      "external_import_roots": [
+        "pydantic",
+        "pytest"
+      ],
+      "imports": [
+        "alphaos_api.research2",
+        "tests.test_mcp_api",
+        "tests.test_research2_api",
+        "tests.test_website_mcp_parity"
+      ],
+      "lazy_imports": [
+        "alphaos_api.research2"
+      ],
+      "path": "tests/test_after_hours_research.py",
+      "reached_from": [
+        "tests"
+      ]
+    },
+    "tests.test_api_config": {
+      "external_import_roots": [
+        "pytest"
+      ],
+      "imports": [
+        "alphaos_api.config"
+      ],
+      "lazy_imports": [],
+      "path": "tests/test_api_config.py",
+      "reached_from": [
+        "tests"
+      ]
+    },
+    "tests.test_api_hardening": {
+      "external_import_roots": [
+        "fastapi",
+        "numpy",
+        "pandas",
+        "pytest"
+      ],
+      "imports": [
+        "alphaos_api.__main__",
+        "alphaos_api.app",
+        "alphaos_api.contracts",
+        "alphaos_api.service",
+        "modules.daily_archive",
+        "modules.history_diagnostics",
+        "modules.market_state_research",
+        "modules.option_scenario_ev",
+        "modules.public_provider"
+      ],
+      "lazy_imports": [
+        "alphaos_api.__main__",
+        "modules.daily_archive",
+        "modules.history_diagnostics"
+      ],
+      "path": "tests/test_api_hardening.py",
+      "reached_from": [
+        "tests"
+      ]
+    },
+    "tests.test_architecture_consolidation": {
+      "external_import_roots": [
+        "pytest"
+      ],
+      "imports": [
+        "alphaos_api.app",
+        "scripts.inventory_architecture",
+        "tests.test_api_hardening"
+      ],
+      "lazy_imports": [
+        "alphaos_api.app"
+      ],
+      "path": "tests/test_architecture_consolidation.py",
+      "reached_from": [
+        "tests"
+      ]
+    },
+    "tests.test_archive_read_path": {
+      "external_import_roots": [
+        "pytest"
+      ],
+      "imports": [
+        "modules.run_market",
+        "modules.supabase_archive",
+        "tests.test_market_archive_adapter",
+        "tests.test_run_market"
+      ],
+      "lazy_imports": [],
+      "path": "tests/test_archive_read_path.py",
+      "reached_from": [
+        "tests"
+      ]
+    },
+    "tests.test_candidate_generation_diagnostics": {
+      "external_import_roots": [
+        "pandas",
+        "pytest"
+      ],
+      "imports": [
+        "modules.premium_engine",
+        "tests.test_mcp_api",
+        "tests.test_research2_api",
+        "tests.test_run_market",
+        "tests.test_website_mcp_parity"
+      ],
+      "lazy_imports": [
+        "modules.premium_engine"
+      ],
+      "path": "tests/test_candidate_generation_diagnostics.py",
+      "reached_from": [
+        "tests"
+      ]
+    },
+    "tests.test_daily_archive_ui": {
+      "external_import_roots": [
+        "streamlit"
+      ],
+      "imports": [
+        "modules.daily_archive"
+      ],
+      "lazy_imports": [],
+      "path": "tests/test_daily_archive_ui.py",
+      "reached_from": [
+        "tests"
+      ]
+    },
+    "tests.test_daily_quant": {
+      "external_import_roots": [
+        "numpy",
+        "pandas"
+      ],
+      "imports": [
+        "modules.daily_archive",
+        "modules.daily_public",
+        "modules.daily_quant",
+        "modules.daily_sessions",
+        "modules.historical_analogs",
+        "modules.options_archive",
+        "scripts.run_daily_quant"
+      ],
+      "lazy_imports": [
+        "modules.historical_analogs",
+        "scripts.run_daily_quant"
+      ],
+      "path": "tests/test_daily_quant.py",
+      "reached_from": [
+        "tests"
+      ]
+    },
+    "tests.test_historical_analogs": {
+      "external_import_roots": [
+        "numpy",
+        "pandas"
+      ],
+      "imports": [
+        "modules.historical_analogs",
+        "modules.market_outcomes",
+        "modules.market_state_research"
+      ],
+      "lazy_imports": [],
+      "path": "tests/test_historical_analogs.py",
+      "reached_from": [
+        "tests"
+      ]
+    },
+    "tests.test_historical_analogs_ui": {
+      "external_import_roots": [
+        "numpy",
+        "pandas",
+        "streamlit"
+      ],
+      "imports": [
+        "modules.market_state_research"
+      ],
+      "lazy_imports": [],
+      "path": "tests/test_historical_analogs_ui.py",
+      "reached_from": [
+        "tests"
+      ]
+    },
+    "tests.test_historical_economics": {
+      "external_import_roots": [
+        "numpy",
+        "pytest"
+      ],
+      "imports": [
+        "modules.historical_economics",
+        "modules.premium_engine"
+      ],
+      "lazy_imports": [],
+      "path": "tests/test_historical_economics.py",
+      "reached_from": [
+        "tests"
+      ]
+    },
+    "tests.test_index_audit": {
+      "external_import_roots": [],
+      "imports": [
+        "scripts.audit_public_indices"
+      ],
+      "lazy_imports": [],
+      "path": "tests/test_index_audit.py",
+      "reached_from": [
+        "tests"
+      ]
+    },
+    "tests.test_index_mcp": {
+      "external_import_roots": [
+        "pytest"
+      ],
+      "imports": [
+        "tests.test_index_support",
+        "tests.test_mcp_api"
+      ],
+      "lazy_imports": [],
+      "path": "tests/test_index_mcp.py",
+      "reached_from": [
+        "tests"
+      ]
+    },
+    "tests.test_index_support": {
+      "external_import_roots": [
+        "public_api_sdk",
+        "pytest"
+      ],
+      "imports": [
+        "alphaos_api.service",
+        "modules.history_diagnostics",
+        "modules.market_state_research",
+        "modules.public_history",
+        "modules.public_provider",
+        "modules.symbol_registry",
+        "tests.test_api_hardening",
+        "tests.test_public_history"
+      ],
+      "lazy_imports": [],
+      "path": "tests/test_index_support.py",
+      "reached_from": [
+        "tests"
+      ]
+    },
+    "tests.test_intraday_execution": {
+      "external_import_roots": [
+        "pytest",
+        "scripts"
+      ],
+      "imports": [
+        "modules",
+        "modules.market_session_gate",
+        "modules.supabase_archive",
+        "scripts.run_intraday_snapshot"
+      ],
+      "lazy_imports": [],
+      "path": "tests/test_intraday_execution.py",
+      "reached_from": [
+        "tests"
+      ]
+    },
+    "tests.test_long_option_discovery": {
+      "external_import_roots": [],
+      "imports": [
+        "modules.long_option_discovery"
+      ],
+      "lazy_imports": [],
+      "path": "tests/test_long_option_discovery.py",
+      "reached_from": [
+        "tests"
+      ]
+    },
+    "tests.test_long_option_research": {
+      "external_import_roots": [],
+      "imports": [
+        "modules.long_option_research"
+      ],
+      "lazy_imports": [],
+      "path": "tests/test_long_option_research.py",
+      "reached_from": [
+        "tests"
+      ]
+    },
+    "tests.test_manual_trade": {
+      "external_import_roots": [],
+      "imports": [
+        "modules.manual_trade"
+      ],
+      "lazy_imports": [],
+      "path": "tests/test_manual_trade.py",
+      "reached_from": [
+        "tests"
+      ]
+    },
+    "tests.test_market_archive_adapter": {
+      "external_import_roots": [
+        "pytest"
+      ],
+      "imports": [
+        "modules.market_archive_adapter",
+        "modules.opportunity_session"
+      ],
+      "lazy_imports": [],
+      "path": "tests/test_market_archive_adapter.py",
+      "reached_from": [
+        "tests"
+      ]
+    },
+    "tests.test_market_economics_integration": {
+      "external_import_roots": [
+        "pytest"
+      ],
+      "imports": [
+        "modules",
+        "modules.run_market",
+        "modules.structure_economics",
+        "tests.test_market_archive_adapter",
+        "tests.test_mcp_api",
+        "tests.test_opportunity_session",
+        "tests.test_research2_api",
+        "tests.test_run_market"
+      ],
+      "lazy_imports": [],
+      "path": "tests/test_market_economics_integration.py",
+      "reached_from": [
+        "tests"
+      ]
+    },
+    "tests.test_market_state": {
+      "external_import_roots": [
+        "numpy",
+        "pandas"
+      ],
+      "imports": [
+        "modules.market_outcomes",
+        "modules.market_state",
+        "modules.market_state_research"
+      ],
+      "lazy_imports": [],
+      "path": "tests/test_market_state.py",
+      "reached_from": [
+        "tests"
+      ]
+    },
+    "tests.test_market_state_ui": {
+      "external_import_roots": [
+        "pandas",
+        "streamlit"
+      ],
+      "imports": [
+        "modules.history_diagnostics",
+        "modules.market_state_research"
+      ],
+      "lazy_imports": [
+        "modules.history_diagnostics"
+      ],
+      "path": "tests/test_market_state_ui.py",
+      "reached_from": [
+        "tests"
+      ]
+    },
+    "tests.test_mcp_api": {
+      "external_import_roots": [
+        "fastapi",
+        "httpx",
+        "pytest"
+      ],
+      "imports": [
+        "alphaos_api.app",
+        "alphaos_api.mcp_auth",
+        "alphaos_api.mcp_server",
+        "alphaos_api.protocol_diagnostics",
+        "alphaos_api.service",
+        "tests.test_api_hardening"
+      ],
+      "lazy_imports": [
+        "alphaos_api.mcp_auth",
+        "alphaos_api.protocol_diagnostics"
+      ],
+      "path": "tests/test_mcp_api.py",
+      "reached_from": [
+        "tests"
+      ]
+    },
+    "tests.test_no_candidate_diagnostics": {
+      "external_import_roots": [
+        "pytest"
+      ],
+      "imports": [
+        "modules.history_diagnostics",
+        "modules.opportunity_router",
+        "modules.opportunity_session",
+        "modules.public_provider",
+        "tests.test_research2_api"
+      ],
+      "lazy_imports": [
+        "modules.history_diagnostics"
+      ],
+      "path": "tests/test_no_candidate_diagnostics.py",
+      "reached_from": [
+        "tests"
+      ]
+    },
+    "tests.test_opportunity_classifier": {
+      "external_import_roots": [
+        "pandas",
+        "pytest"
+      ],
+      "imports": [
+        "modules.opportunity_classifier",
+        "modules.public_observations"
+      ],
+      "lazy_imports": [
+        "modules.public_observations"
+      ],
+      "path": "tests/test_opportunity_classifier.py",
+      "reached_from": [
+        "tests"
+      ]
+    },
+    "tests.test_opportunity_router": {
+      "external_import_roots": [],
+      "imports": [
+        "modules.opportunity_router"
+      ],
+      "lazy_imports": [],
+      "path": "tests/test_opportunity_router.py",
+      "reached_from": [
+        "tests"
+      ]
+    },
+    "tests.test_opportunity_session": {
+      "external_import_roots": [
+        "pytest"
+      ],
+      "imports": [
+        "modules.opportunity_session",
+        "modules.position_research",
+        "modules.premium_engine"
+      ],
+      "lazy_imports": [],
+      "path": "tests/test_opportunity_session.py",
+      "reached_from": [
+        "tests"
+      ]
+    },
+    "tests.test_option_quote_quality": {
+      "external_import_roots": [
+        "pytest"
+      ],
+      "imports": [
+        "alphaos_api.service",
+        "modules.option_quote_quality",
+        "tests.test_api_hardening"
+      ],
+      "lazy_imports": [],
+      "path": "tests/test_option_quote_quality.py",
+      "reached_from": [
+        "tests"
+      ]
+    },
+    "tests.test_option_scenario_ev": {
+      "external_import_roots": [
+        "pandas",
+        "pytest"
+      ],
+      "imports": [
+        "modules.option_scenario_ev"
+      ],
+      "lazy_imports": [],
+      "path": "tests/test_option_scenario_ev.py",
+      "reached_from": [
+        "tests"
+      ]
+    },
+    "tests.test_options_payoff": {
+      "external_import_roots": [],
+      "imports": [
+        "modules.options_payoff",
+        "modules.premium_engine"
+      ],
+      "lazy_imports": [],
+      "path": "tests/test_options_payoff.py",
+      "reached_from": [
+        "tests"
+      ]
+    },
+    "tests.test_options_payoff_ui": {
+      "external_import_roots": [
+        "streamlit"
+      ],
+      "imports": [
+        "modules.options_payoff",
+        "modules.options_payoff_view",
+        "modules.premium_engine"
+      ],
+      "lazy_imports": [],
+      "path": "tests/test_options_payoff_ui.py",
+      "reached_from": [
+        "tests"
+      ]
+    },
+    "tests.test_phase6_research": {
+      "external_import_roots": [
+        "numpy",
+        "pandas"
+      ],
+      "imports": [
+        "modules.forward_distribution",
+        "modules.level_behavior",
+        "modules.price_structure"
+      ],
+      "lazy_imports": [],
+      "path": "tests/test_phase6_research.py",
+      "reached_from": [
+        "tests"
+      ]
+    },
+    "tests.test_phase6_workspace": {
+      "external_import_roots": [
+        "numpy",
+        "pandas",
+        "pytest",
+        "streamlit"
+      ],
+      "imports": [
+        "modules.forward_distribution",
+        "modules.historical_analogs",
+        "modules.level_behavior",
+        "modules.market_outcomes",
+        "modules.market_state",
+        "modules.market_state_research",
+        "modules.option_scenario_ev",
+        "modules.phase6_research",
+        "modules.price_structure",
+        "modules.research_session"
+      ],
+      "lazy_imports": [
+        "modules.market_state_research"
+      ],
+      "path": "tests/test_phase6_workspace.py",
+      "reached_from": [
+        "tests"
+      ]
+    },
+    "tests.test_phase9": {
+      "external_import_roots": [
+        "pytest",
+        "streamlit"
+      ],
+      "imports": [
+        "alphaos_api.phase9",
+        "alphaos_api.phase9_contracts",
+        "modules.daily_archive",
+        "modules.market_state_research",
+        "modules.threshold_survival",
+        "modules.unified_trade",
+        "tests.test_api_hardening"
+      ],
+      "lazy_imports": [],
+      "path": "tests/test_phase9.py",
+      "reached_from": [
+        "tests"
+      ]
+    },
+    "tests.test_phase9_mcp": {
+      "external_import_roots": [
+        "pytest"
+      ],
+      "imports": [
+        "alphaos_api.phase9_contracts",
+        "tests.test_mcp_api",
+        "tests.test_phase9"
+      ],
+      "lazy_imports": [],
+      "path": "tests/test_phase9_mcp.py",
+      "reached_from": [
+        "tests"
+      ]
+    },
+    "tests.test_premium_engine": {
+      "external_import_roots": [],
+      "imports": [
+        "modules.premium_engine"
+      ],
+      "lazy_imports": [],
+      "path": "tests/test_premium_engine.py",
+      "reached_from": [
+        "tests"
+      ]
+    },
+    "tests.test_public_history": {
+      "external_import_roots": [
+        "numpy",
+        "pandas",
+        "public_api_sdk"
+      ],
+      "imports": [
+        "modules.history_diagnostics",
+        "modules.market_state",
+        "modules.market_state_research",
+        "modules.public_history",
+        "modules.public_research"
+      ],
+      "lazy_imports": [
+        "modules.public_research"
+      ],
+      "path": "tests/test_public_history.py",
+      "reached_from": [
+        "tests"
+      ]
+    },
+    "tests.test_public_intraday": {
+      "external_import_roots": [
+        "pytest"
+      ],
+      "imports": [
+        "modules.public_intraday"
+      ],
+      "lazy_imports": [],
+      "path": "tests/test_public_intraday.py",
+      "reached_from": [
+        "tests"
+      ]
+    },
+    "tests.test_public_observations": {
+      "external_import_roots": [
+        "pytest"
+      ],
+      "imports": [
+        "modules.public_observations"
+      ],
+      "lazy_imports": [
+        "modules.public_observations"
+      ],
+      "path": "tests/test_public_observations.py",
+      "reached_from": [
+        "tests"
+      ]
+    },
+    "tests.test_public_research": {
+      "external_import_roots": [
+        "numpy",
+        "pandas"
+      ],
+      "imports": [
+        "modules.public_research"
+      ],
+      "lazy_imports": [],
+      "path": "tests/test_public_research.py",
+      "reached_from": [
+        "tests"
+      ]
+    },
+    "tests.test_quant_engine": {
+      "external_import_roots": [
+        "numpy",
+        "pandas"
+      ],
+      "imports": [
+        "modules.quant_engine"
+      ],
+      "lazy_imports": [],
+      "path": "tests/test_quant_engine.py",
+      "reached_from": [
+        "tests"
+      ]
+    },
+    "tests.test_quote_freshness": {
+      "external_import_roots": [
+        "pytest",
+        "streamlit"
+      ],
+      "imports": [
+        "alphaos_api.service",
+        "modules",
+        "modules.phase6_workspace",
+        "modules.premium_workspace",
+        "modules.public_data",
+        "modules.quote_freshness",
+        "tests.test_api_hardening",
+        "tests.test_selector_quant_workflow"
+      ],
+      "lazy_imports": [
+        "modules",
+        "modules.phase6_workspace",
+        "modules.premium_workspace",
+        "modules.public_data",
+        "modules.quote_freshness",
+        "tests.test_selector_quant_workflow"
+      ],
+      "path": "tests/test_quote_freshness.py",
+      "reached_from": [
+        "tests"
+      ]
+    },
+    "tests.test_quote_latency": {
+      "external_import_roots": [
+        "pytest"
+      ],
+      "imports": [
+        "modules.quote_freshness",
+        "modules.quote_latency",
+        "scripts.quote_latency"
+      ],
+      "lazy_imports": [],
+      "path": "tests/test_quote_latency.py",
+      "reached_from": [
+        "tests"
+      ]
+    },
+    "tests.test_quote_mcp": {
+      "external_import_roots": [
+        "pytest"
+      ],
+      "imports": [
+        "tests.test_mcp_api"
+      ],
+      "lazy_imports": [],
+      "path": "tests/test_quote_mcp.py",
+      "reached_from": [
+        "tests"
+      ]
+    },
+    "tests.test_research2_api": {
+      "external_import_roots": [
+        "fastapi",
+        "pytest"
+      ],
+      "imports": [
+        "alphaos_api.app",
+        "alphaos_api.contracts",
+        "alphaos_api.mcp_server",
+        "alphaos_api.research2",
+        "modules.opportunity_session",
+        "modules.position_research",
+        "modules.supabase_archive",
+        "tests.test_archive_read_path",
+        "tests.test_mcp_api",
+        "tests.test_run_market"
+      ],
+      "lazy_imports": [
+        "alphaos_api.contracts",
+        "alphaos_api.research2",
+        "modules.opportunity_session"
+      ],
+      "path": "tests/test_research2_api.py",
+      "reached_from": [
+        "tests"
+      ]
+    },
+    "tests.test_research_api": {
+      "external_import_roots": [
+        "fastapi",
+        "pytest"
+      ],
+      "imports": [
+        "alphaos_api.app"
+      ],
+      "lazy_imports": [],
+      "path": "tests/test_research_api.py",
+      "reached_from": [
+        "tests"
+      ]
+    },
+    "tests.test_run_market": {
+      "external_import_roots": [
+        "pandas",
+        "pytest"
+      ],
+      "imports": [
+        "modules.intraday_archive",
+        "modules.run_market",
+        "tests.test_market_archive_adapter"
+      ],
+      "lazy_imports": [
+        "modules.intraday_archive"
+      ],
+      "path": "tests/test_run_market.py",
+      "reached_from": [
+        "tests"
+      ]
+    },
+    "tests.test_selector_quant_workflow": {
+      "external_import_roots": [
+        "numpy",
+        "pandas",
+        "pytest",
+        "streamlit"
+      ],
+      "imports": [
+        "modules.market_state_research",
+        "modules.phase6_research",
+        "modules.premium_engine",
+        "modules.quote_freshness",
+        "modules.selector_research",
+        "modules.threshold_survival"
+      ],
+      "lazy_imports": [
+        "modules.phase6_research",
+        "modules.quote_freshness",
+        "modules.selector_research"
+      ],
+      "path": "tests/test_selector_quant_workflow.py",
+      "reached_from": [
+        "tests"
+      ]
+    },
+    "tests.test_shared_evidence_comparison": {
+      "external_import_roots": [
+        "pytest"
+      ],
+      "imports": [
+        "alphaos_api.research2",
+        "modules",
+        "modules.strategy_compare",
+        "modules.structure_economics",
+        "tests.test_mcp_api",
+        "tests.test_research2_api",
+        "tests.test_structure_economics_integration"
+      ],
+      "lazy_imports": [
+        "alphaos_api.research2",
+        "modules.strategy_compare"
+      ],
+      "path": "tests/test_shared_evidence_comparison.py",
+      "reached_from": [
+        "tests"
+      ]
+    },
+    "tests.test_staging_history_dependencies": {
+      "external_import_roots": [
+        "pandas",
+        "pytest"
+      ],
+      "imports": [
+        "alphaos_api.research2",
+        "modules",
+        "modules.history_diagnostics",
+        "modules.public_provider",
+        "tests.test_public_history",
+        "tests.test_research2_api"
+      ],
+      "lazy_imports": [
+        "modules",
+        "modules.public_provider"
+      ],
+      "path": "tests/test_staging_history_dependencies.py",
+      "reached_from": [
+        "tests"
+      ]
+    },
+    "tests.test_strategy_compare": {
+      "external_import_roots": [
+        "pytest"
+      ],
+      "imports": [
+        "modules.long_option_research",
+        "modules.strategy_compare",
+        "modules.structure_research"
+      ],
+      "lazy_imports": [],
+      "path": "tests/test_strategy_compare.py",
+      "reached_from": [
+        "tests"
+      ]
+    },
+    "tests.test_structure_economics_integration": {
+      "external_import_roots": [
+        "numpy",
+        "pandas",
+        "pandas_market_calendars",
+        "pytest"
+      ],
+      "imports": [
+        "alphaos_api.research2",
+        "modules.supabase_archive",
+        "tests.test_archive_read_path",
+        "tests.test_mcp_api",
+        "tests.test_research2_api"
+      ],
+      "lazy_imports": [],
+      "path": "tests/test_structure_economics_integration.py",
+      "reached_from": [
+        "tests"
+      ]
+    },
+    "tests.test_structure_research": {
+      "external_import_roots": [
+        "pytest"
+      ],
+      "imports": [
+        "modules.opportunity_router",
+        "modules.options_payoff",
+        "modules.premium_engine",
+        "modules.structure_research"
+      ],
+      "lazy_imports": [],
+      "path": "tests/test_structure_research.py",
+      "reached_from": [
+        "tests"
+      ]
+    },
+    "tests.test_threshold_survival": {
+      "external_import_roots": [
+        "numpy",
+        "pandas"
+      ],
+      "imports": [
+        "modules.historical_analogs",
+        "modules.market_outcomes",
+        "modules.market_state_research",
+        "modules.threshold_survival"
+      ],
+      "lazy_imports": [],
+      "path": "tests/test_threshold_survival.py",
+      "reached_from": [
+        "tests"
+      ]
+    },
+    "tests.test_threshold_ui": {
+      "external_import_roots": [
+        "numpy",
+        "pandas",
+        "streamlit"
+      ],
+      "imports": [
+        "modules.historical_analogs",
+        "modules.market_state_research"
+      ],
+      "lazy_imports": [],
+      "path": "tests/test_threshold_ui.py",
+      "reached_from": [
+        "tests"
+      ]
+    },
+    "tests.test_trusted_historical_adapter": {
+      "external_import_roots": [
+        "pandas",
+        "pytest"
+      ],
+      "imports": [
+        "modules.trusted_historical_adapter"
+      ],
+      "lazy_imports": [],
+      "path": "tests/test_trusted_historical_adapter.py",
+      "reached_from": [
+        "tests"
+      ]
+    },
+    "tests.test_website_mcp_parity": {
+      "external_import_roots": [
+        "pytest"
+      ],
+      "imports": [
+        "tests.test_mcp_api",
+        "tests.test_research2_api"
+      ],
+      "lazy_imports": [],
+      "path": "tests/test_website_mcp_parity.py",
+      "reached_from": [
+        "tests"
+      ]
+    }
+  },
+  "python_requirements": {
+    "requirements-api.txt": [
+      "fastapi>=0.115.0,<1",
+      "uvicorn>=0.30.0,<1",
+      "pandas>=2.2.2,<4",
+      "numpy>=1.26.4,<3",
+      "python-dateutil>=2.9.0.post0,<3",
+      "publicdotcom-py==0.1.17",
+      "pandas-market-calendars==5.4.0",
+      "tzdata>=2024.1",
+      "mcp==2.2.0",
+      "supabase>=2.6.0,<3"
+    ],
+    "requirements-daily.txt": [
+      "numpy>=1.26.4",
+      "pandas>=2.2.2",
+      "publicdotcom-py==0.1.17",
+      "pandas-market-calendars==5.4.0",
+      "supabase==2.32.0"
+    ],
+    "requirements.txt": [
+      "streamlit>=1.36.0",
+      "supabase>=2.6.0",
+      "pandas>=2.2.2",
+      "numpy>=1.26.4",
+      "plotly>=5.22.0",
+      "python-dateutil>=2.9.0.post0",
+      "publicdotcom-py==0.1.17",
+      "pandas-market-calendars==5.4.0"
+    ]
+  },
+  "rest": [
+    {
+      "handler": "health",
+      "method": "GET",
+      "operation_id": null,
+      "path": "/health",
+      "source": "alphaos_api/app.py"
+    },
+    {
+      "handler": "market_snapshot",
+      "method": "GET",
+      "operation_id": "get_market_snapshot",
+      "path": "/v1/market/{symbol}",
+      "source": "alphaos_api/app.py"
+    },
+    {
+      "handler": "price_structure",
+      "method": "GET",
+      "operation_id": "get_price_structure",
+      "path": "/v1/structure/{symbol}",
+      "source": "alphaos_api/app.py"
+    },
+    {
+      "handler": "forward_distribution",
+      "method": "GET",
+      "operation_id": "get_forward_distribution",
+      "path": "/v1/distribution/{symbol}",
+      "source": "alphaos_api/app.py"
+    },
+    {
+      "handler": "live_quote",
+      "method": "GET",
+      "operation_id": "get_live_quote",
+      "path": "/v1/quote/{symbol}",
+      "source": "alphaos_api/app.py"
+    },
+    {
+      "handler": "option_expirations",
+      "method": "GET",
+      "operation_id": "get_option_expirations",
+      "path": "/v1/options/{symbol}/expirations",
+      "source": "alphaos_api/app.py"
+    },
+    {
+      "handler": "option_chain",
+      "method": "GET",
+      "operation_id": "get_option_chain",
+      "path": "/v1/options/{symbol}/chain/{expiration}",
+      "source": "alphaos_api/app.py"
+    },
+    {
+      "handler": "research_live_vertical",
+      "method": "GET",
+      "operation_id": "research_trade",
+      "path": "/v1/options/{symbol}/vertical",
+      "source": "alphaos_api/app.py"
+    },
+    {
+      "handler": "scan_credit_spreads",
+      "method": "GET",
+      "operation_id": "scan_credit_spreads",
+      "path": "/v1/options/{symbol}/scan",
+      "source": "alphaos_api/app.py"
+    },
+    {
+      "handler": "research_candidate",
+      "method": "GET",
+      "operation_id": "research_candidate",
+      "path": "/v1/candidates/{candidate_id}",
+      "source": "alphaos_api/app.py"
+    },
+    {
+      "handler": "research_explicit_trade",
+      "method": "POST",
+      "operation_id": "research_explicit_trade",
+      "path": "/v1/trade/research",
+      "source": "alphaos_api/app.py"
+    },
+    {
+      "handler": "compare_trades",
+      "method": "POST",
+      "operation_id": "compare_trades",
+      "path": "/v1/trade/compare",
+      "source": "alphaos_api/app.py"
+    },
+    {
+      "handler": "run_symbol",
+      "method": "GET",
+      "operation_id": "run_symbol_research",
+      "path": "/v1/research/{symbol}/run",
+      "source": "alphaos_api/phase9_routes.py"
+    },
+    {
+      "handler": "candidate",
+      "method": "GET",
+      "operation_id": "unified_candidate_research",
+      "path": "/v1/research/candidates/{candidate_id}",
+      "source": "alphaos_api/phase9_routes.py"
+    },
+    {
+      "handler": "vertical",
+      "method": "GET",
+      "operation_id": "unified_vertical_research",
+      "path": "/v1/research/{symbol}/vertical",
+      "source": "alphaos_api/phase9_routes.py"
+    },
+    {
+      "handler": "explicit",
+      "method": "POST",
+      "operation_id": "unified_explicit_trade_research",
+      "path": "/v1/research/trade",
+      "source": "alphaos_api/phase9_routes.py"
+    },
+    {
+      "handler": "run_market",
+      "method": "POST",
+      "operation_id": "run_market_v2",
+      "path": "/v1/research/market",
+      "source": "alphaos_api/research2.py"
+    },
+    {
+      "handler": "research_structure",
+      "method": "POST",
+      "operation_id": "research_structure_v2",
+      "path": "/v1/research/structure",
+      "source": "alphaos_api/research2.py"
+    },
+    {
+      "handler": "compare_structures",
+      "method": "POST",
+      "operation_id": "compare_structures_v2",
+      "path": "/v1/research/structures/compare",
+      "source": "alphaos_api/research2.py"
+    }
+  ],
+  "source_state": "working tree based on baseline; not a checkout of that commit",
+  "streamlit_pages": [
+    "pages/10_TradingView_Indicator.py",
+    "pages/11_Option_Economics.py",
+    "pages/4_Scanner.py",
+    "pages/5_Strategy_Selector.py",
+    "pages/8_Quant_Lab.py",
+    "pages/9_Settings.py"
+  ],
+  "web_imports": {
+    "web/src/app/api/health/route.ts": [],
+    "web/src/app/api/market/route.ts": [
+      "web/src/lib/alphaos-server.ts",
+      "web/src/lib/research-evidence.ts"
+    ],
+    "web/src/app/api/research/market/route.ts": [],
+    "web/src/app/api/strategies/route.ts": [
+      "web/src/app/api/research/market/route.ts"
+    ],
+    "web/src/app/dashboard/page.tsx": [
+      "web/src/components/shell/Header.tsx",
+      "web/src/lib/alphaos-server.ts",
+      "web/src/lib/research-evidence.ts"
+    ],
+    "web/src/app/error.tsx": [],
+    "web/src/app/journal/page.tsx": [
+      "web/src/components/shell/Header.tsx"
+    ],
+    "web/src/app/layout.tsx": [
+      "web/src/app/globals.css",
+      "web/src/components/shell/Sidebar.tsx"
+    ],
+    "web/src/app/market/page.tsx": [
+      "web/src/components/market/MarketResearchPanel.tsx",
+      "web/src/components/market/MarketUnavailable.tsx"
+    ],
+    "web/src/app/page.tsx": [],
+    "web/src/app/risk/page.tsx": [
+      "web/src/components/shell/Header.tsx",
+      "web/src/components/ui/MetricCard.tsx"
+    ],
+    "web/src/app/session/page.tsx": [
+      "web/src/components/shell/Header.tsx",
+      "web/src/components/shell/StatusPill.tsx"
+    ],
+    "web/src/app/settings/page.tsx": [
+      "web/src/components/shell/Header.tsx"
+    ],
+    "web/src/app/strategies/page.tsx": [
+      "web/src/app/market/page.tsx"
+    ],
+    "web/src/components/market/MarketResearchPanel.tsx": [
+      "web/src/components/shell/Header.tsx",
+      "web/src/components/shell/StatusPill.tsx",
+      "web/src/lib/market-candidates.ts"
+    ],
+    "web/src/components/market/MarketUnavailable.tsx": [
+      "web/src/components/shell/Header.tsx"
+    ],
+    "web/src/components/shell/Header.tsx": [
+      "web/src/components/shell/StatusPill.tsx"
+    ],
+    "web/src/components/shell/Sidebar.tsx": [],
+    "web/src/components/shell/StatusPill.tsx": [],
+    "web/src/components/ui/MetricCard.tsx": [],
+    "web/src/lib/alphaos-server.ts": [
+      "web/src/lib/mock-data.ts",
+      "web/src/lib/research-evidence.ts",
+      "web/src/types/research.ts"
+    ],
+    "web/src/lib/market-candidates.ts": [],
+    "web/src/lib/mock-data.ts": [
+      "web/src/types/research.ts"
+    ],
+    "web/src/lib/research-evidence.ts": [],
+    "web/src/types/research.ts": []
+  },
+  "web_package": {
+    "dependencies": {
+      "clsx": "^2.1.1",
+      "lucide-react": "^0.447.0",
+      "next": "16.4.0",
+      "react": "^18.3.1",
+      "react-dom": "^18.3.1",
+      "tailwind-merge": "^2.5.2"
+    },
+    "devDependencies": {
+      "@playwright/test": "^1.64.0",
+      "@types/node": "^20.16.10",
+      "@types/react": "^18.3.10",
+      "@types/react-dom": "^18.3.0",
+      "autoprefixer": "^10.4.20",
+      "postcss": "^8.4.47",
+      "tailwindcss": "^3.4.13",
+      "typescript": "^5.6.2"
+    },
+    "name": "alphaos-web",
+    "private": true,
+    "scripts": {
+      "build": "next build",
+      "dev": "next dev",
+      "lint": "next lint",
+      "start": "next start",
+      "test": "node --test --experimental-strip-types ./tests/*.test.mjs",
+      "test:e2e": "playwright test",
+      "typecheck": "tsc --noEmit"
+    },
+    "version": "0.1.0"
+  },
+  "web_reachable": [
+    "web/src/app/api/health/route.ts",
+    "web/src/app/api/market/route.ts",
+    "web/src/app/api/research/market/route.ts",
+    "web/src/app/api/strategies/route.ts",
+    "web/src/app/dashboard/page.tsx",
+    "web/src/app/error.tsx",
+    "web/src/app/globals.css",
+    "web/src/app/journal/page.tsx",
+    "web/src/app/layout.tsx",
+    "web/src/app/market/page.tsx",
+    "web/src/app/page.tsx",
+    "web/src/app/risk/page.tsx",
+    "web/src/app/session/page.tsx",
+    "web/src/app/settings/page.tsx",
+    "web/src/app/strategies/page.tsx",
+    "web/src/components/market/MarketResearchPanel.tsx",
+    "web/src/components/market/MarketUnavailable.tsx",
+    "web/src/components/shell/Header.tsx",
+    "web/src/components/shell/Sidebar.tsx",
+    "web/src/components/shell/StatusPill.tsx",
+    "web/src/components/ui/MetricCard.tsx",
+    "web/src/lib/alphaos-server.ts",
+    "web/src/lib/market-candidates.ts",
+    "web/src/lib/mock-data.ts",
+    "web/src/lib/research-evidence.ts",
+    "web/src/types/research.ts"
+  ],
+  "website_routes": [
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/health",
+      "source": "web/src/app/api/health/route.ts"
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/market",
+      "source": "web/src/app/api/market/route.ts"
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/research/market",
+      "source": "web/src/app/api/research/market/route.ts"
+    },
+    {
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "path": "/api/strategies",
+      "source": "web/src/app/api/strategies/route.ts"
+    },
+    {
+      "methods": [
+        "PAGE"
+      ],
+      "path": "/dashboard",
+      "source": "web/src/app/dashboard/page.tsx"
+    },
+    {
+      "methods": [
+        "PAGE"
+      ],
+      "path": "/journal",
+      "source": "web/src/app/journal/page.tsx"
+    },
+    {
+      "methods": [
+        "PAGE"
+      ],
+      "path": "/market",
+      "source": "web/src/app/market/page.tsx"
+    },
+    {
+      "methods": [
+        "PAGE"
+      ],
+      "path": "/",
+      "source": "web/src/app/page.tsx"
+    },
+    {
+      "methods": [
+        "PAGE"
+      ],
+      "path": "/risk",
+      "source": "web/src/app/risk/page.tsx"
+    },
+    {
+      "methods": [
+        "PAGE"
+      ],
+      "path": "/session",
+      "source": "web/src/app/session/page.tsx"
+    },
+    {
+      "methods": [
+        "PAGE"
+      ],
+      "path": "/settings",
+      "source": "web/src/app/settings/page.tsx"
+    },
+    {
+      "methods": [
+        "PAGE"
+      ],
+      "path": "/strategies",
+      "source": "web/src/app/strategies/page.tsx"
+    }
+  ],
+  "workflows": [
+    ".github/workflows/daily-quant.yml",
+    ".github/workflows/intraday-archive.yml",
+    ".github/workflows/tests.yml"
+  ]
+}

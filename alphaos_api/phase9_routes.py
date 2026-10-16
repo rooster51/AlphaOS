@@ -2,7 +2,7 @@
 from datetime import date
 from typing import Literal
 from fastapi import Query
-from .contracts import TradeRequest
+from .contracts import TradeRequest, friction
 from .phase9 import UnifiedResearch
 from .phase9_contracts import SymbolResearchResponse, UnifiedTradeResponse
 from modules.unified_trade import build_unified_trade
@@ -30,6 +30,5 @@ def register_phase9(router, get_service, respond):
     @router.post('/research/trade',response_model=UnifiedTradeResponse,operation_id='unified_explicit_trade_research')
     def explicit(trade:TradeRequest,include_advanced:bool=False):
         service=get_service();t=service.manual_trade(trade);bundle=service.snapshot(trade.symbol,trade.horizon,trade.spot)
-        friction={k:getattr(trade,k) for k in ('commission_per_contract','entry_slippage','terminal_friction')}
-        result=service.research(bundle,t,trade.method,**friction)
+        result=service.research(bundle,t,trade.method,**friction(trade))
         return respond(build_unified_trade(result,include_advanced=include_advanced))

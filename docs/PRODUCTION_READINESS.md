@@ -1,3 +1,11 @@
+# Historical readiness record
+
+The audit and deployment statements below are dated milestone evidence, retained
+without rewriting history. For the current Release 1.5 code and audited service
+map, use [ARCHITECTURE.md](ARCHITECTURE.md) and [DEPLOYMENT.md](DEPLOYMENT.md).
+
+---
+
 # AlphaOS 2.0 production readiness
 
 Audit date: 2026-10-06. Documentation only; no deployment, production smoke test,

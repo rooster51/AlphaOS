@@ -41,6 +41,11 @@ class CompareRequest(BaseModel):
     research_trade: TradeRequest
     candidates: list[TradeRequest]=Field(min_length=1,max_length=20)
 
+
+def friction(req):
+    """Shared extraction only; TradeRequest owns validation and default values."""
+    return {k:getattr(req,k) for k in ('commission_per_contract','entry_slippage','terminal_friction')}
+
 class ResponseMeta(BaseModel):
     instrument: dict | None = None
     schema_version: str
