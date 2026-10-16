@@ -1,11 +1,11 @@
 {
-  "baseline": "d1c9e087a3dbf09490fd113d095c004fecdac738",
+  "baseline": "18655f055a7667706f639c83bfb4ef3de75b7d99",
   "counts": {
     "mcp_tools": 17,
-    "python_files": 169,
-    "python_test_files": 57,
+    "python_files": 171,
+    "python_test_files": 58,
     "rest_operations": 19,
-    "tracked_files": 272
+    "tracked_files": 275
   },
   "dependency_files": [
     ".python-version",
@@ -34,6 +34,7 @@
     "docs/MCP.md",
     "docs/MCP_AUDIT.md",
     "docs/PRODUCTION_READINESS.md",
+    "docs/PROVIDER_CONSOLIDATION.md",
     "docs/QUOTE_FRESHNESS.md",
     "docs/RELEASE1_AFTER_HOURS_RESEARCH.md",
     "docs/RELEASE1_CANDIDATE_GENERATION_DIAGNOSTICS.md",
@@ -1271,6 +1272,7 @@
       "imports": [
         "modules.history_diagnostics",
         "modules.public_history",
+        "modules.public_option_quote",
         "modules.public_provider",
         "modules.public_session",
         "modules.quote_freshness"
@@ -1342,6 +1344,20 @@
         "tests"
       ]
     },
+    "modules.public_option_quote": {
+      "external_import_roots": [],
+      "imports": [],
+      "lazy_imports": [],
+      "path": "modules/public_option_quote.py",
+      "reached_from": [
+        "api",
+        "archive_contract",
+        "streamlit",
+        "cli",
+        "tests",
+        "disabled_pages"
+      ]
+    },
     "modules.public_provider": {
       "external_import_roots": [
         "pandas",
@@ -1350,6 +1366,7 @@
       "imports": [
         "modules.history_diagnostics",
         "modules.public_history",
+        "modules.public_option_quote",
         "modules.public_session",
         "modules.quote_freshness",
         "modules.symbol_registry"
@@ -2599,6 +2616,17 @@
         "modules.public_observations"
       ],
       "path": "tests/test_public_observations.py",
+      "reached_from": [
+        "tests"
+      ]
+    },
+    "tests.test_public_option_quote": {
+      "external_import_roots": [
+        "pytest"
+      ],
+      "imports": [],
+      "lazy_imports": [],
+      "path": "tests/test_public_option_quote.py",
       "reached_from": [
         "tests"
       ]
