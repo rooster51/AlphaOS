@@ -128,13 +128,18 @@ def normalize_contract(raw,symbol,expiration,kind,observed_at,snapshot_date):
 def build_options_snapshot(provider,symbol,session,config,config_version,config_hash,code_revision=None):
     start=timestamp(provider.now())
     snapshot_date=start.astimezone(NY).date().isoformat()
-    if symbol not in ('SPY','QQQ') or snapshot_date!=session:
+    from modules.intraday_canary_universe import CORE_SYMBOLS, collection_symbols
+    allowed = collection_symbols({'symbols': list(CORE_SYMBOLS)}, config.get('canary_symbol'))
+    if symbol not in allowed or snapshot_date!=session:
         raise ValueError('Options collection must occur on the actual session date.')
     underlying=provider.underlying(symbol)
     instrument=underlying.get('instrument',{})
     spot,bad=number(underlying.get('last'))
     if instrument.get('symbol')!=symbol or instrument.get('type')!='EQUITY' or underlying.get('outcome')!='SUCCESS' or bad or spot is None or spot<=0:
         raise ValueError('Underlying quote is missing, invalid or mismatched.')
+    if symbol not in CORE_SYMBOLS:
+        from modules.quote_freshness import require_research_quote
+        require_research_quote({'last': spot, 'updated_at': underlying.get('lastTimestamp')}, provider.now())
     spot_time=None;warnings=LIMITATIONS.copy()
     if underlying.get('lastTimestamp') is not None:
         spot_time=timestamp(underlying['lastTimestamp'])
