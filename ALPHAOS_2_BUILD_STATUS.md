@@ -1,3 +1,12 @@
+# Historical milestone status
+
+This file retains earlier build/handoff evidence. Current ownership, compatibility
+boundaries and observed deployments are in [the architecture inventory](docs/ARCHITECTURE.md)
+and [deployment map](docs/DEPLOYMENT.md); older status entries are not a fresh
+production-health or service-configuration assertion.
+
+---
+
 # AlphaOS 2.0 Build Status
 
 > Current release status updated 2026-10-14. Research outputs are not rankings or execution recommendations.

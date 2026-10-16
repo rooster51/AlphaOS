@@ -1,0 +1,295 @@
+{
+  "audited_on": "2026-10-16",
+  "baseline": "d1c9e087a3dbf09490fd113d095c004fecdac738",
+  "limitations": "Ancestry is not proof a branch is disposable; squash/cherry-picked work and deployed branch settings require separate review.",
+  "remote_branches": [
+    {
+      "name": "alphaos2/api-mcp-integration",
+      "sha": "1d06aee4c82332d4cfef0987e5e96e09cc4ee73e",
+      "ancestry": "not_ancestor_of_baseline",
+      "action": "retain; no branch deletion authorized"
+    },
+    {
+      "name": "alphaos2/identity-readiness-gate",
+      "sha": "e7118435edfbe2c6407cc6ff91eee5a933545b49",
+      "ancestry": "not_ancestor_of_baseline",
+      "action": "retain; no branch deletion authorized"
+    },
+    {
+      "name": "alphaos2/production-runtime",
+      "sha": "af7feb1377dda1e8151a62ad202f8be07a66b1ed",
+      "ancestry": "not_ancestor_of_baseline",
+      "action": "retain; no branch deletion authorized"
+    },
+    {
+      "name": "alphaos2/trade-ledger-foundation",
+      "sha": "0409230a904911ad7269acca4960d6b7214af7dd",
+      "ancestry": "not_ancestor_of_baseline",
+      "action": "retain; no branch deletion authorized"
+    },
+    {
+      "name": "alphaos3/economics-integration",
+      "sha": "8077d47689fbfd3c30eec549a1503d420dde6a4b",
+      "ancestry": "contained_in_baseline",
+      "action": "retain; no branch deletion authorized"
+    },
+    {
+      "name": "alphaos3/exchange-session-evidence",
+      "sha": "06e998f6624f693a388ef6ddd797577a7ffea31d",
+      "ancestry": "contained_in_baseline",
+      "action": "retain; no branch deletion authorized"
+    },
+    {
+      "name": "alphaos3/historical-economics",
+      "sha": "2c99a965dbef6b07a25e921405bf84271aa3007e",
+      "ancestry": "contained_in_baseline",
+      "action": "retain; no branch deletion authorized"
+    },
+    {
+      "name": "alphaos3/market-economics-integration",
+      "sha": "29d5365b41aaf36f1afbd0fbcf3e1905d6eb7908",
+      "ancestry": "contained_in_baseline",
+      "action": "retain; no branch deletion authorized"
+    },
+    {
+      "name": "alphaos3/shared-evidence-comparison",
+      "sha": "ba173006498896682fcfe038a1205d7a14b12ad0",
+      "ancestry": "contained_in_baseline",
+      "action": "retain; no branch deletion authorized"
+    },
+    {
+      "name": "alphaos3/trusted-evidence-adapter",
+      "sha": "aabd66065a31c56fcc6b23f683fde342e0e16e1b",
+      "ancestry": "contained_in_baseline",
+      "action": "retain; no branch deletion authorized"
+    },
+    {
+      "name": "alphaos3/trusted-historical-adapter",
+      "sha": "2c99a965dbef6b07a25e921405bf84271aa3007e",
+      "ancestry": "contained_in_baseline",
+      "action": "retain; no branch deletion authorized"
+    },
+    {
+      "name": "backend/configurable-archive-universe",
+      "sha": "5dd6abbabd65f6a29dfb6a3e03c540aaaa09a80e",
+      "ancestry": "not_ancestor_of_baseline",
+      "action": "retain; no branch deletion authorized"
+    },
+    {
+      "name": "backend/release1-history-recovery",
+      "sha": "81ce3f1c51ed90e082a03e5012f0aff31a520bbb",
+      "ancestry": "not_ancestor_of_baseline",
+      "action": "retain; no branch deletion authorized"
+    },
+    {
+      "name": "codex/release1-after-hours-research",
+      "sha": "f6d7f96db105644896765d77fcd807c400cc71ae",
+      "ancestry": "contained_in_baseline",
+      "action": "retain; no branch deletion authorized"
+    },
+    {
+      "name": "codex/release1-candidate-diagnostics",
+      "sha": "79e34568ae73d2fb058c799a3dd38f39ff64fb22",
+      "ancestry": "contained_in_baseline",
+      "action": "retain; no branch deletion authorized"
+    },
+    {
+      "name": "collector/noncanceling-heartbeat",
+      "sha": "f6cdb7a295c73553cdafbb0ea5352bfac7cbaad6",
+      "ancestry": "not_ancestor_of_baseline",
+      "action": "retain; no branch deletion authorized"
+    },
+    {
+      "name": "collector/render-cron",
+      "sha": "2ec6ec8fdd256bbbc290fffd0003d3bd3818f2bd",
+      "ancestry": "contained_in_baseline",
+      "action": "retain; no branch deletion authorized"
+    },
+    {
+      "name": "collector/verified-canary-wiring",
+      "sha": "b2bd429b4c5db919b417e8cf942bb4f65cb222aa",
+      "ancestry": "not_ancestor_of_baseline",
+      "action": "retain; no branch deletion authorized"
+    },
+    {
+      "name": "feature/historical-archive-evaluator-integration",
+      "sha": "2fbbe5e146bb6e4993e5a9f2d6d87ee48c5d1f10",
+      "ancestry": "not_ancestor_of_baseline",
+      "action": "retain; no branch deletion authorized"
+    },
+    {
+      "name": "feature/web-frontend-foundation",
+      "sha": "2de3577433ab42ee974d99d1d2e16888ff6415d1",
+      "ancestry": "not_ancestor_of_baseline",
+      "action": "retain; no branch deletion authorized"
+    },
+    {
+      "name": "fix/daily-archive-secret-diagnostic",
+      "sha": "c5365e40a6e810c41ee5da4582fa28de24cfab91",
+      "ancestry": "not_ancestor_of_baseline",
+      "action": "retain; no branch deletion authorized"
+    },
+    {
+      "name": "fix/release1-candidate-details",
+      "sha": "415cd27d6003027b541370527587e56c26b875d6",
+      "ancestry": "not_ancestor_of_baseline",
+      "action": "retain; no branch deletion authorized"
+    },
+    {
+      "name": "fix/release1-history-validation",
+      "sha": "6e116ca1dfe790b32bba8c1cb89ce66a72058a3c",
+      "ancestry": "not_ancestor_of_baseline",
+      "action": "retain; no branch deletion authorized"
+    },
+    {
+      "name": "fix/release1-safe-history-reasons",
+      "sha": "8a36a49843a27a442153e8a67672d27b197f02c6",
+      "ancestry": "not_ancestor_of_baseline",
+      "action": "retain; no branch deletion authorized"
+    },
+    {
+      "name": "integration/canary-intraday-safety",
+      "sha": "d9b828758f07e066daac6a4b0805c117865e1a6f",
+      "ancestry": "not_ancestor_of_baseline",
+      "action": "retain; no branch deletion authorized"
+    },
+    {
+      "name": "main",
+      "sha": "d1c9e087a3dbf09490fd113d095c004fecdac738",
+      "ancestry": "contained_in_baseline",
+      "action": "retain; no branch deletion authorized"
+    },
+    {
+      "name": "market-data-v1",
+      "sha": "6ca69e0ce7606cd4fad34d2b61c1595f9eb19ce1",
+      "ancestry": "not_ancestor_of_baseline",
+      "action": "retain; no branch deletion authorized"
+    },
+    {
+      "name": "phase10a-intraday-engine",
+      "sha": "c22366f6237e19a7d88196a1dc5f7f384edad004",
+      "ancestry": "not_ancestor_of_baseline",
+      "action": "retain; no branch deletion authorized"
+    },
+    {
+      "name": "phase10b-active-trade-monitor",
+      "sha": "3e9455c8ba700b6f2359bad0041650ad6cd5de3f",
+      "ancestry": "not_ancestor_of_baseline",
+      "action": "retain; no branch deletion authorized"
+    },
+    {
+      "name": "phase10c-trade-journal",
+      "sha": "7755b7e2a7ff1fb48cb990025c5ff331f3510553",
+      "ancestry": "not_ancestor_of_baseline",
+      "action": "retain; no branch deletion authorized"
+    },
+    {
+      "name": "phase5-2-robustness-ui",
+      "sha": "82a7aa375ba99408d8b91eb376bc8b61354ef708",
+      "ancestry": "contained_in_baseline",
+      "action": "retain; no branch deletion authorized"
+    },
+    {
+      "name": "phase5-option-economics",
+      "sha": "aa98f8b97d069116e7b0e7dd82cb98c8de8167fe",
+      "ancestry": "contained_in_baseline",
+      "action": "retain; no branch deletion authorized"
+    },
+    {
+      "name": "phase6-price-structure",
+      "sha": "cd508e36930ad69db696e4ba0b359902211e7f3c",
+      "ancestry": "contained_in_baseline",
+      "action": "retain; no branch deletion authorized"
+    },
+    {
+      "name": "phase7-research-api",
+      "sha": "51289ce9f5455eae3c230088c07abc12cecadc08",
+      "ancestry": "not_ancestor_of_baseline",
+      "action": "retain; no branch deletion authorized"
+    },
+    {
+      "name": "phase8-mcp",
+      "sha": "cd59c2c4026a9505ecd25e1976da241b2dc4c534",
+      "ancestry": "not_ancestor_of_baseline",
+      "action": "retain; no branch deletion authorized"
+    },
+    {
+      "name": "phase9-index-support",
+      "sha": "4ef8d5bb1487af1612d8be33cf53f2b2c3be7124",
+      "ancestry": "not_ancestor_of_baseline",
+      "action": "retain; no branch deletion authorized"
+    },
+    {
+      "name": "phase9-unified-trade-research",
+      "sha": "92ed1104edd30d9077a3267332902e495cb9fe20",
+      "ancestry": "not_ancestor_of_baseline",
+      "action": "retain; no branch deletion authorized"
+    },
+    {
+      "name": "release/reconcile-quote-freshness-economics",
+      "sha": "6a46074a29bae24a8803d0ebe6ba471066c11b4a",
+      "ancestry": "contained_in_baseline",
+      "action": "retain; no branch deletion authorized"
+    },
+    {
+      "name": "release/release1-consolidation",
+      "sha": "0b9d1807061661c462df55afba70e5111794f47f",
+      "ancestry": "contained_in_baseline",
+      "action": "retain; no branch deletion authorized"
+    },
+    {
+      "name": "research/expanded-symbol-collection-plan",
+      "sha": "27a9812d61269f0c1fda347f26fd43a5c6fc1178",
+      "ancestry": "not_ancestor_of_baseline",
+      "action": "retain; no branch deletion authorized"
+    },
+    {
+      "name": "research/intraday-session-integrity",
+      "sha": "e2bb6109c1adc7dcc81956f41251cfe8349c0d41",
+      "ancestry": "not_ancestor_of_baseline",
+      "action": "retain; no branch deletion authorized"
+    },
+    {
+      "name": "research/market-contract-regression",
+      "sha": "b9c4f3be36e929e0052b1d118093d84243bde9e4",
+      "ancestry": "not_ancestor_of_baseline",
+      "action": "retain; no branch deletion authorized"
+    },
+    {
+      "name": "research/verified-intraday-round-trip-v1",
+      "sha": "1f0371bba09f7544b37a8fd08f3b4a7042da154c",
+      "ancestry": "not_ancestor_of_baseline",
+      "action": "retain; no branch deletion authorized"
+    },
+    {
+      "name": "strategy-selector-quant-workflow",
+      "sha": "1f53bf4048183c15b1e625f7058e00de3e4a82e7",
+      "ancestry": "contained_in_baseline",
+      "action": "retain; no branch deletion authorized"
+    },
+    {
+      "name": "strategy/shape-normalization-straddles",
+      "sha": "1a4f8b988a6c6dc0931692e2fccb94deac598c36",
+      "ancestry": "not_ancestor_of_baseline",
+      "action": "retain; no branch deletion authorized"
+    },
+    {
+      "name": "web/fail-closed-data-boundary",
+      "sha": "6d025ad2ff93b46a3acfa1d554810e2bc165bfed",
+      "ancestry": "not_ancestor_of_baseline",
+      "action": "retain; no branch deletion authorized"
+    },
+    {
+      "name": "web/release1-research-parity",
+      "sha": "c0f8f8a140c4fa801a0703e54df5e3d2a035c783",
+      "ancestry": "contained_in_baseline",
+      "action": "retain; no branch deletion authorized"
+    },
+    {
+      "name": "web/research-api-integration",
+      "sha": "c2d4645afdf2da361a2b8df6e7fc78f1d1864563",
+      "ancestry": "not_ancestor_of_baseline",
+      "action": "retain; no branch deletion authorized"
+    }
+  ]
+}

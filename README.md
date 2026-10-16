@@ -1,10 +1,38 @@
 # AlphaOS
 
-AlphaOS is a Streamlit premium-selling research app with timeframe selection, 15 income strategy generators, expiration risk/reward, estimated probability of profit, and interactive payoff charts. It retains the Scanner, Pulse Bar lab, TradingView tools, and existing Public/Supabase integrations.
+AlphaOS provides read-only options research through a Next.js website, an
+authenticated FastAPI backend and OAuth MCP tools. General SPY/QQQ research uses
+one verified-archive pipeline shared by the website, REST and MCP, with explicit
+current/historical modes, backend-generated structures, economics and diagnostics.
+Legacy live-vertical tools and the Streamlit research workspace remain available
+with their existing contracts.
 
-The MVP intentionally does not support automated trade execution.
+The deployed research API does not execute trades or write a personal journal.
+Capital eligibility, historical evidence and executable quote freshness remain
+separate; unknown evidence is never filled with synthetic observations.
 
-## Active Pages
+## Current architecture and local entrypoints
+
+- [Architecture and consolidation inventory](docs/ARCHITECTURE.md): canonical call
+  paths, retained compatibility code, cleanup decisions and migration boundaries.
+- [Actual deployment/dependency map](docs/DEPLOYMENT.md): audited services,
+  entrypoints and install scopes; older release reports are dated evidence.
+- [Website setup](web/DEPLOYMENT.md), [MCP setup](docs/MCP.md),
+  [archive modes](docs/RELEASE1_AFTER_HOURS_RESEARCH.md) and
+  [candidate diagnostics](docs/RELEASE1_CANDIDATE_GENERATION_DIAGNOSTICS.md).
+
+Headless backend: install `requirements-api.txt`, configure the server-side
+environment described in the deployment map, and run `python -m alphaos_api`.
+Website: `cd web`, `npm ci`, then `npm run dev`; configure its server-side backend
+URL and token using `web/.env.example` as a template. Production builds use
+`npm run build` and `npm start`. These are local setup instructions, not an
+instruction to deploy or change service settings.
+
+The sections below retain the original **legacy Streamlit workspace** setup and
+feature documentation. Its demo, portfolio and research behavior is not a claim
+about the canonical archive API or the website's unconnected account pages.
+
+## Legacy Streamlit pages
 
 - Dashboard
 - Scanner
@@ -13,7 +41,7 @@ The MVP intentionally does not support automated trade execution.
 - TradingView Indicator
 - Settings
 
-## Current MVP Features
+## Legacy workspace features
 
 - Supabase-ready authentication
 - Defined-risk spread suggestions
