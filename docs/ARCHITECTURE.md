@@ -4,6 +4,13 @@ Audited October 16, 2026, starting from `main` at
 `d1c9e087a3dbf09490fd113d095c004fecdac738` (PR #44 merged).
 This is an inventory and behavior-preserving cleanup, not a new research engine.
 
+Release 1.5B starts from PR #45 merge
+`18655f055a7667706f639c83bfb4ef3de75b7d99`. It consolidates only the pure SDK
+option-row formatter shared by the headless and Streamlit adapters. See
+[provider consolidation](PROVIDER_CONSOLIDATION.md) for traced callers, preserved
+failure/cache boundaries, validation and the next migration. The deployment audit
+below remains dated evidence; this code change does not assert a new deployment.
+
 ## Canonical general research pipeline
 
 The authoritative general SPY/QQQ workflow is **archive-backed `run_market`**.
@@ -94,7 +101,7 @@ module globals, symbol policies, caching, credentials and callers may differ.
 |---|---|
 | `app.py`, `streamlit_app.py` | Duplicate three-line launchers, retained compatibility entrypoints. Both call `premium_workspace.render`; external Streamlit deployments were not inventoried by Render and may depend on either filename. |
 | `pages/` and workspace modules | Active legacy UI. Scanner uses `market_data`; Strategy Selector and root use `premium_workspace`; Quant Lab dispatches its retained research workspaces; settings uses guardrails/Alpaca configuration. Keep. |
-| `public_data.py`, `public_provider.py`, `daily_public.py`, `public_session.py`, `public_history.py` | Distinct lifecycle boundaries: Streamlit secrets/cache and portfolio reads; headless server market data; collector; shared account selection; historical transport. Several identical helper bodies still depend on different globals. Keep; any consolidation needs provider/cache contract tests and a separate migration. |
+| `public_data.py`, `public_provider.py`, `daily_public.py`, `public_session.py`, `public_history.py` | Distinct lifecycle boundaries: Streamlit secrets/cache and portfolio reads; headless server market data; collector; shared account selection; historical transport. Release 1.5B shares only SDK option-row formatting through `public_option_quote.py`, retaining `_option_quote_row` wrappers and local numeric hooks. Credentials, request policy, caches, raw archive normalization and other helpers remain separate; see the provider consolidation record. |
 | `phase6_*`, `selector_research.py`, `option_scenario_ev.py`, `threshold_survival.py` | Older names, but imported by the active `ResearchService` and shared structure/history paths. Required compatibility/research primitives, not obsolete phases. |
 | `options_income.py`, `options_suggestions.py` | Required by current structure discovery. Retain legacy selector behavior, including observed-delta gates, and avoid importing UI scoring into canonical research. |
 | `_number` helpers and timestamp/freshness functions | Some exact duplicates, others intentionally differ on booleans/nonfinite input or observation versus quote time. Keep; no global validation rewrite in this PR. |

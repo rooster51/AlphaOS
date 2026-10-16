@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Any
+from modules.public_option_quote import option_quote_row
 
 import pandas as pd
 import streamlit as st
@@ -173,33 +174,8 @@ def get_public_option_expirations(symbol: str) -> list[str]:
 
 
 def _option_quote_row(quote: Any, option_type: str) -> dict | None:
-    details = quote.option_details
-    if details is None or details.strike_price is None:
-        return None
-    greeks = details.greeks
-    bid = _as_float(quote.bid)
-    ask = _as_float(quote.ask)
-    mid = _as_float(details.mid_price)
-    if mid is None and bid is not None and ask is not None:
-        mid = (bid + ask) / 2
-    return {
-        "contract": quote.instrument.symbol,
-        "type": option_type,
-        "strike": _as_float(details.strike_price),
-        "bid": bid,
-        "ask": ask,
-        "mid": mid,
-        "delta": _as_float(greeks.delta if greeks else None),
-        "gamma": _as_float(greeks.gamma if greeks else None),
-        "theta": _as_float(greeks.theta if greeks else None),
-        "vega": _as_float(greeks.vega if greeks else None),
-        "rho": _as_float(greeks.rho if greeks else None),
-        "bid_timestamp": getattr(quote, "bid_timestamp", None),
-        "ask_timestamp": getattr(quote, "ask_timestamp", None),
-        "iv": _as_float(greeks.implied_volatility if greeks else None),
-        "volume": quote.volume,
-        "open_interest": getattr(quote, "open_interest", None),
-    }
+    """Compatibility wrapper; retain this provider's numeric conversion hook."""
+    return option_quote_row(quote, option_type, as_float=_as_float)
 
 
 @st.cache_data(ttl=30, show_spinner=False)

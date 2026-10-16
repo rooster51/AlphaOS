@@ -19,6 +19,16 @@ observed production configuration**. This audit changes neither file nor service
 Reconciliation needs a separate approved migration; do not apply that Blueprint
 as a replacement for current settings.
 
+## Release 1.5B code dependency update
+
+From PR #45 main (`18655f055a7667706f639c83bfb4ef3de75b7d99`), both
+`public_provider` and legacy `public_data` depend on the standard-library-only
+`public_option_quote` formatter. This adds no package, credential, service, request,
+cache or fallback. The collector still uses raw-response `DailyPublicProvider` and
+`options_archive.normalize_contract`; verified archive reads remain separate.
+See [the provider trace and migration boundaries](PROVIDER_CONSOLIDATION.md).
+This is a source-code update, not a fresh Render audit or deployment.
+
 ## Actual application dependencies
 
 ```mermaid
