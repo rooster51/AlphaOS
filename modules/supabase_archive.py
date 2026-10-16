@@ -83,16 +83,20 @@ def find_slot_snapshot(client, provider, symbol, slot):
     return rows[0] if rows else None
 
 
-def read_latest_option_snapshot(client, symbol, as_of, *, max_age_seconds, provider='Public'):
+def read_latest_option_snapshot(client, symbol, as_of, *, max_age_seconds, provider='Public', research_mode='current'):
     """Read verified persisted evidence; client/credentials belong to the caller.
 
     Freshness is an explicit caller policy. Partial latest evidence is returned,
     never silently replaced with an older complete snapshot. No writes or fetches
     from the market provider occur, and historical objects are not modified.
+    Explicit historical mode removes only the age ceiling; all availability,
+    integrity and identity checks still apply to that same latest snapshot.
     """
     from math import isfinite
     from modules.options_archive import timestamp
     now = timestamp(as_of)
+    if research_mode not in ('current', 'historical'):
+        raise ValueError('Explicit current or historical research mode required.')
     symbol = str(symbol).strip().upper()
     if symbol not in ('SPY', 'QQQ'):
         raise ValueError('Select an archived SPY/QQQ symbol.')
@@ -108,7 +112,8 @@ def read_latest_option_snapshot(client, symbol, as_of, *, max_age_seconds, provi
             raise ArchiveUnavailable('No archived snapshot available.', code='archive_missing')
         row = rows[0]
         observed = timestamp(row['observed_at'])
-        if not 0 <= (now-observed).total_seconds() <= max_age_seconds:
+        age = (now-observed).total_seconds()
+        if age < 0 or (research_mode == 'current' and age > max_age_seconds):
             raise ArchiveUnavailable('Archived snapshot is stale or future-dated.', code='archive_stale')
         if timestamp(row['created_at']) > now:
             raise ValueError('Snapshot was not yet available.')
@@ -141,7 +146,8 @@ def read_latest_option_snapshot(client, symbol, as_of, *, max_age_seconds, provi
         raise ArchiveUnavailable('Latest archive missing, stale, invalid or unreadable.') from None
     return {'payload': payload, 'metadata': row,
             'freshness': {'as_of': now.isoformat(), 'age_seconds': (now-observed).total_seconds(),
-                          'max_age_seconds': max_age_seconds, 'basis': 'collection_start'}}
+                          'max_age_seconds': max_age_seconds if research_mode == 'current' else None,
+                          'basis': 'collection_start'}}
 
 
 def persist_option_snapshot(client, payload, archive_config=None):

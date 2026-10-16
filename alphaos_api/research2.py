@@ -22,8 +22,9 @@ class Request(BaseModel):
 
 class MarketRequest(Request):
     symbol: Literal['QQQ', 'SPY']
+    research_mode: Literal['current', 'historical'] = 'current'
     expiration: date | None = None
-    available_capital: float | None = Field(default=None, ge=0)
+    available_capital: float | None = Field(default=None, gt=0, strict=True)
     objective: str | None = Field(default=None, max_length=1000)
     width: float = Field(default=5, gt=0, le=100)
 
@@ -72,14 +73,15 @@ class ArchiveResearchService:
         self.clock = clock or (lambda: datetime.now(timezone.utc))
 
     @staticmethod
-    def _read(symbol, as_of):
+    def _read(symbol, as_of, *, research_mode='current'):
         # Lazy trusted server wiring. No connection or secret loading on import.
         # Reader implements ALL selection, checksum, identity and freshness rules.
         try:
             age = float(os.environ.get('ALPHAOS_ARCHIVE_MAX_AGE_SECONDS', '600'))
             if not isfinite(age) or age < 0:
                 raise ValueError()
-            return read_latest_option_snapshot(archive_client(), symbol, as_of, max_age_seconds=age)
+            return read_latest_option_snapshot(archive_client(), symbol, as_of,
+                max_age_seconds=age, research_mode=research_mode)
         except ArchiveUnavailable:
             raise
         except Exception:
@@ -103,7 +105,8 @@ class ArchiveResearchService:
         # Load/verify archive FIRST; never fall back to live chain on failure.
         now = self.clock()
         try:
-            record = self.read_snapshot(request.symbol, now.isoformat())
+            record = self.read_snapshot(request.symbol, now.isoformat(), **(
+                {'research_mode': 'historical'} if request.research_mode == 'historical' else {}))
         except ArchiveUnavailable as error:
             raise APIError(error.code, 503) from None
         except Exception:
@@ -139,6 +142,7 @@ class ArchiveResearchService:
         try:
             result = run_latest_market(request.symbol, as_of=now.isoformat(),
                 read_snapshot=lambda symbol, as_of: record, history=history,
+                research_mode=request.research_mode,
                 expiration=request.expiration.isoformat() if request.expiration else None,
                 available_capital=request.available_capital, objective=request.objective, width=request.width)
         except ArchiveExpirationUnavailable:
@@ -146,6 +150,9 @@ class ArchiveResearchService:
         except (ValueError, TypeError, KeyError, OverflowError):
             raise APIError('archive_research_unavailable', 422) from None
         result['research_session']['diagnostics']['history_loading'] = history_loading
+        result['research_mode'] = request.research_mode
+        if request.research_mode == 'historical':
+            caveats.append('Historical archive research at the observation timestamp; candidates are not current trading opportunities or executable quotes.')
         return envelope(request, result, 'Verified Supabase archive; completed Public daily history when available', caveats)
 
     @staticmethod

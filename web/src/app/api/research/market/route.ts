@@ -1,5 +1,6 @@
 type MarketPayload = {
   symbol: "SPY" | "QQQ";
+  research_mode?: "current" | "historical";
   expiration?: string;
   available_capital?: number;
   objective?: string;
@@ -9,7 +10,7 @@ type MarketPayload = {
 function parseMarketPayload(value: unknown): MarketPayload | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
   const input = value as Record<string, unknown>;
-  const allowed = new Set(["symbol", "expiration", "available_capital", "objective", "width"]);
+  const allowed = new Set(["symbol", "research_mode", "expiration", "available_capital", "objective", "width"]);
   if (Object.keys(input).some((key) => !allowed.has(key))) return null;
 
   if (typeof input.symbol !== "string") return null;
@@ -17,6 +18,10 @@ function parseMarketPayload(value: unknown): MarketPayload | null {
   if (symbol !== "SPY" && symbol !== "QQQ") return null;
 
   const payload: MarketPayload = { symbol };
+  if (input.research_mode !== undefined) {
+    if (input.research_mode !== "current" && input.research_mode !== "historical") return null;
+    payload.research_mode = input.research_mode;
+  }
   if (input.expiration !== undefined) {
     if (typeof input.expiration !== "string" ||
         !/^\d{4}-\d{2}-\d{2}$/.test(input.expiration) ||
@@ -49,12 +54,20 @@ function object(value: unknown): Record<string, unknown> | null {
     : null;
 }
 
-function validResearchEnvelope(value: unknown, symbol: MarketPayload["symbol"]): value is Record<string, unknown> {
+function validResearchEnvelope(value: unknown, symbol: MarketPayload["symbol"], mode: MarketPayload["research_mode"]): value is Record<string, unknown> {
   const envelope = object(value);
   const request = object(envelope?.request);
   const research = object(envelope?.research);
   const archive = object(research?.archive);
   const session = object(research?.research_session);
+  if (mode === "historical") {
+    const freshness = object(archive?.freshness);
+    const observation = object(archive?.observation);
+    if (request?.research_mode !== mode || research?.research_mode !== mode ||
+        typeof observation?.observed_at !== "string" || !Number.isFinite(Date.parse(observation.observed_at)) ||
+        typeof freshness?.age_seconds !== "number" || !Number.isFinite(freshness.age_seconds) || freshness.age_seconds < 0 ||
+        freshness.max_age_seconds !== null || typeof archive?.provider !== "string") return false;
+  } else if (research?.research_mode === "historical" || request?.research_mode === "historical") return false;
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
   return envelope?.schema_version === "alphaos-interface-v2" &&
     envelope.read_only === true &&
@@ -165,6 +178,16 @@ export async function POST(request: Request) {
                   ? "archive_expiration_unavailable"
                 : response.status === 422
                   ? "backend_rejected_request"
+                  : code === "api_not_configured"
+                    ? "backend_api_not_configured"
+                    : code === "internal_error"
+                      ? "backend_internal_error"
+                      : response.status === 404
+                        ? "backend_endpoint_unavailable"
+                        : response.status === 429
+                          ? "backend_rate_limited"
+                          : response.status >= 500
+                            ? "backend_service_unavailable"
                   : "backend_http_error";
     return Response.json(
       { status: "unavailable", code: detail },
@@ -184,7 +207,7 @@ export async function POST(request: Request) {
     }
     throw error;
   }
-  if (!validResearchEnvelope(responsePayload, payload.symbol)) {
+  if (!validResearchEnvelope(responsePayload, payload.symbol, payload.research_mode)) {
     return Response.json(
       { status: "unavailable", code: "response_schema_mismatch" },
       { status: 502, headers: { "Cache-Control": "no-store" } },

@@ -151,12 +151,13 @@ def build_mcp(app, sanitize):
     async def unified_explicit_trade_research(trade: TradeRequest,include_advanced: bool=False) -> CallToolResult:
         return await invoke('/v1/research/trade',dict(include_advanced=include_advanced),body=trade.model_dump(mode='json'))
 
-    @tool('AlphaOS 2.0 Run QQQ/SPY: verified stored archive -> classifier -> routes -> structures -> capital eligibility -> descriptive comparison. Not live executable quotes. Capital is max-loss ceiling, not margin. Objective is context only, not a market classification or filter. Omit expiration to use archive selection; explicit dates are never substituted. Default width 5 points. Preserve full evidence, timestamps, exclusions and unknowns; no winner or POP at expiration.')
+    @tool('AlphaOS Run QQQ/SPY: verified stored archive -> classifier -> routes -> structures -> capital eligibility -> descriptive comparison. research_mode=current (default) requires strict freshness and never substitutes stale data. Use research_mode=historical only for explicitly requested historical archive analysis, including after close/weekends/holidays; latest verified snapshot at its original observation time, never current trading opportunities or executable quotes. Preserve observation timestamp, archive age, source, expiration and warnings. Capital is max-loss ceiling, not margin. Objective is context only. Omit expiration to use archive selection; explicit dates are never substituted. Default width 5 points. Preserve full evidence, exclusions and unknowns; no winner or POP at expiration.')
     async def run_market(symbol: Literal['QQQ','SPY'], expiration: date|None=None,
-            available_capital: Annotated[float|None,Field(ge=0,allow_inf_nan=False)]=None,
+            research_mode: Literal['current','historical']='current',
+            available_capital: Annotated[float|None,Field(gt=0,strict=True,allow_inf_nan=False)]=None,
             objective: Annotated[str|None,Field(max_length=1000)]=None,
             width: Annotated[float,Field(gt=0,le=100,allow_inf_nan=False)]=5) -> CallToolResult:
-        request=MarketRequest(symbol=symbol,expiration=expiration,available_capital=available_capital,objective=objective,width=width)
+        request=MarketRequest(symbol=symbol,expiration=expiration,research_mode=research_mode,available_capital=available_capital,objective=objective,width=width)
         return await invoke('/v1/research/market',body=request.model_dump(mode='json'))
 
     @tool('Research an explicit long option, debit/credit spread, butterfly/BWB or iron condor using shared AlphaOS 2.0 economics. Requires symbol, expiration, as_of date, scenario spot, signed quantities and signed package credit (negative debit), fees in dollars. Supplied cashflow is not a verified fill. No provider calls, position writes, or recommendations.')
