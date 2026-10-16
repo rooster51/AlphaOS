@@ -5,6 +5,7 @@ an already-loaded archive payload and converts one expiration into the normalize
 market/chain inputs consumed by AlphaOS opportunity research.
 """
 from copy import deepcopy
+from collections import Counter
 from datetime import date, timezone
 from zoneinfo import ZoneInfo
 
@@ -70,19 +71,26 @@ def normalize_archive_snapshot(payload, expiration=None):
 
     rows = []
     excluded = []
+    bucket_counts = {}
+    selection_counts = Counter()
     for bucket in ("valid_contracts", "questionable_contracts", "rejected_contracts"):
         values = options.get(bucket) or []
         if not isinstance(values, list):
             raise ValueError("Archive contract buckets must be lists.")
+        bucket_counts[bucket] = len(values)
         for row in values:
             if not isinstance(row, dict):
+                selection_counts['malformed_contract'] += 1
                 excluded.append({'contract': None, 'reason': 'malformed_archive_contract', 'bucket': bucket})
             elif row.get('expiration') == expiration:
+                selection_counts['selected_expiration'] += 1
                 if bucket == 'rejected_contracts':
                     excluded.append({'contract': row.get('contract'), 'reason': 'rejected_archive_contract',
                                      'rejection_reasons': deepcopy(row.get('rejection_reasons') or [])})
                 else:
                     rows.append((bucket, row))
+            else:
+                selection_counts['different_expiration'] += 1
 
     chain = {"symbol": symbol, "expiration": expiration, "calls": [], "puts": []}
     failed_expirations = {item.get('expiration') for item in options.get('expiration_failures') or [] if isinstance(item, dict)}
@@ -91,9 +99,13 @@ def normalize_archive_snapshot(payload, expiration=None):
         pool = "calls" if kind == "call" else "puts" if kind == "put" else None
         times = [raw.get(k) for k in ('bid_timestamp', 'ask_timestamp', 'last_timestamp', 'observed_at') if raw.get(k) is not None]
         bad_time = any(aware_time(t) is None or aware_time(t) > last_observation for t in times)
-        if (pool is None or raw.get("rejection_reasons") or raw.get('symbol') != symbol
-                or expiration in failed_expirations or bad_time):
-            excluded.append({"contract": raw.get("contract"), "reason": "invalid_archive_contract"})
+        defects = (["invalid_option_type"] if pool is None else [])
+        if raw.get('rejection_reasons'): defects.append('archive_rejection_reasons')
+        if raw.get('symbol') != symbol: defects.append('contract_symbol_mismatch')
+        if expiration in failed_expirations: defects.append('expiration_collection_failed')
+        if bad_time: defects.append('invalid_or_future_contract_timestamp')
+        if defects:
+            excluded.append({"contract": raw.get("contract"), "reason": "invalid_archive_contract", "details": defects})
             continue
         row = deepcopy(raw)
         row["type"] = "Call" if kind == "call" else "Put"
@@ -106,6 +118,16 @@ def normalize_archive_snapshot(payload, expiration=None):
         row["archive_quality"] = bucket
         chain[pool].append(row)
 
+    diagnostics = dict(
+        bucket_counts=bucket_counts, total_contract_count=sum(bucket_counts.values()),
+        selected_expiration=expiration, selected_expiration_count=selection_counts['selected_expiration'],
+        other_expiration_count=selection_counts['different_expiration'],
+        malformed_contract_count=selection_counts['malformed_contract'],
+        normalized_contract_count=len(chain['calls']) + len(chain['puts']),
+        rejection_counts=dict(Counter(item['reason'] for item in excluded)),
+        rejection_detail_counts=dict(Counter(reason for item in excluded for reason in item.get('details', []))),
+        counts_scope='contract rows in this verified snapshot; selected expiration only after selection')
+
     return {
         "version": VERSION,
         "provider": payload.get("provider"),
@@ -113,9 +135,11 @@ def normalize_archive_snapshot(payload, expiration=None):
         "observed_at": observed_at.isoformat(),
         "session_date": session,
         "expiration": expiration,
+        "diagnostics": diagnostics,
         "market_research": {
             "symbol": symbol,
             "spot": spot,
+            "archive_diagnostics": diagnostics,
             "archive_observation": {
                 "provider": payload.get("provider"),
                 "schema_version": payload.get("schema_version"),

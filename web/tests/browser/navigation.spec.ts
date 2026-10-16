@@ -1,6 +1,27 @@
 import { expect, test } from "@playwright/test";
 
 for (const symbol of ["SPY", "QQQ"] as const) {
+  test(`${symbol} shows backend stage counts and keeps unclassified structures distinct from opportunities`, async ({page}) => {
+    await page.route("**/api/research/market", async route => {
+      const {readFileSync} = await import("node:fs");
+      const cases = JSON.parse(readFileSync("tests/fixtures/candidate-diagnostics-parity.json", "utf8"));
+      const fixture = cases.find((item: any) => item.request.symbol === symbol);
+      await route.fulfill({json:{source:"alphaos_research_api",verified_for_trading:false,research:fixture.response}});
+    });
+    await page.goto(`/market?symbol=${symbol}`);
+    const table = page.getByRole("table",{name:"Candidate generation pipeline"});
+    await expect(table).toBeVisible();
+    await expect(table.getByRole("row").filter({hasText:"archive selection"})).toContainText("12 contracts");
+    await expect(table.getByRole("row").filter({hasText:"archive selection"})).toContainText("4 contracts");
+    await expect(table.getByRole("row").filter({hasText:"construction"})).toContainText("2 structures");
+    await expect(table.getByRole("row").filter({hasText:"historical evidence"})).toContainText("0 evidence eligible structures");
+    await expect(page.getByText(/No evidence-supported market route matched\. Both existing debit hypotheses/).first()).toBeVisible();
+    await expect(page.getByText("Unclassified quote-supported structure — market thesis unavailable; not an evidence-supported opportunity.",{exact:true})).toHaveCount(2);
+    await expect(page.getByText("Evidence incomplete — NOT ELIGIBLE FOR CONSIDERATION",{exact:true})).toHaveCount(2);
+  });
+}
+
+for (const symbol of ["SPY", "QQQ"] as const) {
   test(`${symbol} stale current research requires explicit historical mode and stays non-executable`, async ({page}) => {
     const requests: Array<Record<string, unknown>> = [];
     await page.route("**/api/research/market", async route => {

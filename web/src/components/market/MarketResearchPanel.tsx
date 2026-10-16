@@ -509,6 +509,34 @@ function ResearchResult({
       </div>
       <ResearchMetric label="Available buying power used" value={formatMoney(session.available_capital)} />
       <section className="rounded border border-terminal-800 p-4 space-y-3">
+        <h3>Candidate generation diagnostics</h3>
+        <p className="text-xs">Unavailable classifications are not invalid structures. Matched market routes and quote-supported structure research are reported separately. Counts apply to this snapshot and selected expiration; they are not rankings or a count of all possible trades.</p>
+        {object(session.diagnostics)?.generation_basis === "unclassified_quote_research" && (
+          <p className="font-mono text-sm text-warning">No evidence-supported market route matched. Both existing debit hypotheses were tested with observed quotes and deltas; resulting structures are unclassified research, not evidence-supported opportunities.</p>
+        )}
+        {typeof object(session.diagnostics)?.zero_candidate_reason === "string" && (
+          <p className="text-sm">Zero-candidate reason: {formatLabel(object(session.diagnostics)?.zero_candidate_reason)}</p>
+        )}
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs" aria-label="Candidate generation pipeline">
+            <thead><tr><th className="p-2">Stage</th><th className="p-2">Status</th><th className="p-2">Input</th><th className="p-2">Output</th><th className="p-2">Reasons</th></tr></thead>
+            <tbody>{(Array.isArray(object(session.diagnostics)?.pipeline) ? object(session.diagnostics)!.pipeline as unknown[] : []).map((value, index) => {
+              const stage = object(value);
+              return <tr key={index} className="border-t border-terminal-800">
+                <th className="p-2">{formatLabel(stage?.stage)}</th>
+                <td className="p-2">{formatLabel(stage?.status)}</td>
+                <td className="p-2">{formatValue(stage?.input_count)} {formatLabel(stage?.input_unit)}</td>
+                <td className="p-2">{formatValue(stage?.output_count)} {formatLabel(stage?.output_unit)}</td>
+                <td className="p-2">{Object.entries(object(stage?.reason_counts) ?? {}).filter(([, count]) => typeof count === "number" && count > 0).map(([reason, count]) => `${formatLabel(reason)}: ${count}`).join("; ") || "None reported"}</td>
+              </tr>;
+            })}</tbody>
+          </table>
+        </div>
+        <details><summary>Constructor counts and exclusion reasons</summary>
+          <pre className="whitespace-pre-wrap break-words text-xs">{JSON.stringify(object(session.diagnostics)?.construction ?? "Unavailable", null, 2)}</pre>
+        </details>
+      </section>
+      <section className="rounded border border-terminal-800 p-4 space-y-3">
         <h3>Backend exclusions and unavailable routes</h3>
         <ul className="text-sm list-disc pl-5 space-y-2">
           {(Array.isArray(session.excluded) ? session.excluded : []).map((item, i) => {
@@ -520,7 +548,7 @@ function ResearchResult({
           })}
           {formatStringList(object(session.diagnostics)?.blocking_reasons).map(reason => <li key={reason}>{formatLabel(reason)}</li>)}
         </ul>
-        <p className="text-xs">Only evidence-supported backend routes are evaluated. Automatic discovery supports long calls/puts, debit/credit verticals, iron condors, iron butterflies and broken-wing butterflies. Standard long butterflies require explicit structure research; they are not automatically discovered. No additional families are implied by this screen.</p>
+        <p className="text-xs">Evidence-supported backend routes retain their existing constructors. When no route matches, both existing debit hypotheses may be evaluated as unclassified quote-supported research. Automatic discovery supports long calls/puts, debit/credit verticals, iron condors, iron butterflies and broken-wing butterflies. Standard long butterflies require explicit structure research; they are not automatically discovered. No additional families are implied by this screen.</p>
         <ul className="text-xs list-disc pl-5">{[...formatStringList(bundle.caveats), ...formatStringList(bundle.archive.caveats), ...formatStringList(session.caveats)].map((warning,i)=><li key={i}>{warning}</li>)}</ul>
       </section>
       <details className="rounded border border-terminal-800 p-4">
@@ -592,6 +620,7 @@ function ResearchResult({
                   </h3>
 
                   <p className="font-mono text-sm">{formatValue(entry?.capital_status)}</p>
+                  {entry?.classification_supported === false && <p className="font-mono text-xs text-warning">Unclassified quote-supported structure — market thesis unavailable; not an evidence-supported opportunity.</p>}
                   <p className="font-mono text-xs text-terminal-300">
                     Underlying: {symbol}{" · "}Direction:{" "}
                     {formatLabel(research?.direction)}

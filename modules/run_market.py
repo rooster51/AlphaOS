@@ -1,5 +1,6 @@
 """Read-only AlphaOS 2.0 orchestration for one persisted market snapshot."""
 from copy import deepcopy
+from collections import Counter
 from datetime import date
 from zoneinfo import ZoneInfo
 
@@ -68,6 +69,7 @@ def run_market(payload, *, expiration=None, history=None, session_context=None,
             "observation": archived["market_research"]["archive_observation"],
             "excluded": archived["excluded"],
             "caveats": archived["caveats"],
+            "diagnostics": archived["diagnostics"],
         },
         "research_session": research,
         "status": research["status"],
@@ -141,3 +143,9 @@ def attach_market_economics(session, *, observed_at):
             required_to_hold_to_expiration=position['trade']['expiration'] > day,
             preferred=False, early_exit_economics_available=False)
         economics['research_only_reasons'].append('Default holding preference avoids overnight exposure; early-exit economics unavailable.')
+    eligible = sum(position['historical_economics']['eligible_for_consideration'] is True for position in positions)
+    session['diagnostics']['pipeline'].append(dict(stage='historical_evidence',
+        status='completed' if positions else 'not_attempted', input_count=len(positions), output_count=eligible,
+        input_unit='structures', output_unit='evidence_eligible_structures',
+        reason_counts=dict(Counter(reason for position in positions
+            for reason in position['historical_economics'].get('missing_evidence', [])))))

@@ -57,7 +57,8 @@ def test_capital_is_only_eligibility_and_preserves_input_order():
 
 def test_unknown_evidence_does_not_route():
     result = run(market={'spot': 500})
-    assert result['candidates'] == []
+    assert {x['strategy_family'] for x in result['candidates']} == {'call_debit_spread', 'put_debit_spread'}
+    assert all(x['classification_supported'] is False for x in result['candidates'])
     assert result['strategy_routes']['routes'] == []
     assert result['opportunity_state']['time_state'] == 'unknown'
     assert not result['opportunity_state']['evidence_sufficiency']['sufficient_for_routing']
