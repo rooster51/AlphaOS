@@ -151,8 +151,11 @@ def discover_debit_spreads(chain,spot,*,directions=('bullish','bearish'),width=1
             clean[key].append({**leg,'strike':float(leg['strike']),'bid':float(leg['bid']),'ask':float(leg['ask']),
                 'delta':delta,'mid':(float(leg['bid'])+float(leg['ask']))/2})
     results=[]
+    diagnostics=[]
     for direction in dict.fromkeys(directions):
-        candidate=_debit_spread(clean,spot,direction.title(),'Research',width)
+        selection = dict(direction=direction, reason=None)
+        candidate=_debit_spread(clean,spot,direction.title(),'Research',width,diagnostics=selection)
+        diagnostics.append(selection)
         if candidate is None:continue
         # Restore observations dropped by the legacy presentation-leg formatter.
         for leg in candidate['legs']:
@@ -160,7 +163,7 @@ def discover_debit_spreads(chain,spot,*,directions=('bullish','bearish'),width=1
             leg.update({k:v for k,v in source.items() if k not in ('qty','action','quantity')})
         candidate.update(source='Public normalized chain',pricing_assumption='Existing constructor midpoint debit (rounded to cents); not an executable fill')
         results.append(research_structure(candidate,symbol=chain['symbol'],spot=spot,as_of=as_of,expected_move=expected_move))
-    return dict(version='debit-discovery-v1',candidates=results,excluded_contract_count=excluded,
+    return dict(version='debit-discovery-v1',candidates=results,excluded_contract_count=excluded,diagnostics=diagnostics,
         candidate_order='requested direction order; not a ranking',
         caveats=['Observed delta and valid bid/ask required by the reused selector; missing evidence produces no candidate.',
             'Requested wing width is a target; the existing constructor may use the nearest available width. Actual legs/payoff are authoritative.'])

@@ -87,7 +87,7 @@ def valid_contract(c):
 
 
 def generate(chain, spot, years, iv, width=5, fee=0.65, pricing="Natural", as_of=None,
-             min_net_credit=50.0, max_short_distance=0.05):
+             min_net_credit=50.0, max_short_distance=0.05, diagnostics=None):
     as_of = as_of or date.today()
     if not isfinite(spot) or spot <= 0 or width <= 0 or years < 0:
         return []
@@ -104,25 +104,41 @@ def generate(chain, spot, years, iv, width=5, fee=0.65, pricing="Natural", as_of
         return {**c, "qty": qty} if c else None
     results = []
     def add(name, legs, shares=0):
+        report = None
+        if diagnostics is not None:
+            report = diagnostics.setdefault(name, dict(attempted_count=0, generated_count=0, rejection_counts={}))
+            report['attempted_count'] += 1
+        def rejected(reason):
+            if report is not None:
+                report['rejection_counts'][reason] = report['rejection_counts'].get(reason, 0) + 1
         if any(x is None for x in legs):
+            rejected('missing_required_leg')
             return
         if len({(x["type"], x["strike"]) for x in legs}) != len(legs):
+            rejected('duplicate_leg')
             return
         short_distance = max(abs(x["strike"] / spot - 1) for x in legs if x["qty"] < 0)
         if short_distance > max_short_distance + 1e-10:
+            rejected('short_leg_outside_existing_distance_filter')
             return
         if any(x["bid"] <= 0 for x in legs if x["qty"] < 0):
+            rejected('nonpositive_short_bid')
             return
         credit = -sum(x["qty"] * ((x["bid"] + x["ask"]) / 2 if pricing == "Midpoint" else (x["ask"] if x["qty"] > 0 else x["bid"])) for x in legs)
         fees = fee * sum(abs(x["qty"]) for x in legs)
         if credit * 100 <= fees or credit * 100 - fees < min_net_credit:
+            rejected('credit_does_not_cover_fees' if credit * 100 <= fees else 'below_existing_minimum_credit')
             return
         stats = analyze(legs, credit, spot, years, iv, shares, fees)
         if stats["max_profit"] <= 0 or stats["max_loss"] <= 0:
+            rejected('nonpositive_profit_or_risk')
             return
         # Reject impossible bounded payoff arbitrages / malformed quotes.
         if CATALOG[name][1] == "Defined" and not isfinite(stats["max_loss"]):
+            rejected('nonfinite_defined_risk')
             return
+        if report is not None:
+            report['generated_count'] += 1
         results.append(dict(strategy=name, legs=legs, credit=credit, shares=shares,
                             fees=fees, net_credit=credit * 100 - fees, short_distance=short_distance,
                             spot=spot, expiration=chain["expiration"], **stats))

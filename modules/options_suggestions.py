@@ -341,12 +341,17 @@ def _debit_spread(
     outlook: str,
     bucket: str,
     width: float,
+    diagnostics: dict | None = None,
 ) -> dict | None:
+    def unavailable(reason):
+        if diagnostics is not None:
+            diagnostics['reason'] = reason
+        return None
     option_type = "Call" if outlook == "Bullish" else "Put"
     contracts = _contracts(chain, option_type, underlying)
     long_leg = _by_delta(contracts, 0.50)
     if long_leg is None:
-        return None
+        return unavailable('no_observed_delta_long_leg')
     short_leg = _protection(
         contracts,
         long_leg["strike"],
@@ -354,11 +359,11 @@ def _debit_spread(
         "higher" if option_type == "Call" else "lower",
     )
     if short_leg is None:
-        return None
+        return unavailable('no_protection_leg_on_required_side')
     debit = round(long_leg["mid"] - short_leg["mid"], 2)
     actual_width = abs(short_leg["strike"] - long_leg["strike"])
     if debit <= 0 or debit >= actual_width:
-        return None
+        return unavailable('nonpositive_debit' if debit <= 0 else 'debit_not_below_actual_width')
     max_profit = (actual_width - debit) * 100
     max_loss = debit * 100
     breakeven_value = (

@@ -373,3 +373,26 @@ test("website preserves exact fixed REST/MCP results across symbols and capital 
     assert.deepEqual((await result.json()).research,fixture.response);
   }
 });
+
+test("candidate stage diagnostics and unclassified flags survive the REST bridge exactly for SPY and QQQ", async () => {
+  const {readFileSync} = await import("node:fs");
+  const cases = JSON.parse(readFileSync(new URL("./fixtures/candidate-diagnostics-parity.json", import.meta.url),"utf8"));
+  setBackendConfig();
+  for (const fixture of cases) {
+    globalThis.fetch = async (_, options) => {
+      assert.deepEqual(JSON.parse(options.body),fixture.request);
+      return Response.json(fixture.response);
+    };
+    const response = await POST(request(fixture.request));
+    const body = await response.json();
+    assert.equal(response.status, 200);
+    assert.deepEqual(body.research, fixture.response);
+    assert.equal(body.verified_for_trading, false);
+    const session = body.research.research.research_session;
+    assert.equal(session.opportunity_state.direction,"unknown");
+    assert.deepEqual(session.strategy_routes.routes,[]);
+    assert.equal(session.diagnostics.generated_count,2);
+    assert.ok(session.diagnostics.pipeline.some(stage => stage.stage === "historical_evidence" && stage.output_count === 0));
+    assert.ok(session.candidates.every(item => item.classification_supported === false));
+  }
+});
