@@ -1,11 +1,11 @@
 {
-  "baseline": "18655f055a7667706f639c83bfb4ef3de75b7d99",
+  "baseline": "74eabb42f3226b1fbb354991040b60ed9bede49d",
   "counts": {
     "mcp_tools": 17,
-    "python_files": 171,
-    "python_test_files": 58,
+    "python_files": 172,
+    "python_test_files": 59,
     "rest_operations": 19,
-    "tracked_files": 275
+    "tracked_files": 277
   },
   "dependency_files": [
     ".python-version",
@@ -30,6 +30,7 @@
     "docs/DEPLOYMENT.md",
     "docs/HISTORICAL_ECONOMICS.md",
     "docs/HISTORICAL_ECONOMICS_INTEGRATION.md",
+    "docs/LEGACY_CONTRACTS_DEPENDENCIES.md",
     "docs/MARKET_ECONOMICS_INTEGRATION.md",
     "docs/MCP.md",
     "docs/MCP_AUDIT.md",
@@ -2237,6 +2238,20 @@
       ],
       "lazy_imports": [],
       "path": "tests/test_intraday_execution.py",
+      "reached_from": [
+        "tests"
+      ]
+    },
+    "tests.test_legacy_explicit_contracts": {
+      "external_import_roots": [
+        "pytest"
+      ],
+      "imports": [
+        "tests.test_api_hardening",
+        "tests.test_mcp_api"
+      ],
+      "lazy_imports": [],
+      "path": "tests/test_legacy_explicit_contracts.py",
       "reached_from": [
         "tests"
       ]

@@ -11,6 +11,13 @@ option-row formatter shared by the headless and Streamlit adapters. See
 failure/cache boundaries, validation and the next migration. The deployment audit
 below remains dated evidence; this code change does not assert a new deployment.
 
+Release 1.5C starts from PR #46 merge
+`74eabb42f3226b1fbb354991040b60ed9bede49d`. It shares only the repeated
+explicit legacy vertical service sequence, preserving both response contracts,
+all REST/MCP declarations and dependency scopes. See
+[legacy contracts and dependency inventory](LEGACY_CONTRACTS_DEPENDENCIES.md)
+for compatibility evidence and the Release 1.5D migration boundary.
+
 ## Canonical general research pipeline
 
 The authoritative general SPY/QQQ workflow is **archive-backed `run_market`**.
