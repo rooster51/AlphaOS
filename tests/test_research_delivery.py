@@ -1,6 +1,7 @@
 """Issue #49: stage truth, source schema parity and safe correlated boundaries."""
 import asyncio
 import importlib
+import hashlib
 import json
 import logging
 import re
@@ -26,8 +27,14 @@ def prepare_breakout(boundary,symbol):
 
 @pytest.mark.parametrize('symbol', ['SPY','QQQ'])
 @pytest.mark.parametrize('mode', ['current','historical'])
-def test_unknown_direction_breakout_has_no_supported_route_not_bad_quotes_or_capital(boundary,symbol,mode):
+@pytest.mark.parametrize('gzip_os', [3, 10], ids=['linux-gzip', 'windows-gzip'])
+def test_unknown_direction_breakout_has_no_supported_route_not_bad_quotes_or_capital(boundary,symbol,mode,gzip_os):
     client,storage,service=prepare_breakout(boundary,symbol)
+    # Python 3.12 gzip.compress(mtime=0) uses zlib's platform-specific OS byte.
+    # Verify provenance against the actual compressed bytes, not another OS's hash.
+    raw=bytearray(storage.raw);raw[9]=gzip_os;storage.raw=bytes(raw)
+    checksum=hashlib.sha256(storage.raw).hexdigest()
+    storage.row['archive_sha256']=checksum
     request=dict(symbol=symbol,expiration='2026-10-19',available_capital=150,research_mode=mode)
     result=post(client,'market',request)
     assert result.status_code==200,result.text
@@ -36,7 +43,9 @@ def test_unknown_direction_breakout_has_no_supported_route_not_bad_quotes_or_cap
         from pathlib import Path
         from tests.test_website_mcp_parity import expected_fixture
         fixture=json.loads((Path(__file__).parents[1]/'web/tests/fixtures/unsupported-routes-parity.json').read_text())
+        fixture['response']['research']['archive']['storage']['archive_sha256']=checksum
         assert data==expected_fixture(fixture['response'])
+    assert data['research']['archive']['storage']['archive_sha256']==checksum
     session=data['research']['research_session'];d=session['diagnostics']
     assert session['opportunity_state']['direction']=='unknown'
     assert session['opportunity_state']['movement_state']=='breakout'
@@ -50,6 +59,18 @@ def test_unknown_direction_breakout_has_no_supported_route_not_bad_quotes_or_cap
     assert all(stages[s]['status']=='not_attempted' for s in ['construction','economics','capital_eligibility'])
     _,tokens=login(client)
     assert call(client,tokens['access_token'],'run_market',request)['structuredContent']==data
+
+
+@pytest.mark.parametrize('gzip_os', [3, 10], ids=['linux-gzip', 'windows-gzip'])
+def test_breakout_archive_header_change_without_checksum_update_is_rejected(boundary,gzip_os):
+    client,storage,_=prepare_breakout(boundary,'QQQ')
+    raw=bytearray(storage.raw);raw[9]=gzip_os;storage.raw=bytes(raw)
+    storage.row['archive_sha256']=hashlib.sha256(storage.raw).hexdigest()
+    # The uncompressed payload is identical, but integrity covers the header too.
+    raw[9]=10 if gzip_os==3 else 3;storage.raw=bytes(raw)
+    result=post(client,'market',dict(symbol='QQQ',expiration='2026-10-19',available_capital=150))
+    assert result.status_code==503
+    assert result.json()['error']['code']=='archive_unavailable'
 
 
 def test_mcp_argument_properties_match_rest_including_historical_mode():

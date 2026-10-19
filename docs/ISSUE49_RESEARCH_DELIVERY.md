@@ -128,3 +128,35 @@ new correlated evidence after a separately authorized deployment; user OAuth
 reauthentication and live schema/parity verification; a bounded repeatability/SLO
 observation window. This PR is reviewable Milestone 1 source work, not a claim
 that production reliability or live MCP acceptance is complete.
+
+## PR #50 Linux CI fixture repair
+
+Run `39315875618`, Python job `118277084385` (Python 3.12.14), failed only
+the current QQQ unsupported-routing fixture comparison. The sole unequal field
+was `research.archive.storage.archive_sha256`: stored Windows value
+`b8c952a4d2d2c20849ed211beba9f0b97afc2504f3ad7cf34ced8eea3a26b81b`,
+Linux response `4837f186c5959df33300da11a3f12649f3500a7f3ebf161738ee668814c946a8`.
+Changing only gzip header byte 9 from Windows OS 10 to Unix OS 3 reproduced
+these exact hashes locally, with no other response differences. Python 3.12
+`gzip.compress(mtime=0)` delegates to zlib, whose gzip OS byte is platform
+dependent. The payload is identical; the compressed archive bytes correctly
+have different checksums. This is fixture instability, not a research defect.
+
+The unsupported-routing regression now exercises both OS headers for SPY/QQQ
+and current/historical modes, following the existing website parity test pattern.
+It computes the expected checksum independently from the actual test archive
+bytes, updates only that field in the loaded fixture expectation, and retains
+the full response comparison and exact REST/MCP equality. Negative tests change
+the header without updating its checksum and require `503 archive_unavailable`.
+The stored website fixture and production code are unchanged.
+
+Repair validation (same local runtime as above):
+
+- `python -m pytest tests/test_research_delivery.py tests/test_website_mcp_parity.py tests/test_research2_api.py -q --tb=short --basetemp=../issue50-ci-focused-temp`: **57 passed in 32.98s**.
+- `python -m pytest -q --tb=short --basetemp=../issue50-ci-full-temp`: **907 passed, 64 subtests passed in 394.96s**.
+- `npm test`: **69 passed**; `npm run typecheck` and `npm run build`: **passed**.
+- `npm run test:e2e -- --workers=2`: **16 passed in 8.5s**.
+
+Both gzip headers were exercised locally; a native Linux rerun remains the
+GitHub Actions verification after publishing. No live market verification is
+claimed by these deterministic fixture tests.
