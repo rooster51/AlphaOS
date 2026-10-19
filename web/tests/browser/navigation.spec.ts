@@ -300,3 +300,14 @@ test("buying power reruns use new backend eligibility and archive expiration on 
   await expect(page.getByRole("alert").filter({hasText:"Enter a finite positive dollar amount."})).toBeVisible();
   expect(requests).toHaveLength(2);
 });
+
+test("QQQ unsupported route is distinguished from quote and capital rejection",async({page})=>{
+ const {readFileSync}=await import("node:fs");
+ const fixture=JSON.parse(readFileSync("tests/fixtures/unsupported-routes-parity.json","utf8"));
+ await page.route("**/api/research/market",route=>route.fulfill({json:{source:"alphaos_research_api",verified_for_trading:false,research:fixture.response}}));
+ await page.goto("/market?symbol=QQQ");
+ await expect(page.getByText("Zero-candidate reason: no supported constructor route",{exact:true})).toBeVisible();
+ const table=page.getByRole("table",{name:"Candidate generation pipeline"});
+ await expect(table.getByRole("row").filter({hasText:"routing"}).first()).toContainText("no supported constructor route");
+ await expect(table.getByRole("row").filter({hasText:"capital eligibility"})).toContainText("not attempted");
+});

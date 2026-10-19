@@ -1,4 +1,9 @@
 """Authenticated read-only HTTP surface over the existing AlphaOS research engine."""
+import json
+import logging
+import re
+import secrets
+from time import perf_counter
 import hmac
 import os
 from datetime import date
@@ -56,7 +61,12 @@ def error_response(code,status):
 
 
 @app.exception_handler(APIError)
-async def api_error(request,exc):return error_response(exc.code,exc.status)
+async def api_error(request,exc):
+    request.state.research_error = exc.code if exc.code in {
+        'archive_stale','archive_missing','archive_not_configured','archive_unavailable',
+        'archive_research_unavailable','archive_expiration_unavailable','api_not_configured',
+        'authentication_required','forbidden','internal_error'} else 'other_api_error'
+    return error_response(exc.code,exc.status)
 
 
 @app.exception_handler(RequestValidationError)
@@ -71,15 +81,28 @@ async def http_error(request,exc):return error_response('not_found' if exc.statu
 
 @app.middleware('http')
 async def safe_boundary(request,call_next):
+    research = request.url.path == '/v1/research/market' and request.method == 'POST'
+    correlation = request.headers.get('X-AlphaOS-Request-ID','')
+    correlation = correlation if re.fullmatch('[0-9a-f]{32}',correlation) else secrets.token_hex(16)
+    started = perf_counter()
     try:
         length=request.headers.get('content-length')
         if length and int(length)>131072:return error_response('request_too_large',413)
         response=await call_next(request)
         response.headers['Cache-Control']='no-store'
-        return response
     except Exception:
-        # Handle at the ASGI boundary so Uvicorn never receives a raw SDK traceback.
-        return error_response('internal_error',500)
+        # Never send raw SDK traceback/credentials across this boundary.
+        request.state.research_error = 'internal_error'
+        response = error_response('internal_error',500)
+    if research:
+        response.headers['X-AlphaOS-Request-ID'] = correlation
+        response.headers['Cache-Control'] = 'no-store'
+        if response.status_code >= 400:
+            logging.getLogger('alphaos_api.research').warning('research_request %s', json.dumps(dict(
+                request_id=correlation, status=response.status_code,
+                elapsed_ms=round((perf_counter()-started)*1000),
+                code=getattr(request.state,'research_error','http_or_validation_error'))))
+    return response
 
 
 @app.get('/health')

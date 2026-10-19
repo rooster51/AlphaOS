@@ -67,7 +67,8 @@ function validResearchEnvelope(value: unknown, symbol: MarketPayload["symbol"], 
         typeof observation?.observed_at !== "string" || !Number.isFinite(Date.parse(observation.observed_at)) ||
         typeof freshness?.age_seconds !== "number" || !Number.isFinite(freshness.age_seconds) || freshness.age_seconds < 0 ||
         freshness.max_age_seconds !== null || typeof archive?.provider !== "string") return false;
-  } else if (research?.research_mode === "historical" || request?.research_mode === "historical") return false;
+  } else if ((research?.research_mode !== undefined && research.research_mode !== "current") ||
+      (request?.research_mode !== undefined && request.research_mode !== "current")) return false;
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
   return envelope?.schema_version === "alphaos-interface-v2" &&
     envelope.read_only === true &&
@@ -104,7 +105,49 @@ async function readErrorPayload(response: Response): Promise<unknown> {
  * converted into trade candidates or advertised as executable prices.
  * Credentials remain server-side.
  */
+type BridgeTrace = {
+  request_id: string;
+  stage: string;
+  upstream_status?: number;
+  upstream_json?: boolean;
+  backend_correlated?: boolean;
+  upstream_code?: string;
+};
+const KNOWN_UPSTREAM_CODES = new Set([
+  "archive_stale", "archive_missing", "archive_not_configured", "archive_unavailable",
+  "archive_research_unavailable", "archive_expiration_unavailable", "api_not_configured",
+  "internal_error", "authentication_required", "forbidden", "invalid_request",
+]);
+
+// Headers, URLs, bodies, objective text and exception strings never enter diagnostics.
 export async function POST(request: Request) {
+  const trace: BridgeTrace = {request_id: crypto.randomUUID().replaceAll("-", ""), stage: "request_validation"};
+  const started = performance.now();
+  let result: Response;
+  let timeoutSignal: AbortSignal | undefined;
+  try {
+    result = await marketRequest(request, trace, () => timeoutSignal = AbortSignal.timeout(12000));
+  } catch (error) {
+    const timeout = error instanceof DOMException && (error.name === "TimeoutError" ||
+      (error.name === "AbortError" && timeoutSignal?.reason instanceof DOMException &&
+        timeoutSignal.reason.name === "TimeoutError"));
+    if (!timeout && !(error instanceof TypeError)) {
+      console.warn(JSON.stringify({event: "research_bridge", ...trace, outcome: "unexpected_error",
+        elapsed_ms: Math.round(performance.now() - started)}));
+      throw error;
+    }
+    result = Response.json({status: "unavailable", code: timeout ? "backend_timeout" : "backend_unreachable"},
+      {status: 502, headers: {"Cache-Control": "no-store"}});
+  }
+  result.headers.set("X-AlphaOS-Request-ID", trace.request_id);
+  if (result.status >= 400) {
+    console.warn(JSON.stringify({event: "research_bridge", ...trace, status: result.status,
+      elapsed_ms: Math.round(performance.now() - started)}));
+  }
+  return result;
+}
+
+async function marketRequest(request: Request, trace: BridgeTrace, timeout: () => AbortSignal) {
   let payload: MarketPayload | null;
   try {
     payload = parseMarketPayload(await request.json());
@@ -136,6 +179,7 @@ export async function POST(request: Request) {
     );
   }
 
+  trace.stage = "fetch";
   let response: Response;
   try {
     response = await fetch(new URL("/v1/research/market", origin), {
@@ -143,11 +187,12 @@ export async function POST(request: Request) {
       headers: {
         Authorization: `Bearer ${token}`,
         Accept: "application/json",
+        "X-AlphaOS-Request-ID": trace.request_id,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(payload),
       cache: "no-store",
-      signal: AbortSignal.timeout(12000),
+      signal: timeout(),
     });
   } catch (error) {
     const timedOut = error instanceof DOMException && error.name === "TimeoutError";
@@ -158,8 +203,13 @@ export async function POST(request: Request) {
     );
   }
 
+  trace.upstream_status = response.status;
+  trace.upstream_json = (response.headers.get("Content-Type") ?? "").toLowerCase().includes("application/json");
+  trace.backend_correlated = response.headers.get("X-AlphaOS-Request-ID") === trace.request_id;
+  trace.stage = "response_body";
   if (!response.ok) {
     const code = upstreamErrorCode(await readErrorPayload(response));
+    trace.upstream_code = KNOWN_UPSTREAM_CODES.has(code ?? "") ? code! : "unrecognized_or_missing";
     const detail = response.status === 401
       ? "backend_authentication_required"
       : response.status === 403
@@ -207,6 +257,7 @@ export async function POST(request: Request) {
     }
     throw error;
   }
+  trace.stage = "schema_validation";
   if (!validResearchEnvelope(responsePayload, payload.symbol, payload.research_mode)) {
     return Response.json(
       { status: "unavailable", code: "response_schema_mismatch" },
