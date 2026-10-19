@@ -261,6 +261,8 @@ def research_market_opportunities(symbol, market_research, chain, *, as_of,
     if not researched:
         if context_error:
             zero_reason = context_error
+        elif not construction_families and routing['routes'] and candidates is None:
+            zero_reason = 'no_supported_constructor_route'
         elif not raw:
             zero_reason = 'no_constructible_structure'
         elif not economics_valid_count:
@@ -308,7 +310,8 @@ def research_market_opportunities(symbol, market_research, chain, *, as_of,
              reason_counts={f'{key}_unknown': 1 for key in state['evidence_sufficiency']['unknown_dimensions']}),
         dict(stage='routing', status='completed', input_count=len(routing['routes']), output_count=len(allowed),
              input_unit='matched_routes', output_unit='supported_families',
-             reason_counts={'no_evidence_supported_routes': 1} if not routing['routes'] else {},
+             reason_counts={'no_evidence_supported_routes': 1} if not routing['routes'] else
+                 {'no_supported_constructor_route': len(routing['routes'])} if not allowed else {},
              quote_research_families=sorted(construction_families - allowed)),
         dict(stage='construction', status='not_attempted' if context_error or (candidates is None and not construction_diagnostics) else 'completed',
              input_count=len(construction_diagnostics) if candidates is None else len(candidates), output_count=len(raw),

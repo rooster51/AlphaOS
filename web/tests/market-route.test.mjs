@@ -5,7 +5,7 @@ import { POST } from "../src/app/api/research/market/route.ts";
 test("historical mode is explicit and preserves the full backend envelope for SPY and QQQ", async () => {
   setBackendConfig();
   for (const symbol of ["SPY", "QQQ"]) {
-    for (const capital of [150, 500]) {
+    for (const capital of [150, 300, 500, 1000]) {
       const data = envelope(symbol);
       data.request.research_mode = "historical";
       data.research.research_mode = "historical";
@@ -343,7 +343,7 @@ test("consolidated historical economics and history diagnostics survive the webs
   assert.equal(body.verified_for_trading, false);
 });
 
-for (const capital of [100,150,500,2000,150.75]) {
+for (const capital of [100,150,300,500,1000,2000,150.75]) {
   test(`forwards buying power ${capital} without altering backend research`, async () => {
     setBackendConfig();
     const expected = envelope("SPY");
@@ -395,4 +395,66 @@ test("candidate stage diagnostics and unclassified flags survive the REST bridge
     assert.ok(session.diagnostics.pipeline.some(stage => stage.stage === "historical_evidence" && stage.output_count === 0));
     assert.ok(session.candidates.every(item => item.classification_supported === false));
   }
+});
+test("upstream failures record correlation/status without secrets and recover without retry",async()=>{
+ setBackendConfig();const logs=[];const warn=console.warn;console.warn=v=>logs.push(JSON.parse(v));
+ try {
+  for(const status of [500,502,503,504]) {
+   let sent;
+   globalThis.fetch=async(_,options)=>{sent=options;return new Response("DO_NOT_LOG",{status,headers:{"Content-Type":"text/html"}});};
+   const r=await POST(request({symbol:"QQQ",objective:"DO_NOT_LOG"}));
+   assert.deepEqual(await r.json(),{status:"unavailable",code:"backend_service_unavailable"});
+   const id=r.headers.get("X-AlphaOS-Request-ID");assert.match(id,/^[0-9a-f]{32}$/);
+   assert.equal(sent.headers["X-AlphaOS-Request-ID"],id);
+   const log=logs.at(-1);assert.equal(log.request_id,id);assert.equal(log.upstream_status,status);
+   assert.equal(log.upstream_json,false);assert.equal(log.backend_correlated,false);
+   assert.equal(log.upstream_code,"unrecognized_or_missing");assert.ok(log.elapsed_ms>=0);
+  }
+  globalThis.fetch=async(_,options)=>Response.json({error:{code:"secret_token",message:"DO_NOT_LOG"}},{status:503,headers:{"X-AlphaOS-Request-ID":options.headers["X-AlphaOS-Request-ID"]}});
+  await POST(request({symbol:"SPY"}));assert.equal(logs.at(-1).backend_correlated,true);
+  assert.equal(logs.at(-1).upstream_code,"unrecognized_or_missing");
+  assert.ok(!JSON.stringify(logs).includes("DO_NOT_LOG"));assert.ok(!JSON.stringify(logs).includes("test-token"));assert.ok(!JSON.stringify(logs).includes("secret_token"));
+  globalThis.fetch=async()=>Response.json(envelope());
+  const recovered=await POST(request({symbol:"QQQ"}));assert.equal(recovered.status,200);assert.equal(logs.length,5);
+ }finally{console.warn=warn;}
+});
+for(const status of [200,503]) {
+ test(`response-body timeout after HTTP ${status} stays bounded and classified`,async()=>{
+  setBackendConfig();const logs=[];const warn=console.warn;console.warn=v=>logs.push(JSON.parse(v));
+  try {
+   globalThis.fetch=async()=>({ok:status===200,status,headers:new Headers(),json:async()=>{throw new DOMException("DO_NOT_LOG","TimeoutError");}});
+   const r=await POST(request({symbol:"SPY"}));assert.equal(r.status,502);assert.equal((await r.json()).code,"backend_timeout");
+   assert.equal(logs[0].stage,"response_body");assert.equal(logs[0].upstream_status,status);
+  }finally{console.warn=warn;}
+ });
+}
+test("unresolved directional routes preserve exact backend stage truth",async()=>{
+ const {readFileSync}=await import("node:fs");
+ const fixture=JSON.parse(readFileSync(new URL("./fixtures/unsupported-routes-parity.json",import.meta.url),"utf8"));
+ setBackendConfig();globalThis.fetch=async(_,options)=>{assert.deepEqual(JSON.parse(options.body),fixture.request);return Response.json(fixture.response);};
+ const r=await POST(request(fixture.request));assert.equal(r.status,200);assert.deepEqual((await r.json()).research,fixture.response);
+});
+
+
+test("body AbortError is classified using the original 12000ms timeout signal",async()=>{
+ setBackendConfig();const original=AbortSignal.timeout;const warn=console.warn;console.warn=()=>{};
+ try {
+  AbortSignal.timeout=ms=>{assert.equal(ms,12000);return AbortSignal.abort(new DOMException("private","TimeoutError"));};
+  globalThis.fetch=async()=>({ok:true,status:200,headers:new Headers(),json:async()=>{throw new DOMException("private","AbortError");}});
+  const result=await POST(request({symbol:"SPY"}));assert.equal((await result.json()).code,"backend_timeout");
+ }finally{AbortSignal.timeout=original;console.warn=warn;}
+});
+
+
+test("current bridge rejects unknown backend research modes without breaking legacy omission",async()=>{
+ setBackendConfig();
+ for(const mode of ["auto","live",null]) {
+  for(const section of ["request","research"]) {
+   const data=envelope();data[section].research_mode=mode;
+   globalThis.fetch=async()=>Response.json(data);
+   const r=await POST(request({symbol:"QQQ"}));assert.equal(r.status,502);assert.equal((await r.json()).code,"response_schema_mismatch");
+  }
+ }
+ globalThis.fetch=async()=>Response.json(envelope());
+ assert.equal((await POST(request({symbol:"QQQ"}))).status,200);
 });
