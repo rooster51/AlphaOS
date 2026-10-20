@@ -12,6 +12,7 @@ import os
 from threading import RLock
 import urllib.error
 import urllib.request
+from urllib.parse import quote
 from modules.research_timing import stage
 
 
@@ -52,22 +53,58 @@ _research_client = None
 _research_credentials = None
 
 
+class ResearchArchiveHTTP:
+    """Only the two GET operations required by the verified research reader.
+
+    Avoid loading the full Supabase SDK/auth/realtime graph on first research.
+    HTTPX is already used by the API. No market observations are cached here.
+    """
+    def __init__(self, url, key, *, transport=None):
+        import httpx
+        if not url or not key:
+            raise ArchiveUnavailable('Archive is not configured.', code='archive_not_configured')
+        base = httpx.URL(url)
+        if base.scheme not in ('http', 'https') or not base.host or base.userinfo or base.query or base.fragment:
+            raise ArchiveUnavailable('Invalid archive configuration.')
+        self._base = str(base).rstrip('/')
+        self._http = httpx.Client(transport=transport, follow_redirects=False,
+            headers={'apikey': key, 'Authorization': f'Bearer {key}'})
+
+    def latest_metadata(self, symbol, provider, as_of):
+        response = self._http.get(self._base+'/rest/v1/option_snapshots',
+            params={'select': '*', 'provider': f'eq.{provider}', 'symbol': f'eq.{symbol}',
+                'observed_at': f'lte.{as_of}', 'created_at': f'lte.{as_of}',
+                'order': 'observed_at.desc,id.desc', 'limit': '1'},
+            headers={'Accept': 'application/json', 'Accept-Profile': 'public'}, timeout=120)
+        response.raise_for_status()
+        rows = response.json()
+        if not isinstance(rows, list) or len(rows) > 1 or any(not isinstance(row, dict) for row in rows):
+            raise ArchiveUnavailable('Invalid archive metadata response.')
+        return rows
+
+    def download_archive(self, path):
+        response = self._http.get(self._base+'/storage/v1/object/market-archive/'+quote(path, safe='/'), timeout=20)
+        response.raise_for_status()
+        return response.content
+
+
+def _research_archive_transport(url, key):
+    with stage('archive_transport_initialization'):
+        return ResearchArchiveHTTP(url, key)
+
+
 def research_archive_client():
     """Reuse a fixed server identity; never sign in or mutate auth on this client.
 
-    Query builders remain request-local. Initialize lazy transports under the
-    lock; concurrent readers share HTTPX pools, not query state or evidence.
+    Requests remain local. Initialize the transport under the lock; concurrent
+    readers share HTTPX pools, not query state or evidence.
     Re-read configuration each time so rotation cannot return the old identity.
     """
     global _research_client, _research_credentials
     credentials = (os.environ.get('SUPABASE_URL'), os.environ.get('SUPABASE_SERVICE_ROLE_KEY'))
     with _research_client_lock:
         if _research_client is None or credentials != _research_credentials:
-            client = archive_client()
-            # Supabase initializes these properties lazily. Resolve them before
-            # publishing the client to concurrent research requests.
-            client.postgrest
-            client.storage
+            client = _research_archive_transport(*credentials)
             _research_client, _research_credentials = client, credentials
         return _research_client
 
@@ -132,7 +169,8 @@ def read_latest_option_snapshot(client, symbol, as_of, *, max_age_seconds, provi
         raise ValueError('Explicit finite nonnegative freshness window required.')
     try:
         with stage('archive_metadata_query'):
-            rows = (client.table('option_snapshots').select('*').eq('provider', provider)
+            rows = client.latest_metadata(symbol, provider, now.isoformat()) if isinstance(client, ResearchArchiveHTTP) else (
+                client.table('option_snapshots').select('*').eq('provider', provider)
                     .eq('symbol', symbol).lte('observed_at', now.isoformat())
                     .lte('created_at', now.isoformat()).order('observed_at', desc=True)
                     .order('id', desc=True).limit(1).execute()).data
@@ -150,7 +188,7 @@ def read_latest_option_snapshot(client, symbol, as_of, *, max_age_seconds, provi
             if not path.startswith(f'options/symbol={symbol}/date={row["session_date"]}/') or '..' in path:
                 raise ValueError('Archive path mismatch.')
         with stage('archive_download'):
-            raw = client.storage.from_('market-archive').download(path)
+            raw = client.download_archive(path) if isinstance(client, ResearchArchiveHTTP) else client.storage.from_('market-archive').download(path)
         with stage('archive_checksum'):
             if hashlib.sha256(raw).hexdigest() != row.get('archive_sha256'):
                 raise ValueError('Archive checksum mismatch.')
