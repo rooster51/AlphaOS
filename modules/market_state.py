@@ -86,12 +86,15 @@ def validate_ohlc(history, completed_before, expected_sessions=None):
 
 
 def _wilder(series, n=14):
-    out = pd.Series(np.nan,index=series.index,dtype=float)
+    # Preserve the seed and recurrence exactly; avoid thousands of pandas scalar
+    # reads/writes for each five-year history (especially under concurrent load).
+    values = series.to_numpy(dtype=float)
+    out = np.full(len(series), np.nan)
     if len(series) > n:
-        out.iloc[n] = series.iloc[1:n+1].mean()
+        out[n] = series.iloc[1:n+1].mean()
         for i in range(n+1,len(series)):
-            out.iloc[i] = (out.iloc[i-1]*(n-1)+series.iloc[i])/n
-    return out
+            out[i] = (out[i-1]*(n-1)+values[i])/n
+    return pd.Series(out, index=series.index, dtype=float)
 
 
 def market_state_features(history, completed_before, expected_sessions=None):

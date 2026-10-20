@@ -9,6 +9,7 @@ import gzip
 import hashlib
 import json
 import os
+from threading import RLock
 import urllib.error
 import urllib.request
 from modules.research_timing import stage
@@ -44,6 +45,31 @@ def archive_client():
         )
     from supabase import create_client
     return create_client(url, key)
+
+
+_research_client_lock = RLock()
+_research_client = None
+_research_credentials = None
+
+
+def research_archive_client():
+    """Reuse a fixed server identity; never sign in or mutate auth on this client.
+
+    Query builders remain request-local. Initialize lazy transports under the
+    lock; concurrent readers share HTTPX pools, not query state or evidence.
+    Re-read configuration each time so rotation cannot return the old identity.
+    """
+    global _research_client, _research_credentials
+    credentials = (os.environ.get('SUPABASE_URL'), os.environ.get('SUPABASE_SERVICE_ROLE_KEY'))
+    with _research_client_lock:
+        if _research_client is None or credentials != _research_credentials:
+            client = archive_client()
+            # Supabase initializes these properties lazily. Resolve them before
+            # publishing the client to concurrent research requests.
+            client.postgrest
+            client.storage
+            _research_client, _research_credentials = client, credentials
+        return _research_client
 
 
 def persist_candles(client, rows):

@@ -1,7 +1,7 @@
 """NYSE regular-session gate and deterministic archive slots."""
 from __future__ import annotations
 from datetime import datetime, timezone
-import pandas_market_calendars as mcal
+from modules.research_calendar import nyse_schedule
 
 def regular_session_bounds(now=None):
     """Return the authoritative NYSE session bounds for an aware timestamp date."""
@@ -9,8 +9,7 @@ def regular_session_bounds(now=None):
     if now.tzinfo is None:
         raise ValueError("now must be timezone-aware")
     now = now.astimezone(timezone.utc)
-    calendar = mcal.get_calendar("NYSE")
-    schedule = calendar.schedule(start_date=now.date(), end_date=now.date())
+    schedule = nyse_schedule(now.date(), now.date())
     if schedule.empty:
         return None
     market_open = schedule.iloc[0]["market_open"].to_pydatetime()
