@@ -9,7 +9,7 @@ from datetime import date, timedelta
 from math import isfinite
 
 import pandas as pd
-import pandas_market_calendars as mcal
+from modules.research_calendar import nyse_schedule
 
 from modules.historical_analogs import analog_research
 from modules.market_state_research import build_research_dataset
@@ -32,9 +32,8 @@ def prepare_structure_evidence(trade, *, as_of, now, read_snapshot, history_load
         result['missing_reason'] = reason
         return result
 
-    calendar = mcal.get_calendar('NYSE')
     day, expiration = date.fromisoformat(as_of), date.fromisoformat(trade['expiration'])
-    schedule = calendar.schedule(start_date=day, end_date=expiration)
+    schedule = nyse_schedule(day, expiration)
     if schedule.empty or schedule.index[0].date() != day:
         return unavailable('as_of_not_exchange_session')
     if schedule.index[-1].date() != expiration:
@@ -82,7 +81,7 @@ def prepare_structure_evidence(trade, *, as_of, now, read_snapshot, history_load
         history = history_loader(trade['symbol'])
         dates = pd.to_datetime(history['date'], utc=True).dt.date
         history = history.loc[dates <= day].copy()
-        historical_schedule = calendar.schedule(start_date=dates.min(), end_date=day)
+        historical_schedule = nyse_schedule(dates.min(), day)
         dataset = build_research_dataset(history, day+timedelta(days=1),
             expected_sessions=historical_schedule.index)
         if dataset['features'].iloc[-1]['date'].date() != day:

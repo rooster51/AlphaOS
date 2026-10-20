@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 from modules.public_option_quote import option_quote_row
 from functools import lru_cache
+from threading import RLock
 import os
 import pandas as pd
 from datetime import datetime, timezone
@@ -52,8 +53,14 @@ def authenticated_context(secret,preferred):
         raise provider_error(exc) from None
 
 
+_context_lock = RLock()
+
+
 def _public_context():
-    return authenticated_context(*configuration())
+    # lru_cache permits duplicate cold calls. Serialize initialization only;
+    # SPY/QQQ history requests retain their independent transport execution.
+    with _context_lock:
+        return authenticated_context(*configuration())
 
 def _as_float(value: Any) -> float | None:
     return float(value) if value is not None else None

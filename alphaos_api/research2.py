@@ -10,7 +10,7 @@ from modules.market_archive_adapter import ArchiveExpirationUnavailable
 from modules.strategy_compare import compare_strategy_research
 from modules.run_market import run_latest_market
 from modules.structure_economics import structure_historical_economics, compare_historical_economics
-from modules.supabase_archive import archive_client, read_latest_option_snapshot, ArchiveUnavailable
+from modules.supabase_archive import research_archive_client as archive_client, read_latest_option_snapshot, ArchiveUnavailable
 from .contracts import APIError
 from modules.research_timing import execution, stage as timing_stage
 
