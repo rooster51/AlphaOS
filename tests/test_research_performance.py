@@ -50,8 +50,8 @@ def test_archive_client_reuses_identity_not_queries_and_rechecks_credentials(mon
     monkeypatch.setattr(archive, '_research_credentials', None)
     monkeypatch.setenv('SUPABASE_URL', 'https://fixture.invalid')
     monkeypatch.setenv('SUPABASE_SERVICE_ROLE_KEY', 'fixture-key')
-    factory = Mock(side_effect=lambda: SimpleNamespace(postgrest=object(), storage=object()))
-    monkeypatch.setattr(archive, 'archive_client', factory)
+    factory = Mock(side_effect=lambda *args: SimpleNamespace())
+    monkeypatch.setattr(archive, '_research_archive_transport', factory)
     with ThreadPoolExecutor(2) as pool:
         clients = list(pool.map(lambda _: archive.research_archive_client(), range(8)))
     assert factory.call_count == 1 and all(c is clients[0] for c in clients)
