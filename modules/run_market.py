@@ -9,6 +9,7 @@ from modules.opportunity_classifier import aware_time, classify_opportunity, exp
 from modules.opportunity_session import research_market_opportunities
 from modules.market_session_gate import regular_session_bounds
 from modules.structure_economics import compare_historical_economics
+from modules.research_timing import stage
 
 VERSION = "alphaos-run-market-v1"
 
@@ -17,8 +18,10 @@ def run_market(payload, *, expiration=None, history=None, session_context=None,
                expected_move=None, expected_move_horizon=None,
                available_capital=None, objective=None, width=5, late_minutes=60):
     """Research one archive snapshot without provider calls, persistence or execution."""
-    archived = normalize_archive_snapshot(payload, expiration)
-    bounds = regular_session_bounds(aware_time(archived['observed_at']))
+    with stage('archive_normalization'):
+        archived = normalize_archive_snapshot(payload, expiration)
+    with stage('session_calendar'):
+        bounds = regular_session_bounds(aware_time(archived['observed_at']))
     if bounds is None:
         raise ValueError('Archive date is not an NYSE session.')
     authoritative_session = {'open': bounds[0].isoformat(), 'close': bounds[1].isoformat()}
@@ -31,16 +34,18 @@ def run_market(payload, *, expiration=None, history=None, session_context=None,
     evidence = {}
     if history is not None:
         try:
-            evidence = history_evidence(history, archived["symbol"], archived["observed_at"])
+            with stage('history_features'):
+                evidence = history_evidence(history, archived["symbol"], archived["observed_at"])
         except (ValueError, RuntimeError):
             evidence = {"unavailable": "Completed market history unavailable or invalid."}
     else:
         evidence = {"unavailable": "Completed market history was not supplied."}
 
-    state = classify_opportunity(
-        evidence, observed_at=archived["observed_at"], expiration=archived["expiration"],
-        session=session_context, late_minutes=late_minutes,
-    )
+    with stage('opportunity_classification'):
+        state = classify_opportunity(
+            evidence, observed_at=archived["observed_at"], expiration=archived["expiration"],
+            session=session_context, late_minutes=late_minutes,
+        )
     em_context, comparable_em = expected_move_context(
         expected_move, expected_move_horizon, archived["observed_at"], archived["expiration"],
     )
@@ -51,12 +56,14 @@ def run_market(payload, *, expiration=None, history=None, session_context=None,
     market["expected_move_evidence"] = em_context
     market["expected_move"] = comparable_em
 
-    research = research_market_opportunities(
-        archived["symbol"], market, archived["chain"], as_of=archived["observed_at"],
-        expiration=archived["expiration"], available_capital=available_capital,
-        objective=objective, width=width,
-    )
-    attach_market_economics(research, observed_at=archived['observed_at'])
+    with stage('candidate_and_economics_pipeline'):
+        research = research_market_opportunities(
+            archived["symbol"], market, archived["chain"], as_of=archived["observed_at"],
+            expiration=archived["expiration"], available_capital=available_capital,
+            objective=objective, width=width,
+        )
+        with stage('historical_economics'):
+            attach_market_economics(research, observed_at=archived['observed_at'])
     return {
         "version": VERSION,
         "command": f"Run {archived['symbol']}",

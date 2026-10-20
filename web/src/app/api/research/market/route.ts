@@ -91,12 +91,15 @@ function upstreamErrorCode(value: unknown): string | null {
   return typeof code === "string" && /^[a-z][a-z0-9_]{0,63}$/.test(code) ? code : null;
 }
 
-async function readErrorPayload(response: Response): Promise<unknown> {
+async function readErrorPayload(response: Response, trace: BridgeTrace): Promise<unknown> {
+  const started = performance.now();
   try {
     return await response.json();
   } catch (error) {
     if (error instanceof SyntaxError || error instanceof TypeError) return null;
     throw error;
+  } finally {
+    trace.response_body_ms = Math.round(performance.now() - started);
   }
 }
 
@@ -108,6 +111,11 @@ async function readErrorPayload(response: Response): Promise<unknown> {
 type BridgeTrace = {
   request_id: string;
   stage: string;
+  symbol?: MarketPayload["symbol"];
+  research_mode?: "current" | "historical";
+  fetch_headers_ms?: number;
+  response_body_ms?: number;
+  schema_validation_ms?: number;
   upstream_status?: number;
   upstream_json?: boolean;
   backend_correlated?: boolean;
@@ -140,10 +148,8 @@ export async function POST(request: Request) {
       {status: 502, headers: {"Cache-Control": "no-store"}});
   }
   result.headers.set("X-AlphaOS-Request-ID", trace.request_id);
-  if (result.status >= 400) {
-    console.warn(JSON.stringify({event: "research_bridge", ...trace, status: result.status,
-      elapsed_ms: Math.round(performance.now() - started)}));
-  }
+  console.warn(JSON.stringify({event: "research_bridge", ...trace, status: result.status,
+    timeout_ms: 12000, elapsed_ms: Math.round(performance.now() - started)}));
   return result;
 }
 
@@ -157,6 +163,8 @@ async function marketRequest(request: Request, trace: BridgeTrace, timeout: () =
   if (!payload) {
     return Response.json({ error: "Invalid research request" }, { status: 400 });
   }
+  trace.symbol = payload.symbol;
+  trace.research_mode = payload.research_mode ?? "current";
 
   const token = process.env.ALPHAOS_API_TOKEN;
   const base = process.env.ALPHAOS_API_URL;
@@ -180,6 +188,7 @@ async function marketRequest(request: Request, trace: BridgeTrace, timeout: () =
   }
 
   trace.stage = "fetch";
+  const fetchStarted = performance.now();
   let response: Response;
   try {
     response = await fetch(new URL("/v1/research/market", origin), {
@@ -203,12 +212,13 @@ async function marketRequest(request: Request, trace: BridgeTrace, timeout: () =
     );
   }
 
+  trace.fetch_headers_ms = Math.round(performance.now() - fetchStarted);
   trace.upstream_status = response.status;
   trace.upstream_json = (response.headers.get("Content-Type") ?? "").toLowerCase().includes("application/json");
   trace.backend_correlated = response.headers.get("X-AlphaOS-Request-ID") === trace.request_id;
   trace.stage = "response_body";
   if (!response.ok) {
-    const code = upstreamErrorCode(await readErrorPayload(response));
+    const code = upstreamErrorCode(await readErrorPayload(response, trace));
     trace.upstream_code = KNOWN_UPSTREAM_CODES.has(code ?? "") ? code! : "unrecognized_or_missing";
     const detail = response.status === 401
       ? "backend_authentication_required"
@@ -246,6 +256,7 @@ async function marketRequest(request: Request, trace: BridgeTrace, timeout: () =
   }
 
   let responsePayload: unknown;
+  const bodyStarted = performance.now();
   try {
     responsePayload = await response.json();
   } catch (error) {
@@ -256,9 +267,14 @@ async function marketRequest(request: Request, trace: BridgeTrace, timeout: () =
       );
     }
     throw error;
+  } finally {
+    trace.response_body_ms = Math.round(performance.now() - bodyStarted);
   }
   trace.stage = "schema_validation";
-  if (!validResearchEnvelope(responsePayload, payload.symbol, payload.research_mode)) {
+  const validationStarted = performance.now();
+  const valid = validResearchEnvelope(responsePayload, payload.symbol, payload.research_mode);
+  trace.schema_validation_ms = Math.round(performance.now() - validationStarted);
+  if (!valid) {
     return Response.json(
       { status: "unavailable", code: "response_schema_mismatch" },
       { status: 502, headers: { "Cache-Control": "no-store" } },

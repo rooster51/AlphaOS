@@ -2,6 +2,7 @@
 import re
 from modules.symbol_registry import REGISTRY, instrument
 import pandas as pd
+from modules.research_timing import stage
 
 from modules.history_diagnostics import HistoryError, history_diagnostics, schema_issues, api_error_detail
 from modules.market_state import validate_ohlc
@@ -70,8 +71,10 @@ def fetch_research_bars(client, symbol, period, kind='EQUITY', as_of=None):
                       requested_end=str(pd.Timestamp(as_of).date()),adjustment=ADJUSTMENT,
                       retrieved_at=pd.Timestamp.now(tz='UTC').isoformat())
     try:
-        client.auth_manager.refresh_token_if_needed()
-        raw = client.api_client.get(path,params=params)
+        with stage('history_token_refresh'):
+            client.auth_manager.refresh_token_if_needed()
+        with stage('history_provider_request'):
+            raw = client.api_client.get(path,params=params)
     except Exception as exc:
         status = getattr(exc,'status_code',None)
         diagnostic.update(http_status=status if isinstance(status,int) else None,

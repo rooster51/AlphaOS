@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 from modules.quote_freshness import normalize_timestamp
 from modules.public_session import _select_account
 from modules.symbol_registry import REGISTRY, instrument
+from modules.research_timing import stage
 
 INDEX_SYMBOLS = {"SPX", "XSP", "NDX", "RUT", "DJX", "VIX"}
 SYMBOL_ALIASES = {"^SPX":"SPX","$SPX":"SPX","SPX.X":"SPX","^NDX":"NDX","$NDX":"NDX","^RUT":"RUT","$RUT":"RUT","^VIX":"VIX","$VIX":"VIX"}
@@ -41,8 +42,10 @@ def authenticated_context(secret,preferred):
     if not secret: raise PublicProviderError('public_not_configured')
     try:
         from public_api_sdk import ApiKeyAuthConfig,PublicApiClient
-        client=PublicApiClient(ApiKeyAuthConfig(api_secret_key=secret,validity_minutes=60))
-        accounts=client.get_accounts().accounts
+        with stage('history_sdk_initialization'):
+            client=PublicApiClient(ApiKeyAuthConfig(api_secret_key=secret,validity_minutes=60))
+        with stage('history_accounts_request'):
+            accounts=client.get_accounts().accounts
         if not accounts: raise PublicProviderError('public_authentication_failure')
         return client,_select_account(accounts,preferred).account_id
     except Exception as exc:
@@ -123,7 +126,8 @@ def get_public_research_bars(symbol: str, period: str='FIVE_YEARS', option: bool
     as_of = pd.Timestamp.now(tz='America/New_York').date()
     research_request(symbol, period, kind.value, as_of)
     try:
-        client, _ = (_context or _public_context)()
+        with stage('history_provider_context'):
+            client, _ = (_context or _public_context)()
     except PublicProviderError:
         raise
     except Exception:

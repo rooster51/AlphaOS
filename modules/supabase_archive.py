@@ -11,6 +11,7 @@ import json
 import os
 import urllib.error
 import urllib.request
+from modules.research_timing import stage
 
 
 class ArchiveUnavailable(RuntimeError):
@@ -104,40 +105,48 @@ def read_latest_option_snapshot(client, symbol, as_of, *, max_age_seconds, provi
             or not isfinite(max_age_seconds) or max_age_seconds < 0):
         raise ValueError('Explicit finite nonnegative freshness window required.')
     try:
-        rows = (client.table('option_snapshots').select('*').eq('provider', provider)
-                .eq('symbol', symbol).lte('observed_at', now.isoformat())
-                .lte('created_at', now.isoformat()).order('observed_at', desc=True)
-                .order('id', desc=True).limit(1).execute()).data
-        if not rows:
-            raise ArchiveUnavailable('No archived snapshot available.', code='archive_missing')
-        row = rows[0]
-        observed = timestamp(row['observed_at'])
-        age = (now-observed).total_seconds()
-        if age < 0 or (research_mode == 'current' and age > max_age_seconds):
-            raise ArchiveUnavailable('Archived snapshot is stale or future-dated.', code='archive_stale')
-        if timestamp(row['created_at']) > now:
-            raise ValueError('Snapshot was not yet available.')
-        path = row['archive_path']
-        if not path.startswith(f'options/symbol={symbol}/date={row["session_date"]}/') or '..' in path:
-            raise ValueError('Archive path mismatch.')
-        raw = client.storage.from_('market-archive').download(path)
-        if hashlib.sha256(raw).hexdigest() != row.get('archive_sha256'):
-            raise ValueError('Archive checksum mismatch.')
-        payload = json.loads(gzip.decompress(raw))
-        if (payload['symbol'] != symbol or payload['provider'] != provider
-                or payload['session'] != row['session_date']
-                or timestamp(payload['observed_at']) != observed):
-            raise ValueError('Archive metadata mismatch.')
-        slot = payload.get('slot_time')
-        if (slot is None) != (row.get('slot_time') is None):
-            raise ValueError('Slot metadata mismatch.')
-        if slot is not None and timestamp(slot) != timestamp(row['slot_time']):
-            raise ValueError('Slot metadata mismatch.')
-        finished = payload.get('collection_finished_at') or payload['options'].get('generated_at')
-        if finished is not None and timestamp(finished) > now:
-            raise ValueError('Archive collection was not yet complete at as_of.')
-        if payload['options'].get('status') != row['quality_status']:
-            raise ValueError('Archive quality mismatch.')
+        with stage('archive_metadata_query'):
+            rows = (client.table('option_snapshots').select('*').eq('provider', provider)
+                    .eq('symbol', symbol).lte('observed_at', now.isoformat())
+                    .lte('created_at', now.isoformat()).order('observed_at', desc=True)
+                    .order('id', desc=True).limit(1).execute()).data
+        with stage('archive_metadata_validation'):
+            if not rows:
+                raise ArchiveUnavailable('No archived snapshot available.', code='archive_missing')
+            row = rows[0]
+            observed = timestamp(row['observed_at'])
+            age = (now-observed).total_seconds()
+            if age < 0 or (research_mode == 'current' and age > max_age_seconds):
+                raise ArchiveUnavailable('Archived snapshot is stale or future-dated.', code='archive_stale')
+            if timestamp(row['created_at']) > now:
+                raise ValueError('Snapshot was not yet available.')
+            path = row['archive_path']
+            if not path.startswith(f'options/symbol={symbol}/date={row["session_date"]}/') or '..' in path:
+                raise ValueError('Archive path mismatch.')
+        with stage('archive_download'):
+            raw = client.storage.from_('market-archive').download(path)
+        with stage('archive_checksum'):
+            if hashlib.sha256(raw).hexdigest() != row.get('archive_sha256'):
+                raise ValueError('Archive checksum mismatch.')
+        with stage('archive_decompression'):
+            decoded = gzip.decompress(raw)
+        with stage('archive_json_decode'):
+            payload = json.loads(decoded)
+        with stage('archive_payload_validation'):
+            if (payload['symbol'] != symbol or payload['provider'] != provider
+                    or payload['session'] != row['session_date']
+                    or timestamp(payload['observed_at']) != observed):
+                raise ValueError('Archive metadata mismatch.')
+            slot = payload.get('slot_time')
+            if (slot is None) != (row.get('slot_time') is None):
+                raise ValueError('Slot metadata mismatch.')
+            if slot is not None and timestamp(slot) != timestamp(row['slot_time']):
+                raise ValueError('Slot metadata mismatch.')
+            finished = payload.get('collection_finished_at') or payload['options'].get('generated_at')
+            if finished is not None and timestamp(finished) > now:
+                raise ValueError('Archive collection was not yet complete at as_of.')
+            if payload['options'].get('status') != row['quality_status']:
+                raise ValueError('Archive quality mismatch.')
     except ArchiveUnavailable:
         raise
     except Exception:
