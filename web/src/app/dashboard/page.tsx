@@ -3,34 +3,9 @@ export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { Header } from "@/components/shell/Header";
-import { getMarketSnapshotServer } from "@/lib/alphaos-server";
-import { ResearchUnavailableError } from "@/lib/research-evidence";
+import { DashboardResearch } from "@/components/dashboard/DashboardResearch";
 
-export default async function DashboardPage() {
-  const checks = await Promise.all(
-    ["QQQ", "SPY"].map(async (symbol) => {
-      try {
-        const response = await getMarketSnapshotServer(symbol);
-
-        return {
-          symbol,
-          response,
-          errorMessage: null as string | null,
-        };
-      } catch (error) {
-        if (!(error instanceof ResearchUnavailableError)) {
-          throw error;
-        }
-
-        return {
-          symbol,
-          response: null,
-          errorMessage: error.message,
-        };
-      }
-    })
-  );
-
+export default function DashboardPage() {
   return (
     <div>
       <Header
@@ -51,70 +26,8 @@ export default async function DashboardPage() {
         </p>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-          {checks.map(({ symbol, response, errorMessage }) => (
-            <section
-              key={symbol}
-              className="bg-terminal-900 border border-terminal-800 rounded p-5 space-y-3"
-            >
-              <div className="flex items-center justify-between">
-                <h2 className="font-mono font-bold text-terminal-100">
-                  {symbol}
-                </h2>
-
-                <span className="text-xs font-mono text-terminal-400">
-                  {response?.isLive
-                    ? "VERIFIED UNDERLYING OBSERVATION"
-                    : response
-                      ? "DEMO ONLY"
-                      : "UNAVAILABLE"}
-                </span>
-              </div>
-
-              {response ? (
-                <>
-                  <div className="font-mono text-lg text-terminal-100">
-                    ${response.data.current_spot.toFixed(2)}
-                  </div>
-
-                  <p className="text-xs text-terminal-400 font-mono">
-                    Observation: {response.data.as_of} · ATR: $
-                    {response.data.atr_14.toFixed(2)}
-                  </p>
-
-                  <p className="text-xs text-terminal-400 font-mono">
-                    Direction: {response.data.opportunity_state.direction} ·
-                    Premium: {response.data.opportunity_state.premium_state} ·
-                    Volatility: {response.data.opportunity_state.volatility_state}
-                  </p>
-
-                  {response.warning && (
-                    <p className="text-xs text-warning">
-                      {response.warning}
-                    </p>
-                  )}
-                </>
-              ) : (
-                <div className="space-y-2">
-                  <p className="font-mono text-xs text-warning">
-                    Market research unavailable:{" "}
-                    {errorMessage ??
-                      "Verified market evidence could not be established."}
-                  </p>
-
-                  <p className="font-mono text-xs text-terminal-400">
-                    No substitute or unverified market data has been displayed.
-                  </p>
-                </div>
-              )}
-
-              <Link
-                href={`/market?symbol=${symbol}`}
-                className="text-xs text-accent underline"
-              >
-                Open market research
-              </Link>
-            </section>
-          ))}
+          <DashboardResearch symbol="QQQ" />
+          <DashboardResearch symbol="SPY" />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 font-mono text-sm">
