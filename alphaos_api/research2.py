@@ -12,6 +12,7 @@ from modules.run_market import run_latest_market
 from modules.structure_economics import structure_historical_economics, compare_historical_economics
 from modules.supabase_archive import archive_client, read_latest_option_snapshot, ArchiveUnavailable
 from .contracts import APIError
+from modules.research_timing import execution, stage as timing_stage
 
 VERSION = 'alphaos-interface-v2'
 
@@ -80,7 +81,9 @@ class ArchiveResearchService:
             age = float(os.environ.get('ALPHAOS_ARCHIVE_MAX_AGE_SECONDS', '600'))
             if not isfinite(age) or age < 0:
                 raise ValueError()
-            return read_latest_option_snapshot(archive_client(), symbol, as_of,
+            with timing_stage('archive_client'):
+                client = archive_client()
+            return read_latest_option_snapshot(client, symbol, as_of,
                 max_age_seconds=age, research_mode=research_mode)
         except ArchiveUnavailable:
             raise
@@ -96,6 +99,10 @@ class ArchiveResearchService:
         return bars
 
     def run(self, request):
+        with execution(request.symbol, request.research_mode):
+            return self._run(request)
+
+    def _run(self, request):
         history = None
         history_loading = dict(status="unavailable", reason="completed_history_unavailable")
         caveats = ['Archive observations are not executable live quotes.',
@@ -105,14 +112,16 @@ class ArchiveResearchService:
         # Load/verify archive FIRST; never fall back to live chain on failure.
         now = self.clock()
         try:
-            record = self.read_snapshot(request.symbol, now.isoformat(), **(
-                {'research_mode': 'historical'} if request.research_mode == 'historical' else {}))
+            with timing_stage('archive_read'):
+                record = self.read_snapshot(request.symbol, now.isoformat(), **(
+                    {'research_mode': 'historical'} if request.research_mode == 'historical' else {}))
         except ArchiveUnavailable as error:
             raise APIError(error.code, 503) from None
         except Exception:
             raise APIError('archive_unavailable', 503) from None
         try:
-            history = self.history_loader(request.symbol)
+            with timing_stage('history_load'):
+                history = self.history_loader(request.symbol)
             if history is not None:
                 history_loading = dict(status="loaded", reason=None)
         except Exception as error:
@@ -140,11 +149,12 @@ class ArchiveResearchService:
                         history_loading['reason'] = 'public_history_validation_failed'
             caveats.append('Completed daily history unavailable; missing classifier evidence stays unknown.')
         try:
-            result = run_latest_market(request.symbol, as_of=now.isoformat(),
-                read_snapshot=lambda symbol, as_of: record, history=history,
-                research_mode=request.research_mode,
-                expiration=request.expiration.isoformat() if request.expiration else None,
-                available_capital=request.available_capital, objective=request.objective, width=request.width)
+            with timing_stage('research_calculations'):
+                result = run_latest_market(request.symbol, as_of=now.isoformat(),
+                    read_snapshot=lambda symbol, as_of: record, history=history,
+                    research_mode=request.research_mode,
+                    expiration=request.expiration.isoformat() if request.expiration else None,
+                    available_capital=request.available_capital, objective=request.objective, width=request.width)
         except ArchiveExpirationUnavailable:
             raise APIError('archive_expiration_unavailable', 422) from None
         except (ValueError, TypeError, KeyError, OverflowError):

@@ -415,7 +415,11 @@ test("upstream failures record correlation/status without secrets and recover wi
   assert.equal(logs.at(-1).upstream_code,"unrecognized_or_missing");
   assert.ok(!JSON.stringify(logs).includes("DO_NOT_LOG"));assert.ok(!JSON.stringify(logs).includes("test-token"));assert.ok(!JSON.stringify(logs).includes("secret_token"));
   globalThis.fetch=async()=>Response.json(envelope());
-  const recovered=await POST(request({symbol:"QQQ"}));assert.equal(recovered.status,200);assert.equal(logs.length,5);
+  const recovered=await POST(request({symbol:"QQQ"}));assert.equal(recovered.status,200);
+  assert.deepEqual(logs.map(log=>log.status),[502,502,502,502,502,200]);
+  assert.equal(logs.at(-1).symbol,"QQQ");assert.equal(logs.at(-1).research_mode,"current");
+  assert.equal(logs.at(-1).timeout_ms,12000);
+  for(const field of ["fetch_headers_ms","response_body_ms","schema_validation_ms"]) assert.ok(logs.at(-1)[field]>=0);
  }finally{console.warn=warn;}
 });
 for(const status of [200,503]) {
@@ -457,4 +461,37 @@ test("current bridge rejects unknown backend research modes without breaking leg
  }
  globalThis.fetch=async()=>Response.json(envelope());
  assert.equal((await POST(request({symbol:"QQQ"}))).status,200);
+});
+
+test("concurrent historical timeouts keep the 12000ms deadline, isolated correlation and sanitized diagnostics",async()=>{
+ setBackendConfig();const originalTimeout=AbortSignal.timeout;const warn=console.warn;
+ const logs=[];const sent=[];console.warn=value=>logs.push(JSON.parse(value));
+ try {
+  AbortSignal.timeout=ms=>{
+   assert.equal(ms,12000);
+   const controller=new AbortController();
+   queueMicrotask(()=>controller.abort(new DOMException("DO_NOT_LOG","TimeoutError")));
+   return controller.signal;
+  };
+  globalThis.fetch=async(_,options)=>{
+   sent.push({id:options.headers["X-AlphaOS-Request-ID"],payload:JSON.parse(options.body)});
+   return new Promise((resolve,reject)=>{
+    if(options.signal.aborted) reject(options.signal.reason);
+    else options.signal.addEventListener("abort",()=>reject(options.signal.reason),{once:true});
+   });
+  };
+  const responses=await Promise.all(["SPY","QQQ"].map(symbol=>POST(request({symbol,research_mode:"historical"}))));
+  assert.equal(new Set(sent.map(item=>item.id)).size,2);
+  for(let index=0;index<responses.length;index++) {
+   const response=responses[index];assert.equal(response.status,502);
+   assert.deepEqual(await response.json(),{status:"unavailable",code:"backend_timeout"});
+   const id=response.headers.get("X-AlphaOS-Request-ID");
+   const log=logs.find(row=>row.request_id===id);
+   assert.equal(log.symbol,index===0?"SPY":"QQQ");assert.equal(log.research_mode,"historical");
+   assert.equal(log.stage,"fetch");assert.equal(log.timeout_ms,12000);
+   assert.equal(sent.find(item=>item.id===id).payload.research_mode,"historical");
+  }
+  assert.equal(logs.length,2);assert.ok(!JSON.stringify(logs).includes("DO_NOT_LOG"));
+  assert.ok(!JSON.stringify(logs).includes("test-token"));
+ }finally{AbortSignal.timeout=originalTimeout;console.warn=warn;}
 });

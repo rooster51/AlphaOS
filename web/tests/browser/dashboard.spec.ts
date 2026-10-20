@@ -102,3 +102,26 @@ test("same-session historical evidence is refused, and one failed symbol does no
   await expect(qqq.getByText("HISTORICAL — COMPLETED SESSION ARCHIVE",{exact:true})).toHaveCount(0);
   await expect(qqq).toContainText("No substitute or unverified market data has been displayed");
 });
+
+test("both historical timeouts retain stale warnings, correlation, layout and refresh without prices",async({page})=>{
+  const requests:Array<{symbol:string;research_mode:string}>=[];
+  await page.route("**/api/research/market",async route=>{
+    const payload=route.request().postDataJSON();requests.push(payload);
+    await route.fulfill({status:502,json:{code:payload.research_mode==="current"?"archive_stale":"backend_timeout"},
+      headers:{"X-AlphaOS-Request-ID":(payload.symbol==="SPY"?"a":"b").repeat(32)}});
+  });
+  await page.goto("/dashboard");
+  await expect(page.getByRole("heading",{name:"Research Terminal Dashboard"})).toBeVisible();
+  for(const symbol of ["SPY","QQQ"]) {
+    const card=page.getByRole("region",{name:`${symbol} evidence`});
+    await expect(card).toContainText("Current market evidence is stale");
+    await expect(card).toContainText("Historical context unavailable: The research backend request timed out.");
+    await expect(card).toContainText("Historical request ID: "+(symbol==="SPY"?"a":"b").repeat(32));
+    await expect(card.getByRole("button",{name:`Refresh ${symbol} evidence`})).toBeVisible();
+    await expect(card.getByText("$500.00",{exact:true})).toHaveCount(0);
+  }
+  await expect(page.getByText("HISTORICAL — COMPLETED SESSION ARCHIVE",{exact:true})).toHaveCount(0);
+  expect(requests.filter(item=>item.research_mode==="historical")).toHaveLength(2);
+  await page.getByRole("button",{name:"Refresh SPY evidence"}).click();
+  await expect.poll(()=>requests.filter(item=>item.symbol==="SPY"&&item.research_mode==="historical").length).toBe(2);
+});

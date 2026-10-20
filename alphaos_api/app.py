@@ -25,6 +25,8 @@ load_secret_files()
 app=FastAPI(title='AlphaOS Research API',version=SCHEMA_VERSION,debug=False,
     description='Read-only descriptive research using the same AlphaOS engine as Streamlit. No order execution or recommendations.')
 app.state.service=ResearchService()
+from modules.research_timing import ResearchTimingMiddleware
+from modules.research_timing import stage
 security=HTTPBearer(auto_error=False)
 
 
@@ -52,7 +54,9 @@ def sanitized(value):
     return clean(json_value(value))
 
 
-def respond(value):return JSONResponse(sanitized(value))
+def respond(value):
+    with stage('response_serialization'):
+        return JSONResponse(sanitized(value))
 
 
 def error_response(code,status):
@@ -204,3 +208,4 @@ app.include_router(router)
 
 from .mcp_server import build_mcp
 build_mcp(app, sanitized)
+app.add_middleware(ResearchTimingMiddleware)
