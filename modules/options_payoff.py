@@ -59,7 +59,11 @@ def adaptive_grid(spot, strikes, breakevens, max_regular_points=401):
     return sorted(set(regular + anchors + midpoints))
 
 
-def trade_analysis(trade, units=1):
+def trade_analysis(trade, units=1, *, payoff_detail='full'):
+    # Presentation sampling never changes the exact kink/tail economics above
+    # the grid. 'none' is used only for intermediate historical validation.
+    if payoff_detail not in ('full', 'landmarks', 'none'):
+        raise ValueError('Invalid payoff presentation detail.')
     trade = validate_trade(trade)
     if not isinstance(units, (int, float)) or not isfinite(units) or units < 1 or units != int(units):
         raise ValueError('Strategy units must be a positive whole number.')
@@ -90,10 +94,20 @@ def trade_analysis(trade, units=1):
         width = strikes[1] - strikes[0]
         if trade['credit'] > 0:
             credit_width = trade['credit'] / (abs(legs[0]['qty']) * width)
-    return dict(trade=trade, units=units, max_profit=profit, max_loss=risk,
+    anchors = sorted(set([spot, *strikes, *roots]))
+    if payoff_detail == 'full':
+        points = adaptive_grid(spot, strikes, roots)
+    elif payoff_detail == 'landmarks':
+        points = sorted(set(anchors + [(a+b)/2 for a,b in zip(anchors, anchors[1:])]))
+    else:
+        points = []
+    result = dict(trade=trade, units=units, max_profit=profit, max_loss=risk,
                 return_on_risk=profit/risk if isfinite(profit) and isfinite(risk) and risk > 0 and profit >= 0 else None,
                 option_premium=trade['credit']*100*units, fees=trade['fees']*units,
                 net_cash=(trade['credit']*100-trade['fees'])*units,
                 width=width, credit_width=credit_width, breakevens=roots, strikes=strikes,
-                grid=[scenario(p) for p in adaptive_grid(spot,strikes,roots)],
-                extremes=[scenario(spot*(1+s)) for s in (-.5,-.3,-.2,-.1,-.05,0,.05,.1,.2,.3,.5)])
+                grid=[scenario(p) for p in points],
+                extremes=[scenario(spot*(1+s)) for s in (-.5,-.3,-.2,-.1,-.05,0,.05,.1,.2,.3,.5)] if payoff_detail != 'none' else [])
+    if payoff_detail != 'full':
+        result['grid_sampling'] = 'exact_landmarks_and_midpoints' if payoff_detail == 'landmarks' else 'not_materialized'
+    return result

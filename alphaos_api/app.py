@@ -4,6 +4,7 @@ import logging
 import re
 import secrets
 from time import perf_counter
+from math import isfinite
 import hmac
 import os
 from datetime import date
@@ -19,6 +20,7 @@ from modules.forward_distribution import summarize_forward_distribution
 from .contracts import APIError,TradeRequest,CompareRequest,ResearchResponse,ErrorResponse,SCHEMA_VERSION,friction
 from .service import ResearchService,symbol_value,horizon_value
 from .config import load_secret_files
+from modules.research_control import checkpoint
 
 load_secret_files()
 
@@ -42,16 +44,36 @@ router=APIRouter(prefix='/v1',dependencies=[Depends(authenticate)],responses={
 
 
 def sanitized(value):
-    secrets=[os.environ.get(k) for k in ('PUBLIC_API_SECRET','PUBLIC_ACCOUNT_NUMBER','ALPHAOS_API_TOKEN','SUPABASE_SERVICE_ROLE_KEY','SUPABASE_URL')]
+    secrets_to_redact = tuple(secret_value for key in ('PUBLIC_API_SECRET','PUBLIC_ACCOUNT_NUMBER','ALPHAOS_API_TOKEN','SUPABASE_SERVICE_ROLE_KEY','SUPABASE_URL') if (secret_value := os.environ.get(key)))
+    key_policy = {}
+    unlimited = isinstance(value, dict) and isinstance(value.get('schema_version'), str) and value.get('schema_version') == 'alphaos-interface-v2'
     def clean(item):
-        if isinstance(item,dict):
-            return {k:clean(v) for k,v in item.items() if not any(word in k.lower() for word in ('account_id','account_number','secret','token','authorization','password'))}
-        if isinstance(item,list):return [clean(v) for v in item]
-        if isinstance(item,str):
-            for secret in secrets:
-                if secret:item=item.replace(secret,'[REDACTED]')
-        return item
-    return clean(json_value(value))
+        kind = type(item)
+        if item is None or kind is int or kind is bool:
+            return item
+        if isinstance(item, float):
+            return item if isfinite(item) else 'unlimited' if unlimited and item == float('inf') else None
+        if isinstance(item, str):
+            for secret in secrets_to_redact:
+                item = item.replace(secret, '[REDACTED]')
+            return item
+        if isinstance(item, dict):
+            checkpoint()
+            result = {}
+            for key, value in item.items():
+                key = str(key)
+                if key not in key_policy:
+                    key_policy[key] = not any(word in key.lower() for word in ('account_id','account_number','secret','token','authorization','password'))
+                if key_policy[key]:
+                    result[key] = clean(value)
+            return result
+        if isinstance(item, (list, tuple)):
+            return [clean(value) for value in item]
+        if isinstance(item, int):
+            return int(item)
+        # Retain the existing pandas/numpy/date conversions for legacy routes.
+        return clean(json_value(item))
+    return clean(value)
 
 
 def respond(value):
@@ -208,4 +230,6 @@ app.include_router(router)
 
 from .mcp_server import build_mcp
 build_mcp(app, sanitized)
+from .research_compression import ResearchCompressionMiddleware
+app.add_middleware(ResearchCompressionMiddleware)
 app.add_middleware(ResearchTimingMiddleware)

@@ -3,6 +3,10 @@ from datetime import date, datetime, timezone
 from math import isfinite
 import os
 from typing import Literal
+import asyncio
+from anyio import to_thread
+from fastapi import Request as HTTPRequest
+from starlette.responses import Response
 
 from pydantic import BaseModel, ConfigDict, Field
 from modules.position_research import research_position
@@ -62,9 +66,10 @@ def json_safe(value):
     return value
 
 
-def envelope(request, research, source, caveats=()):
-    return json_safe(dict(schema_version=VERSION, request=request.model_dump(mode='json'),
-        read_only=True, research=research, provenance=dict(source=source), caveats=list(caveats)))
+def envelope(request, research, source, caveats=(), *, json_ready=True):
+    value = dict(schema_version=VERSION, request=request.model_dump(mode='json'),
+        read_only=True, research=research, provenance=dict(source=source), caveats=list(caveats))
+    return json_safe(value) if json_ready else value
 
 
 class ArchiveResearchService:
@@ -98,11 +103,11 @@ class ArchiveResearchService:
         bars['symbol'] = symbol
         return bars
 
-    def run(self, request):
+    def run(self, request, *, json_ready=True):
         with execution(request.symbol, request.research_mode):
-            return self._run(request)
+            return self._run(request, json_ready=json_ready)
 
-    def _run(self, request):
+    def _run(self, request, *, json_ready=True):
         history = None
         history_loading = dict(status="unavailable", reason="completed_history_unavailable")
         caveats = ['Archive observations are not executable live quotes.',
@@ -154,7 +159,7 @@ class ArchiveResearchService:
                     read_snapshot=lambda symbol, as_of: record, history=history,
                     research_mode=request.research_mode,
                     expiration=request.expiration.isoformat() if request.expiration else None,
-                    available_capital=request.available_capital, objective=request.objective, width=request.width)
+                    available_capital=request.available_capital, objective=request.objective, width=request.width, json_ready=False)
         except ArchiveExpirationUnavailable:
             raise APIError('archive_expiration_unavailable', 422) from None
         except (ValueError, TypeError, KeyError, OverflowError):
@@ -163,7 +168,7 @@ class ArchiveResearchService:
         result['research_mode'] = request.research_mode
         if request.research_mode == 'historical':
             caveats.append('Historical archive research at the observation timestamp; candidates are not current trading opportunities or executable quotes.')
-        return envelope(request, result, 'Verified Supabase archive; completed Public daily history when available', caveats)
+        return envelope(request, result, 'Verified Supabase archive; completed Public daily history when available', caveats, json_ready=json_ready)
 
     @staticmethod
     def _structure(request):
@@ -194,8 +199,30 @@ class ArchiveResearchService:
 
 def register_research2(router, service, respond):
     @router.post('/research/market', operation_id='run_market_v2')
-    def run_market(request: MarketRequest):
-        return respond(service().run(request))
+    async def run_market(request: MarketRequest, http_request: HTTPRequest):
+        # FastAPI has consumed/validated the body before this handler. Polling
+        # here cannot race the body consumer. Python cannot kill a blocking SDK
+        # call; checkpoints stop subsequent work as soon as that call returns.
+        from modules.research_control import cancellable_research
+        with cancellable_research() as cancelled:
+            work = asyncio.create_task(to_thread.run_sync(
+                lambda: respond(service().run(request, json_ready=False)), abandon_on_cancel=True))
+            try:
+                while not work.done():
+                    if await http_request.is_disconnected():
+                        cancelled.set()
+                        work.cancel()
+                        # The client is gone. A quiet non-success response also
+                        # prevents BaseHTTPMiddleware mistaking cancellation for
+                        # a "no response returned" internal server error.
+                        http_request.state.research_error = 'client_disconnected'
+                        return Response(status_code=499)
+                    await asyncio.sleep(.025)
+                return await work
+            finally:
+                cancelled.set()
+                if not work.done():
+                    work.cancel()
 
     @router.post('/research/structure', operation_id='research_structure_v2')
     def research_structure(request: StructureRequest):

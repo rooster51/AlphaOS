@@ -14,6 +14,8 @@ from modules.opportunity_router import ALLOWED, opportunity_state, route_strateg
 from modules.position_research import research_position
 from modules.premium_engine import valid_contract
 from modules.width_discovery import discover_widths
+from modules.research_control import checkpoint
+from modules.research_timing import stage as timing_stage
 from modules.strategy_compare import compare_strategy_research
 from modules.structure_research import _number
 
@@ -91,7 +93,7 @@ def _serializable(value):
 
 def research_market_opportunities(symbol, market_research, chain, *, as_of,
                                   expiration=None, available_capital=None,
-                                  objective=None, candidates=None, width=None):
+                                  objective=None, candidates=None, width=None, json_ready=True):
     """Research one expiration; supplied candidates replace automatic discovery.
 
     No provider calls, journal writes, rankings, or recommendations. Capital is a
@@ -176,37 +178,40 @@ def research_market_opportunities(symbol, market_research, chain, *, as_of,
                     count = sum(item['option_type'] == kind.lower() for item in discovery['candidates'])
                     construction_diagnostics.append(dict(strategy_family='long_call' if kind == 'Call' else 'long_put',
                         generated_count=count, reason=None if count else 'no_quoted_long_option_within_existing_distance_filter'))
-            discovered, reports = discover_widths(clean, spot,
-                construction_families - {'long_call', 'long_put'}, width=width)
+            with timing_stage('width_enumeration'):
+                discovered, reports = discover_widths(clean, spot,
+                    construction_families - {'long_call', 'long_put'}, width=width)
             raw.extend(discovered)
             construction_diagnostics.extend(reports)
-        for index, candidate in enumerate(raw):
-            try:
-                if not isinstance(candidate, dict) or candidate.get('expiration') != expiration:
-                    raise ValueError('Candidate expiration mismatch.')
-                result = research_position(candidate, symbol=symbol, spot=spot,
-                                           as_of=research_date, expected_move=expected_move)
-            except (ValueError, TypeError, KeyError, OverflowError):
-                excluded.append(dict(stage='research', input_index=index, reason='invalid_or_insufficient_candidate'))
-                continue
-            family = result['strategy_family']
-            economics_valid_count += 1
-            if family not in construction_families:
-                excluded.append(dict(stage='routing', input_index=index, reason='family_not_routed', strategy_family=family))
-                continue
-            risk = _number(result['capital_at_risk'])
-            if risk is None or risk < 0:
-                excluded.append(dict(stage='eligibility', input_index=index, reason='unknown_max_risk'))
-                continue
-            if available_capital is not None and risk > available_capital:
-                excluded.append(dict(stage='eligibility', input_index=index, reason='exceeds_available_capital',
-                    required_capital=risk, available_capital=available_capital, research=result,
-                    **(dict(generation_basis='unclassified_quote_research', classification_supported=False) if unclassified_research else {})))
-                continue
-            entry = dict(input_index=index, strategy_family=family, research=result)
-            if unclassified_research:
-                entry.update(generation_basis='unclassified_quote_research', classification_supported=False)
-            researched.append(entry)
+        with timing_stage('candidate_payoff'):
+            for index, candidate in enumerate(raw):
+                checkpoint()
+                try:
+                    if not isinstance(candidate, dict) or candidate.get('expiration') != expiration:
+                        raise ValueError('Candidate expiration mismatch.')
+                    result = research_position(candidate, symbol=symbol, spot=spot,
+                                               as_of=research_date, expected_move=expected_move, payoff_detail='landmarks')
+                except (ValueError, TypeError, KeyError, OverflowError):
+                    excluded.append(dict(stage='research', input_index=index, reason='invalid_or_insufficient_candidate'))
+                    continue
+                family = result['strategy_family']
+                economics_valid_count += 1
+                if family not in construction_families:
+                    excluded.append(dict(stage='routing', input_index=index, reason='family_not_routed', strategy_family=family))
+                    continue
+                risk = _number(result['capital_at_risk'])
+                if risk is None or risk < 0:
+                    excluded.append(dict(stage='eligibility', input_index=index, reason='unknown_max_risk'))
+                    continue
+                if available_capital is not None and risk > available_capital:
+                    excluded.append(dict(stage='eligibility', input_index=index, reason='exceeds_available_capital',
+                        required_capital=risk, available_capital=available_capital, research=result,
+                        **(dict(generation_basis='unclassified_quote_research', classification_supported=False) if unclassified_research else {})))
+                    continue
+                entry = dict(input_index=index, strategy_family=family, research=result)
+                if unclassified_research:
+                    entry.update(generation_basis='unclassified_quote_research', classification_supported=False)
+                researched.append(entry)
     present = {x['strategy_family'] for x in researched}
     unavailable = [dict(route=r, reason=context_error or ('unsupported_or_requires_known_direction' if not fs else 'no_eligible_candidate'),
                         supported_families=fs) for r, fs in route_families.items() if not present.intersection(fs)]
@@ -295,8 +300,9 @@ def research_market_opportunities(symbol, market_research, chain, *, as_of,
              output_count=len(researched), input_unit='structures', output_unit='structures',
              reason_counts=dict(Counter(x['reason'] for x in excluded if x['stage'] == 'eligibility'))),
     ]
-    comparison = compare_strategy_research([x['research'] for x in researched], thesis=state)
-    return _serializable(dict(version='opportunity-session-v1', symbol=symbol, as_of=str(as_of),
+    with timing_stage('candidate_comparison'):
+        comparison = compare_strategy_research([x['research'] for x in researched], thesis=state)
+    result = dict(version='opportunity-session-v1', symbol=symbol, as_of=str(as_of),
         expiration=expiration, market=market, opportunity_state=state, strategy_routes=routing,
         candidates=researched, comparison=comparison, excluded=excluded, diagnostics=diagnostics,
         unavailable_routes=unavailable, status='complete' if researched else 'no_candidate',
@@ -308,4 +314,5 @@ def research_market_opportunities(symbol, market_research, chain, *, as_of,
                  'One expiration and standard 100-share contracts only; fills are assumptions.',
                  'Symmetric long butterflies require supplied candidates; automatic butterfly construction uses existing iron butterflies.',
                  'No ranking or recommendation. Unsupported routes remain unavailable.'] +
-                 (['No evidence-supported market route matched. Both existing debit hypotheses were tested using observed quotes/deltas only; any resulting structures are unclassified research, not market opportunities.'] if unclassified_research else []) + construction_errors))
+                 (['No evidence-supported market route matched. Both existing debit hypotheses were tested using observed quotes/deltas only; any resulting structures are unclassified research, not market opportunities.'] if unclassified_research else []) + construction_errors)
+    return _serializable(result) if json_ready else result
