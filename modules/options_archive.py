@@ -142,14 +142,10 @@ def build_options_snapshot(provider,symbol,session,config,config_version,config_
         if spot_time.astimezone(NY).date().isoformat()!=session: warnings.append('Underlying last trade is from a different session; strike band uses last available price.')
     else: warnings.append('Underlying last-trade timestamp unavailable.')
     expirations=provider.expirations(symbol)
-    selected=[];excluded_expirations=0;invalid_expirations=0
-    for expiration in expirations:
-        try:
-            if not isinstance(expiration,str) or not re.fullmatch(r'\d{4}-\d{2}-\d{2}',expiration): raise ValueError
-            dte=(date.fromisoformat(expiration)-date.fromisoformat(session)).days
-        except (ValueError,TypeError): invalid_expirations+=1;continue
-        if config['min_dte']<=dte<=config['max_dte']: selected.append(expiration)
-        else: excluded_expirations+=1
+    from modules.expiration_coverage import select_expirations
+    selected, coverage = select_expirations(expirations, session, config)
+    excluded_expirations = coverage['excluded_expiration_count']
+    invalid_expirations = coverage['invalid_expiration_count']
     records=[];requests=[];failures=[]
     for expiration in sorted(set(selected)):
         request_start=timestamp(provider.now()).isoformat()
@@ -185,7 +181,7 @@ def build_options_snapshot(provider,symbol,session,config,config_version,config_
         underlying_last_timestamp=spot_time.isoformat() if spot_time else None,universe=config,
         status='partial' if failures or invalid_expirations else 'complete' if records else 'empty',
         provenance=PROVENANCE,warnings=warnings,requested_expirations=sorted(set(selected)),requests=requests,
-        expiration_failures=failures,invalid_expiration_count=invalid_expirations,
+        expiration_failures=failures,expiration_discovery=coverage,invalid_expiration_count=invalid_expirations,
         excluded_expiration_count=excluded_expirations,excluded_strike_count=excluded_strikes,received_contract_count=len(records),
         valid_contracts=valid,questionable_contracts=questionable,rejected_contracts=rejected,
         rejection_counts=dict(Counter(reason for row in rejected for reason in row['rejection_reasons'])),

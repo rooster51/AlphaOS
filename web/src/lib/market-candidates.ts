@@ -9,7 +9,12 @@ export function buyingPower(value: string): number | null {
   const amount = Number(value);
   return Number.isFinite(amount) && amount > 0 ? amount : null;
 }
-export function archiveExpirations(session: RecordValue): string[] {
+export function archiveExpirations(session: RecordValue, archive?: RecordValue): string[] {
+  const entries = record(archive?.expiration_coverage).entries;
+  if (Array.isArray(entries)) return [...new Set(entries.filter(entry =>
+    record(entry).status === "archived_observations" && record(entry).eligible_date === true)
+    .map(entry => record(entry).expiration).filter((expiry): expiry is string =>
+      typeof expiry === "string" && /^\d{4}-\d{2}-\d{2}$/.test(expiry)))].sort();
   const available = record(record(session.diagnostics).expiration_selection).available;
   const observation = record(record(session.market).archive_observation);
   const failures = Array.isArray(observation.expiration_failures) ? observation.expiration_failures : [];

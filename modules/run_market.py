@@ -10,6 +10,7 @@ from modules.opportunity_session import research_market_opportunities
 from modules.market_session_gate import regular_session_bounds
 from modules.structure_economics import compare_historical_economics
 from modules.research_timing import stage
+from modules.expiration_coverage import archive_coverage
 
 VERSION = "alphaos-run-market-v1"
 
@@ -71,6 +72,7 @@ def run_market(payload, *, expiration=None, history=None, session_context=None,
         "as_of": archived["observed_at"],
         "expiration": archived["expiration"],
         "archive": {
+            "expiration_coverage": archive_coverage(payload['options'], archived['session_date']),
             "provider": archived["provider"],
             "session_date": archived["session_date"],
             "observation": archived["market_research"]["archive_observation"],

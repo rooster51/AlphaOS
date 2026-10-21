@@ -68,6 +68,9 @@ def normalize_archive_snapshot(payload, expiration=None):
         raise ValueError("Valid archive expiration required.") from None
     if expiration not in requested:
         raise ArchiveExpirationUnavailable("Expiration was not requested in this archive snapshot.")
+    from modules.expiration_coverage import classify_expiration
+    if not classify_expiration(session, expiration)['eligible_date']:
+        raise ArchiveExpirationUnavailable('Expiration is not an eligible exchange session.')
 
     rows = []
     excluded = []

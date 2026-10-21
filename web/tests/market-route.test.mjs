@@ -2,6 +2,27 @@ import assert from "node:assert/strict";
 import { afterEach, test } from "node:test";
 import { POST } from "../src/app/api/research/market/route.ts";
 
+test("explicit near, monthly and long dates never accept a substituted expiration", async () => {
+  setBackendConfig();
+  for (const symbol of ["SPY","QQQ"]) for (const expiration of ["2030-01-02","2030-01-03","2030-01-04","2030-01-18","2031-01-17"]) {
+    const data = envelope(symbol);
+    data.request.expiration = data.research.expiration = data.research.research_session.expiration = expiration;
+    globalThis.fetch = async (_,options) => {
+      assert.equal(JSON.parse(options.body).expiration,expiration);
+      return Response.json(data);
+    };
+    assert.equal((await POST(request({symbol,expiration}))).status,200);
+    for (const place of ["request","research","session"]) {
+      const bad = structuredClone(data);
+      (place==="request" ? bad.request : place==="research" ? bad.research : bad.research.research_session).expiration = "2030-01-07";
+      globalThis.fetch = async () => Response.json(bad);
+      const response = await POST(request({symbol,expiration}));
+      assert.equal(response.status,502);
+      assert.equal((await response.json()).code,"response_schema_mismatch");
+    }
+  }
+});
+
 test("historical mode is explicit and preserves the full backend envelope for SPY and QQQ", async () => {
   setBackendConfig();
   for (const symbol of ["SPY", "QQQ"]) {
@@ -136,7 +157,11 @@ test("forwards a valid authenticated JSON POST and preserves read-only response 
   let upstreamRequest;
   globalThis.fetch = async (url, options) => {
     upstreamRequest = { url: new URL(url), options };
-    return Response.json(envelope());
+    const data = envelope();
+    data.request.expiration = "2026-10-16";
+    data.research.expiration = "2026-10-16";
+    data.research.research_session.expiration = "2026-10-16";
+    return Response.json(data);
   };
 
   const response = await POST(request({
