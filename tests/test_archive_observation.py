@@ -2,6 +2,8 @@
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 import json
+import os
+from pathlib import Path
 import subprocess
 import sys
 from time import perf_counter
@@ -98,6 +100,9 @@ def test_encoder_retains_redaction_nonfinite_and_large_integer_compatibility(mon
 def test_cold_observation_does_not_import_public_sdk():
     code='''
 import sys
+# Fixture helpers use pytest's top-level test-module imports. A fresh child
+# does not inherit pytest's sys.path changes.
+sys.path.insert(0, sys.argv[1])
 from datetime import datetime
 from alphaos_api.research2 import ArchiveResearchService, ObservationRequest
 from tests.performance_archive_fixture import dense_storage,AS_OF
@@ -107,4 +112,13 @@ service=ArchiveResearchService(read_snapshot=lambda symbol,as_of:read_latest_opt
 assert service.observe(ObservationRequest(symbol='SPY'))['research_performed'] is False
 assert 'public_api_sdk' not in sys.modules
 '''
-    subprocess.run([sys.executable,'-c',code],check=True,capture_output=True,text=True)
+    root = Path(__file__).resolve().parents[1]
+    result = subprocess.run(
+        [sys.executable, '-c', code, str(root / 'tests')],
+        cwd=root, env={**os.environ, 'PYTHONPATH': str(root)},
+        capture_output=True, text=True,
+    )
+    assert result.returncode == 0, (
+        f'Cold observation subprocess exited {result.returncode}\n'
+        f'stdout:\n{result.stdout}\nstderr:\n{result.stderr}'
+    )
