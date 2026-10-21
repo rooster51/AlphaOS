@@ -54,12 +54,13 @@ function object(value: unknown): Record<string, unknown> | null {
     : null;
 }
 
-function validResearchEnvelope(value: unknown, symbol: MarketPayload["symbol"], mode: MarketPayload["research_mode"]): value is Record<string, unknown> {
+function validResearchEnvelope(value: unknown, symbol: MarketPayload["symbol"], mode: MarketPayload["research_mode"], expiration?: string): value is Record<string, unknown> {
   const envelope = object(value);
   const request = object(envelope?.request);
   const research = object(envelope?.research);
   const archive = object(research?.archive);
   const session = object(research?.research_session);
+  if (expiration !== undefined && (request?.expiration !== expiration || research?.expiration !== expiration || session?.expiration !== expiration)) return false;
   if (mode === "historical") {
     const freshness = object(archive?.freshness);
     const observation = object(archive?.observation);
@@ -272,7 +273,7 @@ async function marketRequest(request: Request, trace: BridgeTrace, timeout: () =
   }
   trace.stage = "schema_validation";
   const validationStarted = performance.now();
-  const valid = validResearchEnvelope(responsePayload, payload.symbol, payload.research_mode);
+  const valid = validResearchEnvelope(responsePayload, payload.symbol, payload.research_mode, payload.expiration);
   trace.schema_validation_ms = Math.round(performance.now() - validationStarted);
   if (!valid) {
     return Response.json(

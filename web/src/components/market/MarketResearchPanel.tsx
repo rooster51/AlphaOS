@@ -72,7 +72,8 @@ function object(value: unknown): Record<string, unknown> | null {
 function parseResearchBundle(
   value: unknown,
   symbol: MarketSymbol,
-  mode: ResearchMode
+  mode: ResearchMode,
+  expiration?: string
 ): ResearchBundle | null {
   const outer = object(value);
   const envelope = object(outer?.research);
@@ -81,6 +82,7 @@ function parseResearchBundle(
   const archive = object(research?.archive);
   const session = object(research?.research_session);
   const provenance = object(envelope?.provenance);
+  if (expiration !== undefined && (request?.expiration !== expiration || research?.expiration !== expiration || session?.expiration !== expiration)) return null;
 
   if (
     envelope?.schema_version !== "alphaos-interface-v2" ||
@@ -265,7 +267,7 @@ export function MarketResearchPanel({
           return;
         }
 
-        const bundle = parseResearchBundle(body, symbol, submitted.research_mode ?? "current");
+        const bundle = parseResearchBundle(body, symbol, submitted.research_mode ?? "current", submitted.expiration);
 
         if (!bundle) {
           if (active) {
@@ -279,7 +281,7 @@ export function MarketResearchPanel({
         }
 
         if (active) {
-          setExpirations(archiveExpirations(bundle.session));
+          setExpirations(archiveExpirations(bundle.session, bundle.archive));
           setState({ kind: "result", bundle });
         }
       } catch (error) {
@@ -357,9 +359,16 @@ export function MarketResearchPanel({
             <select className="rounded bg-terminal-900 border border-terminal-600 p-2" aria-label="Expiration"
               value={expiration} onChange={e => setExpiration(e.target.value)}>
               <option value="">Backend archive selection</option>
+              {expiration && !expirations.includes(expiration) && <option value={expiration}>{expiration} (explicit request)</option>}
               {expirations.map(date => <option key={date} value={date}>{date}</option>)}
             </select>
           </label>
+          <label className="grid gap-2">Exact expiration date
+            <input type="date" aria-label="Exact expiration date" value={expiration}
+              className="rounded bg-terminal-900 border border-terminal-600 p-2"
+              onChange={e => setExpiration(e.target.value)} />
+          </label>
+          <p className="w-full text-xs text-terminal-400">Listed choices come from archived observations. An exact date requires matching verified archive evidence; no other expiration is substituted. Monthly and long-dated coverage may be unavailable.</p>
           <button className="rounded border border-terminal-600 px-4 py-2" disabled={state.kind === "loading"}>Run Research</button>
           {inputError && <p role="alert">{inputError}</p>}
           <p className="text-xs text-terminal-400 w-full">Capital is an expiration maximum-loss ceiling, not account equity or broker margin. Expiration choices come from the last verified backend response; availability is rechecked on each run. Default spread width: 5 points, matching MCP.</p>
@@ -432,6 +441,7 @@ function ResearchResult({
   symbol: MarketSymbol;
 }) {
   const session = bundle.session;
+  const coverage = object(object(bundle.archive.expiration_coverage)?.horizons);
   const archiveObservation = object(
     bundle.archive.observation
   );
@@ -482,6 +492,17 @@ function ResearchResult({
           }
         />
       </div>
+      {coverage && <section aria-label="Expiration coverage" className="overflow-x-auto">
+        <h3>Archived expiration coverage</h3>
+        <table className="w-full text-left text-sm"><thead><tr><th>Horizon</th><th>Archived dates</th></tr></thead>
+          <tbody>{Object.entries({"0dte":"0DTE", "1dte":"1DTE", weekly:"Weekly", monthly:"Monthly", long_dated:"Long-dated / LEAPS-style"}).map(([key,label]) => {
+            const entry = object(coverage[key]);
+            const dates = Array.isArray(entry?.expirations) ? entry.expirations.filter((d): d is string => typeof d === "string") : [];
+            return <tr key={key}><th>{label}</th><td>{dates.length ? dates.join(", ") : "Missing verified archive evidence"}</td></tr>;
+          })}</tbody>
+        </table>
+        <p className="text-xs text-terminal-400">Calendar-day labels; monthly dates follow the exchange calendar. Long-dated means at least 365 days, not verified LEAPS series status. Archived observations do not establish fresh quotes or eligible candidates.</p>
+      </section>}
       <p className="rounded border border-warning/30 p-4 font-mono text-sm">
         {bundle.mode === "historical"
           ? "HISTORICAL ARCHIVE RESEARCH — candidates describe the archived observation, not current trading opportunities or executable quotes."

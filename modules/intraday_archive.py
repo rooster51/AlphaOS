@@ -50,6 +50,8 @@ def collect_symbol(provider, symbol, config, now=None):
         "max_dte": int(config["max_dte"]),
         "strike_band": float(config["strike_band"]),
     }
+    if 'extended_expiration_coverage' in config:
+        options_config['extended_expiration_coverage'] = config['extended_expiration_coverage']
     options = build_options_snapshot(
         provider, symbol, session, options_config,
         config_version=config.get("schema_version", "intraday-archive-config-v1"),
