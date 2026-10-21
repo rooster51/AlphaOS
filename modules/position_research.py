@@ -15,13 +15,13 @@ def research_position(candidate, *, symbol, spot, as_of, expected_move=None, pay
     """Reuse existing researchers; native cashflow includes signed quantities."""
     if not isinstance(candidate, dict):
         raise ValueError('Candidate must be a mapping.')
-    candidate = deepcopy(candidate)
     legs = candidate.get('legs')
     if not isinstance(legs, list) or not legs:
         raise ValueError('Option legs required.')
     if candidate.get('symbol', symbol) != symbol or candidate.get('spot', spot) != spot:
         raise ValueError('Candidate context mismatch.')
     if len(legs) == 1:
+        candidate = deepcopy(candidate)
         trade = validate_trade(dict(candidate, symbol=symbol, spot=spot,
                                     shares=candidate.get('shares', 0), fees=candidate.get('fees', 0)))
         leg = trade['legs'][0]

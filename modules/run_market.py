@@ -6,7 +6,7 @@ from zoneinfo import ZoneInfo
 
 from modules.market_archive_adapter import normalize_archive_snapshot
 from modules.opportunity_classifier import aware_time, classify_opportunity, expected_move_context, history_evidence
-from modules.opportunity_session import research_market_opportunities
+from modules.opportunity_session import research_market_opportunities, _serializable
 from modules.market_session_gate import regular_session_bounds
 from modules.structure_economics import compare_historical_economics
 from modules.research_timing import stage
@@ -61,11 +61,11 @@ def run_market(payload, *, expiration=None, history=None, session_context=None,
         research = research_market_opportunities(
             archived["symbol"], market, archived["chain"], as_of=archived["observed_at"],
             expiration=archived["expiration"], available_capital=available_capital,
-            objective=objective, width=width, json_ready=json_ready,
+            objective=objective, width=width, json_ready=False,
         )
         with stage('historical_economics'):
             attach_market_economics(research, observed_at=archived['observed_at'])
-    return {
+    result = {
         "version": VERSION,
         "command": f"Run {archived['symbol']}",
         "symbol": archived["symbol"],
@@ -89,6 +89,7 @@ def run_market(payload, *, expiration=None, history=None, session_context=None,
             "Unknown evidence remains unknown.",
         ],
     }
+    return _serializable(result) if json_ready else result
 
 
 def run_latest_market(symbol, *, as_of, read_snapshot, research_mode='current', **research_context):
@@ -134,7 +135,7 @@ def attach_market_economics(session, *, observed_at):
     comparison = compare_historical_economics(positions, as_of_dates=[day]*len(positions),
         now=observed, read_snapshot=None, history_loader=None,
         entry_observed_at=observed.isoformat(), available_capital=session['available_capital'],
-        holding_period='intraday', include_pairwise=False)
+        holding_period='intraday', include_pairwise=False, _reuse_discovery_payoff=True)
     session['historical_comparison'] = comparison
     session['holding_policy'] = dict(preference='avoid_overnight_exposure',
         intraday_exit_economics='unavailable', expiration_selection='unchanged',

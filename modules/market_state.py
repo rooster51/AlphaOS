@@ -1,6 +1,7 @@
 """Trailing daily features only. Never import forward outcomes here."""
 import numpy as np
 import pandas as pd
+from modules.research_control import checkpoint
 
 VERSION = 'market-state-v1'
 RAW = ['date', 'symbol', 'open', 'high', 'low', 'close']
@@ -27,6 +28,7 @@ def validate_ohlc(history, completed_before, expected_sessions=None):
     the observed span. Without it, report weekday gaps without inventing bars.
     Daily provider timestamps are interpreted by UTC calendar date.
     """
+    checkpoint()
     if not isinstance(history, pd.DataFrame) or history.empty or not set(RAW).issubset(history):
         raise ValueError('Supply nonempty date, symbol, open, high, low, close history.')
     frame = history[RAW].copy().reset_index(drop=True)
@@ -45,6 +47,7 @@ def validate_ohlc(history, completed_before, expected_sessions=None):
         raise ValueError('Supply exactly one nonmissing symbol per dataset.')
     frame['symbol'] = symbols.str.strip().str.upper()
     for col in RAW[2:]:
+        checkpoint()
         frame[col] = pd.to_numeric(frame[col],errors='coerce')
     values = frame[RAW[2:]].to_numpy(dtype=float)
     if not np.isfinite(values).all() or (values <= 0).any():
@@ -55,6 +58,7 @@ def validate_ohlc(history, completed_before, expected_sessions=None):
     if invalid_bounds.any():
         raise ValueError(f'Invalid OHLC bounds on {days[invalid_bounds].iloc[0].date()}: high must contain open/close/low and low must contain open/close/high ({int(invalid_bounds.sum())} rows).')
     cutoff = pd.Timestamp(completed_before)
+    checkpoint()
     if pd.isna(cutoff):
         raise ValueError('Supply an explicit completed-session cutoff date.')
     if cutoff.tzinfo:
@@ -78,6 +82,7 @@ def validate_ohlc(history, completed_before, expected_sessions=None):
     if not calendar_verified:
         warnings.append('Exchange calendar not verified. Missing weekdays may be holidays or missing provider bars; horizons count observed bars. Review the gap audit before research use.')
     gaps = frame.date.diff().dt.days
+    checkpoint()
     if (gaps > 7).any():
         warnings.append('At least one gap exceeds seven calendar days: history may be sparse or incomplete.')
     return frame, dict(excluded_uncompleted=excluded,completed_before=str(cutoff.date()),

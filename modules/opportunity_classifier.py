@@ -79,14 +79,28 @@ def classify_opportunity(evidence=None, *, observed_at=None, expiration=None,
 
 
 def history_evidence(history, symbol, observed_at):
-    from modules.market_state import validate_ohlc, market_state_features
+    from modules.market_state import validate_ohlc
+    from modules.research_control import checkpoint
+    import numpy as np
     now = aware_time(observed_at)
     if now is None:
         raise ValueError('Timezone-aware research timestamp required.')
     clean, audit = validate_ohlc(history, now.astimezone(NY).date())
     if clean.symbol.iloc[0] != symbol:
         raise ValueError('History symbol mismatch.')
-    features = market_state_features(clean, now.astimezone(NY).date())
+    # Only the classifier's consumed features. Use the identical full-history
+    # formulas/seed and validation; RSI, ATR and unused returns are not needed.
+    checkpoint()
+    features = clean
+    close = features.close
+    for n in (9, 21, 50):
+        features[f'ema_{n}'] = close.ewm(span=n, adjust=False, min_periods=n).mean()
+    logs = np.log(close / close.shift(1))
+    for n in (20, 60):
+        features[f'realized_vol_{n}d'] = logs.rolling(n, min_periods=n).std(ddof=1)*np.sqrt(252)
+    features['high_20'] = features.high.rolling(20, min_periods=20).max()
+    features['low_20'] = features.low.rolling(20, min_periods=20).min()
+    checkpoint()
     def row(index):
         item = features.iloc[index]
         return dict(date=str(item.date.date()), **{k: _number(item.get(k)) for k in

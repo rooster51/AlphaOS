@@ -190,7 +190,7 @@ def research_market_opportunities(symbol, market_research, chain, *, as_of,
                     if not isinstance(candidate, dict) or candidate.get('expiration') != expiration:
                         raise ValueError('Candidate expiration mismatch.')
                     result = research_position(candidate, symbol=symbol, spot=spot,
-                                               as_of=research_date, expected_move=expected_move, payoff_detail='landmarks')
+                                               as_of=research_date, expected_move=expected_move, payoff_detail='none')
                 except (ValueError, TypeError, KeyError, OverflowError):
                     excluded.append(dict(stage='research', input_index=index, reason='invalid_or_insufficient_candidate'))
                     continue
@@ -204,10 +204,19 @@ def research_market_opportunities(symbol, market_research, chain, *, as_of,
                     excluded.append(dict(stage='eligibility', input_index=index, reason='unknown_max_risk'))
                     continue
                 if available_capital is not None and risk > available_capital:
+                    # Keep exact economics, normalized identity and original
+                    # quote-bearing trade once; charts and repeated quote aliases
+                    # add no evidence to a capital exclusion.
+                    result.pop('legs', None)
+                    result['payoff'].pop('trade', None)
+                    result['evidence'].pop('option_legs', None)
+                    result['presentation'] = 'capital_exclusion_summary'
                     excluded.append(dict(stage='eligibility', input_index=index, reason='exceeds_available_capital',
                         required_capital=risk, available_capital=available_capital, research=result,
                         **(dict(generation_basis='unclassified_quote_research', classification_supported=False) if unclassified_research else {})))
                     continue
+                from modules.options_payoff import materialize_payoff
+                result['payoff'] = materialize_payoff(result['payoff'])
                 entry = dict(input_index=index, strategy_family=family, research=result)
                 if unclassified_research:
                     entry.update(generation_basis='unclassified_quote_research', classification_supported=False)
@@ -302,6 +311,15 @@ def research_market_opportunities(symbol, market_research, chain, *, as_of,
     ]
     with timing_stage('candidate_comparison'):
         comparison = compare_strategy_research([x['research'] for x in researched], thesis=state)
+    for entry in researched:
+        result = entry['research']
+        # Normalized position.legs and original trade.legs retain every quote;
+        # comparison has consumed the evidence alias. Do not repeat those legs
+        # again in top-level legs, payoff.trade and evidence.option_legs.
+        result.pop('legs', None)
+        result['payoff'].pop('trade', None)
+        result['evidence'].pop('option_legs', None)
+        result['presentation'] = 'discovery_summary'
     result = dict(version='opportunity-session-v1', symbol=symbol, as_of=str(as_of),
         expiration=expiration, market=market, opportunity_state=state, strategy_routes=routing,
         candidates=researched, comparison=comparison, excluded=excluded, diagnostics=diagnostics,

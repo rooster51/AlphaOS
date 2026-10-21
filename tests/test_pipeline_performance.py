@@ -29,7 +29,7 @@ from tests.benchmark_research_pipeline import WireCapture
 def prepare_dense(boundary, delay=0, *, late=False):
     from time import sleep
     client, _, service, _ = boundary
-    storages = {symbol:dense_storage(symbol,late=late) for symbol in ('SPY','QQQ')}
+    storages = {symbol:dense_storage(symbol,late=late,production_scale=True) for symbol in ('SPY','QQQ')}
     def read(symbol, as_of, **kwargs):
         sleep(delay)
         return read_latest_option_snapshot(storages[symbol], symbol, as_of,
@@ -44,18 +44,24 @@ def prepare_dense(boundary, delay=0, *, late=False):
     return TestClient(stack,base_url='https://alphaos.onrender.com'), storages, service, stack
 
 
-@pytest.mark.parametrize('expiration',['2030-01-02','2030-01-18','2031-01-17'])
+@pytest.mark.parametrize('expiration',['2030-01-02','2030-01-04','2030-01-18','2031-01-17'])
 @pytest.mark.parametrize('width',[None,5])
-def test_four_concurrent_cold_warm_requests_have_deadline_headroom(boundary, expiration, width):
-    from modules.research_calendar import _schedule
+@pytest.mark.parametrize('mode',['current','historical'])
+def test_four_concurrent_cold_warm_requests_have_deadline_headroom(boundary, expiration, width, mode):
+    from modules.research_calendar import _schedule, _calendar
+    from modules.expiration_coverage import _sessions
     _schedule.cache_clear()
-    client, _, _, wire = prepare_dense(boundary, delay=.02)
+    _calendar.cache_clear()
+    _sessions.cache_clear()
+    client, _, service, wire = prepare_dense(boundary, delay=.02)
+    if mode == 'historical':
+        service.clock = lambda:datetime.fromisoformat('2030-01-03T23:00:00+00:00')
     expected = {}
     def invoke(index):
         symbol = ('SPY','QQQ')[index%2]
         started = perf_counter()
         response = post(client,'market',dict(symbol=symbol,expiration=expiration,
-            available_capital=150,width=width))
+            available_capital=150,width=width,research_mode=mode))
         assert response.status_code == 200
         assert response.headers['content-encoding'] == 'gzip'
         assert wire.sizes[response.headers['x-alphaos-request-id']] < len(response.content)/5
@@ -111,6 +117,31 @@ def test_late_session_constructor_overlap_has_one_explicit_request_budget(bounda
         return perf_counter()-started
     with ThreadPoolExecutor(4) as pool:
         assert max(pool.map(invoke,range(4)))<10.5
+
+
+@pytest.mark.parametrize('mode',['current','historical'])
+def test_dashboard_without_capital_limit_retains_all_evaluated_candidates(boundary,mode):
+    from modules.research_calendar import _calendar, _schedule
+    from modules.expiration_coverage import _sessions
+    _schedule.cache_clear(); _calendar.cache_clear(); _sessions.cache_clear()
+    client,_,service,_=prepare_dense(boundary,delay=.02,late=True)
+    if mode=='historical':
+        service.clock=lambda:datetime.fromisoformat('2030-01-03T23:00:00+00:00')
+    def invoke(index):
+        start=perf_counter()
+        response=post(client,'market',dict(symbol=('SPY','QQQ')[index%2],research_mode=mode))
+        assert response.status_code==200
+        session=response.json()['research']['research_session']
+        assert session['available_capital'] is None
+        assert len(session['candidates'])==session['diagnostics']['generated_count']
+        assert len(session['candidates'])>800
+        assert not session['diagnostics']['capital_rejection_count']
+        assert session['diagnostics']['width_selection']['search_complete'] is False
+        assert all(c['research']['historical_economics']['eligible_for_consideration'] is False for c in session['candidates'])
+        return perf_counter()-start
+    for _ in range(2):
+        with ThreadPoolExecutor(4) as pool:
+            assert max(pool.map(invoke,range(4)))<10.5
 
 
 @pytest.mark.parametrize('legs,credit', [

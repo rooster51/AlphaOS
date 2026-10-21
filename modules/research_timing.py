@@ -9,7 +9,7 @@ import re
 import secrets
 from threading import Lock
 from time import perf_counter
-from modules.research_control import checkpoint
+from modules.research_control import checkpoint, cancellable_research
 
 
 @dataclass(frozen=True)
@@ -88,11 +88,7 @@ def execution(symbol, mode):
 
 
 class ResearchTimingMiddleware:
-    """Observe ASGI messages without consuming/replaying bodies or cancelling work.
-
-    A disconnect is only claimed when observed on receive; no polling task races
-    the request-body consumer. Sync worker spans can finish after client departure.
-    """
+    """Observe ASGI messages and signal request-local workers on disconnect."""
     def __init__(self, app):
         self.app = app
 
@@ -117,6 +113,7 @@ class ResearchTimingMiddleware:
             message = await receive()
             if message['type'] == 'http.disconnect' and not disconnected:
                 disconnected = True
+                cancelled.set()
                 emit('client_disconnect', 'observed')
             return message
 
@@ -132,7 +129,8 @@ class ResearchTimingMiddleware:
         outcome = 'incomplete'
         emit('request', 'start')
         try:
-            await self.app(scope, observed_receive, observed_send)
+            with cancellable_research() as cancelled:
+                await self.app(scope, observed_receive, observed_send)
             outcome = 'disconnected' if disconnected else 'complete' if finished else 'incomplete'
         except BaseException as error:
             outcome = 'cancelled' if isinstance(error, asyncio.CancelledError) else 'error'

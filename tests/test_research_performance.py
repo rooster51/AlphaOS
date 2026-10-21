@@ -28,6 +28,7 @@ def test_wilder_matches_original_scalar_recurrence_exactly(length):
 
 def test_calendar_concurrent_cold_miss_is_single_and_copies_are_isolated(monkeypatch):
     calendar._schedule.cache_clear()
+    calendar._calendar.cache_clear()
     original = mcal.get_calendar
     factory = Mock(side_effect=original)
     monkeypatch.setattr(calendar.mcal, 'get_calendar', factory)
@@ -43,6 +44,7 @@ def test_calendar_concurrent_cold_miss_is_single_and_copies_are_isolated(monkeyp
     assert not b.isna().any().any()
     assert calendar.nyse_schedule('2026-12-25', '2026-12-25').empty
     calendar._schedule.cache_clear()
+    calendar._calendar.cache_clear()
 
 
 def test_archive_client_reuses_identity_not_queries_and_rechecks_credentials(monkeypatch):

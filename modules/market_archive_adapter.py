@@ -11,6 +11,7 @@ from zoneinfo import ZoneInfo
 
 from modules.opportunity_classifier import aware_time
 from modules.structure_research import _number
+from modules.research_control import checkpoint
 
 VERSION = "market-archive-adapter-v1"
 
@@ -98,6 +99,7 @@ def normalize_archive_snapshot(payload, expiration=None):
     chain = {"symbol": symbol, "expiration": expiration, "calls": [], "puts": []}
     failed_expirations = {item.get('expiration') for item in options.get('expiration_failures') or [] if isinstance(item, dict)}
     for bucket, raw in rows:
+        checkpoint()
         kind = raw.get("type")
         pool = "calls" if kind == "call" else "puts" if kind == "put" else None
         times = [raw.get(k) for k in ('bid_timestamp', 'ask_timestamp', 'last_timestamp', 'observed_at') if raw.get(k) is not None]
