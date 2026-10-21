@@ -158,7 +158,7 @@ def test_observed_disconnect_does_not_consume_extra_messages_or_cancel_work(capl
     assert 'private' not in caplog.text
 
 
-def test_cancelled_asgi_request_logs_cancellation_while_sync_worker_can_finish(boundary, caplog):
+def test_cancelled_asgi_request_stops_after_blocking_io_returns(boundary, caplog):
     entered, release, finished = Event(), Event(), Event()
     service = boundary[2]
     original_read = service.read_snapshot
@@ -197,7 +197,9 @@ def test_cancelled_asgi_request_logs_cancellation_while_sync_worker_can_finish(b
     asyncio.run(exercise())
     rows = records(caplog)
     assert any(r['stage']=='request' and r.get('outcome')=='cancelled' for r in rows)
-    assert any(r['stage']=='research_execution' and r.get('outcome')=='complete' for r in rows)
+    assert any(r['stage']=='research_execution' and r.get('outcome')=='cancelled' for r in rows)
+    assert not any(r['stage']=='history_load' for r in rows)
+    boundary[3].assert_not_called()
     assert {r['request_id'] for r in rows} == {'c'*32}
 
 

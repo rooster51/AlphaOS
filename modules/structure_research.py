@@ -49,7 +49,7 @@ def _family(legs):
     raise ValueError('Unsupported or malformed structure; explicit supported legs required.')
 
 
-def research_structure(candidate,*,symbol=None,spot=None,as_of=None,expected_move=None):
+def research_structure(candidate,*,symbol=None,spot=None,as_of=None,expected_move=None,payoff_detail='full'):
     """Normalize shared-engine trades or existing Strategy Selector suggestions.
 
     Native credit uses the shared engine's signed per-share package cashflow.
@@ -93,7 +93,7 @@ def research_structure(candidate,*,symbol=None,spot=None,as_of=None,expected_mov
     if family in ('iron_condor','put_credit_spread','call_credit_spread') and trade['credit']<=0:raise ValueError('Iron condor requires a credit.')
     trade['strategy_family']=family
     trade['strategy']=family
-    analysis=trade_analysis(trade)
+    analysis=trade_analysis(trade,payoff_detail=payoff_detail)
     if not all(isfinite(analysis[k]) and analysis[k]>0 for k in ('max_profit','max_loss')):
         raise ValueError('Candidate must have finite positive potential profit and risk.')
     dte=None if as_of is None else (expiry-date.fromisoformat(str(as_of))).days

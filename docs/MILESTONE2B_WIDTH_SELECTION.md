@@ -78,7 +78,10 @@ quote-constructed package in that enumeration reaches shared payoff research
 before capital eligibility; there is no separate constructor output shortlist. Bounds
 are independent of the user's capital. Output follows deterministic family and
 strike order; it is not ranked or guaranteed exhaustive. No UI shortlist runs
-before the economics/capital check. Families have independent budgets.
+before the economics/capital check. Issue #60 adds a shared 1,024-attempt request
+budget, allocated fairly across routed families; the per-family 1,024 limit is
+a ceiling rather than a multiplier. Applied quotas and truncation are explicit.
+See [the performance audit](ISSUE60_RESEARCH_PERFORMANCE.md).
 
 Diagnostics include the applied bounds and `search_truncated`; aggregate
 `width_selection.search_complete` describes completion **within the declared

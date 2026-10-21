@@ -11,7 +11,7 @@ OBSERVATIONS = ('contract', 'bid', 'ask', 'mid', 'delta', 'gamma', 'theta',
                 'observed_at', 'archive_quality', 'quality_warnings', 'missing_fields')
 
 
-def research_position(candidate, *, symbol, spot, as_of, expected_move=None):
+def research_position(candidate, *, symbol, spot, as_of, expected_move=None, payoff_detail='full'):
     """Reuse existing researchers; native cashflow includes signed quantities."""
     if not isinstance(candidate, dict):
         raise ValueError('Candidate must be a mapping.')
@@ -29,7 +29,7 @@ def research_position(candidate, *, symbol, spot, as_of, expected_move=None):
             raise ValueError('Only long outright options supported.')
         result = research_long_option(symbol, trade['expiration'], leg['type'],
             leg['strike'], -trade['credit']/leg['qty'], spot, contracts=leg['qty'],
-            fees=trade['fees'], as_of=as_of, expected_move=expected_move, source=trade['source'])
+            fees=trade['fees'], as_of=as_of, expected_move=expected_move, source=trade['source'], payoff_detail=payoff_detail)
         result['trade']['legs'] = trade['legs']
         result.update(underlying=symbol, strategy_family=result['trade']['strategy_family'],
                       direction='bullish' if leg['type'] == 'Call' else 'bearish',
@@ -37,7 +37,7 @@ def research_position(candidate, *, symbol, spot, as_of, expected_move=None):
         result['evidence'] = {'pricing_assumption': candidate.get('pricing_assumption', 'Supplied cashflow; not a verified fill')}
     else:
         result = research_structure(candidate, symbol=symbol, spot=spot,
-                                    as_of=as_of, expected_move=expected_move)
+                                    as_of=as_of, expected_move=expected_move, payoff_detail=payoff_detail)
     normalized = []
     for leg in result['trade']['legs']:
         normalized.append(dict(type=leg['type'], strike=leg['strike'],

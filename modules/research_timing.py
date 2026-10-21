@@ -9,6 +9,7 @@ import re
 import secrets
 from threading import Lock
 from time import perf_counter
+from modules.research_control import checkpoint
 
 
 @dataclass(frozen=True)
@@ -49,14 +50,17 @@ def emit(stage, phase, *, duration_ms=None, outcome=None, status=None):
 
 @contextmanager
 def stage(name):
+    checkpoint()
     if _trace.get() is None:
         yield
+        checkpoint()
         return
     started = perf_counter()
     emit(name, 'start')
     outcome = 'complete'
     try:
         yield
+        checkpoint()
     except BaseException as error:
         outcome = 'cancelled' if isinstance(error, asyncio.CancelledError) else 'error'
         raise

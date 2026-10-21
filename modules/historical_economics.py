@@ -12,7 +12,7 @@ from math import isfinite
 import numpy as np
 
 from modules.position_research import research_position
-from modules.premium_engine import analyze, payoff
+from modules.premium_engine import payoff
 from modules.option_scenario_ev import _summary as summarize_payoffs
 
 VERSION = 'historical-economics-v1'
@@ -121,10 +121,11 @@ def evaluate_historical_economics(candidate, *, as_of, evidence=None,
     # Existing position researchers assume 100; normalize dollar costs for their validation.
     normalized = dict(candidate, fees=(candidate['fees'] + slip) * 100 / multiplier)
     position = research_position(normalized, symbol=candidate['symbol'],
-        spot=candidate['spot'], as_of=as_of)
+        spot=candidate['spot'], as_of=as_of, payoff_detail='none')
     trade = position['trade']
-    stats = analyze(trade['legs'], trade['credit'], trade['spot'], 0, None,
-                    fees=normalized['fees'])
+    # This is the shared engine result just validated above, not caller-cached metrics.
+    # Historical output needs exact economics/identity, not a second chart grid.
+    stats = position['payoff']
     scale = multiplier / 100
     risk = stats['max_loss'] * scale
     profit = stats['max_profit'] * scale

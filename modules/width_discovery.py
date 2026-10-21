@@ -5,24 +5,30 @@ The caller validates the chain and computes shared payoff economics afterwards.
 """
 from collections import Counter
 from itertools import combinations
-from math import isclose
+from math import isclose, isfinite
+from modules.research_control import checkpoint
 
 
 MAX_WIDTH = 100.0
 MAX_CONTRACTS_PER_SIDE = 80
 MAX_ATTEMPTS_PER_FAMILY = 1024
+MAX_ATTEMPTS_PER_REQUEST = 1024
 
 
 def discover_widths(chain, spot, families, *, width=None,
                     max_width=MAX_WIDTH,
                     max_contracts_per_side=MAX_CONTRACTS_PER_SIDE,
-                    max_attempts=MAX_ATTEMPTS_PER_FAMILY):
+                    max_attempts=MAX_ATTEMPTS_PER_FAMILY,
+                    max_total_attempts=MAX_ATTEMPTS_PER_REQUEST):
     """Manual width is exact; BWB outer wing is twice the manual inner wing.
 
     Bounds are constructor policy, independent of account capital. Each family
-    gets its own budget; overflow is visible rather than called unaffordable.
+    gets a deterministic share of the request budget; overflow is visible rather than called unaffordable.
     """
-    if min(max_contracts_per_side, max_attempts) < 1 or max_width <= 0:
+    if (any(type(value) is not int or value < 1 for value in
+            (max_contracts_per_side, max_attempts, max_total_attempts))
+            or isinstance(max_width, bool) or not isinstance(max_width, (int, float))
+            or not isfinite(max_width) or max_width <= 0):
         raise ValueError('Positive enumeration bounds required.')
     pools = {kind: sorted(chain[key], key=lambda r: r['strike'])
              for kind, key in (('Call', 'calls'), ('Put', 'puts'))}
@@ -51,11 +57,26 @@ def discover_widths(chain, spot, families, *, width=None,
                     yield legs((body, -1), (wing, 1))
         elif family in ('bullish_bwb', 'bearish_bwb'):
             kind = 'Put' if family == 'bullish_bwb' else 'Call'
-            for low, body, high in combinations(pools[kind], 3):
-                inner = high['strike'] - body['strike'] if kind == 'Put' else body['strike'] - low['strike']
-                outer = body['strike'] - low['strike'] if kind == 'Put' else high['strike'] - body['strike']
-                if matches(inner) and inner < outer <= max_width and (width is None or isclose(outer, 2 * width, abs_tol=1e-8)) and short(body) and (body['strike'] < spot if kind == 'Put' else body['strike'] > spot):
-                    yield legs((low, 1), (body, -2), (high, 1))
+            # Start at observed OTM bodies nearest spot, then visit multiple
+            # inner/outer widths. This is deterministic search order, not a
+            # recommendation or a narrowest-width selection.
+            bodies = sorted((r for r in pools[kind] if short(r) and
+                (r['strike'] < spot if kind == 'Put' else r['strike'] > spot)),
+                key=lambda r: (abs(r['strike']-spot), r['strike']))
+            for body in bodies:
+                inners = sorted((r for r in pools[kind] if
+                    (r['strike'] > body['strike'] if kind == 'Put' else r['strike'] < body['strike'])),
+                    key=lambda r: abs(r['strike']-body['strike']))
+                outers = sorted((r for r in pools[kind] if
+                    (r['strike'] < body['strike'] if kind == 'Put' else r['strike'] > body['strike'])),
+                    key=lambda r: abs(r['strike']-body['strike']))
+                for inner_row in inners:
+                    inner = abs(inner_row['strike']-body['strike'])
+                    if not matches(inner): continue
+                    for outer_row in outers:
+                        outer = abs(outer_row['strike']-body['strike'])
+                        if inner < outer <= max_width and (width is None or isclose(outer, 2*width, abs_tol=1e-8)):
+                            yield legs((inner_row, 1), (body, -2), (outer_row, 1))
         elif family in ('iron_condor', 'butterfly'):
             # Iron butterflies retain the existing nearest common ATM body and
             # symmetric wings. Condors may use unequal observed wing widths.
@@ -72,12 +93,16 @@ def discover_widths(chain, spot, families, *, width=None,
                     if family == 'butterfly' and not isclose(ps['strike'] - pl['strike'], cl['strike'] - cs['strike'], abs_tol=1e-8):
                         continue
                     yield legs((ps, -1), (pl, 1), (cs, -1), (cl, 1))
-    for family in sorted(families):
+    ordered = sorted(families)
+    share, extra = divmod(max_total_attempts, max(1, len(ordered)))
+    for family_index, family in enumerate(ordered):
+        attempt_budget = min(max_attempts, share + (family_index < extra))
         rejected = Counter()
         attempted = generated = 0
         truncated = pools_truncated
         for item in geometries(family):
-            if attempted == max_attempts:
+            checkpoint()
+            if attempted == attempt_budget:
                 truncated = True
                 break
             attempted += 1
@@ -119,7 +144,8 @@ def discover_widths(chain, spot, families, *, width=None,
                 reason = 'insufficient_observed_strikes_deltas_or_quotes'
         reports.append(dict(strategy_family=family, attempted_count=attempted, generated_count=generated,
             rejection_counts=dict(rejected), requested_width=width,
-            search_truncated=truncated, max_attempts=max_attempts,
+            search_truncated=truncated, max_attempts=attempt_budget,
+            max_attempts_per_family=max_attempts, max_total_attempts=max_total_attempts,
             max_width=max_width, max_contracts_per_side=max_contracts_per_side,
             delta_eligible_contract_count=sum(r.get('delta') is not None and (0 < r['delta'] <= 1 if r['type'] == 'Call' else -1 <= r['delta'] < 0) for r in pools['Call' if family == 'call_debit_spread' else 'Put']) if family.endswith('debit_spread') else None,
             reason=reason))

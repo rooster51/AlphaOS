@@ -17,7 +17,7 @@ VERSION = "alphaos-run-market-v1"
 
 def run_market(payload, *, expiration=None, history=None, session_context=None,
                expected_move=None, expected_move_horizon=None,
-               available_capital=None, objective=None, width=None, late_minutes=60):
+               available_capital=None, objective=None, width=None, late_minutes=60, json_ready=True):
     """Research one archive snapshot without provider calls, persistence or execution."""
     with stage('archive_normalization'):
         archived = normalize_archive_snapshot(payload, expiration)
@@ -61,7 +61,7 @@ def run_market(payload, *, expiration=None, history=None, session_context=None,
         research = research_market_opportunities(
             archived["symbol"], market, archived["chain"], as_of=archived["observed_at"],
             expiration=archived["expiration"], available_capital=available_capital,
-            objective=objective, width=width,
+            objective=objective, width=width, json_ready=json_ready,
         )
         with stage('historical_economics'):
             attach_market_economics(research, observed_at=archived['observed_at'])

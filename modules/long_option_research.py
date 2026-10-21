@@ -48,7 +48,7 @@ def long_option_trade(symbol, expiration, option_type, strike, premium, spot,
 
 def research_long_option(symbol, expiration, option_type, strike, premium, spot,
                          contracts=1, fees=0, expected_move=None,
-                         structural_level=None, as_of=None, source="Explicit long option"):
+                         structural_level=None, as_of=None, source="Explicit long option", payoff_detail="full"):
     """Return normalized economics and move requirements for an outright option.
 
     expected_move is an optional dollar move for the underlying over the user's
@@ -58,7 +58,7 @@ def research_long_option(symbol, expiration, option_type, strike, premium, spot,
         symbol, expiration, option_type, strike, premium, spot,
         contracts=contracts, fees=fees, source=source,
     )
-    analysis = trade_analysis(trade)
+    analysis = trade_analysis(trade, payoff_detail=payoff_detail)
     kind = trade["legs"][0]["type"]
     breakeven = analysis["breakevens"][0]
     required_move = breakeven - spot

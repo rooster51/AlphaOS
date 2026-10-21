@@ -22,6 +22,8 @@ separate; unknown evidence is never filled with synthetic observations.
   [candidate diagnostics](docs/RELEASE1_CANDIDATE_GENERATION_DIAGNOSTICS.md).
 - [Auto/Manual Width research](docs/MILESTONE2B_WIDTH_SELECTION.md): observed-strike
   discovery, capital checks, compatibility changes and bounded-search limitations.
+- [Research performance audit](docs/ISSUE60_RESEARCH_PERFORMANCE.md): correlated
+  production evidence, Auto/Manual benchmarks, cancellation and remaining gates.
 
 Headless backend: install `requirements-api.txt`, configure the server-side
 environment described in the deployment map, and run `python -m alphaos_api`.
