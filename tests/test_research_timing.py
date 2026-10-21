@@ -136,7 +136,7 @@ def test_auth_failure_logs_arrival_without_starting_research(timed_boundary, cap
     assert [r['stage'] for r in records(caplog) if r['phase']=='start'] == ['request']
 
 
-def test_observed_disconnect_does_not_consume_extra_messages_or_cancel_work(caplog):
+def test_observed_disconnect_signals_worker_without_consuming_extra_messages(caplog):
     async def exercise():
         messages = iter([{'type':'http.request','body':b'private'}, {'type':'http.disconnect'}])
         async def receive(): return next(messages)
@@ -148,13 +148,14 @@ def test_observed_disconnect_does_not_consume_extra_messages_or_cancel_work(capl
                 assert (await receive())['type'] == 'http.disconnect'
             await send({'type':'http.response.start','status':200,'headers':[]})
             await send({'type':'http.response.body','body':b'private'})
-        await ResearchTimingMiddleware(app)(dict(type='http',method='POST',path='/v1/research/market',headers=[]),receive,send)
-        assert len(sent) == 2
+        with pytest.raises(asyncio.CancelledError):
+            await ResearchTimingMiddleware(app)(dict(type='http',method='POST',path='/v1/research/market',headers=[]),receive,send)
+        assert not sent
     asyncio.run(exercise())
     rows = records(caplog)
     assert any(r['stage']=='client_disconnect' and r['phase']=='observed' for r in rows)
-    assert rows[-1]['outcome'] == 'disconnected'
-    assert any(r['stage']=='archive_download' and r.get('outcome')=='complete' for r in rows)
+    assert rows[-1]['outcome'] == 'cancelled'
+    assert any(r['stage']=='archive_download' and r.get('outcome')=='cancelled' for r in rows)
     assert 'private' not in caplog.text
 
 

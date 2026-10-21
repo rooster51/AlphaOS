@@ -15,6 +15,12 @@ def checkpoint():
 
 @contextmanager
 def cancellable_research():
+    # Middleware and route must share the same signal. BaseHTTPMiddleware can
+    # consume http.disconnect before Request.is_disconnected() sees it.
+    existing = _cancelled.get()
+    if existing is not None:
+        yield existing
+        return
     event = Event()
     token = _cancelled.set(event)
     try:

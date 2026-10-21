@@ -2,6 +2,31 @@ import assert from "node:assert/strict";
 import { afterEach, test } from "node:test";
 import { POST } from "../src/app/api/research/market/route.ts";
 
+test("browser cancellation reaches only its upstream request with the existing deadline", async () => {
+  setBackendConfig();
+  const cancelled = new AbortController();
+  const input = new Request("https://alphaos.example/api/research/market", {
+    method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({symbol:"QQQ",research_mode:"historical"}),signal:cancelled.signal,
+  });
+  let observed;
+  globalThis.fetch=async (_, options) => {
+    const symbol=JSON.parse(options.body).symbol;
+    if(symbol === "SPY") return Response.json(envelope("SPY"));
+    observed=options.signal;
+    return new Promise((_,reject)=>{
+      options.signal.addEventListener("abort",()=>reject(options.signal.reason),{once:true});
+      cancelled.abort(new DOMException("DO_NOT_LOG","AbortError"));
+    });
+  };
+  const [abandoned,peer]=await Promise.all([POST(input),POST(request({symbol:"SPY"}))]);
+  assert.equal(observed.aborted,true);
+  assert.equal(abandoned.status,499);
+  assert.deepEqual(await abandoned.json(),{status:"unavailable",code:"request_cancelled"});
+  assert.equal(peer.status,200);
+  assert.notEqual(abandoned.headers.get("X-AlphaOS-Request-ID"),peer.headers.get("X-AlphaOS-Request-ID"));
+});
+
 test("auto and exact manual width semantics survive the bridge; substituted widths fail closed", async () => {
   setBackendConfig();
   for (const symbol of ["SPY", "QQQ"]) for (const width of [undefined, null, 1, 2.5, 5]) {

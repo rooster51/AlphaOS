@@ -3,6 +3,7 @@ import re
 from modules.symbol_registry import REGISTRY, instrument
 import pandas as pd
 from modules.research_timing import stage
+from modules.research_control import checkpoint
 
 from modules.history_diagnostics import HistoryError, history_diagnostics, schema_issues, api_error_detail
 from modules.market_state import validate_ohlc
@@ -83,6 +84,7 @@ def fetch_research_bars(client, symbol, period, kind='EQUITY', as_of=None):
                   else 'Public history request failed; verify access or retry later.')
         raise HistoryError(reason,diagnostic) from None
     diagnostic['stage'] = 'provider_schema'
+    checkpoint()
     if not isinstance(raw,dict):
         raise HistoryError('Unexpected provider response schema: expected a history object.',diagnostic)
     regular = raw.get('regularMarket')
@@ -92,7 +94,8 @@ def fetch_research_bars(client, symbol, period, kind='EQUITY', as_of=None):
             for key in ('date','open','high','low','close','volume')} for bar in bars])
         diagnostic.update({k:v for k,v in history_diagnostics(symbol,period,frame).items() if k!='stage'})
     try:
-        response = BarsResponse(**raw)
+        with stage('history_schema_validation'):
+            response = BarsResponse(**raw)
     except SchemaError as exc:
         diagnostic['schema_issues'] = schema_issues(exc)
         raise HistoryError('Unexpected provider response schema; see the field-level diagnostic.',diagnostic) from None
@@ -105,11 +108,14 @@ def fetch_research_bars(client, symbol, period, kind='EQUITY', as_of=None):
         low=float(bar.low),close=float(bar.close),volume=float(bar.volume)) for bar in response.regular_market.bars],
         columns=['date','open','high','low','close','volume'])
     diagnostic['regular_expected_bars'] = response.regular_market.expected_bars
+    checkpoint()
     diagnostic['stage'] = 'normalization'
     if result.empty:
         raise HistoryError('Public returned no regular-market daily bars.',diagnostic)
     diagnostic.update(provider_symbol=response.symbol,requested_symbol=symbol,research_proxy_used=False)
     if kind in ('EQUITY','INDEX'):
-        validate_coverage(result,symbol,period,as_of,diagnostic)
+        with stage('history_coverage_validation'):
+            validate_coverage(result,symbol,period,as_of,diagnostic)
     result.attrs['provider_diagnostics'] = dict(diagnostic,stage='validated')
+    checkpoint()
     return result

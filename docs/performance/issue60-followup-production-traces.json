@@ -1,0 +1,2109 @@
+{
+  "source": "Read-only Render app logs, deployed main 8a374fbd, 2026-10-21; before this follow-up, not post-change acceptance",
+  "requests": [
+    {
+      "request_id": "7a034429fc8a4b028c76150522a0abe4",
+      "has_more": false,
+      "records": [
+        {
+          "timestamp": "2026-10-21T21:01:45.709401124Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "7a034429fc8a4b028c76150522a0abe4",
+            "stage": "request",
+            "phase": "start",
+            "elapsed_ms": 0,
+            "inflight_requests": 2,
+            "active_executions": 1
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:45.711358154Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "7a034429fc8a4b028c76150522a0abe4",
+            "stage": "research_execution",
+            "phase": "start",
+            "elapsed_ms": 2,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "QQQ",
+            "research_mode": "current"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:45.711465192Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "7a034429fc8a4b028c76150522a0abe4",
+            "stage": "archive_read",
+            "phase": "start",
+            "elapsed_ms": 2,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "QQQ",
+            "research_mode": "current"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:45.711645374Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "7a034429fc8a4b028c76150522a0abe4",
+            "stage": "archive_client",
+            "phase": "start",
+            "elapsed_ms": 2,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "QQQ",
+            "research_mode": "current"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:46.29901547Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "7a034429fc8a4b028c76150522a0abe4",
+            "stage": "archive_client",
+            "phase": "end",
+            "elapsed_ms": 590,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "QQQ",
+            "research_mode": "current",
+            "duration_ms": 587,
+            "outcome": "complete"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:46.304793733Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "7a034429fc8a4b028c76150522a0abe4",
+            "stage": "archive_metadata_query",
+            "phase": "start",
+            "elapsed_ms": 595,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "QQQ",
+            "research_mode": "current"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:47.056502502Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "7a034429fc8a4b028c76150522a0abe4",
+            "stage": "archive_metadata_query",
+            "phase": "end",
+            "elapsed_ms": 1346,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "QQQ",
+            "research_mode": "current",
+            "duration_ms": 751,
+            "outcome": "complete"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:47.056505783Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "7a034429fc8a4b028c76150522a0abe4",
+            "stage": "archive_metadata_validation",
+            "phase": "start",
+            "elapsed_ms": 1347,
+            "inflight_requests": 2,
+            "active_executions": 1,
+            "symbol": "QQQ",
+            "research_mode": "current"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:47.056546895Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "7a034429fc8a4b028c76150522a0abe4",
+            "stage": "archive_metadata_validation",
+            "phase": "end",
+            "elapsed_ms": 1347,
+            "inflight_requests": 2,
+            "active_executions": 1,
+            "symbol": "QQQ",
+            "research_mode": "current",
+            "duration_ms": 0,
+            "outcome": "error"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:47.056708957Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "7a034429fc8a4b028c76150522a0abe4",
+            "stage": "archive_read",
+            "phase": "end",
+            "elapsed_ms": 1347,
+            "inflight_requests": 2,
+            "active_executions": 1,
+            "symbol": "QQQ",
+            "research_mode": "current",
+            "duration_ms": 1345,
+            "outcome": "error"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:47.056850387Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "7a034429fc8a4b028c76150522a0abe4",
+            "stage": "research_execution",
+            "phase": "end",
+            "elapsed_ms": 1348,
+            "inflight_requests": 2,
+            "active_executions": 1,
+            "symbol": "QQQ",
+            "research_mode": "current",
+            "duration_ms": 1346,
+            "outcome": "error"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:47.081164813Z",
+          "message": {
+            "request_id": "7a034429fc8a4b028c76150522a0abe4",
+            "status": 503,
+            "elapsed_ms": 1371,
+            "code": "archive_stale"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:47.082603246Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "7a034429fc8a4b028c76150522a0abe4",
+            "stage": "response_headers",
+            "phase": "sent",
+            "elapsed_ms": 1373,
+            "inflight_requests": 2,
+            "active_executions": 0,
+            "status": 503
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:47.082981133Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "7a034429fc8a4b028c76150522a0abe4",
+            "stage": "request",
+            "phase": "end",
+            "elapsed_ms": 1374,
+            "inflight_requests": 1,
+            "active_executions": 0,
+            "outcome": "complete",
+            "status": 503
+          }
+        }
+      ]
+    },
+    {
+      "request_id": "faab29f15b8e41bd9f7a851a7ebf1a3f",
+      "has_more": false,
+      "records": [
+        {
+          "timestamp": "2026-10-21T21:01:47.513805622Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "faab29f15b8e41bd9f7a851a7ebf1a3f",
+            "stage": "request",
+            "phase": "start",
+            "elapsed_ms": 0,
+            "inflight_requests": 2,
+            "active_executions": 1
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:47.517595343Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "faab29f15b8e41bd9f7a851a7ebf1a3f",
+            "stage": "research_execution",
+            "phase": "start",
+            "elapsed_ms": 4,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "QQQ",
+            "research_mode": "historical"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:47.51769359Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "faab29f15b8e41bd9f7a851a7ebf1a3f",
+            "stage": "archive_read",
+            "phase": "start",
+            "elapsed_ms": 4,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "QQQ",
+            "research_mode": "historical"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:47.517713061Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "faab29f15b8e41bd9f7a851a7ebf1a3f",
+            "stage": "archive_client",
+            "phase": "start",
+            "elapsed_ms": 4,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "QQQ",
+            "research_mode": "historical"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:47.517787476Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "faab29f15b8e41bd9f7a851a7ebf1a3f",
+            "stage": "archive_client",
+            "phase": "end",
+            "elapsed_ms": 5,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "QQQ",
+            "research_mode": "historical",
+            "duration_ms": 0,
+            "outcome": "complete"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:47.517866312Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "faab29f15b8e41bd9f7a851a7ebf1a3f",
+            "stage": "archive_metadata_query",
+            "phase": "start",
+            "elapsed_ms": 5,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "QQQ",
+            "research_mode": "historical"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:47.644271097Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "faab29f15b8e41bd9f7a851a7ebf1a3f",
+            "stage": "archive_metadata_query",
+            "phase": "end",
+            "elapsed_ms": 131,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "QQQ",
+            "research_mode": "historical",
+            "duration_ms": 126,
+            "outcome": "complete"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:47.64474185Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "faab29f15b8e41bd9f7a851a7ebf1a3f",
+            "stage": "archive_metadata_validation",
+            "phase": "start",
+            "elapsed_ms": 131,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "QQQ",
+            "research_mode": "historical"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:47.644752101Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "faab29f15b8e41bd9f7a851a7ebf1a3f",
+            "stage": "archive_metadata_validation",
+            "phase": "end",
+            "elapsed_ms": 131,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "QQQ",
+            "research_mode": "historical",
+            "duration_ms": 0,
+            "outcome": "complete"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:47.644759992Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "faab29f15b8e41bd9f7a851a7ebf1a3f",
+            "stage": "archive_download",
+            "phase": "start",
+            "elapsed_ms": 131,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "QQQ",
+            "research_mode": "historical"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:48.102133726Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "faab29f15b8e41bd9f7a851a7ebf1a3f",
+            "stage": "archive_download",
+            "phase": "end",
+            "elapsed_ms": 589,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "QQQ",
+            "research_mode": "historical",
+            "duration_ms": 458,
+            "outcome": "complete"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:48.102154638Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "faab29f15b8e41bd9f7a851a7ebf1a3f",
+            "stage": "archive_checksum",
+            "phase": "start",
+            "elapsed_ms": 589,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "QQQ",
+            "research_mode": "historical"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:48.102264076Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "faab29f15b8e41bd9f7a851a7ebf1a3f",
+            "stage": "archive_checksum",
+            "phase": "end",
+            "elapsed_ms": 589,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "QQQ",
+            "research_mode": "historical",
+            "duration_ms": 0,
+            "outcome": "complete"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:48.10232923Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "faab29f15b8e41bd9f7a851a7ebf1a3f",
+            "stage": "archive_decompression",
+            "phase": "start",
+            "elapsed_ms": 589,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "QQQ",
+            "research_mode": "historical"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:48.105666989Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "faab29f15b8e41bd9f7a851a7ebf1a3f",
+            "stage": "archive_decompression",
+            "phase": "end",
+            "elapsed_ms": 592,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "QQQ",
+            "research_mode": "historical",
+            "duration_ms": 3,
+            "outcome": "complete"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:48.108500611Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "faab29f15b8e41bd9f7a851a7ebf1a3f",
+            "stage": "archive_json_decode",
+            "phase": "start",
+            "elapsed_ms": 592,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "QQQ",
+            "research_mode": "historical"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:48.201855226Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "faab29f15b8e41bd9f7a851a7ebf1a3f",
+            "stage": "archive_json_decode",
+            "phase": "end",
+            "elapsed_ms": 688,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "QQQ",
+            "research_mode": "historical",
+            "duration_ms": 96,
+            "outcome": "complete"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:48.202020398Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "faab29f15b8e41bd9f7a851a7ebf1a3f",
+            "stage": "archive_payload_validation",
+            "phase": "start",
+            "elapsed_ms": 689,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "QQQ",
+            "research_mode": "historical"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:48.202238704Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "faab29f15b8e41bd9f7a851a7ebf1a3f",
+            "stage": "archive_payload_validation",
+            "phase": "end",
+            "elapsed_ms": 689,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "QQQ",
+            "research_mode": "historical",
+            "duration_ms": 0,
+            "outcome": "complete"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:48.202782542Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "faab29f15b8e41bd9f7a851a7ebf1a3f",
+            "stage": "archive_read",
+            "phase": "end",
+            "elapsed_ms": 689,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "QQQ",
+            "research_mode": "historical",
+            "duration_ms": 685,
+            "outcome": "complete"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:48.202992967Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "faab29f15b8e41bd9f7a851a7ebf1a3f",
+            "stage": "history_load",
+            "phase": "start",
+            "elapsed_ms": 690,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "QQQ",
+            "research_mode": "historical"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:50.509643494Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "faab29f15b8e41bd9f7a851a7ebf1a3f",
+            "stage": "history_provider_context",
+            "phase": "start",
+            "elapsed_ms": 2996,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "QQQ",
+            "research_mode": "historical"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:50.984925897Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "faab29f15b8e41bd9f7a851a7ebf1a3f",
+            "stage": "history_provider_context",
+            "phase": "end",
+            "elapsed_ms": 3472,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "QQQ",
+            "research_mode": "historical",
+            "duration_ms": 475,
+            "outcome": "complete"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:50.985053606Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "faab29f15b8e41bd9f7a851a7ebf1a3f",
+            "stage": "history_token_refresh",
+            "phase": "start",
+            "elapsed_ms": 3472,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "QQQ",
+            "research_mode": "historical"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:50.985220488Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "faab29f15b8e41bd9f7a851a7ebf1a3f",
+            "stage": "history_token_refresh",
+            "phase": "end",
+            "elapsed_ms": 3472,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "QQQ",
+            "research_mode": "historical",
+            "duration_ms": 0,
+            "outcome": "complete"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:50.985279702Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "faab29f15b8e41bd9f7a851a7ebf1a3f",
+            "stage": "history_provider_request",
+            "phase": "start",
+            "elapsed_ms": 3472,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "QQQ",
+            "research_mode": "historical"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:51.705242925Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "faab29f15b8e41bd9f7a851a7ebf1a3f",
+            "stage": "history_provider_request",
+            "phase": "end",
+            "elapsed_ms": 4192,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "QQQ",
+            "research_mode": "historical",
+            "duration_ms": 720,
+            "outcome": "complete"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:53.009954487Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "faab29f15b8e41bd9f7a851a7ebf1a3f",
+            "stage": "history_load",
+            "phase": "end",
+            "elapsed_ms": 5497,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "QQQ",
+            "research_mode": "historical",
+            "duration_ms": 4807,
+            "outcome": "complete"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:53.009987839Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "faab29f15b8e41bd9f7a851a7ebf1a3f",
+            "stage": "research_calculations",
+            "phase": "start",
+            "elapsed_ms": 5497,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "QQQ",
+            "research_mode": "historical"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:53.010060904Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "faab29f15b8e41bd9f7a851a7ebf1a3f",
+            "stage": "archive_normalization",
+            "phase": "start",
+            "elapsed_ms": 5497,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "QQQ",
+            "research_mode": "historical"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:53.912550969Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "faab29f15b8e41bd9f7a851a7ebf1a3f",
+            "stage": "archive_normalization",
+            "phase": "end",
+            "elapsed_ms": 6399,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "QQQ",
+            "research_mode": "historical",
+            "duration_ms": 902,
+            "outcome": "complete"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:53.998956868Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "faab29f15b8e41bd9f7a851a7ebf1a3f",
+            "stage": "session_calendar",
+            "phase": "start",
+            "elapsed_ms": 6486,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "QQQ",
+            "research_mode": "historical"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:55.416405688Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "faab29f15b8e41bd9f7a851a7ebf1a3f",
+            "stage": "session_calendar",
+            "phase": "end",
+            "elapsed_ms": 7903,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "QQQ",
+            "research_mode": "historical",
+            "duration_ms": 1504,
+            "outcome": "complete"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:55.416554199Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "faab29f15b8e41bd9f7a851a7ebf1a3f",
+            "stage": "history_features",
+            "phase": "start",
+            "elapsed_ms": 7903,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "QQQ",
+            "research_mode": "historical"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:56.707362645Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "faab29f15b8e41bd9f7a851a7ebf1a3f",
+            "stage": "history_features",
+            "phase": "end",
+            "elapsed_ms": 9194,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "QQQ",
+            "research_mode": "historical",
+            "duration_ms": 1291,
+            "outcome": "complete"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:56.707391887Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "faab29f15b8e41bd9f7a851a7ebf1a3f",
+            "stage": "opportunity_classification",
+            "phase": "start",
+            "elapsed_ms": 9194,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "QQQ",
+            "research_mode": "historical"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:56.707551178Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "faab29f15b8e41bd9f7a851a7ebf1a3f",
+            "stage": "opportunity_classification",
+            "phase": "end",
+            "elapsed_ms": 9194,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "QQQ",
+            "research_mode": "historical",
+            "duration_ms": 0,
+            "outcome": "complete"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:56.707732741Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "faab29f15b8e41bd9f7a851a7ebf1a3f",
+            "stage": "candidate_and_economics_pipeline",
+            "phase": "start",
+            "elapsed_ms": 9194,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "QQQ",
+            "research_mode": "historical"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:56.71121002Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "faab29f15b8e41bd9f7a851a7ebf1a3f",
+            "stage": "width_enumeration",
+            "phase": "start",
+            "elapsed_ms": 9198,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "QQQ",
+            "research_mode": "historical"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:56.912945962Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "faab29f15b8e41bd9f7a851a7ebf1a3f",
+            "stage": "width_enumeration",
+            "phase": "end",
+            "elapsed_ms": 9394,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "QQQ",
+            "research_mode": "historical",
+            "duration_ms": 196,
+            "outcome": "complete"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:56.913131295Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "faab29f15b8e41bd9f7a851a7ebf1a3f",
+            "stage": "candidate_payoff",
+            "phase": "start",
+            "elapsed_ms": 9400,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "QQQ",
+            "research_mode": "historical"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:59.101299019Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "faab29f15b8e41bd9f7a851a7ebf1a3f",
+            "stage": "candidate_payoff",
+            "phase": "end",
+            "elapsed_ms": 11588,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "QQQ",
+            "research_mode": "historical",
+            "duration_ms": 2188,
+            "outcome": "complete"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:59.101543857Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "faab29f15b8e41bd9f7a851a7ebf1a3f",
+            "stage": "candidate_comparison",
+            "phase": "start",
+            "elapsed_ms": 11588,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "QQQ",
+            "research_mode": "historical"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:02:00.005234102Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "faab29f15b8e41bd9f7a851a7ebf1a3f",
+            "stage": "candidate_comparison",
+            "phase": "end",
+            "elapsed_ms": 12492,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "QQQ",
+            "research_mode": "historical",
+            "duration_ms": 904,
+            "outcome": "complete"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:02:00.005919322Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "faab29f15b8e41bd9f7a851a7ebf1a3f",
+            "stage": "historical_economics",
+            "phase": "start",
+            "elapsed_ms": 12493,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "QQQ",
+            "research_mode": "historical"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:02:00.098943582Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "faab29f15b8e41bd9f7a851a7ebf1a3f",
+            "stage": "client_disconnect",
+            "phase": "observed",
+            "elapsed_ms": 12586,
+            "inflight_requests": 2,
+            "active_executions": 2
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:02:03.599403353Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "faab29f15b8e41bd9f7a851a7ebf1a3f",
+            "stage": "historical_economics",
+            "phase": "end",
+            "elapsed_ms": 15995,
+            "inflight_requests": 2,
+            "active_executions": 1,
+            "symbol": "QQQ",
+            "research_mode": "historical",
+            "duration_ms": 3503,
+            "outcome": "complete"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:02:03.599553583Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "faab29f15b8e41bd9f7a851a7ebf1a3f",
+            "stage": "candidate_and_economics_pipeline",
+            "phase": "end",
+            "elapsed_ms": 16086,
+            "inflight_requests": 2,
+            "active_executions": 1,
+            "symbol": "QQQ",
+            "research_mode": "historical",
+            "duration_ms": 6892,
+            "outcome": "complete"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:02:03.600967804Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "faab29f15b8e41bd9f7a851a7ebf1a3f",
+            "stage": "research_calculations",
+            "phase": "end",
+            "elapsed_ms": 16088,
+            "inflight_requests": 2,
+            "active_executions": 1,
+            "symbol": "QQQ",
+            "research_mode": "historical",
+            "duration_ms": 10591,
+            "outcome": "complete"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:02:03.601780563Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "faab29f15b8e41bd9f7a851a7ebf1a3f",
+            "stage": "research_execution",
+            "phase": "end",
+            "elapsed_ms": 16088,
+            "inflight_requests": 2,
+            "active_executions": 1,
+            "symbol": "QQQ",
+            "research_mode": "historical",
+            "duration_ms": 16084,
+            "outcome": "complete"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:02:03.601794524Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "faab29f15b8e41bd9f7a851a7ebf1a3f",
+            "stage": "response_serialization",
+            "phase": "start",
+            "elapsed_ms": 16089,
+            "inflight_requests": 2,
+            "active_executions": 0
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:02:06.717225319Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "faab29f15b8e41bd9f7a851a7ebf1a3f",
+            "stage": "response_serialization",
+            "phase": "end",
+            "elapsed_ms": 19203,
+            "inflight_requests": 1,
+            "active_executions": 0,
+            "duration_ms": 3115,
+            "outcome": "complete"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:02:07.055596869Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "faab29f15b8e41bd9f7a851a7ebf1a3f",
+            "stage": "response_headers",
+            "phase": "sent",
+            "elapsed_ms": 19494,
+            "inflight_requests": 1,
+            "active_executions": 0,
+            "status": 200
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:02:07.055618561Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "faab29f15b8e41bd9f7a851a7ebf1a3f",
+            "stage": "request",
+            "phase": "end",
+            "elapsed_ms": 19494,
+            "inflight_requests": 1,
+            "active_executions": 0,
+            "outcome": "disconnected",
+            "status": 200
+          }
+        }
+      ]
+    },
+    {
+      "request_id": "dadc4090784d4246a7d6022ba79de26f",
+      "has_more": false,
+      "records": [
+        {
+          "timestamp": "2026-10-21T21:01:45.318853011Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "dadc4090784d4246a7d6022ba79de26f",
+            "stage": "request",
+            "phase": "start",
+            "elapsed_ms": 0,
+            "inflight_requests": 1,
+            "active_executions": 0
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:45.321198658Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "dadc4090784d4246a7d6022ba79de26f",
+            "stage": "research_execution",
+            "phase": "start",
+            "elapsed_ms": 2,
+            "inflight_requests": 1,
+            "active_executions": 1,
+            "symbol": "SPY",
+            "research_mode": "current"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:45.321231411Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "dadc4090784d4246a7d6022ba79de26f",
+            "stage": "archive_read",
+            "phase": "start",
+            "elapsed_ms": 3,
+            "inflight_requests": 1,
+            "active_executions": 1,
+            "symbol": "SPY",
+            "research_mode": "current"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:45.321398472Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "dadc4090784d4246a7d6022ba79de26f",
+            "stage": "archive_client",
+            "phase": "start",
+            "elapsed_ms": 3,
+            "inflight_requests": 1,
+            "active_executions": 1,
+            "symbol": "SPY",
+            "research_mode": "current"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:45.321409473Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "dadc4090784d4246a7d6022ba79de26f",
+            "stage": "archive_transport_initialization",
+            "phase": "start",
+            "elapsed_ms": 3,
+            "inflight_requests": 1,
+            "active_executions": 1,
+            "symbol": "SPY",
+            "research_mode": "current"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:46.298805935Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "dadc4090784d4246a7d6022ba79de26f",
+            "stage": "archive_transport_initialization",
+            "phase": "end",
+            "elapsed_ms": 980,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "SPY",
+            "research_mode": "current",
+            "duration_ms": 977,
+            "outcome": "complete"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:46.298881301Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "dadc4090784d4246a7d6022ba79de26f",
+            "stage": "archive_client",
+            "phase": "end",
+            "elapsed_ms": 980,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "SPY",
+            "research_mode": "current",
+            "duration_ms": 977,
+            "outcome": "complete"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:46.304479831Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "dadc4090784d4246a7d6022ba79de26f",
+            "stage": "archive_metadata_query",
+            "phase": "start",
+            "elapsed_ms": 985,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "SPY",
+            "research_mode": "current"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:47.053873355Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "dadc4090784d4246a7d6022ba79de26f",
+            "stage": "archive_metadata_query",
+            "phase": "end",
+            "elapsed_ms": 1735,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "SPY",
+            "research_mode": "current",
+            "duration_ms": 750,
+            "outcome": "complete"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:47.054676612Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "dadc4090784d4246a7d6022ba79de26f",
+            "stage": "archive_metadata_validation",
+            "phase": "start",
+            "elapsed_ms": 1736,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "SPY",
+            "research_mode": "current"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:47.056478821Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "dadc4090784d4246a7d6022ba79de26f",
+            "stage": "archive_metadata_validation",
+            "phase": "end",
+            "elapsed_ms": 1737,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "SPY",
+            "research_mode": "current",
+            "duration_ms": 1,
+            "outcome": "error"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:47.056496592Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "dadc4090784d4246a7d6022ba79de26f",
+            "stage": "archive_read",
+            "phase": "end",
+            "elapsed_ms": 1737,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "SPY",
+            "research_mode": "current",
+            "duration_ms": 1735,
+            "outcome": "error"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:47.056499852Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "dadc4090784d4246a7d6022ba79de26f",
+            "stage": "research_execution",
+            "phase": "end",
+            "elapsed_ms": 1737,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "SPY",
+            "research_mode": "current",
+            "duration_ms": 1735,
+            "outcome": "error"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:47.080930496Z",
+          "message": {
+            "request_id": "dadc4090784d4246a7d6022ba79de26f",
+            "status": 503,
+            "elapsed_ms": 1762,
+            "code": "archive_stale"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:47.081638497Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "dadc4090784d4246a7d6022ba79de26f",
+            "stage": "response_headers",
+            "phase": "sent",
+            "elapsed_ms": 1763,
+            "inflight_requests": 2,
+            "active_executions": 0,
+            "status": 503
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:47.082882756Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "dadc4090784d4246a7d6022ba79de26f",
+            "stage": "request",
+            "phase": "end",
+            "elapsed_ms": 1764,
+            "inflight_requests": 2,
+            "active_executions": 0,
+            "outcome": "complete",
+            "status": 503
+          }
+        }
+      ]
+    },
+    {
+      "request_id": "33882cdf844f4f7abcc4de23c435a801",
+      "has_more": false,
+      "records": [
+        {
+          "timestamp": "2026-10-21T21:01:47.313371322Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "33882cdf844f4f7abcc4de23c435a801",
+            "stage": "request",
+            "phase": "start",
+            "elapsed_ms": 0,
+            "inflight_requests": 1,
+            "active_executions": 0
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:47.31531064Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "33882cdf844f4f7abcc4de23c435a801",
+            "stage": "research_execution",
+            "phase": "start",
+            "elapsed_ms": 2,
+            "inflight_requests": 1,
+            "active_executions": 1,
+            "symbol": "SPY",
+            "research_mode": "historical"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:47.315344903Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "33882cdf844f4f7abcc4de23c435a801",
+            "stage": "archive_read",
+            "phase": "start",
+            "elapsed_ms": 2,
+            "inflight_requests": 1,
+            "active_executions": 1,
+            "symbol": "SPY",
+            "research_mode": "historical"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:47.315488533Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "33882cdf844f4f7abcc4de23c435a801",
+            "stage": "archive_client",
+            "phase": "start",
+            "elapsed_ms": 2,
+            "inflight_requests": 1,
+            "active_executions": 1,
+            "symbol": "SPY",
+            "research_mode": "historical"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:47.315552667Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "33882cdf844f4f7abcc4de23c435a801",
+            "stage": "archive_client",
+            "phase": "end",
+            "elapsed_ms": 2,
+            "inflight_requests": 1,
+            "active_executions": 1,
+            "symbol": "SPY",
+            "research_mode": "historical",
+            "duration_ms": 0,
+            "outcome": "complete"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:47.315624453Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "33882cdf844f4f7abcc4de23c435a801",
+            "stage": "archive_metadata_query",
+            "phase": "start",
+            "elapsed_ms": 2,
+            "inflight_requests": 1,
+            "active_executions": 1,
+            "symbol": "SPY",
+            "research_mode": "historical"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:47.382745285Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "33882cdf844f4f7abcc4de23c435a801",
+            "stage": "archive_metadata_query",
+            "phase": "end",
+            "elapsed_ms": 69,
+            "inflight_requests": 1,
+            "active_executions": 1,
+            "symbol": "SPY",
+            "research_mode": "historical",
+            "duration_ms": 67,
+            "outcome": "complete"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:47.382774027Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "33882cdf844f4f7abcc4de23c435a801",
+            "stage": "archive_metadata_validation",
+            "phase": "start",
+            "elapsed_ms": 70,
+            "inflight_requests": 1,
+            "active_executions": 1,
+            "symbol": "SPY",
+            "research_mode": "historical"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:47.382897636Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "33882cdf844f4f7abcc4de23c435a801",
+            "stage": "archive_metadata_validation",
+            "phase": "end",
+            "elapsed_ms": 70,
+            "inflight_requests": 1,
+            "active_executions": 1,
+            "symbol": "SPY",
+            "research_mode": "historical",
+            "duration_ms": 0,
+            "outcome": "complete"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:47.382908947Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "33882cdf844f4f7abcc4de23c435a801",
+            "stage": "archive_download",
+            "phase": "start",
+            "elapsed_ms": 70,
+            "inflight_requests": 1,
+            "active_executions": 1,
+            "symbol": "SPY",
+            "research_mode": "historical"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:47.933934528Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "33882cdf844f4f7abcc4de23c435a801",
+            "stage": "archive_download",
+            "phase": "end",
+            "elapsed_ms": 620,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "SPY",
+            "research_mode": "historical",
+            "duration_ms": 551,
+            "outcome": "complete"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:47.934158764Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "33882cdf844f4f7abcc4de23c435a801",
+            "stage": "archive_checksum",
+            "phase": "start",
+            "elapsed_ms": 621,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "SPY",
+            "research_mode": "historical"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:47.934398531Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "33882cdf844f4f7abcc4de23c435a801",
+            "stage": "archive_checksum",
+            "phase": "end",
+            "elapsed_ms": 621,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "SPY",
+            "research_mode": "historical",
+            "duration_ms": 0,
+            "outcome": "complete"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:47.934584024Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "33882cdf844f4f7abcc4de23c435a801",
+            "stage": "archive_decompression",
+            "phase": "start",
+            "elapsed_ms": 621,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "SPY",
+            "research_mode": "historical"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:47.937231273Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "33882cdf844f4f7abcc4de23c435a801",
+            "stage": "archive_decompression",
+            "phase": "end",
+            "elapsed_ms": 624,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "SPY",
+            "research_mode": "historical",
+            "duration_ms": 3,
+            "outcome": "complete"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:47.937409586Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "33882cdf844f4f7abcc4de23c435a801",
+            "stage": "archive_json_decode",
+            "phase": "start",
+            "elapsed_ms": 624,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "SPY",
+            "research_mode": "historical"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:47.999697683Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "33882cdf844f4f7abcc4de23c435a801",
+            "stage": "archive_json_decode",
+            "phase": "end",
+            "elapsed_ms": 686,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "SPY",
+            "research_mode": "historical",
+            "duration_ms": 62,
+            "outcome": "complete"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:47.999978533Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "33882cdf844f4f7abcc4de23c435a801",
+            "stage": "archive_payload_validation",
+            "phase": "start",
+            "elapsed_ms": 687,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "SPY",
+            "research_mode": "historical"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:48.000196819Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "33882cdf844f4f7abcc4de23c435a801",
+            "stage": "archive_payload_validation",
+            "phase": "end",
+            "elapsed_ms": 687,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "SPY",
+            "research_mode": "historical",
+            "duration_ms": 0,
+            "outcome": "complete"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:48.000408474Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "33882cdf844f4f7abcc4de23c435a801",
+            "stage": "archive_read",
+            "phase": "end",
+            "elapsed_ms": 687,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "SPY",
+            "research_mode": "historical",
+            "duration_ms": 685,
+            "outcome": "complete"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:48.000613568Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "33882cdf844f4f7abcc4de23c435a801",
+            "stage": "history_load",
+            "phase": "start",
+            "elapsed_ms": 687,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "SPY",
+            "research_mode": "historical"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:50.508732109Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "33882cdf844f4f7abcc4de23c435a801",
+            "stage": "history_provider_context",
+            "phase": "start",
+            "elapsed_ms": 3195,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "SPY",
+            "research_mode": "historical"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:50.508827515Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "33882cdf844f4f7abcc4de23c435a801",
+            "stage": "history_sdk_initialization",
+            "phase": "start",
+            "elapsed_ms": 3196,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "SPY",
+            "research_mode": "historical"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:50.923167318Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "33882cdf844f4f7abcc4de23c435a801",
+            "stage": "history_sdk_initialization",
+            "phase": "end",
+            "elapsed_ms": 3610,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "SPY",
+            "research_mode": "historical",
+            "duration_ms": 414,
+            "outcome": "complete"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:50.92319199Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "33882cdf844f4f7abcc4de23c435a801",
+            "stage": "history_accounts_request",
+            "phase": "start",
+            "elapsed_ms": 3610,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "SPY",
+            "research_mode": "historical"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:50.984205486Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "33882cdf844f4f7abcc4de23c435a801",
+            "stage": "history_accounts_request",
+            "phase": "end",
+            "elapsed_ms": 3671,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "SPY",
+            "research_mode": "historical",
+            "duration_ms": 61,
+            "outcome": "complete"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:50.984349196Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "33882cdf844f4f7abcc4de23c435a801",
+            "stage": "history_provider_context",
+            "phase": "end",
+            "elapsed_ms": 3671,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "SPY",
+            "research_mode": "historical",
+            "duration_ms": 476,
+            "outcome": "complete"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:50.984597434Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "33882cdf844f4f7abcc4de23c435a801",
+            "stage": "history_token_refresh",
+            "phase": "start",
+            "elapsed_ms": 3671,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "SPY",
+            "research_mode": "historical"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:50.984617595Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "33882cdf844f4f7abcc4de23c435a801",
+            "stage": "history_token_refresh",
+            "phase": "end",
+            "elapsed_ms": 3671,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "SPY",
+            "research_mode": "historical",
+            "duration_ms": 0,
+            "outcome": "complete"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:50.984701481Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "33882cdf844f4f7abcc4de23c435a801",
+            "stage": "history_provider_request",
+            "phase": "start",
+            "elapsed_ms": 3671,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "SPY",
+            "research_mode": "historical"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:51.384082495Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "33882cdf844f4f7abcc4de23c435a801",
+            "stage": "history_provider_request",
+            "phase": "end",
+            "elapsed_ms": 4071,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "SPY",
+            "research_mode": "historical",
+            "duration_ms": 399,
+            "outcome": "complete"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:52.200650655Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "33882cdf844f4f7abcc4de23c435a801",
+            "stage": "history_load",
+            "phase": "end",
+            "elapsed_ms": 4887,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "SPY",
+            "research_mode": "historical",
+            "duration_ms": 4200,
+            "outcome": "complete"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:52.200687298Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "33882cdf844f4f7abcc4de23c435a801",
+            "stage": "research_calculations",
+            "phase": "start",
+            "elapsed_ms": 4887,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "SPY",
+            "research_mode": "historical"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:52.200787295Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "33882cdf844f4f7abcc4de23c435a801",
+            "stage": "archive_normalization",
+            "phase": "start",
+            "elapsed_ms": 4888,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "SPY",
+            "research_mode": "historical"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:53.907898276Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "33882cdf844f4f7abcc4de23c435a801",
+            "stage": "archive_normalization",
+            "phase": "end",
+            "elapsed_ms": 6595,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "SPY",
+            "research_mode": "historical",
+            "duration_ms": 1707,
+            "outcome": "complete"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:53.907936909Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "33882cdf844f4f7abcc4de23c435a801",
+            "stage": "session_calendar",
+            "phase": "start",
+            "elapsed_ms": 6595,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "SPY",
+            "research_mode": "historical"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:55.407476541Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "33882cdf844f4f7abcc4de23c435a801",
+            "stage": "session_calendar",
+            "phase": "end",
+            "elapsed_ms": 8094,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "SPY",
+            "research_mode": "historical",
+            "duration_ms": 1499,
+            "outcome": "complete"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:55.407545226Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "33882cdf844f4f7abcc4de23c435a801",
+            "stage": "history_features",
+            "phase": "start",
+            "elapsed_ms": 8094,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "SPY",
+            "research_mode": "historical"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:56.906267734Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "33882cdf844f4f7abcc4de23c435a801",
+            "stage": "history_features",
+            "phase": "end",
+            "elapsed_ms": 9593,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "SPY",
+            "research_mode": "historical",
+            "duration_ms": 1498,
+            "outcome": "complete"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:56.906285056Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "33882cdf844f4f7abcc4de23c435a801",
+            "stage": "opportunity_classification",
+            "phase": "start",
+            "elapsed_ms": 9593,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "SPY",
+            "research_mode": "historical"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:56.906288206Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "33882cdf844f4f7abcc4de23c435a801",
+            "stage": "opportunity_classification",
+            "phase": "end",
+            "elapsed_ms": 9593,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "SPY",
+            "research_mode": "historical",
+            "duration_ms": 0,
+            "outcome": "complete"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:56.906814484Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "33882cdf844f4f7abcc4de23c435a801",
+            "stage": "candidate_and_economics_pipeline",
+            "phase": "start",
+            "elapsed_ms": 9594,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "SPY",
+            "research_mode": "historical"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:56.999128083Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "33882cdf844f4f7abcc4de23c435a801",
+            "stage": "width_enumeration",
+            "phase": "start",
+            "elapsed_ms": 9686,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "SPY",
+            "research_mode": "historical"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:57.100296676Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "33882cdf844f4f7abcc4de23c435a801",
+            "stage": "width_enumeration",
+            "phase": "end",
+            "elapsed_ms": 9787,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "SPY",
+            "research_mode": "historical",
+            "duration_ms": 101,
+            "outcome": "complete"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:57.100322018Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "33882cdf844f4f7abcc4de23c435a801",
+            "stage": "candidate_payoff",
+            "phase": "start",
+            "elapsed_ms": 9787,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "SPY",
+            "research_mode": "historical"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:58.003101228Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "33882cdf844f4f7abcc4de23c435a801",
+            "stage": "candidate_payoff",
+            "phase": "end",
+            "elapsed_ms": 10690,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "SPY",
+            "research_mode": "historical",
+            "duration_ms": 903,
+            "outcome": "complete"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:58.003321854Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "33882cdf844f4f7abcc4de23c435a801",
+            "stage": "candidate_comparison",
+            "phase": "start",
+            "elapsed_ms": 10690,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "SPY",
+            "research_mode": "historical"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:58.006591968Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "33882cdf844f4f7abcc4de23c435a801",
+            "stage": "candidate_comparison",
+            "phase": "end",
+            "elapsed_ms": 10693,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "SPY",
+            "research_mode": "historical",
+            "duration_ms": 3,
+            "outcome": "complete"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:58.007130046Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "33882cdf844f4f7abcc4de23c435a801",
+            "stage": "historical_economics",
+            "phase": "start",
+            "elapsed_ms": 10694,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "SPY",
+            "research_mode": "historical"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:59.001777635Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "33882cdf844f4f7abcc4de23c435a801",
+            "stage": "historical_economics",
+            "phase": "end",
+            "elapsed_ms": 11688,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "SPY",
+            "research_mode": "historical",
+            "duration_ms": 995,
+            "outcome": "complete"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:01:59.001811557Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "33882cdf844f4f7abcc4de23c435a801",
+            "stage": "candidate_and_economics_pipeline",
+            "phase": "end",
+            "elapsed_ms": 11689,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "SPY",
+            "research_mode": "historical",
+            "duration_ms": 2095,
+            "outcome": "complete"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:02:00.098666642Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "33882cdf844f4f7abcc4de23c435a801",
+            "stage": "client_disconnect",
+            "phase": "observed",
+            "elapsed_ms": 12785,
+            "inflight_requests": 2,
+            "active_executions": 2
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:02:01.408137237Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "33882cdf844f4f7abcc4de23c435a801",
+            "stage": "research_calculations",
+            "phase": "end",
+            "elapsed_ms": 14095,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "SPY",
+            "research_mode": "historical",
+            "duration_ms": 9207,
+            "outcome": "complete"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:02:01.409464772Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "33882cdf844f4f7abcc4de23c435a801",
+            "stage": "research_execution",
+            "phase": "end",
+            "elapsed_ms": 14096,
+            "inflight_requests": 2,
+            "active_executions": 2,
+            "symbol": "SPY",
+            "research_mode": "historical",
+            "duration_ms": 14094,
+            "outcome": "complete"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:02:01.409526757Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "33882cdf844f4f7abcc4de23c435a801",
+            "stage": "response_serialization",
+            "phase": "start",
+            "elapsed_ms": 14096,
+            "inflight_requests": 2,
+            "active_executions": 1
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:02:03.504060357Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "33882cdf844f4f7abcc4de23c435a801",
+            "stage": "response_serialization",
+            "phase": "end",
+            "elapsed_ms": 16191,
+            "inflight_requests": 2,
+            "active_executions": 1,
+            "duration_ms": 2094,
+            "outcome": "complete"
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:02:04.198030639Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "33882cdf844f4f7abcc4de23c435a801",
+            "stage": "response_headers",
+            "phase": "sent",
+            "elapsed_ms": 16797,
+            "inflight_requests": 2,
+            "active_executions": 0,
+            "status": 200
+          }
+        },
+        {
+          "timestamp": "2026-10-21T21:02:04.299845518Z",
+          "message": {
+            "event": "research_timing",
+            "request_id": "33882cdf844f4f7abcc4de23c435a801",
+            "stage": "request",
+            "phase": "end",
+            "elapsed_ms": 16987,
+            "inflight_requests": 2,
+            "active_executions": 0,
+            "outcome": "disconnected",
+            "status": 200
+          }
+        }
+      ]
+    }
+  ]
+}

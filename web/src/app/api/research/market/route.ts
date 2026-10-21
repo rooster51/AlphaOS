@@ -138,16 +138,17 @@ export async function POST(request: Request) {
   try {
     result = await marketRequest(request, trace, () => timeoutSignal = AbortSignal.timeout(12000));
   } catch (error) {
+    const clientCancelled = request.signal.aborted;
     const timeout = error instanceof DOMException && (error.name === "TimeoutError" ||
       (error.name === "AbortError" && timeoutSignal?.reason instanceof DOMException &&
         timeoutSignal.reason.name === "TimeoutError"));
-    if (!timeout && !(error instanceof TypeError)) {
+    if (!clientCancelled && !timeout && !(error instanceof TypeError)) {
       console.warn(JSON.stringify({event: "research_bridge", ...trace, outcome: "unexpected_error",
         elapsed_ms: Math.round(performance.now() - started)}));
       throw error;
     }
-    result = Response.json({status: "unavailable", code: timeout ? "backend_timeout" : "backend_unreachable"},
-      {status: 502, headers: {"Cache-Control": "no-store"}});
+    result = Response.json({status: "unavailable", code: clientCancelled ? "request_cancelled" : timeout ? "backend_timeout" : "backend_unreachable"},
+      {status: clientCancelled ? 499 : 502, headers: {"Cache-Control": "no-store"}});
   }
   result.headers.set("X-AlphaOS-Request-ID", trace.request_id);
   console.warn(JSON.stringify({event: "research_bridge", ...trace, status: result.status,
@@ -203,7 +204,7 @@ async function marketRequest(request: Request, trace: BridgeTrace, timeout: () =
       },
       body: JSON.stringify(payload),
       cache: "no-store",
-      signal: timeout(),
+      signal: AbortSignal.any([timeout(), request.signal]),
     });
   } catch (error) {
     const timedOut = error instanceof DOMException && error.name === "TimeoutError";

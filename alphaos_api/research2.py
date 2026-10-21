@@ -98,7 +98,8 @@ class ArchiveResearchService:
     @staticmethod
     def _history(symbol):
         # Reuse the historical API provider's daily bars, not a second collector.
-        from modules.public_provider import get_public_research_bars
+        with timing_stage('history_adapter_import'):
+            from modules.public_provider import get_public_research_bars
         bars = get_public_research_bars(symbol, 'FIVE_YEARS').copy()
         bars['symbol'] = symbol
         return bars
@@ -209,7 +210,7 @@ def register_research2(router, service, respond):
                 lambda: respond(service().run(request, json_ready=False)), abandon_on_cancel=True))
             try:
                 while not work.done():
-                    if await http_request.is_disconnected():
+                    if cancelled.is_set() or await http_request.is_disconnected():
                         cancelled.set()
                         work.cancel()
                         # The client is gone. A quiet non-success response also
@@ -218,6 +219,9 @@ def register_research2(router, service, respond):
                         http_request.state.research_error = 'client_disconnected'
                         return Response(status_code=499)
                     await asyncio.sleep(.025)
+                if cancelled.is_set():
+                    http_request.state.research_error = 'client_disconnected'
+                    return Response(status_code=499)
                 return await work
             finally:
                 cancelled.set()

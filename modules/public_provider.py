@@ -126,9 +126,10 @@ def get_public_option_chain(symbol: str, expiration: str, _context=None) -> dict
 
 def get_public_research_bars(symbol: str, period: str='FIVE_YEARS', option: bool=False, _context=None) -> pd.DataFrame:
     """Observed Public daily OHLC, with explicit long-history mapping and audit."""
-    from public_api_sdk import InstrumentType
-    from modules.public_history import fetch_research_bars, research_request
-    from modules.history_diagnostics import HistoryError, history_diagnostics
+    with stage('history_dependency_import'):
+        from public_api_sdk import InstrumentType
+        from modules.public_history import fetch_research_bars, research_request
+        from modules.history_diagnostics import HistoryError, history_diagnostics
     kind = InstrumentType.OPTION if option else _instrument_type_for_symbol(InstrumentType, symbol)
     as_of = pd.Timestamp.now(tz='America/New_York').date()
     research_request(symbol, period, kind.value, as_of)

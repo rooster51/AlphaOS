@@ -6,6 +6,10 @@ Baseline: main `dd1196b`, including PR #59. No deployment or production success
 claim accompanies this change. **Milestone 1 production cold-start acceptance
 remains open.** The website deadline is still 12,000 ms.
 
+Post-merge production validation of PR #61 still exceeded that deadline. See
+[the reliability follow-up](ISSUE60_RELIABILITY_FOLLOWUP.md) for the newer
+correlated traces, after-close freshness audit and further measured changes.
+
 ## Production evidence, correlated rather than summed
 
 Read-only Render app/website logs were retrieved for 2026-10-21 18:18:50–18:22:30

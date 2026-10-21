@@ -122,6 +122,22 @@ def evaluate_historical_economics(candidate, *, as_of, evidence=None,
     normalized = dict(candidate, fees=(candidate['fees'] + slip) * 100 / multiplier)
     position = research_position(normalized, symbol=candidate['symbol'],
         spot=candidate['spot'], as_of=as_of, payoff_detail='none')
+    return _evaluate_validated_position(candidate, position, as_of=as_of, evidence=evidence,
+        holding_period=holding_period, valuation=valuation, multiplier=multiplier,
+        slip=slip, capital=capital, minimum_samples=minimum_samples)
+
+
+def _evaluate_validated_position(candidate, position, *, as_of, evidence=None,
+        holding_period='intraday', valuation='expiration', multiplier=100,
+        slip=0.0, capital=None, minimum_samples=30):
+    """Internal request-local projection of freshly researched discovery output.
+
+    External candidates always use evaluate_historical_economics above. The
+    market pipeline alone can reuse its just-validated exact payoff, with the
+    same standard multiplier and no change to fees or slippage.
+    """
+    from modules.research_control import checkpoint
+    checkpoint()
     trade = position['trade']
     # This is the shared engine result just validated above, not caller-cached metrics.
     # Historical output needs exact economics/identity, not a second chart grid.
@@ -130,7 +146,9 @@ def evaluate_historical_economics(candidate, *, as_of, evidence=None,
     risk = stats['max_loss'] * scale
     profit = stats['max_profit'] * scale
     roots = stats['breakevens']
-    result = dict(version=VERSION, structure_identity=position['position'],
+    # Only fees/multiplier below are adjusted. The normalized legs are read-only
+    # in this request; a top-level copy avoids cloning every observed quote.
+    result = dict(version=VERSION, structure_identity=dict(position['position']),
         holding_period=holding_period, valuation=valuation,
         deterministic_expiration=dict(max_profit=profit if isfinite(profit) else None,
             max_profit_unlimited=not isfinite(profit), max_loss=risk, breakevens=roots,
@@ -189,7 +207,7 @@ def evaluate_historical_economics(candidate, *, as_of, evidence=None,
         if not missing:
             ordered = sorted(evidence.scenarios, key=lambda s: s.observation_id)
             values = np.array([payoff(trade['legs'], trade['credit'],
-                trade['spot']*(1+s.terminal_return), fees=normalized['fees'])*scale for s in ordered])
+                trade['spot']*(1+s.terminal_return), fees=(candidate['fees']+slip)*100/multiplier)*scale for s in ordered])
             if not np.isfinite(values).all():
                 raise ValueError('Scenario payoff overflow.')
             # Same summary math and near-zero tolerance as existing vertical economics.

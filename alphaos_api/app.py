@@ -46,6 +46,8 @@ router=APIRouter(prefix='/v1',dependencies=[Depends(authenticate)],responses={
 def sanitized(value):
     secrets_to_redact = tuple(secret_value for key in ('PUBLIC_API_SECRET','PUBLIC_ACCOUNT_NUMBER','ALPHAOS_API_TOKEN','SUPABASE_SERVICE_ROLE_KEY','SUPABASE_URL') if (secret_value := os.environ.get(key)))
     key_policy = {}
+    redacted_strings = {}
+    normalized_lists = {}
     unlimited = isinstance(value, dict) and isinstance(value.get('schema_version'), str) and value.get('schema_version') == 'alphaos-interface-v2'
     def clean(item):
         kind = type(item)
@@ -54,8 +56,12 @@ def sanitized(value):
         if isinstance(item, float):
             return item if isfinite(item) else 'unlimited' if unlimited and item == float('inf') else None
         if isinstance(item, str):
+            if item in redacted_strings:
+                return redacted_strings[item]
+            original = item
             for secret in secrets_to_redact:
                 item = item.replace(secret, '[REDACTED]')
+            redacted_strings[original] = item
             return item
         if isinstance(item, dict):
             checkpoint()
@@ -68,7 +74,12 @@ def sanitized(value):
                     result[key] = clean(value)
             return result
         if isinstance(item, (list, tuple)):
-            return [clean(value) for value in item]
+            checkpoint()
+            # Discovery's position and historical identity share immutable leg
+            # observations. Normalize shared arrays once in this response only.
+            if id(item) not in normalized_lists:
+                normalized_lists[id(item)] = (item, [clean(value) for value in item])
+            return normalized_lists[id(item)][1]
         if isinstance(item, int):
             return int(item)
         # Retain the existing pandas/numpy/date conversions for legacy routes.

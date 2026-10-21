@@ -74,6 +74,35 @@ def trade_analysis(trade, units=1, *, payoff_detail='full'):
     profit, risk = stats['max_profit'] * units, stats['max_loss'] * units
     strikes = sorted(set(l['strike'] for l in legs))
     roots = stats['breakevens']
+    # Exact economics are complete before any optional chart scenarios.
+    result = dict(trade=trade, units=units, max_profit=profit, max_loss=risk,
+                return_on_risk=profit/risk if isfinite(profit) and isfinite(risk) and risk > 0 and profit >= 0 else None,
+                option_premium=trade['credit']*100*units, fees=trade['fees']*units,
+                net_cash=(trade['credit']*100-trade['fees'])*units,
+                breakevens=roots, strikes=strikes)
+    width = credit_width = None
+    if (not trade['shares'] and len(legs) == 2 and legs[0]['type'] == legs[1]['type']
+            and legs[0]['qty'] == -legs[1]['qty'] and len(strikes) == 2):
+        width = strikes[1] - strikes[0]
+        if trade['credit'] > 0:
+            credit_width = trade['credit'] / (abs(legs[0]['qty']) * width)
+    result.update(width=width, credit_width=credit_width)
+    return materialize_payoff(result, payoff_detail=payoff_detail)
+
+
+def materialize_payoff(analysis, *, payoff_detail='landmarks'):
+    """Add presentation scenarios to an already computed request-local analysis.
+
+    Never used to validate caller economics. Discovery invokes this only after
+    research_position has validated and computed exact risk for capital gating.
+    """
+    if payoff_detail not in ('full', 'landmarks', 'none'):
+        raise ValueError('Invalid payoff presentation detail.')
+    from modules.research_control import checkpoint
+    checkpoint()
+    trade, units = analysis['trade'], analysis['units']
+    spot, legs = trade['spot'], trade['legs']
+    risk, strikes, roots = analysis['max_loss'], analysis['strikes'], analysis['breakevens']
     def scenario(price):
         pnl = payoff(legs, trade['credit'], price, trade['shares'], trade['stock_basis'], trade['fees']) * units
         labels = []
@@ -87,13 +116,6 @@ def trade_analysis(trade, units=1, *, payoff_detail='full'):
                 'Expiration P&L ($)': pnl,
                 'Return on max risk (%)': pnl/risk*100 if isfinite(risk) and risk > 0 else None,
                 'Landmark': ' · '.join(labels)}
-    # Width is deliberately limited to a plain equal-quantity two-leg vertical.
-    width = credit_width = None
-    if (not trade['shares'] and len(legs) == 2 and legs[0]['type'] == legs[1]['type']
-            and legs[0]['qty'] == -legs[1]['qty'] and len(strikes) == 2):
-        width = strikes[1] - strikes[0]
-        if trade['credit'] > 0:
-            credit_width = trade['credit'] / (abs(legs[0]['qty']) * width)
     anchors = sorted(set([spot, *strikes, *roots]))
     if payoff_detail == 'full':
         points = adaptive_grid(spot, strikes, roots)
@@ -101,13 +123,11 @@ def trade_analysis(trade, units=1, *, payoff_detail='full'):
         points = sorted(set(anchors + [(a+b)/2 for a,b in zip(anchors, anchors[1:])]))
     else:
         points = []
-    result = dict(trade=trade, units=units, max_profit=profit, max_loss=risk,
-                return_on_risk=profit/risk if isfinite(profit) and isfinite(risk) and risk > 0 and profit >= 0 else None,
-                option_premium=trade['credit']*100*units, fees=trade['fees']*units,
-                net_cash=(trade['credit']*100-trade['fees'])*units,
-                width=width, credit_width=credit_width, breakevens=roots, strikes=strikes,
+    result = dict(analysis,
                 grid=[scenario(p) for p in points],
                 extremes=[scenario(spot*(1+s)) for s in (-.5,-.3,-.2,-.1,-.05,0,.05,.1,.2,.3,.5)] if payoff_detail != 'none' else [])
     if payoff_detail != 'full':
         result['grid_sampling'] = 'exact_landmarks_and_midpoints' if payoff_detail == 'landmarks' else 'not_materialized'
+    else:
+        result.pop('grid_sampling', None)
     return result
