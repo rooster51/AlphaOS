@@ -9,5 +9,5 @@ class ResearchCompressionMiddleware:
 
     async def __call__(self, scope, receive, send):
         target = self.compressed if (scope['type'] == 'http' and
-            scope.get('method') == 'POST' and scope.get('path') == '/v1/research/market') else self.app
+            scope.get('method') == 'POST' and scope.get('path') in ('/v1/research/market','/v1/research/observation')) else self.app
         await target(scope, receive, send)

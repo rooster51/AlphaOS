@@ -17,6 +17,7 @@ def test_existing_rest_and_mcp_compatibility_surface_is_preserved():
         '/v1/trade/research', '/v1/trade/compare', '/v1/research/{symbol}/run',
         '/v1/research/candidates/{candidate_id}', '/v1/research/{symbol}/vertical', '/v1/research/trade',
         '/v1/research/market', '/v1/research/structure', '/v1/research/structures/compare',
+        '/v1/research/observation',
     }
     paths = app.openapi()['paths']
     assert set(paths) == expected_paths

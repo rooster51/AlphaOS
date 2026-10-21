@@ -1,0 +1,330 @@
+[
+  {
+    "request": {
+      "symbol": "SPY",
+      "research_mode": "current"
+    },
+    "response": {
+      "schema_version": "alphaos-observation-v1",
+      "read_only": true,
+      "verified_for_trading": false,
+      "research_performed": false,
+      "evidence_scope": "archive_observation_only",
+      "symbol": "SPY",
+      "research_mode": "current",
+      "as_of": "2026-10-16T19:30:00+00:00",
+      "requested_as_of": "2026-10-16T19:33:00+00:00",
+      "expiration": "2026-10-16",
+      "spot": 500.0,
+      "session": {
+        "open": "2026-10-16T13:30:00+00:00",
+        "close": "2026-10-16T20:00:00+00:00"
+      },
+      "archive": {
+        "provider": "Public",
+        "session_date": "2026-10-16",
+        "observation": {
+          "provider": "Public",
+          "options_status": "complete",
+          "quote_timing": "last_available_not_guaranteed_close",
+          "observed_at": "2026-10-16T19:30:00+00:00",
+          "slot_time": "2026-10-16T19:25:00+00:00",
+          "collection_finished_at": "2026-10-16T19:32:00+00:00",
+          "quality_warnings": [],
+          "underlying_last_timestamp": "2026-10-16T19:30:00+00:00",
+          "expiration_failures": []
+        },
+        "storage": {
+          "id": "fixture",
+          "provider": "Public",
+          "symbol": "SPY",
+          "observed_at": "2026-10-16T19:30:00+00:00",
+          "session_date": "2026-10-16",
+          "slot_time": "2026-10-16T19:25:00+00:00",
+          "created_at": "2026-10-16T19:32:30+00:00",
+          "quality_status": "complete",
+          "archive_path": "options/symbol=SPY/date=2026-10-16/fixture.json.gz",
+          "archive_sha256": "d7113e8503b4ed108c5e7ed86e97d75312e2f6942f93296e4977be061ce38817"
+        },
+        "freshness": {
+          "as_of": "2026-10-16T19:33:00+00:00",
+          "age_seconds": 180.0,
+          "max_age_seconds": 300,
+          "basis": "collection_start"
+        },
+        "diagnostics": {
+          "bucket_counts": {
+            "valid_contracts": 12,
+            "questionable_contracts": 0,
+            "rejected_contracts": 0
+          },
+          "total_contract_count": 12,
+          "selected_expiration": "2026-10-16",
+          "selected_expiration_count": 4,
+          "other_expiration_count": 8,
+          "malformed_contract_count": 0,
+          "normalized_contract_count": 4,
+          "rejection_counts": {},
+          "rejection_detail_counts": {},
+          "counts_scope": "contract rows in this verified snapshot; selected expiration only after selection"
+        }
+      },
+      "caveats": [
+        "Archive underlying observation, not an executable quote or current-price guarantee.",
+        "No history, classifications, candidates, payoff economics, capital eligibility, POP or EV were calculated.",
+        "Historical mode retains the original observation time; it is not current market evidence."
+      ],
+      "request": {
+        "symbol": "SPY",
+        "research_mode": "current",
+        "expiration": null
+      }
+    }
+  },
+  {
+    "request": {
+      "symbol": "SPY",
+      "research_mode": "historical"
+    },
+    "response": {
+      "schema_version": "alphaos-observation-v1",
+      "read_only": true,
+      "verified_for_trading": false,
+      "research_performed": false,
+      "evidence_scope": "archive_observation_only",
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "as_of": "2026-10-16T19:30:00+00:00",
+      "requested_as_of": "2026-10-20T14:00:00+00:00",
+      "expiration": "2026-10-16",
+      "spot": 500.0,
+      "session": {
+        "open": "2026-10-16T13:30:00+00:00",
+        "close": "2026-10-16T20:00:00+00:00"
+      },
+      "archive": {
+        "provider": "Public",
+        "session_date": "2026-10-16",
+        "observation": {
+          "provider": "Public",
+          "options_status": "complete",
+          "quote_timing": "last_available_not_guaranteed_close",
+          "observed_at": "2026-10-16T19:30:00+00:00",
+          "slot_time": "2026-10-16T19:25:00+00:00",
+          "collection_finished_at": "2026-10-16T19:32:00+00:00",
+          "quality_warnings": [],
+          "underlying_last_timestamp": "2026-10-16T19:30:00+00:00",
+          "expiration_failures": []
+        },
+        "storage": {
+          "id": "fixture",
+          "provider": "Public",
+          "symbol": "SPY",
+          "observed_at": "2026-10-16T19:30:00+00:00",
+          "session_date": "2026-10-16",
+          "slot_time": "2026-10-16T19:25:00+00:00",
+          "created_at": "2026-10-16T19:32:30+00:00",
+          "quality_status": "complete",
+          "archive_path": "options/symbol=SPY/date=2026-10-16/fixture.json.gz",
+          "archive_sha256": "d7113e8503b4ed108c5e7ed86e97d75312e2f6942f93296e4977be061ce38817"
+        },
+        "freshness": {
+          "as_of": "2026-10-20T14:00:00+00:00",
+          "age_seconds": 325800.0,
+          "max_age_seconds": null,
+          "basis": "collection_start"
+        },
+        "diagnostics": {
+          "bucket_counts": {
+            "valid_contracts": 12,
+            "questionable_contracts": 0,
+            "rejected_contracts": 0
+          },
+          "total_contract_count": 12,
+          "selected_expiration": "2026-10-16",
+          "selected_expiration_count": 4,
+          "other_expiration_count": 8,
+          "malformed_contract_count": 0,
+          "normalized_contract_count": 4,
+          "rejection_counts": {},
+          "rejection_detail_counts": {},
+          "counts_scope": "contract rows in this verified snapshot; selected expiration only after selection"
+        }
+      },
+      "caveats": [
+        "Archive underlying observation, not an executable quote or current-price guarantee.",
+        "No history, classifications, candidates, payoff economics, capital eligibility, POP or EV were calculated.",
+        "Historical mode retains the original observation time; it is not current market evidence."
+      ],
+      "request": {
+        "symbol": "SPY",
+        "research_mode": "historical",
+        "expiration": null
+      }
+    }
+  },
+  {
+    "request": {
+      "symbol": "QQQ",
+      "research_mode": "current"
+    },
+    "response": {
+      "schema_version": "alphaos-observation-v1",
+      "read_only": true,
+      "verified_for_trading": false,
+      "research_performed": false,
+      "evidence_scope": "archive_observation_only",
+      "symbol": "QQQ",
+      "research_mode": "current",
+      "as_of": "2026-10-16T19:30:00+00:00",
+      "requested_as_of": "2026-10-16T19:33:00+00:00",
+      "expiration": "2026-10-16",
+      "spot": 500.0,
+      "session": {
+        "open": "2026-10-16T13:30:00+00:00",
+        "close": "2026-10-16T20:00:00+00:00"
+      },
+      "archive": {
+        "provider": "Public",
+        "session_date": "2026-10-16",
+        "observation": {
+          "provider": "Public",
+          "options_status": "complete",
+          "quote_timing": "last_available_not_guaranteed_close",
+          "observed_at": "2026-10-16T19:30:00+00:00",
+          "slot_time": "2026-10-16T19:25:00+00:00",
+          "collection_finished_at": "2026-10-16T19:32:00+00:00",
+          "quality_warnings": [],
+          "underlying_last_timestamp": "2026-10-16T19:30:00+00:00",
+          "expiration_failures": []
+        },
+        "storage": {
+          "id": "fixture",
+          "provider": "Public",
+          "symbol": "QQQ",
+          "observed_at": "2026-10-16T19:30:00+00:00",
+          "session_date": "2026-10-16",
+          "slot_time": "2026-10-16T19:25:00+00:00",
+          "created_at": "2026-10-16T19:32:30+00:00",
+          "quality_status": "complete",
+          "archive_path": "options/symbol=QQQ/date=2026-10-16/fixture.json.gz",
+          "archive_sha256": "b8c952a4d2d2c20849ed211beba9f0b97afc2504f3ad7cf34ced8eea3a26b81b"
+        },
+        "freshness": {
+          "as_of": "2026-10-16T19:33:00+00:00",
+          "age_seconds": 180.0,
+          "max_age_seconds": 300,
+          "basis": "collection_start"
+        },
+        "diagnostics": {
+          "bucket_counts": {
+            "valid_contracts": 12,
+            "questionable_contracts": 0,
+            "rejected_contracts": 0
+          },
+          "total_contract_count": 12,
+          "selected_expiration": "2026-10-16",
+          "selected_expiration_count": 4,
+          "other_expiration_count": 8,
+          "malformed_contract_count": 0,
+          "normalized_contract_count": 4,
+          "rejection_counts": {},
+          "rejection_detail_counts": {},
+          "counts_scope": "contract rows in this verified snapshot; selected expiration only after selection"
+        }
+      },
+      "caveats": [
+        "Archive underlying observation, not an executable quote or current-price guarantee.",
+        "No history, classifications, candidates, payoff economics, capital eligibility, POP or EV were calculated.",
+        "Historical mode retains the original observation time; it is not current market evidence."
+      ],
+      "request": {
+        "symbol": "QQQ",
+        "research_mode": "current",
+        "expiration": null
+      }
+    }
+  },
+  {
+    "request": {
+      "symbol": "QQQ",
+      "research_mode": "historical"
+    },
+    "response": {
+      "schema_version": "alphaos-observation-v1",
+      "read_only": true,
+      "verified_for_trading": false,
+      "research_performed": false,
+      "evidence_scope": "archive_observation_only",
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "as_of": "2026-10-16T19:30:00+00:00",
+      "requested_as_of": "2026-10-20T14:00:00+00:00",
+      "expiration": "2026-10-16",
+      "spot": 500.0,
+      "session": {
+        "open": "2026-10-16T13:30:00+00:00",
+        "close": "2026-10-16T20:00:00+00:00"
+      },
+      "archive": {
+        "provider": "Public",
+        "session_date": "2026-10-16",
+        "observation": {
+          "provider": "Public",
+          "options_status": "complete",
+          "quote_timing": "last_available_not_guaranteed_close",
+          "observed_at": "2026-10-16T19:30:00+00:00",
+          "slot_time": "2026-10-16T19:25:00+00:00",
+          "collection_finished_at": "2026-10-16T19:32:00+00:00",
+          "quality_warnings": [],
+          "underlying_last_timestamp": "2026-10-16T19:30:00+00:00",
+          "expiration_failures": []
+        },
+        "storage": {
+          "id": "fixture",
+          "provider": "Public",
+          "symbol": "QQQ",
+          "observed_at": "2026-10-16T19:30:00+00:00",
+          "session_date": "2026-10-16",
+          "slot_time": "2026-10-16T19:25:00+00:00",
+          "created_at": "2026-10-16T19:32:30+00:00",
+          "quality_status": "complete",
+          "archive_path": "options/symbol=QQQ/date=2026-10-16/fixture.json.gz",
+          "archive_sha256": "b8c952a4d2d2c20849ed211beba9f0b97afc2504f3ad7cf34ced8eea3a26b81b"
+        },
+        "freshness": {
+          "as_of": "2026-10-20T14:00:00+00:00",
+          "age_seconds": 325800.0,
+          "max_age_seconds": null,
+          "basis": "collection_start"
+        },
+        "diagnostics": {
+          "bucket_counts": {
+            "valid_contracts": 12,
+            "questionable_contracts": 0,
+            "rejected_contracts": 0
+          },
+          "total_contract_count": 12,
+          "selected_expiration": "2026-10-16",
+          "selected_expiration_count": 4,
+          "other_expiration_count": 8,
+          "malformed_contract_count": 0,
+          "normalized_contract_count": 4,
+          "rejection_counts": {},
+          "rejection_detail_counts": {},
+          "counts_scope": "contract rows in this verified snapshot; selected expiration only after selection"
+        }
+      },
+      "caveats": [
+        "Archive underlying observation, not an executable quote or current-price guarantee.",
+        "No history, classifications, candidates, payoff economics, capital eligibility, POP or EV were calculated.",
+        "Historical mode retains the original observation time; it is not current market evidence."
+      ],
+      "request": {
+        "symbol": "QQQ",
+        "research_mode": "historical",
+        "expiration": null
+      }
+    }
+  }
+]

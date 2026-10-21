@@ -1,4 +1,7 @@
+import { validArchiveObservation } from "../../../../lib/archive-observation.ts";
+
 type MarketPayload = {
+  view?: "observation";
   symbol: "SPY" | "QQQ";
   research_mode?: "current" | "historical";
   expiration?: string;
@@ -10,7 +13,7 @@ type MarketPayload = {
 function parseMarketPayload(value: unknown): MarketPayload | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
   const input = value as Record<string, unknown>;
-  const allowed = new Set(["symbol", "research_mode", "expiration", "available_capital", "objective", "width"]);
+  const allowed = new Set(["symbol", "research_mode", "expiration", "available_capital", "objective", "width", "view"]);
   if (Object.keys(input).some((key) => !allowed.has(key))) return null;
 
   if (typeof input.symbol !== "string") return null;
@@ -18,6 +21,10 @@ function parseMarketPayload(value: unknown): MarketPayload | null {
   if (symbol !== "SPY" && symbol !== "QQQ") return null;
 
   const payload: MarketPayload = { symbol };
+  if (input.view !== undefined) {
+    if (input.view !== "observation" || ["available_capital","objective","width"].some(k => k in input)) return null;
+    payload.view = "observation";
+  }
   if (input.research_mode !== undefined) {
     if (input.research_mode !== "current" && input.research_mode !== "historical") return null;
     payload.research_mode = input.research_mode;
@@ -194,7 +201,8 @@ async function marketRequest(request: Request, trace: BridgeTrace, timeout: () =
   const fetchStarted = performance.now();
   let response: Response;
   try {
-    response = await fetch(new URL("/v1/research/market", origin), {
+    const {view,...backendPayload} = payload;
+    response = await fetch(new URL(view === "observation" ? "/v1/research/observation" : "/v1/research/market", origin), {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -202,7 +210,7 @@ async function marketRequest(request: Request, trace: BridgeTrace, timeout: () =
         "X-AlphaOS-Request-ID": trace.request_id,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(backendPayload),
       cache: "no-store",
       signal: AbortSignal.any([timeout(), request.signal]),
     });
@@ -275,7 +283,9 @@ async function marketRequest(request: Request, trace: BridgeTrace, timeout: () =
   }
   trace.stage = "schema_validation";
   const validationStarted = performance.now();
-  const valid = validResearchEnvelope(responsePayload, payload.symbol, payload.research_mode, payload.expiration, payload.width);
+  const valid = payload.view === "observation"
+    ? validArchiveObservation(responsePayload,payload.symbol,payload.research_mode ?? "current",payload.expiration)
+    : validResearchEnvelope(responsePayload, payload.symbol, payload.research_mode, payload.expiration, payload.width);
   trace.schema_validation_ms = Math.round(performance.now() - validationStarted);
   if (!valid) {
     return Response.json(

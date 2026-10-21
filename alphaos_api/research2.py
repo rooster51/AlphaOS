@@ -34,6 +34,30 @@ class MarketRequest(Request):
     width: float | None = Field(default=None, gt=0, le=100, strict=True)
 
 
+class ObservationRequest(Request):
+    symbol: Literal['QQQ', 'SPY']
+    research_mode: Literal['current', 'historical'] = 'current'
+    expiration: date | None = None
+
+
+class ObservationResponse(BaseModel):
+    schema_version: Literal['alphaos-observation-v1']
+    read_only: Literal[True]
+    verified_for_trading: Literal[False]
+    research_performed: Literal[False]
+    evidence_scope: Literal['archive_observation_only']
+    symbol: Literal['SPY','QQQ']
+    research_mode: Literal['current','historical']
+    as_of: datetime
+    requested_as_of: datetime
+    expiration: date
+    spot: float = Field(gt=0,allow_inf_nan=False)
+    session: dict[str,str]
+    archive: dict
+    request: ObservationRequest
+    caveats: list[str]
+
+
 class StructureLeg(Request):
     type: Literal['Call', 'Put']
     strike: float = Field(gt=0)
@@ -107,6 +131,29 @@ class ArchiveResearchService:
     def run(self, request, *, json_ready=True):
         with execution(request.symbol, request.research_mode):
             return self._run(request, json_ready=json_ready)
+
+    def observe(self, request, *, json_ready=True):
+        from modules.archive_observation import archive_observation
+        with execution(request.symbol, request.research_mode):
+            now = self.clock()
+            try:
+                with timing_stage('archive_read'):
+                    record = self.read_snapshot(request.symbol, now.isoformat(), **(
+                        {'research_mode':'historical'} if request.research_mode == 'historical' else {}))
+            except ArchiveUnavailable as error:
+                raise APIError(error.code,503) from None
+            except Exception:
+                raise APIError('archive_unavailable',503) from None
+            try:
+                with timing_stage('observation_projection'):
+                    result = archive_observation(record, symbol=request.symbol, now=now,
+                        mode=request.research_mode, expiration=request.expiration.isoformat() if request.expiration else None)
+            except ArchiveExpirationUnavailable:
+                raise APIError('archive_expiration_unavailable',422) from None
+            except (ValueError,TypeError,KeyError,OverflowError):
+                raise APIError('archive_research_unavailable',422) from None
+            result['request'] = request.model_dump(mode='json')
+            return json_safe(result) if json_ready else result
 
     def _run(self, request, *, json_ready=True):
         history = None
@@ -201,13 +248,20 @@ class ArchiveResearchService:
 def register_research2(router, service, respond):
     @router.post('/research/market', operation_id='run_market_v2')
     async def run_market(request: MarketRequest, http_request: HTTPRequest):
+        return await run_cancellable(lambda: service().run(request,json_ready=False),http_request)
+
+    @router.post('/research/observation', operation_id='get_archive_observation_v1',response_model=ObservationResponse)
+    async def observe_market(request: ObservationRequest, http_request: HTTPRequest):
+        return await run_cancellable(lambda: service().observe(request,json_ready=False),http_request)
+
+    async def run_cancellable(calculate, http_request):
         # FastAPI has consumed/validated the body before this handler. Polling
         # here cannot race the body consumer. Python cannot kill a blocking SDK
         # call; checkpoints stop subsequent work as soon as that call returns.
         from modules.research_control import cancellable_research
         with cancellable_research() as cancelled:
             work = asyncio.create_task(to_thread.run_sync(
-                lambda: respond(service().run(request, json_ready=False)), abandon_on_cancel=True))
+                lambda: respond(calculate()), abandon_on_cancel=True))
             try:
                 while not work.done():
                     if cancelled.is_set() or await http_request.is_disconnected():

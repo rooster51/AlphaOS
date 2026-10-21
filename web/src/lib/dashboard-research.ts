@@ -1,4 +1,5 @@
 /** Dashboard presentation policy; research and archive verification stay in the backend. */
+import { validArchiveObservation } from "./archive-observation.ts";
 type Symbol = "SPY" | "QQQ";
 type Mode = "current" | "historical";
 type Failure = { code: string; requestId?: string };
@@ -51,6 +52,18 @@ function correlation(value: string | null): string | undefined {
 
 function observation(value: unknown, symbol: Symbol, mode: Mode, now: number): DashboardObservation | string {
   const outer = record(value), envelope = record(outer.research), request = record(envelope.request);
+  if (envelope.schema_version === "alphaos-observation-v1") {
+    if (outer.source !== "alphaos_research_api" || outer.verified_for_trading !== false ||
+        !validArchiveObservation(envelope,symbol,mode)) return "response_schema_mismatch";
+    const archive=record(envelope.archive), fresh=record(archive.freshness), session=record(envelope.session);
+    const at=timestamp(envelope.as_of), asked=timestamp(envelope.requested_as_of), close=timestamp(session.close);
+    if (at > now) return "response_schema_mismatch";
+    if (mode === "historical" && (close > now || close > asked)) return "historical_session_incomplete";
+    const validUntil=mode === "current" ? at+(fresh.max_age_seconds as number)*1000 : null;
+    if (validUntil !== null && validUntil < now) return "response_schema_mismatch";
+    return {mode,spot:envelope.spot as number,observedAt:envelope.as_of as string,sessionDate:archive.session_date as string,
+      provider:archive.provider as string,ageSeconds:fresh.age_seconds as number,expiration:envelope.expiration as string,validUntil};
+  }
   const research = record(envelope.research), archive = record(research.archive);
   const storage = record(archive.storage), observed = record(archive.observation), freshness = record(archive.freshness);
   const session = record(research.research_session), market = record(session.market);
@@ -107,7 +120,7 @@ export async function loadDashboardResearch(symbol: Symbol, request: typeof fetc
     try {
       const response = await request("/api/research/market", {
         method:"POST", headers:{"Content-Type":"application/json"}, cache:"no-store",
-        body:JSON.stringify({symbol, research_mode:mode}), signal:AbortSignal.timeout(14000),
+        body:JSON.stringify({symbol, research_mode:mode, view:"observation"}), signal:AbortSignal.timeout(14000),
       });
       requestId = correlation(response.headers.get("X-AlphaOS-Request-ID"));
       const body: unknown = await response.json();

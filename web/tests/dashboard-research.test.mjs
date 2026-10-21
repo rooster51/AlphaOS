@@ -9,6 +9,11 @@ const fixture = JSON.parse(readFileSync(new URL("./fixtures/unsupported-routes-p
 const freshNow = Date.parse("2026-10-16T19:33:00Z");
 const historicalNow = Date.parse("2026-10-20T14:00:00Z");
 const id = "a".repeat(32);
+const observationCases=JSON.parse(readFileSync(new URL('./fixtures/observation-parity.json',import.meta.url),'utf8'));
+function compactBody(symbol,mode) {
+  return {source:'alphaos_research_api',verified_for_trading:false,
+    research:observationCases.find(c=>c.request.symbol===symbol && c.request.research_mode===mode).response};
+}
 function body(symbol = "QQQ", mode = "current") {
   const data = JSON.parse(JSON.stringify(fixture).replaceAll("QQQ", symbol));
   data.request.research_mode = mode;
@@ -31,7 +36,7 @@ for (const symbol of ["SPY", "QQQ"]) {
       count++;
       assert.equal(url, "/api/research/market");
       assert.equal(options.cache, "no-store");
-      assert.deepEqual(JSON.parse(options.body), {symbol,research_mode:"current"});
+      assert.deepEqual(JSON.parse(options.body), {symbol,research_mode:"current",view:"observation"});
       assert.equal(options.headers.Authorization, undefined);
       return response(body(symbol));
     }, () => freshNow);
@@ -136,15 +141,26 @@ test("dashboard -> real website bridge preserves auth, correlation, stale code a
   process.env.ALPHAOS_API_URL="https://backend.example.test";
   const modes=[];
   globalThis.fetch=async(url,options)=>{
-    assert.equal(String(url),"https://backend.example.test/v1/research/market");
+    assert.equal(String(url),"https://backend.example.test/v1/research/observation");
     assert.equal(options.headers.Authorization,"Bearer test-only-token");
     assert.match(options.headers["X-AlphaOS-Request-ID"],/^[a-f0-9]{32}$/);
     const mode=JSON.parse(options.body).research_mode;modes.push(mode);
     return mode==="current" ? Response.json({error:{code:"archive_stale"}},{status:503})
-      : Response.json(body("QQQ","historical").research);
+      : Response.json(compactBody("QQQ","historical").research);
   };
   const result=await loadDashboardResearch("QQQ",(_,options)=>POST(new Request("http://localhost/api/research/market",options)),()=>historicalNow);
   assert.deepEqual(modes,["current","historical"]);
   assert.equal(result.observation.mode,"historical");
   assert.match(result.currentFailure.requestId,/^[a-f0-9]{32}$/);
 });
+
+for(const symbol of ['SPY','QQQ']) for(const mode of ['current','historical']) {
+ test(`compact ${symbol} ${mode} displays only verified observation`,async()=>{
+  const result=await loadDashboardResearch(symbol,async(_,options)=>{
+   const request=JSON.parse(options.body);assert.equal(request.view,'observation');
+   return mode==='historical' && request.research_mode==='current' ? response({code:'archive_stale'},502) : response(compactBody(symbol,mode));
+  },()=>mode==='current'?freshNow:historicalNow);
+  assert.equal(result.observation.mode,mode);assert.equal(result.observation.spot,500);
+  assert.equal('candidates' in result.observation,false);
+ });
+}

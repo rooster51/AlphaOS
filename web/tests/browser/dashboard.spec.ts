@@ -3,6 +3,24 @@ import { readFileSync } from "node:fs";
 
 // Offline archive fixture, not a claim about production data availability.
 const fixture = JSON.parse(readFileSync("tests/fixtures/unsupported-routes-parity.json", "utf8")).response;
+const observations=JSON.parse(readFileSync('tests/fixtures/observation-parity.json','utf8'));
+for(const mode of ['current','historical']) test(`compact ${mode} contract keeps both dashboard cards and safety labels`,async({page})=>{
+ await page.clock.install({time:new Date(mode==='current'?'2026-10-16T19:33:00Z':'2026-10-20T14:00:00Z')});
+ const requests:Array<{view:string}>=[];
+ await page.route('**/api/research/market',async route=>{
+  const request=route.request().postDataJSON();requests.push(request);
+  if(mode==='historical' && request.research_mode==='current') return route.fulfill({status:502,json:{code:'archive_stale'}});
+  const data=observations.find((c:{request:{symbol:string;research_mode:string}})=>c.request.symbol===request.symbol && c.request.research_mode===mode).response;
+  await route.fulfill({json:{source:'alphaos_research_api',verified_for_trading:false,research:data}});
+ });
+ await page.goto('/dashboard');
+ for(const symbol of ['SPY','QQQ']) {
+  const card=page.getByRole('region',{name:`${symbol} evidence`});
+  await expect(card.getByText(mode==='current'?'CURRENT — VERIFIED ARCHIVE OBSERVATION':'HISTORICAL — COMPLETED SESSION ARCHIVE',{exact:true})).toBeVisible();
+  await expect(card).toContainText('2026-10-16T19:30:00+00:00');
+ }
+ expect(requests.every(r=>r.view==='observation')).toBe(true);
+});
 function historical(symbol: string) {
   const data = JSON.parse(JSON.stringify(fixture).replaceAll("QQQ", symbol));
   data.request.research_mode = "historical";
