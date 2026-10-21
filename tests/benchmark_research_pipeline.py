@@ -93,6 +93,7 @@ def main():
     parser.add_argument('--concurrency',type=int,choices=[1,2,4],default=4)
     parser.add_argument('--symbol',choices=['SPY','QQQ'],default='SPY',help='Symbol for independent concurrency=1 runs')
     parser.add_argument('--capital',choices=['150','none'],default='150')
+    parser.add_argument('--endpoint',choices=['market','observation'],default='market')
     parser.add_argument('--rounds',type=int,default=2)
     parser.add_argument('--io-delay',type=float,default=.02)
     args=parser.parse_args()
@@ -136,23 +137,28 @@ def main():
                 symbol=args.symbol if args.concurrency==1 else ('SPY','QQQ')[index%2]
                 request_id=f'{round_index*4+index+1:032x}'
                 start=perf_counter()
-                response=client.post('/v1/research/market',json=dict(symbol=symbol,
+                payload=dict(symbol=symbol,
                     expiration=args.expiration,available_capital=150 if args.capital=='150' else None,
-                    research_mode=args.mode, width=None if args.width=='auto' else 5),headers={
+                    research_mode=args.mode, width=None if args.width=='auto' else 5)
+                if args.endpoint=='observation':
+                    payload={k:payload[k] for k in ('symbol','research_mode','expiration')}
+                response=client.post('/v1/research/'+args.endpoint,json=payload,headers={
                     'Authorization':'Bearer owner-test-secret','X-AlphaOS-Request-ID':request_id})
                 assert response.status_code==200,response.text[:100]
-                data=response.json(); session=data['research']['research_session']
+                data=response.json(); session=data['research']['research_session'] if args.endpoint=='market' else None
                 return dict(symbol=symbol,request_id=request_id,wall_ms=round((perf_counter()-start)*1000),
-                    generated=session['diagnostics']['generated_count'],accepted=len(session['candidates']),
+                    generated=session['diagnostics']['generated_count'] if session else None,
+                    accepted=len(session['candidates']) if session else None,
                     decoded_bytes=len(response.content),wire_bytes=wire.sizes[request_id],
                     economics_sha256=economics_digest(data))
             wall,cpu=perf_counter(),process_time()
             with ThreadPoolExecutor(args.concurrency) as pool:
                 rows=list(pool.map(invoke,range(args.concurrency)))
             for row in rows: row['stage_ms']=events.get(row['request_id'],{})
-            print(json.dumps(dict(round=round_index,width=args.width,expiration=args.expiration,late=args.late,
+            print(json.dumps(dict(round=round_index,width=args.width if args.endpoint=='market' else 'not_applicable',expiration=args.expiration,late=args.late,
                 mode=args.mode,concurrency=args.concurrency,fixture_contracts=len(storages['SPY'].payload['options']['valid_contracts']),
-                capital=args.capital,
+                capital=args.capital if args.endpoint=='market' else 'not_applicable',
+                endpoint=args.endpoint,
                 wall_ms=round((perf_counter()-wall)*1000),cpu_ms=round((process_time()-cpu)*1000),
                 peak_rss_bytes=peak_rss(),requests=rows)),flush=True)
     finally:

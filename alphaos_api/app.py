@@ -13,7 +13,7 @@ from fastapi import FastAPI,APIRouter,Depends,Query
 from fastapi.security import HTTPBearer,HTTPAuthorizationCredentials
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from modules.daily_archive import json_value
 from modules.price_structure import nearest_levels
 from modules.forward_distribution import summarize_forward_distribution
@@ -21,6 +21,7 @@ from .contracts import APIError,TradeRequest,CompareRequest,ResearchResponse,Err
 from .service import ResearchService,symbol_value,horizon_value
 from .config import load_secret_files
 from modules.research_control import checkpoint
+from .json_encoding import encode_json
 
 load_secret_files()
 
@@ -89,7 +90,7 @@ def sanitized(value):
 
 def respond(value):
     with stage('response_serialization'):
-        return JSONResponse(sanitized(value))
+        return Response(content=encode_json(sanitized(value)),media_type='application/json')
 
 
 def error_response(code,status):
@@ -118,7 +119,7 @@ async def http_error(request,exc):return error_response('not_found' if exc.statu
 
 @app.middleware('http')
 async def safe_boundary(request,call_next):
-    research = request.url.path == '/v1/research/market' and request.method == 'POST'
+    research = request.url.path in ('/v1/research/market','/v1/research/observation') and request.method == 'POST'
     correlation = request.headers.get('X-AlphaOS-Request-ID','')
     correlation = correlation if re.fullmatch('[0-9a-f]{32}',correlation) else secrets.token_hex(16)
     started = perf_counter()

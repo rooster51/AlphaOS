@@ -66,7 +66,8 @@ def build_mcp(app, sanitize):
                     params={k:str(v).lower() if isinstance(v,bool) else v for k,v in (params or {}).items() if v is not None},
                     json=body, headers={'Authorization':'Bearer '+token})
             data = sanitize(response.json())
-            return CallToolResult(content=[TextContent(type='text',text=json.dumps(data))],
+            from .json_encoding import encode_json
+            return CallToolResult(content=[TextContent(type='text',text=encode_json(data).decode('utf-8'))],
                 structured_content=data, is_error=response.status_code>=400)
         except Exception:
             data = {'schema_version':SCHEMA_VERSION,'error':{'code':'internal_error','message':'Research unavailable'}}

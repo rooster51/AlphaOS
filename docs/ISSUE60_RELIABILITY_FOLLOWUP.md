@@ -3,6 +3,10 @@
 Base: merged PR #61, `8a374fbd`. Milestone 1 production acceptance remains **open**.
 This change is not deployed. Fixture results below are not production acceptance.
 
+Post-merge traces still narrowly exceeded complete website response deadlines.
+See [the dashboard contract follow-up](ISSUE60_DASHBOARD_CONTRACT.md) for the newer
+evidence, additive observation-only contract and serialization measurements.
+
 ## Confirmed production evidence
 
 Read-only Render logs from 2026-10-21 were retrieved in full for all four supplied

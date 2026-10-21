@@ -93,7 +93,7 @@ class ResearchTimingMiddleware:
         self.app = app
 
     async def __call__(self, scope, receive, send):
-        if scope['type'] != 'http' or scope.get('method') != 'POST' or scope.get('path') != '/v1/research/market':
+        if scope['type'] != 'http' or scope.get('method') != 'POST' or scope.get('path') not in ('/v1/research/market','/v1/research/observation'):
             return await self.app(scope, receive, send)
         supplied = next((v.decode('latin1') for k,v in scope.get('headers', [])
             if k.lower() == b'x-alphaos-request-id'), '')
