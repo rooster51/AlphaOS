@@ -199,19 +199,21 @@ def test_orchestration_parameters_and_zero_time_constructor_preserved(boundary, 
     import modules.opportunity_session as session
     c, _, _, _ = boundary
     run = Mock(wraps=interface.run_latest_market)
-    generate = Mock(wraps=session.generate)
+    discover = Mock(wraps=session.discover_widths)
     monkeypatch.setattr(interface, 'run_latest_market', run)
-    monkeypatch.setattr(session, 'generate', generate)
+    monkeypatch.setattr(session, 'discover_widths', discover)
     response = post(c, 'market', dict(symbol='QQQ',expiration='2030-01-02',available_capital=300,objective='bearish'))
     assert response.status_code == 200
     assert run.call_args.kwargs['expiration'] == '2030-01-02'
     assert run.call_args.kwargs['available_capital'] == 300
     assert run.call_args.kwargs['objective'] == 'bearish'
     assert response.json()['research']['research_session']['opportunity_state']['direction'] == 'bullish'
-    assert generate.call_args.args[2] == 0
-    assert generate.call_args.kwargs['min_net_credit'] == 0
+    assert discover.call_args.args[0]['expiration'] == '2030-01-02'
+    assert discover.call_args.kwargs['width'] is None
+    assert all('pop' not in row['research']['payoff'] for row in response.json()['research']['research_session']['candidates'])
     import inspect
-    assert inspect.signature(generate._mock_wraps).parameters['min_net_credit'].default == 50
+    from modules.premium_engine import generate
+    assert inspect.signature(generate).parameters['min_net_credit'].default == 50
 
 
 @pytest.mark.parametrize('change', [dict(legs=[]),dict(credit=10),dict(as_of='2030-01-03'),

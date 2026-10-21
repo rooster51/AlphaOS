@@ -4,7 +4,7 @@ type MarketPayload = {
   expiration?: string;
   available_capital?: number;
   objective?: string;
-  width?: number;
+  width?: number | null;
 };
 
 function parseMarketPayload(value: unknown): MarketPayload | null {
@@ -41,8 +41,8 @@ function parseMarketPayload(value: unknown): MarketPayload | null {
     payload.objective = input.objective;
   }
   if (input.width !== undefined) {
-    if (typeof input.width !== "number" || !Number.isFinite(input.width) ||
-        input.width <= 0 || input.width > 100) return null;
+    if (input.width !== null && (typeof input.width !== "number" || !Number.isFinite(input.width) ||
+        input.width <= 0 || input.width > 100)) return null;
     payload.width = input.width;
   }
   return payload;
@@ -54,12 +54,13 @@ function object(value: unknown): Record<string, unknown> | null {
     : null;
 }
 
-function validResearchEnvelope(value: unknown, symbol: MarketPayload["symbol"], mode: MarketPayload["research_mode"], expiration?: string): value is Record<string, unknown> {
+function validResearchEnvelope(value: unknown, symbol: MarketPayload["symbol"], mode: MarketPayload["research_mode"], expiration?: string, width?: number | null): value is Record<string, unknown> {
   const envelope = object(value);
   const request = object(envelope?.request);
   const research = object(envelope?.research);
   const archive = object(research?.archive);
   const session = object(research?.research_session);
+  if ((request?.width ?? null) !== (width ?? null)) return false;
   if (expiration !== undefined && (request?.expiration !== expiration || research?.expiration !== expiration || session?.expiration !== expiration)) return false;
   if (mode === "historical") {
     const freshness = object(archive?.freshness);
@@ -273,7 +274,7 @@ async function marketRequest(request: Request, trace: BridgeTrace, timeout: () =
   }
   trace.stage = "schema_validation";
   const validationStarted = performance.now();
-  const valid = validResearchEnvelope(responsePayload, payload.symbol, payload.research_mode, payload.expiration);
+  const valid = validResearchEnvelope(responsePayload, payload.symbol, payload.research_mode, payload.expiration, payload.width);
   trace.schema_validation_ms = Math.round(performance.now() - validationStarted);
   if (!valid) {
     return Response.json(

@@ -7,9 +7,12 @@ Integration base: main `249be6e` (PR #12). All research access is read-only.
 
 | MCP tool | Authenticated REST POST | Input |
 | --- | --- | --- |
-| `run_market` | `/v1/research/market` | `symbol` (QQQ/SPY), optional ISO `expiration`, `available_capital`, `objective`, `width` (default 5 points) |
+| `run_market` | `/v1/research/market` | `symbol` (QQQ/SPY), optional ISO `expiration`, `available_capital`, `objective`, `width` (omitted/null = Auto Width; numeric = exact Manual Width) |
 | `research_structure` | `/v1/research/structure` | MCP `structure` object; REST body directly |
 | `compare_structures` | `/v1/research/structures/compare` | MCP `comparison` object; REST body directly with `structures`, optional `thesis` |
+
+See [Milestone 2B width semantics, bounds and limitations](MILESTONE2B_WIDTH_SELECTION.md).
+Numeric widths no longer substitute nearest strikes; BWB manual outer wings are twice the inner width.
 
 Run example: `{"symbol":"QQQ","available_capital":300}`.
 Resolve ambiguous dates like Friday into an explicit ISO date with the user.
