@@ -17,7 +17,7 @@ VERSION = "alphaos-run-market-v1"
 
 def run_market(payload, *, expiration=None, history=None, session_context=None,
                expected_move=None, expected_move_horizon=None,
-               available_capital=None, objective=None, width=5, late_minutes=60):
+               available_capital=None, objective=None, width=None, late_minutes=60):
     """Research one archive snapshot without provider calls, persistence or execution."""
     with stage('archive_normalization'):
         archived = normalize_archive_snapshot(payload, expiration)

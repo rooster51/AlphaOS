@@ -20,6 +20,8 @@ separate; unknown evidence is never filled with synthetic observations.
 - [Website setup](web/DEPLOYMENT.md), [MCP setup](docs/MCP.md),
   [archive modes](docs/RELEASE1_AFTER_HOURS_RESEARCH.md) and
   [candidate diagnostics](docs/RELEASE1_CANDIDATE_GENERATION_DIAGNOSTICS.md).
+- [Auto/Manual Width research](docs/MILESTONE2B_WIDTH_SELECTION.md): observed-strike
+  discovery, capital checks, compatibility changes and bounded-search limitations.
 
 Headless backend: install `requirements-api.txt`, configure the server-side
 environment described in the deployment map, and run `python -m alphaos_api`.

@@ -2,6 +2,27 @@ import assert from "node:assert/strict";
 import { afterEach, test } from "node:test";
 import { POST } from "../src/app/api/research/market/route.ts";
 
+test("auto and exact manual width semantics survive the bridge; substituted widths fail closed", async () => {
+  setBackendConfig();
+  for (const symbol of ["SPY", "QQQ"]) for (const width of [undefined, null, 1, 2.5, 5]) {
+    const payload = {symbol, ...(width !== undefined ? {width} : {})};
+    globalThis.fetch = async (_, options) => {
+      assert.deepEqual(JSON.parse(options.body), payload);
+      const data = envelope(symbol);
+      data.request.width = width ?? null;
+      return Response.json(data);
+    };
+    assert.equal((await POST(request(payload))).status, 200);
+    if (width !== undefined) {
+      globalThis.fetch = async () => {
+        const data = envelope(symbol); data.request.width = 7;
+        return Response.json(data);
+      };
+      assert.equal((await POST(request(payload))).status, 502);
+    }
+  }
+});
+
 test("explicit near, monthly and long dates never accept a substituted expiration", async () => {
   setBackendConfig();
   for (const symbol of ["SPY","QQQ"]) for (const expiration of ["2030-01-02","2030-01-03","2030-01-04","2030-01-18","2031-01-17"]) {
@@ -159,6 +180,7 @@ test("forwards a valid authenticated JSON POST and preserves read-only response 
     upstreamRequest = { url: new URL(url), options };
     const data = envelope();
     data.request.expiration = "2026-10-16";
+    data.request.width = 7.5;
     data.research.expiration = "2026-10-16";
     data.research.research_session.expiration = "2026-10-16";
     return Response.json(data);

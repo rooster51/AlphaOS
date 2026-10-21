@@ -73,7 +73,8 @@ function parseResearchBundle(
   value: unknown,
   symbol: MarketSymbol,
   mode: ResearchMode,
-  expiration?: string
+  expiration?: string,
+  width?: number
 ): ResearchBundle | null {
   const outer = object(value);
   const envelope = object(outer?.research);
@@ -82,6 +83,7 @@ function parseResearchBundle(
   const archive = object(research?.archive);
   const session = object(research?.research_session);
   const provenance = object(envelope?.provenance);
+  if ((request?.width ?? null) !== (width ?? null)) return null;
   if (expiration !== undefined && (request?.expiration !== expiration || research?.expiration !== expiration || session?.expiration !== expiration)) return null;
 
   if (
@@ -200,12 +202,14 @@ export function MarketResearchPanel({
   symbol: MarketSymbol;
 }) {
   const [attempt, setAttempt] = useState(0);
+  const [widthMode, setWidthMode] = useState("auto");
+  const [manualWidth, setManualWidth] = useState("5");
   const [capital, setCapital] = useState("150");
   const [mode, setMode] = useState<ResearchMode>("current");
   const [expiration, setExpiration] = useState("");
   const [expirations, setExpirations] = useState<string[]>([]);
   const [inputError, setInputError] = useState("");
-  const [submitted, setSubmitted] = useState<{available_capital: number; expiration?: string; research_mode?: ResearchMode}>({available_capital: 150});
+  const [submitted, setSubmitted] = useState<{available_capital: number; expiration?: string; research_mode?: ResearchMode; width?: number}>({available_capital: 150});
   const [state, setState] = useState<LoadState>({
     kind: "loading",
   });
@@ -267,7 +271,7 @@ export function MarketResearchPanel({
           return;
         }
 
-        const bundle = parseResearchBundle(body, symbol, submitted.research_mode ?? "current", submitted.expiration);
+        const bundle = parseResearchBundle(body, symbol, submitted.research_mode ?? "current", submitted.expiration, submitted.width);
 
         if (!bundle) {
           if (active) {
@@ -341,8 +345,10 @@ export function MarketResearchPanel({
           event.preventDefault();
           const amount = buyingPower(capital);
           if (amount === null) { setInputError("Enter a finite positive dollar amount."); return; }
+          const width = Number(manualWidth);
+          if (widthMode === "manual" && (!Number.isFinite(width) || width <= 0 || width > 100)) { setInputError("Enter a width greater than 0 and at most 100 points."); return; }
           setInputError("");
-          setSubmitted({ available_capital: amount, ...(expiration ? {expiration} : {}), ...(mode === "historical" ? {research_mode: mode} : {}) });
+          setSubmitted({ available_capital: amount, ...(widthMode === "manual" ? {width} : {}), ...(expiration ? {expiration} : {}), ...(mode === "historical" ? {research_mode: mode} : {}) });
         }}>
           <label className="grid gap-2">Research mode
             <select className="rounded bg-terminal-900 border border-terminal-600 p-2" aria-label="Research mode"
@@ -355,6 +361,17 @@ export function MarketResearchPanel({
             <input className="rounded bg-terminal-900 border border-terminal-600 p-2" aria-label="Available Buying Power ($)"
               inputMode="decimal" value={capital} onChange={e => setCapital(e.target.value)} />
           </label>
+          <label className="grid gap-2">Width mode
+            <select aria-label="Width mode" value={widthMode} onChange={e => setWidthMode(e.target.value)}
+              className="rounded bg-terminal-900 border border-terminal-600 p-2">
+              <option value="auto">Auto Width</option><option value="manual">Manual Width</option>
+            </select>
+          </label>
+          {widthMode === "manual" && <label className="grid gap-2">Manual width (points)
+            <input aria-label="Manual width (points)" inputMode="decimal" value={manualWidth}
+              className="rounded bg-terminal-900 border border-terminal-600 p-2"
+              onChange={e => setManualWidth(e.target.value)} />
+          </label>}
           <label className="grid gap-2">Expiration
             <select className="rounded bg-terminal-900 border border-terminal-600 p-2" aria-label="Expiration"
               value={expiration} onChange={e => setExpiration(e.target.value)}>
@@ -371,7 +388,7 @@ export function MarketResearchPanel({
           <p className="w-full text-xs text-terminal-400">Listed choices come from archived observations. An exact date requires matching verified archive evidence; no other expiration is substituted. Monthly and long-dated coverage may be unavailable.</p>
           <button className="rounded border border-terminal-600 px-4 py-2" disabled={state.kind === "loading"}>Run Research</button>
           {inputError && <p role="alert">{inputError}</p>}
-          <p className="text-xs text-terminal-400 w-full">Capital is an expiration maximum-loss ceiling, not account equity or broker margin. Expiration choices come from the last verified backend response; availability is rechecked on each run. Default spread width: 5 points, matching MCP.</p>
+          <p className="text-xs text-terminal-400 w-full">Capital is an expiration maximum-loss ceiling, not account equity or broker margin. Expiration choices come from the last verified backend response; availability is rechecked on each run. Auto Width evaluates multiple observed strike combinations within documented search bounds. Manual Width requires exact wings; broken-wing butterflies use a twice-as-wide outer wing. Missing strikes are not substituted. REST and MCP use the same rules.</p>
           <p className="text-xs text-terminal-400 w-full">Historical archive research must be requested explicitly. It uses the latest verified snapshot at its original observation time, including after close, weekends and holidays. Historical candidates are not current trading opportunities or executable quotes.</p>
         </form>
 
@@ -529,6 +546,10 @@ function ResearchResult({
         <ResearchMetric label="Capital-rejected structures" value={formatValue(object(session.diagnostics)?.capital_rejection_count)} />
       </div>
       <ResearchMetric label="Available buying power used" value={formatMoney(session.available_capital)} />
+      <ResearchMetric label="Width selection" value={formatLabel(object(object(session.diagnostics)?.width_selection)?.mode)} />
+      {object(object(session.diagnostics)?.width_selection)?.search_complete === false && (
+        <p role="status" className="rounded border border-warning/30 p-4 text-warning">Width search reached a documented bound. Results are partial; no conclusion that every possible structure exceeds capital can be drawn.</p>
+      )}
       <section className="rounded border border-terminal-800 p-4 space-y-3">
         <h3>Candidate generation diagnostics</h3>
         <p className="text-xs">Unavailable classifications are not invalid structures. Matched market routes and quote-supported structure research are reported separately. Counts apply to this snapshot and selected expiration; they are not rankings or a count of all possible trades.</p>

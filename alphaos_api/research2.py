@@ -27,7 +27,7 @@ class MarketRequest(Request):
     expiration: date | None = None
     available_capital: float | None = Field(default=None, gt=0, strict=True)
     objective: str | None = Field(default=None, max_length=1000)
-    width: float = Field(default=5, gt=0, le=100)
+    width: float | None = Field(default=None, gt=0, le=100, strict=True)
 
 
 class StructureLeg(Request):
@@ -108,7 +108,7 @@ class ArchiveResearchService:
         caveats = ['Archive observations are not executable live quotes.',
             'Capital is expiration max-loss eligibility, not broker buying power or margin.',
             'Objective is recorded context; it does not override evidence or filter strategy routes.',
-            'Default width is 5 points. Omitted expiration uses the archive adapter selection.']
+            'Omitted/null width selects automatic observed-strike enumeration; a numeric width is an exact manual override. Omitted expiration uses the archive adapter selection.']
         # Load/verify archive FIRST; never fall back to live chain on failure.
         now = self.clock()
         try:

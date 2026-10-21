@@ -12,9 +12,10 @@ from math import isfinite
 from modules.long_option_discovery import discover_long_options
 from modules.opportunity_router import ALLOWED, opportunity_state, route_strategies
 from modules.position_research import research_position
-from modules.premium_engine import generate, valid_contract
+from modules.premium_engine import valid_contract
+from modules.width_discovery import discover_widths
 from modules.strategy_compare import compare_strategy_research
-from modules.structure_research import _number, discover_debit_spreads
+from modules.structure_research import _number
 
 PREMIUM = {'Bull put spread': 'put_credit_spread', 'Bear call spread': 'call_credit_spread',
            'Iron condor': 'iron_condor', 'Iron butterfly': 'butterfly',
@@ -90,7 +91,7 @@ def _serializable(value):
 
 def research_market_opportunities(symbol, market_research, chain, *, as_of,
                                   expiration=None, available_capital=None,
-                                  objective=None, candidates=None, width=5):
+                                  objective=None, candidates=None, width=None):
     """Research one expiration; supplied candidates replace automatic discovery.
 
     No provider calls, journal writes, rankings, or recommendations. Capital is a
@@ -106,9 +107,10 @@ def research_market_opportunities(symbol, market_research, chain, *, as_of,
         available_capital = _number(available_capital)
         if available_capital is None or available_capital < 0:
             raise ValueError('Capital must be a nonnegative finite dollar amount.')
-    width = _number(width)
-    if width is None or width <= 0:
-        raise ValueError('Width must be positive.')
+    if width is not None:
+        width = _number(width)
+        if width is None or not 0 < width <= 100:
+            raise ValueError('Width must be positive and at most 100.')
     market = deepcopy(market_research)
     raw_state = market.get('opportunity_state') or {}
     if not isinstance(raw_state, dict):
@@ -174,51 +176,10 @@ def research_market_opportunities(symbol, market_research, chain, *, as_of,
                     count = sum(item['option_type'] == kind.lower() for item in discovery['candidates'])
                     construction_diagnostics.append(dict(strategy_family='long_call' if kind == 'Call' else 'long_put',
                         generated_count=count, reason=None if count else 'no_quoted_long_option_within_existing_distance_filter'))
-            directions = [d for f, d in (('call_debit_spread', 'bullish'), ('put_debit_spread', 'bearish')) if f in construction_families]
-            if directions:
-                try:
-                    discovery = discover_debit_spreads(clean, spot,
-                        directions=directions, width=width, as_of=research_date,
-                        expected_move=expected_move)
-                    raw.extend(r['trade'] for r in discovery['candidates'])
-                    for direction in directions:
-                        pool = 'calls' if direction == 'bullish' else 'puts'
-                        family = 'call_debit_spread' if direction == 'bullish' else 'put_debit_spread'
-                        usable = delta_counts[pool]
-                        count = sum(r['strategy_family'] == family for r in discovery['candidates'])
-                        selection_reason = next((row['reason'] for row in discovery['diagnostics'] if row['direction'] == direction), None)
-                        construction_diagnostics.append(dict(strategy_family=family,
-                            generated_count=count, quoted_contract_count=len(clean[pool]),
-                            delta_eligible_contract_count=usable, requested_width=width,
-                            basis='unclassified_quote_research' if unclassified_research else 'evidence_routed',
-                            reason=None if count else 'missing_valid_quotes' if not clean[pool]
-                            else 'insufficient_observed_delta_contracts' if usable < 2
-                            else selection_reason or 'no_valid_debit_pair_at_requested_width'))
-                except ValueError:
-                    construction_errors.append('Debit constructor returned insufficient economics.')
-                    for direction in directions:
-                        construction_diagnostics.append(dict(strategy_family='call_debit_spread' if direction == 'bullish' else 'put_debit_spread',
-                            generated_count=0, reason='debit_constructor_economics_unavailable'))
-            if allowed & set(PREMIUM.values()):
-                # IV is deliberately absent: constructor quotes/legs do not
-                # require a volatility model, and no probability is imported.
-                # Same-day expiry uses zero time; payoff construction remains
-                # valid while modeled POP intentionally stays unavailable.
-                premium_counts = Counter()
-                premium_diagnostics = {}
-                for trade in generate(clean, spot, max(0, (expiry-research_date).days)/365,
-                                      None, width=width, as_of=research_date,
-                                      min_net_credit=0, diagnostics=premium_diagnostics):
-                    if PREMIUM.get(trade['strategy']) in allowed:
-                        premium_counts[PREMIUM[trade['strategy']]] += 1
-                        raw.append(dict(trade, symbol=symbol, source='Public normalized chain',
-                                        pricing_assumption='Natural bid/ask; existing $0.65 per-contract fee; no AlphaOS 2.0 minimum net-credit floor'))
-                for family in sorted(allowed & set(PREMIUM.values())):
-                    name = next(name for name, value in PREMIUM.items() if value == family)
-                    report = premium_diagnostics.get(name, dict(attempted_count=0, rejection_counts={}))
-                    construction_diagnostics.append(dict(strategy_family=family, generated_count=premium_counts[family],
-                        attempted_count=report['attempted_count'], rejection_counts=report['rejection_counts'],
-                        reason=None if premium_counts[family] else 'no_structure_passed_existing_quote_geometry_and_credit_fee_gates'))
+            discovered, reports = discover_widths(clean, spot,
+                construction_families - {'long_call', 'long_put'}, width=width)
+            raw.extend(discovered)
+            construction_diagnostics.extend(reports)
         for index, candidate in enumerate(raw):
             try:
                 if not isinstance(candidate, dict) or candidate.get('expiration') != expiration:
@@ -263,6 +224,8 @@ def research_market_opportunities(symbol, market_research, chain, *, as_of,
             zero_reason = context_error
         elif not construction_families and routing['routes'] and candidates is None:
             zero_reason = 'no_supported_constructor_route'
+        elif any(row.get('search_truncated') for row in construction_diagnostics):
+            zero_reason = 'bounded_search_incomplete'
         elif not raw:
             zero_reason = 'no_constructible_structure'
         elif not economics_valid_count:
@@ -273,7 +236,9 @@ def research_market_opportunities(symbol, market_research, chain, *, as_of,
             zero_reason = 'all_structures_excluded'
         if zero_reason not in blocking:
             blocking.append(zero_reason)
-    diagnostics = dict(generated_count=len(raw), accepted_count=len(researched),
+    diagnostics = dict(width_selection=dict(mode='auto' if width is None else 'manual', requested_width=width,
+        search_complete=not any(row.get('search_truncated') for row in construction_diagnostics)),
+        generated_count=len(raw), accepted_count=len(researched),
         candidate_rejection_count=sum(x['stage'] != 'chain' for x in excluded),
         contract_rejection_count=sum(x['stage'] == 'chain' for x in excluded),
         capital_rejection_count=reason_counts.get('exceeds_available_capital', 0),
@@ -336,7 +301,7 @@ def research_market_opportunities(symbol, market_research, chain, *, as_of,
         candidates=researched, comparison=comparison, excluded=excluded, diagnostics=diagnostics,
         unavailable_routes=unavailable, status='complete' if researched else 'no_candidate',
         context_error=context_error, objective=objective, available_capital=available_capital,
-        candidate_order='supplied order, or existing long/debit/premium generator order; not a ranking',
+        candidate_order='supplied order, or deterministic observed-strike enumeration; not a ranking',
         caveats=['Classifications must come from supplied AlphaOS research; raw metrics are not silently classified.',
                  'Missing evidence stays unknown. No provider requests or freshness guarantees are made.',
                  'Capital uses expiration max loss only; it is not broker margin or buying power.',

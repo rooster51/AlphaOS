@@ -25,9 +25,10 @@ def test_missing_history_does_not_misreport_structural_or_capital_failure(symbol
     accepted = int(capital >= (50 if width == 1 else 100))
     assert result['status'] == ('complete' if accepted else 'no_candidate')
     assert d['route_count'] == 0
-    assert d['generated_count'] == 1
-    assert d['accepted_count'] == accepted
-    assert d['capital_rejection_count'] == 1 - accepted
+    count = 2 if width == 1 else 1
+    assert d['generated_count'] == count
+    assert d['accepted_count'] == accepted * count
+    assert d['capital_rejection_count'] == (1 - accepted) * count
     assert d['classification_limitations'] == ['no_evidence_supported_routes']
     assert d['zero_candidate_reason'] == (None if accepted else 'all_structures_exceed_capital')
     assert not result['opportunity_state']['evidence_sufficiency']['sufficient_for_routing']
@@ -37,9 +38,10 @@ def test_missing_history_does_not_misreport_structural_or_capital_failure(symbol
 def test_observed_evidence_then_capital_has_distinct_counts(symbol, capital, width, accepted, risk):
     result = session(symbol, capital, width)
     d = result['diagnostics']
-    assert d['generated_count'] == 1
-    assert d['accepted_count'] == accepted
-    assert d['capital_rejection_count'] == 1-accepted
+    count = 2 if width == 1 else 1
+    assert d['generated_count'] == count
+    assert d['accepted_count'] == accepted * count
+    assert d['capital_rejection_count'] == (1-accepted) * count
     selected = result['candidates'][0]['research'] if accepted else result['excluded'][0]['research']
     assert selected['capital_at_risk'] == risk
     assert result['comparison']['winner'] is None
