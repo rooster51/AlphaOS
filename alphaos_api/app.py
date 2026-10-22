@@ -85,7 +85,12 @@ def sanitized(value):
             return int(item)
         # Retain the existing pandas/numpy/date conversions for legacy routes.
         return clean(json_value(item))
-    return clean(value)
+    try:
+        return clean(value)
+    finally:
+        # The recursive closure otherwise retains itself and its caches (and
+        # source arrays) until cyclic GC scans the entire response graph.
+        clean = None
 
 
 def respond(value):
