@@ -3,6 +3,7 @@ import gc,json,weakref
 from datetime import date
 from copy import deepcopy
 import numpy as np
+import orjson
 import pytest
 from alphaos_api.app import sanitized
 from alphaos_api.json_encoding import encode_json
@@ -34,7 +35,7 @@ def test_full_bytes_and_redaction(entry,monkeypatch):
 def test_legacy_and_empty_shapes(p):
  assert encode_research_response(p,sanitize=sanitized,encode=encode_json)==encode_json(sanitized(p))
 
-@pytest.mark.parametrize('bad',[object()])
+@pytest.mark.parametrize('bad',[object(),orjson.Fragment(b'{"access_token":"must-not-pass"}')])
 def test_unknown_values_still_fail_closed(bad):
  with pytest.raises(TypeError):encode_research_response(payload({'unknown':bad}),sanitize=sanitized,encode=encode_json)
 

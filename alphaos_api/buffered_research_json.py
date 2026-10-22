@@ -3,7 +3,6 @@
 No bytes are emitted until all sanitization and encoding succeeds. Fragments
 contain only bytes produced by the existing safe encoder, never caller bytes.
 """
-import os
 import orjson
 
 
@@ -21,9 +20,9 @@ def encode_research_response(value, *, sanitize, encode):
     projected_session = dict(session)
     projected_session.update({key: [] for key in arrays})
     projected = dict(value, research=dict(value['research'], research_session=projected_session))
-    secrets = tuple(v for key in ('PUBLIC_API_SECRET', 'PUBLIC_ACCOUNT_NUMBER',
-        'ALPHAOS_API_TOKEN', 'SUPABASE_SERVICE_ROLE_KEY', 'SUPABASE_URL') if (v := os.environ.get(key)))
-    state = (secrets, {}, {}, True)
+    # First sanitize the root header so the existing sanitizer snapshots its
+    # own complete secret/key policy and root nonfinite-number semantics once.
+    state = {}
     cleaned = sanitize(projected, _state=state, _release=True)
     for key, entries in arrays.items():
         chunks = []

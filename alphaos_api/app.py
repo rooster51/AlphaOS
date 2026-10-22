@@ -51,7 +51,8 @@ def sanitized(value, *, _state=None, _release=False):
     normalized_lists = {}
     unlimited = isinstance(value, dict) and isinstance(value.get('schema_version'), str) and value.get('schema_version') == 'alphaos-interface-v2'
     if _state is not None:
-        secrets_to_redact, key_policy, redacted_strings, unlimited = _state
+        secrets_to_redact, key_policy, redacted_strings, unlimited = _state.setdefault(
+            'policy', (secrets_to_redact, key_policy, redacted_strings, unlimited))
     def clean(item):
         kind = type(item)
         if item is None or kind is int or kind is bool:
