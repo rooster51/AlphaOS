@@ -1,0 +1,86 @@
+{
+  "SPY": {
+    "baseline": {
+      "clean_calls": {
+        "dict": 47210,
+        "str": 132386,
+        "NoneType": 47136,
+        "bool": 14369,
+        "list": 25681,
+        "int": 12379,
+        "float": 147474
+      },
+      "unique_containers": {
+        "dict": 47170,
+        "list": 20537
+      },
+      "repeat_container_calls": {
+        "dict": 40,
+        "list": 5144
+      },
+      "bytes": 12735756
+    },
+    "candidate": {
+      "clean_calls": {
+        "dict": 47210,
+        "str": 132386,
+        "NoneType": 47136,
+        "bool": 14369,
+        "list": 25681,
+        "int": 12379,
+        "float": 147474
+      },
+      "unique_containers": {
+        "dict": 47170,
+        "list": 20537
+      },
+      "repeat_container_calls": {
+        "dict": 40,
+        "list": 5144
+      },
+      "bytes": 12735756
+    }
+  },
+  "QQQ": {
+    "baseline": {
+      "clean_calls": {
+        "dict": 47210,
+        "str": 132386,
+        "NoneType": 47136,
+        "bool": 14369,
+        "list": 25681,
+        "int": 12379,
+        "float": 147474
+      },
+      "unique_containers": {
+        "dict": 47170,
+        "list": 20537
+      },
+      "repeat_container_calls": {
+        "dict": 40,
+        "list": 5144
+      },
+      "bytes": 12735756
+    },
+    "candidate": {
+      "clean_calls": {
+        "dict": 47210,
+        "str": 132386,
+        "NoneType": 47136,
+        "bool": 14369,
+        "list": 25681,
+        "int": 12379,
+        "float": 147474
+      },
+      "unique_containers": {
+        "dict": 47170,
+        "list": 20537
+      },
+      "repeat_container_calls": {
+        "dict": 40,
+        "list": 5144
+      },
+      "bytes": 12735756
+    }
+  }
+}

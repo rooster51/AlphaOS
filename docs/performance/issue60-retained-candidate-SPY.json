@@ -1,0 +1,1042 @@
+{
+  "variant": "candidate",
+  "symbol": "SPY",
+  "phases": {
+    "start": {
+      "tracked_objects": 183129,
+      "tracked_types": [
+        [
+          "dict",
+          31509
+        ],
+        [
+          "function",
+          28286
+        ],
+        [
+          "tuple",
+          22729
+        ],
+        [
+          "list",
+          16285
+        ],
+        [
+          "ReferenceType",
+          6808
+        ],
+        [
+          "cell",
+          5794
+        ],
+        [
+          "set",
+          5309
+        ],
+        [
+          "getset_descriptor",
+          4630
+        ],
+        [
+          "Timestamp",
+          3861
+        ],
+        [
+          "wrapper_descriptor",
+          3483
+        ]
+      ],
+      "traced_current_bytes": 27240,
+      "traced_peak_bytes": 1657232
+    },
+    "research_built": {
+      "tracked_objects": 219619,
+      "tracked_types": [
+        [
+          "dict",
+          45988
+        ],
+        [
+          "list",
+          36880
+        ],
+        [
+          "function",
+          28393
+        ],
+        [
+          "tuple",
+          22780
+        ],
+        [
+          "ReferenceType",
+          7381
+        ],
+        [
+          "cell",
+          5803
+        ],
+        [
+          "set",
+          5313
+        ],
+        [
+          "getset_descriptor",
+          4637
+        ],
+        [
+          "Timestamp",
+          3877
+        ],
+        [
+          "wrapper_descriptor",
+          3483
+        ]
+      ],
+      "traced_current_bytes": 19149418,
+      "traced_peak_bytes": 22671500
+    },
+    "body_encoded": {
+      "tracked_objects": 219631,
+      "tracked_types": [
+        [
+          "dict",
+          45989
+        ],
+        [
+          "list",
+          36881
+        ],
+        [
+          "function",
+          28393
+        ],
+        [
+          "tuple",
+          22790
+        ],
+        [
+          "ReferenceType",
+          7381
+        ],
+        [
+          "cell",
+          5803
+        ],
+        [
+          "set",
+          5313
+        ],
+        [
+          "getset_descriptor",
+          4637
+        ],
+        [
+          "Timestamp",
+          3877
+        ],
+        [
+          "wrapper_descriptor",
+          3483
+        ]
+      ],
+      "traced_current_bytes": 35858971,
+      "traced_peak_bytes": 60268605
+    },
+    "input_released": {
+      "tracked_objects": 184720,
+      "tracked_types": [
+        [
+          "dict",
+          31603
+        ],
+        [
+          "function",
+          28393
+        ],
+        [
+          "tuple",
+          22800
+        ],
+        [
+          "list",
+          16347
+        ],
+        [
+          "ReferenceType",
+          7381
+        ],
+        [
+          "cell",
+          5803
+        ],
+        [
+          "set",
+          5313
+        ],
+        [
+          "getset_descriptor",
+          4637
+        ],
+        [
+          "Timestamp",
+          3877
+        ],
+        [
+          "wrapper_descriptor",
+          3483
+        ]
+      ],
+      "traced_current_bytes": 17614816,
+      "traced_peak_bytes": 60268605
+    },
+    "body_released_before_gc": {
+      "tracked_objects": 184732,
+      "tracked_types": [
+        [
+          "dict",
+          31604
+        ],
+        [
+          "function",
+          28393
+        ],
+        [
+          "tuple",
+          22810
+        ],
+        [
+          "list",
+          16348
+        ],
+        [
+          "ReferenceType",
+          7381
+        ],
+        [
+          "cell",
+          5803
+        ],
+        [
+          "set",
+          5313
+        ],
+        [
+          "getset_descriptor",
+          4637
+        ],
+        [
+          "Timestamp",
+          3877
+        ],
+        [
+          "wrapper_descriptor",
+          3483
+        ]
+      ],
+      "traced_current_bytes": 1002448,
+      "traced_peak_bytes": 60268605
+    },
+    "after_forced_gc": {
+      "tracked_objects": 184693,
+      "tracked_types": [
+        [
+          "dict",
+          31595
+        ],
+        [
+          "function",
+          28393
+        ],
+        [
+          "tuple",
+          22779
+        ],
+        [
+          "list",
+          16349
+        ],
+        [
+          "ReferenceType",
+          7381
+        ],
+        [
+          "cell",
+          5803
+        ],
+        [
+          "set",
+          5313
+        ],
+        [
+          "getset_descriptor",
+          4637
+        ],
+        [
+          "Timestamp",
+          3877
+        ],
+        [
+          "wrapper_descriptor",
+          3483
+        ]
+      ],
+      "traced_current_bytes": 780681,
+      "traced_peak_bytes": 60268605
+    }
+  },
+  "diagnostic_encode_wall_ms": 1116.9293000129983,
+  "diagnostic_encode_cpu_ms": 1125.0,
+  "bytes": 12735756,
+  "sha256": "796c7e63fa63d17a464dcc6f3a059eb5cdfa484504951cd786e95b66d89ad9d2",
+  "top_retained_allocations": [
+    "C:\\Users\\rober\\OneDrive\\Documents\\Alpha OS\\issue60-buffered-graphs\\alphaos_api\\json_encoding.py:8: size=15.8 MiB, count=2, average=8112 KiB",
+    "C:\\Users\\rober\\OneDrive\\Documents\\Alpha OS\\issue60-buffered-graphs\\modules\\options_payoff.py:115: size=3610 KiB, count=54121, average=68 B",
+    "C:\\Users\\rober\\OneDrive\\Documents\\Alpha OS\\issue60-buffered-graphs\\modules\\position_research.py:43: size=1696 KiB, count=5120, average=339 B",
+    "C:\\Users\\rober\\OneDrive\\Documents\\Alpha OS\\issue60-buffered-graphs\\modules\\options_payoff.py:22: size=1664 KiB, count=4096, average=416 B",
+    "C:\\Users\\rober\\OneDrive\\Documents\\Alpha OS\\issue60-buffered-graphs\\modules\\structure_research.py:106: size=952 KiB, count=3070, average=317 B",
+    "C:\\Users\\rober\\OneDrive\\Documents\\Alpha OS\\issue60-buffered-graphs\\modules\\historical_economics.py:228: size=768 KiB, count=1024, average=768 B",
+    "C:\\Users\\rober\\OneDrive\\Documents\\Alpha OS\\issue60-buffered-graphs\\modules\\strategy_compare.py:69: size=464 KiB, count=2048, average=232 B",
+    "C:\\Users\\rober\\OneDrive\\Documents\\Alpha OS\\issue60-buffered-graphs\\modules\\options_payoff.py:126: size=464 KiB, count=2048, average=232 B",
+    "C:\\Users\\rober\\OneDrive\\Documents\\Alpha OS\\issue60-buffered-graphs\\modules\\historical_economics.py:151: size=455 KiB, count=4089, average=114 B",
+    "C:\\Users\\rober\\OneDrive\\Documents\\Alpha OS\\issue60-buffered-graphs\\modules\\options_payoff.py:128: size=448 KiB, count=13312, average=34 B",
+    "C:\\Users\\rober\\OneDrive\\Documents\\Alpha OS\\issue60-buffered-graphs\\modules\\options_payoff.py:117: size=431 KiB, count=18404, average=24 B",
+    "C:\\Users\\rober\\OneDrive\\Documents\\Alpha OS\\issue60-buffered-graphs\\modules\\options_payoff.py:107: size=431 KiB, count=18404, average=24 B"
+  ],
+  "source_retained_after_releasing_response_input": false,
+  "forced_gc_collected": 0,
+  "gc_events": [
+    {
+      "generation": 0,
+      "wall_ms": 0.7105999393388629,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.11249992530792952,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.10750000365078449,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.09079999290406704,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.10740000288933516,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.25260006077587605,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.18309999722987413,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.1097000204026699,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.0961000332608819,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.12600002810359,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.11350004933774471,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 1,
+      "wall_ms": 1.219899975694716,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.11640007141977549,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.09790004696696997,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.0817000400274992,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.09820004925131798,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.07940002251416445,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.07569999434053898,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.05809997674077749,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.10379997547715902,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.07949990686029196,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.05819997750222683,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.07179996464401484,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 1,
+      "wall_ms": 1.0076999897137284,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.07219996768981218,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.05330005660653114,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.1078000059351325,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.055900076404213905,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.06610003765672445,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.10750000365078449,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.04880002234131098,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.053299940191209316,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.1365999924018979,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.057200086303055286,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.045599997974932194,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 1,
+      "wall_ms": 0.752599909901619,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.06880005821585655,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.06349990144371986,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.0790000194683671,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.07559999357908964,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.051999930292367935,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.058399979025125504,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.04810001701116562,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.05689996760338545,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.06779993418604136,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.05200004670768976,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.04770001396536827,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 1,
+      "wall_ms": 0.9209000272676349,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.05140004213899374,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.08389994036406279,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.07680000271648169,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.04650000482797623,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.0743999844416976,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.06980006583034992,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.16139994841068983,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.055600074119865894,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.06980006583034992,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.07489998824894428,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.06430002395063639,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 1,
+      "wall_ms": 0.6766999140381813,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.0743999844416976,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.05009991582483053,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.05509995389729738,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.07209996692836285,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.07130007725208998,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.07020006887614727,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.05879998207092285,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.05430006422102451,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.09550002869218588,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.08110003545880318,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.06740004755556583,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 1,
+      "wall_ms": 0.682000070810318,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.05449994932860136,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.0746001023799181,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.06609992124140263,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.05350005812942982,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.0743999844416976,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.0610999995842576,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.05619996227324009,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.05280005279928446,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.07010006811469793,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.07179996464401484,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.06919994484633207,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 1,
+      "wall_ms": 1.1069999309256673,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.12129999231547117,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.14199991710484028,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.07870001718401909,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.06520003080368042,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.04309997893869877,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.0447999918833375,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.06689992733299732,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.07269997149705887,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.188400037586689,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.07880001794546843,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.040499959141016006,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 1,
+      "wall_ms": 0.5766999674960971,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.0591999851167202,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.05209993105381727,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.06630003917962313,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.053600058890879154,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.05570007488131523,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.06180000491440296,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.03299990203231573,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.025499961338937283,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.04529999569058418,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.037400051951408386,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.031400006264448166,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 1,
+      "wall_ms": 0.7863999344408512,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.049299909733235836,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.045599997974932194,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.05489995237439871,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.16599998343735933,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.047200010158121586,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.04409998655319214,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.08640007581561804,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.05119992420077324,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.0654000323265791,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.08309993427246809,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.03330002073198557,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 1,
+      "wall_ms": 0.45060005504637957,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 0,
+      "wall_ms": 0.0828000484034419,
+      "cpu_ms": 0.0,
+      "collected": 0
+    },
+    {
+      "generation": 2,
+      "wall_ms": 77.99060002434999,
+      "cpu_ms": 78.125,
+      "collected": 0
+    }
+  ]
+}
