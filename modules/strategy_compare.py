@@ -4,6 +4,9 @@ Comparison is descriptive only: preserve supplied order, expose common evidence,
 and never score, rank, recommend, or choose a winner.
 """
 from math import isfinite
+from datetime import date
+
+from modules.options_payoff import trade_analysis, validate_trade
 
 
 def _number(value):
@@ -22,6 +25,53 @@ def _family(item):
         or (item.get("trade") or {}).get("strategy_family")
         or (item.get("trade") or {}).get("strategy")
     )
+
+
+def _infer_long_pair(trade):
+    """Recognize only unambiguous native long pairs; never infer an entry price."""
+    symbol = trade.get("symbol")
+    expiration = trade.get("expiration")
+    if not isinstance(symbol, str) or not symbol.strip():
+        raise ValueError("Underlying required for shape recognition.")
+    if not isinstance(expiration, str):
+        raise ValueError("Expiration required for shape recognition.")
+    date.fromisoformat(expiration)
+    if trade.get("underlying", symbol) != symbol:
+        raise ValueError("Underlying mismatch.")
+    if any(_number(trade.get(key)) is None for key in ("spot", "credit", "shares", "fees")):
+        raise ValueError("Explicit finite cashflows, fees and position required.")
+    legs = trade.get("legs")
+    if not isinstance(legs, list) or len(legs) != 2:
+        raise ValueError("Exactly two native option legs required.")
+    for leg in legs:
+        if not isinstance(leg, dict):
+            raise ValueError("Invalid leg.")
+        if leg.get("symbol", symbol) != symbol or leg.get("underlying", symbol) != symbol:
+            raise ValueError("Leg underlying mismatch.")
+        if leg.get("expiration", expiration) != expiration:
+            raise ValueError("Leg expiration mismatch.")
+        qty = _number(leg.get("qty"))
+        if _number(leg.get("strike")) is None:
+            raise ValueError("Finite strike required.")
+        if qty is None or qty <= 0 or not qty.is_integer():
+            raise ValueError("Whole positive quantities required.")
+        # Native signed qty is authoritative; reject conflicting alternate forms.
+        if "action" in leg and leg["action"] != "Buy":
+            raise ValueError("Conflicting leg action.")
+        if "quantity" in leg and _number(leg["quantity"]) != qty:
+            raise ValueError("Conflicting leg quantity.")
+    normalized = validate_trade(trade)
+    if normalized["shares"] != 0 or normalized["credit"] >= 0:
+        raise ValueError("Option-only long pairs require an explicit debit.")
+    legs = normalized["legs"]
+    if {leg["type"] for leg in legs} != {"Call", "Put"} or legs[0]["qty"] != legs[1]["qty"]:
+        raise ValueError("Equal long call and put quantities required.")
+    call = next(leg for leg in legs if leg["type"] == "Call")
+    put = next(leg for leg in legs if leg["type"] == "Put")
+    if put["strike"] > call["strike"]:
+        raise ValueError("Inverted long pair is unsupported.")
+    family = "long_straddle" if put["strike"] == call["strike"] else "long_strangle"
+    return family, normalized
 
 
 def _breakevens(item):
@@ -47,6 +97,14 @@ def normalize_comparison_candidate(item, input_index):
     if not isinstance(trade, dict):
         raise ValueError("Researched candidate requires a normalized trade.")
     family = _family(item)
+    if not family:
+        family, trade = _infer_long_pair(trade)
+        analysis = trade_analysis(trade)
+        # Ignore cached economics only on this new inference path. Existing
+        # explicitly classified researched candidates retain their contract.
+        item = dict(item, capital_at_risk=analysis["max_loss"],
+                    max_loss=analysis["max_loss"], max_profit=analysis["max_profit"],
+                    breakevens=analysis["breakevens"])
     spot = _number(trade.get("spot"))
     risk = _number(item.get("capital_at_risk", item.get("max_loss")))
     if not family or spot is None or spot <= 0 or risk is None or risk < 0:
