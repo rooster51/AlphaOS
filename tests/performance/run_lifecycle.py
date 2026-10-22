@@ -21,6 +21,13 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 REPO=Path.cwd();OUT=REPO/'lifecycle-results';OUT.mkdir(exist_ok=True)
 NETWORK='alphaos-issue60-profile'
 rows=[];reference={}
+def semantic(value):
+    # Existing Next JSON parsing/stringification spells integral doubles as
+    # integers. Compare all parsed values, not their Python/JS number spelling.
+    if isinstance(value,dict):return {k:semantic(v) for k,v in value.items()}
+    if isinstance(value,list):return [semantic(v) for v in value]
+    if type(value) is float and value.is_integer():return int(value)
+    return value
 def command(*args,**kw):return subprocess.run(args,check=True,**kw)
 def ready(url,verify=True):
     start=time.monotonic()
@@ -40,7 +47,7 @@ def call(symbol,tag,direct=False):
         headers=(time.perf_counter()-start)*1000;body=r.content;complete=(time.perf_counter()-start)*1000
         parse=time.perf_counter();data=r.json();parse_ms=(time.perf_counter()-parse)*1000
         full=data if direct else data.get('research',{})
-        digest=hashlib.sha256(json.dumps(full,sort_keys=True,separators=(',',':')).encode()).hexdigest() if r.status_code==200 else None
+        digest=hashlib.sha256(json.dumps(semantic(full),sort_keys=True,separators=(',',':')).encode()).hexdigest() if r.status_code==200 else None
         if digest:
             if symbol in reference:assert digest==reference[symbol],(tag,'full response parity failed')
             else:reference[symbol]=digest
