@@ -1,7 +1,6 @@
 name: Issue 60 isolated resource profile
 on:
-  push:
-    branches: [diagnostics/issue60-resource-profile]
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:
