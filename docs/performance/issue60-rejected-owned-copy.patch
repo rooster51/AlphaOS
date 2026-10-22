@@ -1,0 +1,81 @@
+diff --git a/modules/opportunity_session.py b/modules/opportunity_session.py
+index 555b26f..6c87025 100644
+--- a/modules/opportunity_session.py
++++ b/modules/opportunity_session.py
+@@ -11,7 +11,7 @@ from math import isfinite
+ 
+ from modules.long_option_discovery import discover_long_options
+ from modules.opportunity_router import ALLOWED, opportunity_state, route_strategies
+-from modules.position_research import research_position
++from modules.position_research import research_position, _research_position
+ from modules.premium_engine import valid_contract
+ from modules.width_discovery import discover_widths
+ from modules.research_control import checkpoint
+@@ -189,7 +189,7 @@ def research_market_opportunities(symbol, market_research, chain, *, as_of,
+                 try:
+                     if not isinstance(candidate, dict) or candidate.get('expiration') != expiration:
+                         raise ValueError('Candidate expiration mismatch.')
+-                    result = research_position(candidate, symbol=symbol, spot=spot,
++                    result = _research_position(candidate, symbol=symbol, spot=spot, owned=candidates is None,
+                                                as_of=research_date, expected_move=expected_move, payoff_detail='none')
+                 except (ValueError, TypeError, KeyError, OverflowError):
+                     excluded.append(dict(stage='research', input_index=index, reason='invalid_or_insufficient_candidate'))
+diff --git a/modules/position_research.py b/modules/position_research.py
+index 8b5ced0..cede690 100644
+--- a/modules/position_research.py
++++ b/modules/position_research.py
+@@ -3,7 +3,7 @@ from copy import deepcopy
+ 
+ from modules.long_option_research import research_long_option
+ from modules.options_payoff import validate_trade
+-from modules.structure_research import research_structure
++from modules.structure_research import research_structure, _research_structure
+ 
+ OBSERVATIONS = ('contract', 'bid', 'ask', 'mid', 'delta', 'gamma', 'theta',
+                 'vega', 'rho', 'iv', 'volume', 'open_interest', 'bid_timestamp',
+@@ -12,6 +12,11 @@ OBSERVATIONS = ('contract', 'bid', 'ask', 'mid', 'delta', 'gamma', 'theta',
+ 
+ 
+ def research_position(candidate, *, symbol, spot, as_of, expected_move=None, payoff_detail='full'):
++    return _research_position(candidate, symbol=symbol, spot=spot, as_of=as_of,
++        expected_move=expected_move, payoff_detail=payoff_detail)
++
++
++def _research_position(candidate, *, symbol, spot, as_of, expected_move=None, payoff_detail='full', owned=False):
+     """Reuse existing researchers; native cashflow includes signed quantities."""
+     if not isinstance(candidate, dict):
+         raise ValueError('Candidate must be a mapping.')
+@@ -36,7 +41,7 @@ def research_position(candidate, *, symbol, spot, as_of, expected_move=None, pay
+                       max_loss=result['capital_at_risk'])
+         result['evidence'] = {'pricing_assumption': candidate.get('pricing_assumption', 'Supplied cashflow; not a verified fill')}
+     else:
+-        result = research_structure(candidate, symbol=symbol, spot=spot,
++        result = _research_structure(candidate, symbol=symbol, spot=spot, owned=owned,
+                                     as_of=as_of, expected_move=expected_move, payoff_detail=payoff_detail)
+     normalized = []
+     for leg in result['trade']['legs']:
+diff --git a/modules/structure_research.py b/modules/structure_research.py
+index 1dae0ae..eb66955 100644
+--- a/modules/structure_research.py
++++ b/modules/structure_research.py
+@@ -50,6 +50,11 @@ def _family(legs):
+ 
+ 
+ def research_structure(candidate,*,symbol=None,spot=None,as_of=None,expected_move=None,payoff_detail='full'):
++    return _research_structure(candidate, symbol=symbol, spot=spot, as_of=as_of,
++        expected_move=expected_move, payoff_detail=payoff_detail, owned=False)
++
++
++def _research_structure(candidate,*,symbol=None,spot=None,as_of=None,expected_move=None,payoff_detail='full',owned=False):
+     """Normalize shared-engine trades or existing Strategy Selector suggestions.
+ 
+     Native credit uses the shared engine's signed per-share package cashflow.
+@@ -57,7 +62,7 @@ def research_structure(candidate,*,symbol=None,spot=None,as_of=None,expected_mov
+     Cached max-profit/loss, probability, fit, and recommendation fields are ignored.
+     """
+     if not isinstance(candidate,dict):raise ValueError('Candidate must be a mapping.')
+-    trade=deepcopy(candidate)
++    trade=dict(candidate) if owned else deepcopy(candidate)
+     if symbol is not None and trade.get('symbol') and symbol.strip().upper()!=str(trade['symbol']).strip().upper():
+         raise ValueError('Underlying mismatch.')
+     if spot is not None and trade.get('spot') is not None and _number(spot)!=_number(trade['spot']):

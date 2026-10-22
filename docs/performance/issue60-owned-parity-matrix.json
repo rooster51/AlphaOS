@@ -1,0 +1,162 @@
+[
+  {
+    "symbol": "SPY",
+    "expiration": "2030-01-18",
+    "capital": null,
+    "width": null,
+    "sha256": "796c7e63fa63d17a464dcc6f3a059eb5cdfa484504951cd786e95b66d89ad9d2",
+    "bytes": 12735756,
+    "candidates": 1024,
+    "excluded": 0
+  },
+  {
+    "symbol": "SPY",
+    "expiration": "2030-01-18",
+    "capital": 150.0,
+    "width": null,
+    "sha256": "fde669c7b4b0964d4baa19bb0c91831e13212a571dbfbe36072f78e320ccbf64",
+    "bytes": 5501186,
+    "candidates": 105,
+    "excluded": 919
+  },
+  {
+    "symbol": "SPY",
+    "expiration": "2030-01-18",
+    "capital": null,
+    "width": 5.0,
+    "sha256": "1ceaf1218e21ba46d3d6d1f8bb396b7f99bdbed995cc2f3a419a7cfb59d339d7",
+    "bytes": 877578,
+    "candidates": 70,
+    "excluded": 0
+  },
+  {
+    "symbol": "SPY",
+    "expiration": "2030-01-18",
+    "capital": 150.0,
+    "width": 5.0,
+    "sha256": "61dfb7f214a41554c16397facce5e603467ee2fc2da063978e9df344e707c6cc",
+    "bytes": 338056,
+    "candidates": 0,
+    "excluded": 70
+  },
+  {
+    "symbol": "SPY",
+    "expiration": "2031-01-17",
+    "capital": null,
+    "width": null,
+    "sha256": "01fb11d4290e501bc33f0d3ef03cb0c327bcbc6437968d0f89f0c020463cd14a",
+    "bytes": 12737805,
+    "candidates": 1024,
+    "excluded": 0
+  },
+  {
+    "symbol": "SPY",
+    "expiration": "2031-01-17",
+    "capital": 150.0,
+    "width": null,
+    "sha256": "6873b99922c65b3018d087e4d35c578bdc07ed8c8178e30749e47d8a7b4f5695",
+    "bytes": 5502316,
+    "candidates": 105,
+    "excluded": 919
+  },
+  {
+    "symbol": "SPY",
+    "expiration": "2031-01-17",
+    "capital": null,
+    "width": 5.0,
+    "sha256": "089c52beab66906bbf947f4c2c7c1033ecc50cf1219535d3042be49d988638b7",
+    "bytes": 877719,
+    "candidates": 70,
+    "excluded": 0
+  },
+  {
+    "symbol": "SPY",
+    "expiration": "2031-01-17",
+    "capital": 150.0,
+    "width": 5.0,
+    "sha256": "d447a5ac27a84812cfea776ec788cbc6289d73a5bcbd2c33c147ad4940fe3489",
+    "bytes": 338126,
+    "candidates": 0,
+    "excluded": 70
+  },
+  {
+    "symbol": "QQQ",
+    "expiration": "2030-01-18",
+    "capital": null,
+    "width": null,
+    "sha256": "da157917b40d2e3a0c3fa8d532c5ea9575b9e209d6ba66e3763ca7389933ed60",
+    "bytes": 12735756,
+    "candidates": 1024,
+    "excluded": 0
+  },
+  {
+    "symbol": "QQQ",
+    "expiration": "2030-01-18",
+    "capital": 150.0,
+    "width": null,
+    "sha256": "3a7a889d31380f4e37ce093c859649b017237e0779300a0e8f7e6083340bb2ac",
+    "bytes": 5501186,
+    "candidates": 105,
+    "excluded": 919
+  },
+  {
+    "symbol": "QQQ",
+    "expiration": "2030-01-18",
+    "capital": null,
+    "width": 5.0,
+    "sha256": "fdad878787d17a598710a373d8836a3b6180ab152469510b606ba851184b9692",
+    "bytes": 877578,
+    "candidates": 70,
+    "excluded": 0
+  },
+  {
+    "symbol": "QQQ",
+    "expiration": "2030-01-18",
+    "capital": 150.0,
+    "width": 5.0,
+    "sha256": "5059f73a9dd5e61f80d606c0ee31d0a87099f53129ecfe824dd25c6c8951d2df",
+    "bytes": 338056,
+    "candidates": 0,
+    "excluded": 70
+  },
+  {
+    "symbol": "QQQ",
+    "expiration": "2031-01-17",
+    "capital": null,
+    "width": null,
+    "sha256": "bb05cfd190172b0984328f92462e4eec101e19ef2168f7c435a09d549aaa9cbe",
+    "bytes": 12737805,
+    "candidates": 1024,
+    "excluded": 0
+  },
+  {
+    "symbol": "QQQ",
+    "expiration": "2031-01-17",
+    "capital": 150.0,
+    "width": null,
+    "sha256": "56a0ddd7d1755bcbe7d9f707e179e4f0af02646b6d76b9affc3a28e0c902d736",
+    "bytes": 5502316,
+    "candidates": 105,
+    "excluded": 919
+  },
+  {
+    "symbol": "QQQ",
+    "expiration": "2031-01-17",
+    "capital": null,
+    "width": 5.0,
+    "sha256": "27ef9a2d176d4a7acfb4256ec71f75b77b93185ff5676fda24a5a6d31a820e53",
+    "bytes": 877719,
+    "candidates": 70,
+    "excluded": 0
+  },
+  {
+    "symbol": "QQQ",
+    "expiration": "2031-01-17",
+    "capital": 150.0,
+    "width": 5.0,
+    "sha256": "df83a81f0536d10e177643b3167e27e0d67b0ea81e90640c679061881f3cc501",
+    "bytes": 338126,
+    "candidates": 0,
+    "excluded": 70
+  }
+]

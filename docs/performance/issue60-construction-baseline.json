@@ -1,0 +1,2346 @@
+{
+  "SPY": {
+    "candidates": 1024,
+    "excluded": 0,
+    "functions": [
+      {
+        "file": "opportunity_session.py",
+        "line": 94,
+        "function": "research_market_opportunities",
+        "calls": 1,
+        "primitive_calls": 1,
+        "own_s": 0.0091226,
+        "cumulative_s": 0.6193058
+      },
+      {
+        "file": "position_research.py",
+        "line": 14,
+        "function": "research_position",
+        "calls": 1024,
+        "primitive_calls": 1024,
+        "own_s": 0.0218864,
+        "cumulative_s": 0.40844800000000003
+      },
+      {
+        "file": "structure_research.py",
+        "line": 52,
+        "function": "research_structure",
+        "calls": 1024,
+        "primitive_calls": 1024,
+        "own_s": 0.0368942,
+        "cumulative_s": 0.3773537
+      },
+      {
+        "file": "copy.py",
+        "line": 118,
+        "function": "deepcopy",
+        "calls": 152693,
+        "primitive_calls": 4670,
+        "own_s": 0.140934,
+        "cumulative_s": 0.3683925
+      },
+      {
+        "file": "copy.py",
+        "line": 217,
+        "function": "_deepcopy_dict",
+        "calls": 4697,
+        "primitive_calls": 2618,
+        "own_s": 0.046973400000000005,
+        "cumulative_s": 0.2688876
+      },
+      {
+        "file": "copy.py",
+        "line": 191,
+        "function": "_deepcopy_list",
+        "calls": 6273,
+        "primitive_calls": 2177,
+        "own_s": 0.0048331,
+        "cumulative_s": 0.1894894
+      },
+      {
+        "file": "options_payoff.py",
+        "line": 93,
+        "function": "materialize_payoff",
+        "calls": 2048,
+        "primitive_calls": 2048,
+        "own_s": 0.019581400000000002,
+        "cumulative_s": 0.12169440000000001
+      },
+      {
+        "file": "copy.py",
+        "line": 231,
+        "function": "_keep_alive",
+        "calls": 10971,
+        "primitive_calls": 10971,
+        "own_s": 0.0965038,
+        "cumulative_s": 0.09956100000000001
+      },
+      {
+        "file": "options_payoff.py",
+        "line": 106,
+        "function": "scenario",
+        "calls": 18404,
+        "primitive_calls": 18404,
+        "own_s": 0.0318081,
+        "cumulative_s": 0.09878050000000001
+      },
+      {
+        "file": "premium_engine.py",
+        "line": 35,
+        "function": "payoff",
+        "calls": 21476,
+        "primitive_calls": 21476,
+        "own_s": 0.014269500000000001,
+        "cumulative_s": 0.0704048
+      },
+      {
+        "file": "options_payoff.py",
+        "line": 62,
+        "function": "trade_analysis",
+        "calls": 1024,
+        "primitive_calls": 1024,
+        "own_s": 0.0093156,
+        "cumulative_s": 0.06167690000000001
+      },
+      {
+        "file": "strategy_compare.py",
+        "line": 91,
+        "function": "compare_strategy_research",
+        "calls": 1,
+        "primitive_calls": 1,
+        "own_s": 0.000772,
+        "cumulative_s": 0.043838600000000005
+      },
+      {
+        "file": "strategy_compare.py",
+        "line": 42,
+        "function": "normalize_comparison_candidate",
+        "calls": 1024,
+        "primitive_calls": 1024,
+        "own_s": 0.0159794,
+        "cumulative_s": 0.042850200000000005
+      },
+      {
+        "file": "premium_engine.py",
+        "line": 36,
+        "function": "<genexpr>",
+        "calls": 64428,
+        "primitive_calls": 64428,
+        "own_s": 0.0302865,
+        "cumulative_s": 0.040787800000000006
+      },
+      {
+        "file": "options_payoff.py",
+        "line": 7,
+        "function": "validate_trade",
+        "calls": 2048,
+        "primitive_calls": 2048,
+        "own_s": 0.0248814,
+        "cumulative_s": 0.037849900000000006
+      },
+      {
+        "file": "opportunity_session.py",
+        "line": 45,
+        "function": "_clean_chain",
+        "calls": 1,
+        "primitive_calls": 1,
+        "own_s": 0.0027914000000000003,
+        "cumulative_s": 0.0279046
+      },
+      {
+        "file": "premium_engine.py",
+        "line": 42,
+        "function": "analyze",
+        "calls": 1024,
+        "primitive_calls": 1024,
+        "own_s": 0.0110302,
+        "cumulative_s": 0.025561200000000003
+      },
+      {
+        "file": "strategy_compare.py",
+        "line": 65,
+        "function": "<genexpr>",
+        "calls": 22528,
+        "primitive_calls": 22528,
+        "own_s": 0.008424000000000001,
+        "cumulative_s": 0.012478000000000001
+      },
+      {
+        "file": "copy.py",
+        "line": 172,
+        "function": "_deepcopy_atomic",
+        "calls": 141715,
+        "primitive_calls": 141715,
+        "own_s": 0.0117966,
+        "cumulative_s": 0.0117966
+      },
+      {
+        "file": "structure_research.py",
+        "line": 13,
+        "function": "_number",
+        "calls": 8070,
+        "primitive_calls": 8070,
+        "own_s": 0.007580000000000001,
+        "cumulative_s": 0.0097202
+      },
+      {
+        "file": "structure_research.py",
+        "line": 21,
+        "function": "_family",
+        "calls": 1024,
+        "primitive_calls": 1024,
+        "own_s": 0.0032322,
+        "cumulative_s": 0.005926900000000001
+      },
+      {
+        "file": "options_payoff.py",
+        "line": 14,
+        "function": "<genexpr>",
+        "calls": 12288,
+        "primitive_calls": 12288,
+        "own_s": 0.0031597,
+        "cumulative_s": 0.0043127
+      },
+      {
+        "file": "strategy_compare.py",
+        "line": 9,
+        "function": "_number",
+        "calls": 5120,
+        "primitive_calls": 5120,
+        "own_s": 0.0024551,
+        "cumulative_s": 0.0038372000000000002
+      },
+      {
+        "file": "strategy_compare.py",
+        "line": 27,
+        "function": "_breakevens",
+        "calls": 1024,
+        "primitive_calls": 1024,
+        "own_s": 0.0009336,
+        "cumulative_s": 0.0019632
+      },
+      {
+        "file": "structure_research.py",
+        "line": 71,
+        "function": "<genexpr>",
+        "calls": 2048,
+        "primitive_calls": 2048,
+        "own_s": 0.0013739000000000002,
+        "cumulative_s": 0.0015041000000000002
+      },
+      {
+        "file": "premium_engine.py",
+        "line": 81,
+        "function": "valid_contract",
+        "calls": 282,
+        "primitive_calls": 282,
+        "own_s": 0.0005274,
+        "cumulative_s": 0.0013277
+      },
+      {
+        "file": "structure_research.py",
+        "line": 97,
+        "function": "<genexpr>",
+        "calls": 3072,
+        "primitive_calls": 3072,
+        "own_s": 0.0009833,
+        "cumulative_s": 0.0012150000000000002
+      },
+      {
+        "file": "strategy_compare.py",
+        "line": 35,
+        "function": "_expected_move",
+        "calls": 1024,
+        "primitive_calls": 1024,
+        "own_s": 0.00045390000000000003,
+        "cumulative_s": 0.0007746000000000001
+      },
+      {
+        "file": "premium_engine.py",
+        "line": 46,
+        "function": "<genexpr>",
+        "calls": 3072,
+        "primitive_calls": 3072,
+        "own_s": 0.0006263,
+        "cumulative_s": 0.0006263
+      },
+      {
+        "file": "opportunity_session.py",
+        "line": 59,
+        "function": "<genexpr>",
+        "calls": 1128,
+        "primitive_calls": 1128,
+        "own_s": 0.00037610000000000003,
+        "cumulative_s": 0.0006118
+      },
+      {
+        "file": "structure_research.py",
+        "line": 22,
+        "function": "<lambda>",
+        "calls": 2048,
+        "primitive_calls": 2048,
+        "own_s": 0.0005263,
+        "cumulative_s": 0.0005263
+      },
+      {
+        "file": "options_payoff.py",
+        "line": 75,
+        "function": "<genexpr>",
+        "calls": 3072,
+        "primitive_calls": 3072,
+        "own_s": 0.0005184,
+        "cumulative_s": 0.0005184
+      },
+      {
+        "file": "strategy_compare.py",
+        "line": 19,
+        "function": "_family",
+        "calls": 1024,
+        "primitive_calls": 1024,
+        "own_s": 0.00029810000000000004,
+        "cumulative_s": 0.0005018
+      },
+      {
+        "file": "opportunity_session.py",
+        "line": 53,
+        "function": "<genexpr>",
+        "calls": 284,
+        "primitive_calls": 284,
+        "own_s": 0.00015470000000000002,
+        "cumulative_s": 0.00037590000000000003
+      },
+      {
+        "file": "premium_engine.py",
+        "line": 84,
+        "function": "<genexpr>",
+        "calls": 1128,
+        "primitive_calls": 1128,
+        "own_s": 0.0002347,
+        "cumulative_s": 0.00032460000000000003
+      },
+      {
+        "file": "opportunity_session.py",
+        "line": 161,
+        "function": "<genexpr>",
+        "calls": 284,
+        "primitive_calls": 284,
+        "own_s": 0.0001432,
+        "cumulative_s": 0.00026430000000000003
+      },
+      {
+        "file": "premium_engine.py",
+        "line": 83,
+        "function": "<genexpr>",
+        "calls": 1128,
+        "primitive_calls": 1128,
+        "own_s": 0.0002615,
+        "cumulative_s": 0.0002615
+      },
+      {
+        "file": "copy.py",
+        "line": 247,
+        "function": "_reconstruct",
+        "calls": 1,
+        "primitive_calls": 1,
+        "own_s": 7.7e-06,
+        "cumulative_s": 2.6000000000000002e-05
+      },
+      {
+        "file": "copy.py",
+        "line": 252,
+        "function": "<genexpr>",
+        "calls": 2,
+        "primitive_calls": 2,
+        "own_s": 1.5e-06,
+        "cumulative_s": 1.8e-05
+      },
+      {
+        "file": "opportunity_session.py",
+        "line": 283,
+        "function": "<genexpr>",
+        "calls": 3,
+        "primitive_calls": 3,
+        "own_s": 4.7e-06,
+        "cumulative_s": 6.8e-06
+      },
+      {
+        "file": "opportunity_session.py",
+        "line": 254,
+        "function": "<genexpr>",
+        "calls": 2,
+        "primitive_calls": 2,
+        "own_s": 1.8000000000000001e-06,
+        "cumulative_s": 2.3e-06
+      },
+      {
+        "file": "opportunity_session.py",
+        "line": 28,
+        "function": "_families",
+        "calls": 1,
+        "primitive_calls": 1,
+        "own_s": 1.0000000000000002e-06,
+        "cumulative_s": 1.0000000000000002e-06
+      },
+      {
+        "file": "opportunity_session.py",
+        "line": 298,
+        "function": "<genexpr>",
+        "calls": 1,
+        "primitive_calls": 1,
+        "own_s": 5.000000000000001e-07,
+        "cumulative_s": 5.000000000000001e-07
+      },
+      {
+        "file": "opportunity_session.py",
+        "line": 285,
+        "function": "<genexpr>",
+        "calls": 1,
+        "primitive_calls": 1,
+        "own_s": 3.0000000000000004e-07,
+        "cumulative_s": 3.0000000000000004e-07
+      },
+      {
+        "file": "opportunity_session.py",
+        "line": 234,
+        "function": "<genexpr>",
+        "calls": 1,
+        "primitive_calls": 1,
+        "own_s": 3.0000000000000004e-07,
+        "cumulative_s": 3.0000000000000004e-07
+      },
+      {
+        "file": "opportunity_session.py",
+        "line": 257,
+        "function": "<genexpr>",
+        "calls": 1,
+        "primitive_calls": 1,
+        "own_s": 3.0000000000000004e-07,
+        "cumulative_s": 3.0000000000000004e-07
+      },
+      {
+        "file": "opportunity_session.py",
+        "line": 159,
+        "function": "<genexpr>",
+        "calls": 1,
+        "primitive_calls": 1,
+        "own_s": 3.0000000000000004e-07,
+        "cumulative_s": 3.0000000000000004e-07
+      },
+      {
+        "file": "opportunity_session.py",
+        "line": 256,
+        "function": "<genexpr>",
+        "calls": 1,
+        "primitive_calls": 1,
+        "own_s": 2.0000000000000002e-07,
+        "cumulative_s": 2.0000000000000002e-07
+      },
+      {
+        "file": "opportunity_session.py",
+        "line": 304,
+        "function": "<genexpr>",
+        "calls": 1,
+        "primitive_calls": 1,
+        "own_s": 2.0000000000000002e-07,
+        "cumulative_s": 2.0000000000000002e-07
+      },
+      {
+        "file": "opportunity_session.py",
+        "line": 301,
+        "function": "<genexpr>",
+        "calls": 1,
+        "primitive_calls": 1,
+        "own_s": 2.0000000000000002e-07,
+        "cumulative_s": 2.0000000000000002e-07
+      },
+      {
+        "file": "opportunity_session.py",
+        "line": 306,
+        "function": "<genexpr>",
+        "calls": 1,
+        "primitive_calls": 1,
+        "own_s": 2.0000000000000002e-07,
+        "cumulative_s": 2.0000000000000002e-07
+      },
+      {
+        "file": "opportunity_session.py",
+        "line": 310,
+        "function": "<genexpr>",
+        "calls": 1,
+        "primitive_calls": 1,
+        "own_s": 2.0000000000000002e-07,
+        "cumulative_s": 2.0000000000000002e-07
+      },
+      {
+        "file": "opportunity_session.py",
+        "line": 308,
+        "function": "<genexpr>",
+        "calls": 1,
+        "primitive_calls": 1,
+        "own_s": 1.0000000000000001e-07,
+        "cumulative_s": 1.0000000000000001e-07
+      }
+    ],
+    "dict_visits": 47210,
+    "unique_dicts": 47170,
+    "repeat_dict_visits": 40,
+    "list_visits": 25681,
+    "unique_lists": 20537,
+    "scalar_visits": {
+      "str": 132386,
+      "NoneType": 47136,
+      "bool": 14369,
+      "int": 12379,
+      "float": 147474
+    },
+    "duplicate_dict_shapes": [
+      [
+        "close,date,ema_21,ema_50,ema_9,high_20,low_20,realized_vol_20d",
+        12
+      ],
+      [
+        "conflicts,observations,rule,unavailable",
+        10
+      ],
+      [
+        "realized_vol_20d,realized_vol_60d",
+        6
+      ],
+      [
+        "latest,previous",
+        4
+      ],
+      [
+        "expiration,late_minutes,observed_at,session",
+        2
+      ],
+      [
+        "close,open",
+        2
+      ],
+      [
+        "",
+        1
+      ],
+      [
+        "caveats,classifier_version,direction,evidence,evidence_sufficiency,movement_state,premium_state,time_state",
+        1
+      ],
+      [
+        "direction,movement_state,premium_state,time_state,volatility_state",
+        1
+      ],
+      [
+        "known_dimensions,sufficient_for_routing,total_dimensions,unknown_dimensions",
+        1
+      ]
+    ],
+    "sanitizer_and_encoding_cpu_ms": 359.375,
+    "gc_during_sanitization": [
+      {
+        "generation": 1,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 1,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 1,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 1,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 1,
+        "cpu_ms": 15.625,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 1,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 1,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 1,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 1,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 1,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 1,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 2,
+        "cpu_ms": 125.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      }
+    ],
+    "bytes": 12735756,
+    "sha256": "796c7e63fa63d17a464dcc6f3a059eb5cdfa484504951cd786e95b66d89ad9d2"
+  },
+  "QQQ": {
+    "candidates": 1024,
+    "excluded": 0,
+    "functions": [
+      {
+        "file": "opportunity_session.py",
+        "line": 94,
+        "function": "research_market_opportunities",
+        "calls": 1,
+        "primitive_calls": 1,
+        "own_s": 0.009069,
+        "cumulative_s": 0.6041213000000001
+      },
+      {
+        "file": "position_research.py",
+        "line": 14,
+        "function": "research_position",
+        "calls": 1024,
+        "primitive_calls": 1024,
+        "own_s": 0.021298,
+        "cumulative_s": 0.3996675
+      },
+      {
+        "file": "structure_research.py",
+        "line": 52,
+        "function": "research_structure",
+        "calls": 1024,
+        "primitive_calls": 1024,
+        "own_s": 0.0358547,
+        "cumulative_s": 0.3693831
+      },
+      {
+        "file": "copy.py",
+        "line": 118,
+        "function": "deepcopy",
+        "calls": 152693,
+        "primitive_calls": 4670,
+        "own_s": 0.1385914,
+        "cumulative_s": 0.27635970000000004
+      },
+      {
+        "file": "copy.py",
+        "line": 217,
+        "function": "_deepcopy_dict",
+        "calls": 4697,
+        "primitive_calls": 2618,
+        "own_s": 0.04696,
+        "cumulative_s": 0.264079
+      },
+      {
+        "file": "copy.py",
+        "line": 191,
+        "function": "_deepcopy_list",
+        "calls": 6273,
+        "primitive_calls": 2177,
+        "own_s": 0.0049636,
+        "cumulative_s": 0.1843795
+      },
+      {
+        "file": "options_payoff.py",
+        "line": 93,
+        "function": "materialize_payoff",
+        "calls": 2048,
+        "primitive_calls": 2048,
+        "own_s": 0.0189345,
+        "cumulative_s": 0.11697930000000001
+      },
+      {
+        "file": "options_payoff.py",
+        "line": 106,
+        "function": "scenario",
+        "calls": 18404,
+        "primitive_calls": 18404,
+        "own_s": 0.029474100000000003,
+        "cumulative_s": 0.09476680000000001
+      },
+      {
+        "file": "premium_engine.py",
+        "line": 35,
+        "function": "payoff",
+        "calls": 21476,
+        "primitive_calls": 21476,
+        "own_s": 0.0136576,
+        "cumulative_s": 0.0690979
+      },
+      {
+        "file": "options_payoff.py",
+        "line": 62,
+        "function": "trade_analysis",
+        "calls": 1024,
+        "primitive_calls": 1024,
+        "own_s": 0.0093842,
+        "cumulative_s": 0.0604968
+      },
+      {
+        "file": "strategy_compare.py",
+        "line": 91,
+        "function": "compare_strategy_research",
+        "calls": 1,
+        "primitive_calls": 1,
+        "own_s": 0.0007005000000000001,
+        "cumulative_s": 0.0416925
+      },
+      {
+        "file": "premium_engine.py",
+        "line": 36,
+        "function": "<genexpr>",
+        "calls": 64428,
+        "primitive_calls": 64428,
+        "own_s": 0.030673100000000002,
+        "cumulative_s": 0.040820800000000004
+      },
+      {
+        "file": "strategy_compare.py",
+        "line": 42,
+        "function": "normalize_comparison_candidate",
+        "calls": 1024,
+        "primitive_calls": 1024,
+        "own_s": 0.014994400000000001,
+        "cumulative_s": 0.040789000000000006
+      },
+      {
+        "file": "options_payoff.py",
+        "line": 7,
+        "function": "validate_trade",
+        "calls": 2048,
+        "primitive_calls": 2048,
+        "own_s": 0.024463000000000002,
+        "cumulative_s": 0.0373865
+      },
+      {
+        "file": "opportunity_session.py",
+        "line": 45,
+        "function": "_clean_chain",
+        "calls": 1,
+        "primitive_calls": 1,
+        "own_s": 0.0027829,
+        "cumulative_s": 0.028493400000000002
+      },
+      {
+        "file": "premium_engine.py",
+        "line": 42,
+        "function": "analyze",
+        "calls": 1024,
+        "primitive_calls": 1024,
+        "own_s": 0.010672200000000001,
+        "cumulative_s": 0.0251368
+      },
+      {
+        "file": "strategy_compare.py",
+        "line": 65,
+        "function": "<genexpr>",
+        "calls": 22528,
+        "primitive_calls": 22528,
+        "own_s": 0.0080421,
+        "cumulative_s": 0.0119939
+      },
+      {
+        "file": "copy.py",
+        "line": 172,
+        "function": "_deepcopy_atomic",
+        "calls": 141715,
+        "primitive_calls": 141715,
+        "own_s": 0.0118659,
+        "cumulative_s": 0.0118659
+      },
+      {
+        "file": "copy.py",
+        "line": 231,
+        "function": "_keep_alive",
+        "calls": 10971,
+        "primitive_calls": 10971,
+        "own_s": 0.0087828,
+        "cumulative_s": 0.0118221
+      },
+      {
+        "file": "structure_research.py",
+        "line": 13,
+        "function": "_number",
+        "calls": 8070,
+        "primitive_calls": 8070,
+        "own_s": 0.0076258,
+        "cumulative_s": 0.009781300000000001
+      },
+      {
+        "file": "structure_research.py",
+        "line": 21,
+        "function": "_family",
+        "calls": 1024,
+        "primitive_calls": 1024,
+        "own_s": 0.003294,
+        "cumulative_s": 0.0059937
+      },
+      {
+        "file": "options_payoff.py",
+        "line": 14,
+        "function": "<genexpr>",
+        "calls": 12288,
+        "primitive_calls": 12288,
+        "own_s": 0.0031828000000000004,
+        "cumulative_s": 0.004296100000000001
+      },
+      {
+        "file": "strategy_compare.py",
+        "line": 9,
+        "function": "_number",
+        "calls": 5120,
+        "primitive_calls": 5120,
+        "own_s": 0.0022175000000000003,
+        "cumulative_s": 0.0034755000000000003
+      },
+      {
+        "file": "strategy_compare.py",
+        "line": 27,
+        "function": "_breakevens",
+        "calls": 1024,
+        "primitive_calls": 1024,
+        "own_s": 0.0009670000000000001,
+        "cumulative_s": 0.0019231
+      },
+      {
+        "file": "structure_research.py",
+        "line": 71,
+        "function": "<genexpr>",
+        "calls": 2048,
+        "primitive_calls": 2048,
+        "own_s": 0.0014762,
+        "cumulative_s": 0.0016086000000000002
+      },
+      {
+        "file": "premium_engine.py",
+        "line": 81,
+        "function": "valid_contract",
+        "calls": 282,
+        "primitive_calls": 282,
+        "own_s": 0.0005805000000000001,
+        "cumulative_s": 0.0015523000000000002
+      },
+      {
+        "file": "structure_research.py",
+        "line": 97,
+        "function": "<genexpr>",
+        "calls": 3072,
+        "primitive_calls": 3072,
+        "own_s": 0.0009829,
+        "cumulative_s": 0.0012134000000000001
+      },
+      {
+        "file": "strategy_compare.py",
+        "line": 35,
+        "function": "_expected_move",
+        "calls": 1024,
+        "primitive_calls": 1024,
+        "own_s": 0.0004238,
+        "cumulative_s": 0.00075
+      },
+      {
+        "file": "opportunity_session.py",
+        "line": 59,
+        "function": "<genexpr>",
+        "calls": 1128,
+        "primitive_calls": 1128,
+        "own_s": 0.0003837,
+        "cumulative_s": 0.0006766000000000001
+      },
+      {
+        "file": "premium_engine.py",
+        "line": 46,
+        "function": "<genexpr>",
+        "calls": 3072,
+        "primitive_calls": 3072,
+        "own_s": 0.0005995,
+        "cumulative_s": 0.0005995
+      },
+      {
+        "file": "options_payoff.py",
+        "line": 75,
+        "function": "<genexpr>",
+        "calls": 3072,
+        "primitive_calls": 3072,
+        "own_s": 0.0005373,
+        "cumulative_s": 0.0005373
+      },
+      {
+        "file": "structure_research.py",
+        "line": 22,
+        "function": "<lambda>",
+        "calls": 2048,
+        "primitive_calls": 2048,
+        "own_s": 0.000504,
+        "cumulative_s": 0.000504
+      },
+      {
+        "file": "strategy_compare.py",
+        "line": 19,
+        "function": "_family",
+        "calls": 1024,
+        "primitive_calls": 1024,
+        "own_s": 0.0002773,
+        "cumulative_s": 0.00047900000000000004
+      },
+      {
+        "file": "opportunity_session.py",
+        "line": 53,
+        "function": "<genexpr>",
+        "calls": 284,
+        "primitive_calls": 284,
+        "own_s": 0.0001728,
+        "cumulative_s": 0.00043630000000000003
+      },
+      {
+        "file": "premium_engine.py",
+        "line": 83,
+        "function": "<genexpr>",
+        "calls": 1128,
+        "primitive_calls": 1128,
+        "own_s": 0.0003976,
+        "cumulative_s": 0.0003976
+      },
+      {
+        "file": "premium_engine.py",
+        "line": 84,
+        "function": "<genexpr>",
+        "calls": 1128,
+        "primitive_calls": 1128,
+        "own_s": 0.0002695,
+        "cumulative_s": 0.00035840000000000004
+      },
+      {
+        "file": "opportunity_session.py",
+        "line": 161,
+        "function": "<genexpr>",
+        "calls": 284,
+        "primitive_calls": 284,
+        "own_s": 9.43e-05,
+        "cumulative_s": 0.000173
+      },
+      {
+        "file": "copy.py",
+        "line": 247,
+        "function": "_reconstruct",
+        "calls": 1,
+        "primitive_calls": 1,
+        "own_s": 7.000000000000001e-06,
+        "cumulative_s": 2.4100000000000003e-05
+      },
+      {
+        "file": "copy.py",
+        "line": 252,
+        "function": "<genexpr>",
+        "calls": 2,
+        "primitive_calls": 2,
+        "own_s": 1.0000000000000002e-06,
+        "cumulative_s": 1.69e-05
+      },
+      {
+        "file": "opportunity_session.py",
+        "line": 283,
+        "function": "<genexpr>",
+        "calls": 3,
+        "primitive_calls": 3,
+        "own_s": 2.5e-06,
+        "cumulative_s": 3.7e-06
+      },
+      {
+        "file": "opportunity_session.py",
+        "line": 254,
+        "function": "<genexpr>",
+        "calls": 2,
+        "primitive_calls": 2,
+        "own_s": 1.3e-06,
+        "cumulative_s": 1.7e-06
+      },
+      {
+        "file": "opportunity_session.py",
+        "line": 28,
+        "function": "_families",
+        "calls": 1,
+        "primitive_calls": 1,
+        "own_s": 5.000000000000001e-07,
+        "cumulative_s": 5.000000000000001e-07
+      },
+      {
+        "file": "opportunity_session.py",
+        "line": 159,
+        "function": "<genexpr>",
+        "calls": 1,
+        "primitive_calls": 1,
+        "own_s": 4.0000000000000003e-07,
+        "cumulative_s": 4.0000000000000003e-07
+      },
+      {
+        "file": "opportunity_session.py",
+        "line": 301,
+        "function": "<genexpr>",
+        "calls": 1,
+        "primitive_calls": 1,
+        "own_s": 3.0000000000000004e-07,
+        "cumulative_s": 3.0000000000000004e-07
+      },
+      {
+        "file": "opportunity_session.py",
+        "line": 234,
+        "function": "<genexpr>",
+        "calls": 1,
+        "primitive_calls": 1,
+        "own_s": 2.0000000000000002e-07,
+        "cumulative_s": 2.0000000000000002e-07
+      },
+      {
+        "file": "opportunity_session.py",
+        "line": 256,
+        "function": "<genexpr>",
+        "calls": 1,
+        "primitive_calls": 1,
+        "own_s": 2.0000000000000002e-07,
+        "cumulative_s": 2.0000000000000002e-07
+      },
+      {
+        "file": "opportunity_session.py",
+        "line": 304,
+        "function": "<genexpr>",
+        "calls": 1,
+        "primitive_calls": 1,
+        "own_s": 2.0000000000000002e-07,
+        "cumulative_s": 2.0000000000000002e-07
+      },
+      {
+        "file": "opportunity_session.py",
+        "line": 308,
+        "function": "<genexpr>",
+        "calls": 1,
+        "primitive_calls": 1,
+        "own_s": 2.0000000000000002e-07,
+        "cumulative_s": 2.0000000000000002e-07
+      },
+      {
+        "file": "opportunity_session.py",
+        "line": 298,
+        "function": "<genexpr>",
+        "calls": 1,
+        "primitive_calls": 1,
+        "own_s": 2.0000000000000002e-07,
+        "cumulative_s": 2.0000000000000002e-07
+      },
+      {
+        "file": "opportunity_session.py",
+        "line": 306,
+        "function": "<genexpr>",
+        "calls": 1,
+        "primitive_calls": 1,
+        "own_s": 2.0000000000000002e-07,
+        "cumulative_s": 2.0000000000000002e-07
+      },
+      {
+        "file": "opportunity_session.py",
+        "line": 285,
+        "function": "<genexpr>",
+        "calls": 1,
+        "primitive_calls": 1,
+        "own_s": 1.0000000000000001e-07,
+        "cumulative_s": 1.0000000000000001e-07
+      },
+      {
+        "file": "opportunity_session.py",
+        "line": 257,
+        "function": "<genexpr>",
+        "calls": 1,
+        "primitive_calls": 1,
+        "own_s": 1.0000000000000001e-07,
+        "cumulative_s": 1.0000000000000001e-07
+      },
+      {
+        "file": "opportunity_session.py",
+        "line": 310,
+        "function": "<genexpr>",
+        "calls": 1,
+        "primitive_calls": 1,
+        "own_s": 1.0000000000000001e-07,
+        "cumulative_s": 1.0000000000000001e-07
+      }
+    ],
+    "dict_visits": 47210,
+    "unique_dicts": 47170,
+    "repeat_dict_visits": 40,
+    "list_visits": 25681,
+    "unique_lists": 20537,
+    "scalar_visits": {
+      "str": 132386,
+      "NoneType": 47136,
+      "bool": 14369,
+      "int": 12379,
+      "float": 147474
+    },
+    "duplicate_dict_shapes": [
+      [
+        "close,date,ema_21,ema_50,ema_9,high_20,low_20,realized_vol_20d",
+        12
+      ],
+      [
+        "conflicts,observations,rule,unavailable",
+        10
+      ],
+      [
+        "realized_vol_20d,realized_vol_60d",
+        6
+      ],
+      [
+        "latest,previous",
+        4
+      ],
+      [
+        "expiration,late_minutes,observed_at,session",
+        2
+      ],
+      [
+        "close,open",
+        2
+      ],
+      [
+        "",
+        1
+      ],
+      [
+        "caveats,classifier_version,direction,evidence,evidence_sufficiency,movement_state,premium_state,time_state",
+        1
+      ],
+      [
+        "direction,movement_state,premium_state,time_state,volatility_state",
+        1
+      ],
+      [
+        "known_dimensions,sufficient_for_routing,total_dimensions,unknown_dimensions",
+        1
+      ]
+    ],
+    "sanitizer_and_encoding_cpu_ms": 187.5,
+    "gc_during_sanitization": [
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 1,
+        "cpu_ms": 15.625,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 1,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 1,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 1,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 1,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 1,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 1,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 1,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 1,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 1,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      },
+      {
+        "generation": 0,
+        "cpu_ms": 0.0,
+        "collected": 0
+      }
+    ],
+    "bytes": 12735756,
+    "sha256": "da157917b40d2e3a0c3fa8d532c5ea9575b9e209d6ba66e3763ca7389933ed60"
+  }
+}
