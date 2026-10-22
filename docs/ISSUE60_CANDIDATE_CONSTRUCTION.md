@@ -241,7 +241,7 @@ module, and website source diffs against main are empty.
 
 All three application files are restored to `ff0a42e`. The experiment's tests are
 preserved in `tests/performance/owned_parity_experiment.py.txt`, and the source
-patch in `performance/issue60-rejected-owned-copy.patch`. They are not deployed
+patch in `performance/issue60-rejected-owned-copy.patch.gz`. They are not deployed
 or proposed for merge. The manual-only profiling workflow explicitly checks out
 the immutable experimental commit to reproduce the recorded comparison; it does
 not build/deploy production or change settings.
