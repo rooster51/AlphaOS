@@ -1,0 +1,38 @@
+name: Issue 60 isolated resource profile
+on:
+  push:
+    branches: [diagnostics/issue60-resource-profile]
+permissions:
+  contents: read
+jobs:
+  profile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version-file: .python-version
+      - name: Build existing Python dependencies in an isolated image
+        run: |
+          cat > /tmp/alphaos-profile.Dockerfile <<'EOF'
+          FROM python:3.12.14-slim-bookworm
+          WORKDIR /repo
+          COPY requirements.txt requirements-api.txt /tmp/
+          RUN pip install --no-cache-dir -r /tmp/requirements.txt -r /tmp/requirements-api.txt pytest
+          EOF
+          docker build -f /tmp/alphaos-profile.Dockerfile -t alphaos-profile-python .
+          docker pull node:22-bookworm-slim
+          python -m pip install requests cryptography
+      - name: Profile control and constrained complete-body workloads
+        run: python tests/performance/run_lifecycle.py
+      - name: Preserve diagnostics (no private key or production credentials)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue60-resource-profile
+          path: |
+            lifecycle-results/*.json
+            lifecycle-results/*.jsonl
+            lifecycle-results/*.txt
+          retention-days: 7
