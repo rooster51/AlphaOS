@@ -11,7 +11,7 @@ from math import isfinite
 
 from modules.long_option_discovery import discover_long_options
 from modules.opportunity_router import ALLOWED, opportunity_state, route_strategies
-from modules.position_research import research_position
+from modules.position_research import research_position, _research_position
 from modules.premium_engine import valid_contract
 from modules.width_discovery import discover_widths
 from modules.research_control import checkpoint
@@ -189,7 +189,7 @@ def research_market_opportunities(symbol, market_research, chain, *, as_of,
                 try:
                     if not isinstance(candidate, dict) or candidate.get('expiration') != expiration:
                         raise ValueError('Candidate expiration mismatch.')
-                    result = research_position(candidate, symbol=symbol, spot=spot,
+                    result = _research_position(candidate, symbol=symbol, spot=spot, owned=candidates is None,
                                                as_of=research_date, expected_move=expected_move, payoff_detail='none')
                 except (ValueError, TypeError, KeyError, OverflowError):
                     excluded.append(dict(stage='research', input_index=index, reason='invalid_or_insufficient_candidate'))

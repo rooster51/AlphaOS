@@ -3,7 +3,7 @@ from copy import deepcopy
 
 from modules.long_option_research import research_long_option
 from modules.options_payoff import validate_trade
-from modules.structure_research import research_structure
+from modules.structure_research import research_structure, _research_structure
 
 OBSERVATIONS = ('contract', 'bid', 'ask', 'mid', 'delta', 'gamma', 'theta',
                 'vega', 'rho', 'iv', 'volume', 'open_interest', 'bid_timestamp',
@@ -12,6 +12,11 @@ OBSERVATIONS = ('contract', 'bid', 'ask', 'mid', 'delta', 'gamma', 'theta',
 
 
 def research_position(candidate, *, symbol, spot, as_of, expected_move=None, payoff_detail='full'):
+    return _research_position(candidate, symbol=symbol, spot=spot, as_of=as_of,
+        expected_move=expected_move, payoff_detail=payoff_detail)
+
+
+def _research_position(candidate, *, symbol, spot, as_of, expected_move=None, payoff_detail='full', owned=False):
     """Reuse existing researchers; native cashflow includes signed quantities."""
     if not isinstance(candidate, dict):
         raise ValueError('Candidate must be a mapping.')
@@ -36,7 +41,7 @@ def research_position(candidate, *, symbol, spot, as_of, expected_move=None, pay
                       max_loss=result['capital_at_risk'])
         result['evidence'] = {'pricing_assumption': candidate.get('pricing_assumption', 'Supplied cashflow; not a verified fill')}
     else:
-        result = research_structure(candidate, symbol=symbol, spot=spot,
+        result = _research_structure(candidate, symbol=symbol, spot=spot, owned=owned,
                                     as_of=as_of, expected_move=expected_move, payoff_detail=payoff_detail)
     normalized = []
     for leg in result['trade']['legs']:

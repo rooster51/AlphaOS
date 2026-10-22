@@ -50,6 +50,11 @@ def _family(legs):
 
 
 def research_structure(candidate,*,symbol=None,spot=None,as_of=None,expected_move=None,payoff_detail='full'):
+    return _research_structure(candidate, symbol=symbol, spot=spot, as_of=as_of,
+        expected_move=expected_move, payoff_detail=payoff_detail, owned=False)
+
+
+def _research_structure(candidate,*,symbol=None,spot=None,as_of=None,expected_move=None,payoff_detail='full',owned=False):
     """Normalize shared-engine trades or existing Strategy Selector suggestions.
 
     Native credit uses the shared engine's signed per-share package cashflow.
@@ -57,7 +62,7 @@ def research_structure(candidate,*,symbol=None,spot=None,as_of=None,expected_mov
     Cached max-profit/loss, probability, fit, and recommendation fields are ignored.
     """
     if not isinstance(candidate,dict):raise ValueError('Candidate must be a mapping.')
-    trade=deepcopy(candidate)
+    trade=dict(candidate) if owned else deepcopy(candidate)
     if symbol is not None and trade.get('symbol') and symbol.strip().upper()!=str(trade['symbol']).strip().upper():
         raise ValueError('Underlying mismatch.')
     if spot is not None and trade.get('spot') is not None and _number(spot)!=_number(trade['spot']):
