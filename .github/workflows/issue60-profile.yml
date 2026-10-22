@@ -27,7 +27,7 @@ jobs:
           docker pull node:22-bookworm-slim
           python -m pip install requests cryptography
       - name: Profile control and constrained complete-body workloads
-        run: python tests/performance/run_lifecycle.py
+        run: python tests/performance/run_lifecycle.py --detail
       - name: Preserve diagnostics (no private key or production credentials)
         if: always()
         uses: actions/upload-artifact@v4

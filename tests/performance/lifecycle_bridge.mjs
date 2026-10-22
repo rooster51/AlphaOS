@@ -11,8 +11,14 @@ const originalFetch=globalThis.fetch,originalJSON=Response.json.bind(Response);
 globalThis.fetch=async(...args)=>{
  const start=performance.now(),cpu=process.cpuUsage();const r=await originalFetch(...args);const id=new Headers(args[1]?.headers).get('X-AlphaOS-Request-ID');
  emit({kind:'backend_headers',request_id:id,wall_ms:performance.now()-start,cpu:process.cpuUsage(cpu)});
- const read=r.json.bind(r);
- r.json=async()=>{const w=performance.now(),c=process.cpuUsage();const data=await read();emit({kind:'backend_body_read_parse',request_id:id,wall_ms:performance.now()-w,cpu:process.cpuUsage(c)});return data;};
+ const read=r.text.bind(r);
+ r.json=async()=>{
+  const w=performance.now(),c=process.cpuUsage();const text=await read();
+  emit({kind:'backend_body_read_decode',request_id:id,wall_ms:performance.now()-w,cpu:process.cpuUsage(c)});
+  const p=performance.now(),pc=process.cpuUsage();const data=JSON.parse(text);
+  emit({kind:'backend_json_parse',request_id:id,wall_ms:performance.now()-p,cpu:process.cpuUsage(pc)});
+  emit({kind:'backend_body_read_parse',request_id:id,wall_ms:performance.now()-w,cpu:process.cpuUsage(c)});return data;
+ };
  return r;
 };
 Response.json=(value,init)=>{const start=performance.now(),cpu=process.cpuUsage();const r=originalJSON(value,init);emit({kind:'response_construction',wall_ms:performance.now()-start,cpu:process.cpuUsage(cpu),active_requests:active});return r;};

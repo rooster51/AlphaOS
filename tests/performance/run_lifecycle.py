@@ -96,6 +96,8 @@ def run(label,limited,first,variant,alloc=False):
             with (OUT/(name+'-inspect.json')).open('w') as f:subprocess.run(['docker','inspect',name],stdout=f)
             subprocess.run(['docker','rm','-f',name],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
 def main():
+    import argparse
+    parser=argparse.ArgumentParser();parser.add_argument('--detail',action='store_true');args=parser.parse_args()
     (OUT/'baseline_app.py').write_bytes(subprocess.check_output(['git','show','ff0a42efe74f964733cd2f0ea79e7456a1e862c8:alphaos_api/app.py']))
     key=rsa.generate_private_key(public_exponent=65537,key_size=2048);name=x509.Name([x509.NameAttribute(NameOID.COMMON_NAME,'AlphaOS local fixture')]);now=datetime.now(timezone.utc)
     cert=x509.CertificateBuilder().subject_name(name).issuer_name(name).public_key(key.public_key()).serial_number(x509.random_serial_number()).not_valid_before(now-timedelta(days=1)).not_valid_after(now+timedelta(days=1)).add_extension(x509.BasicConstraints(ca=True,path_length=None),critical=True).add_extension(x509.SubjectAlternativeName([x509.IPAddress(ipaddress.ip_address('127.0.0.1')),x509.DNSName('backend')]),critical=False).sign(key,hashes.SHA256())
@@ -103,7 +105,7 @@ def main():
     command('docker','network','create',NETWORK,stdout=subprocess.DEVNULL)
     try:
         for limited in (False,True):
-            for i,first in enumerate(('SPY','QQQ','pair')):
+            for i,first in enumerate(('pair',) if args.detail else ('SPY','QQQ','pair')):
                 for variant in (('baseline','candidate') if i%2==0 else ('candidate','baseline')):
                     run(variant+'-'+('limited' if limited else 'control')+str(i),limited,first,variant)
         for variant in ('baseline','candidate'):run(variant+'-allocations',False,'pair',variant,alloc=True)
