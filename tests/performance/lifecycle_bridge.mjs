@@ -6,6 +6,7 @@ import {pathToFileURL} from 'node:url';
 const route=await import(pathToFileURL(process.env.DIAGNOSTIC_REPO+'/web/src/app/api/research/market/route.ts').href);
 const log=process.env.LOCAL_PROFILE_LOG;let active=0;
 function emit(x){appendFileSync(log,JSON.stringify({time:performance.now(),...x})+'\n');}
+emit({kind:'configuration',node:process.version,versions:process.versions});
 new PerformanceObserver(list=>{for(const e of list.getEntries())emit({kind:'gc',duration_ms:e.duration,generation:e.detail.kind});}).observe({entryTypes:['gc']});
 const originalFetch=globalThis.fetch,originalJSON=Response.json.bind(Response);
 globalThis.fetch=async(...args)=>{
