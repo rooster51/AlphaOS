@@ -5,6 +5,7 @@ No production network access, secrets, image publication or application changes.
 import concurrent.futures
 from datetime import datetime,timedelta,timezone
 import hashlib
+import gzip
 import ipaddress
 import json
 import os
@@ -20,7 +21,7 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 
 REPO=Path.cwd();OUT=REPO/'lifecycle-results';OUT.mkdir(exist_ok=True)
 NETWORK='alphaos-issue60-profile'
-rows=[];reference={}
+rows=[];reference={};captured=set()
 def semantic(value):
     # Existing Next JSON parsing/stringification spells integral doubles as
     # integers. Compare all parsed values, not their Python/JS number spelling.
@@ -49,6 +50,10 @@ def call(symbol,tag,direct=False):
         full=data if direct else data.get('research',{})
         digest=hashlib.sha256(json.dumps(semantic(full),sort_keys=True,separators=(',',':')).encode()).hexdigest() if r.status_code==200 else None
         if digest:
+            capture=tag.split('-')[0]+'-'+symbol
+            if capture not in captured:
+                (OUT/('sample-'+capture+'.json.gz')).write_bytes(gzip.compress(json.dumps(full).encode(),mtime=0))
+                captured.add(capture)
             if symbol in reference:assert digest==reference[symbol],(tag,'full response parity failed')
             else:reference[symbol]=digest
         row=dict(tag=tag,symbol=symbol,direct=direct,status=r.status_code,code=data.get('code'),request_id=r.headers.get('X-AlphaOS-Request-ID'),headers_ms=headers,complete_ms=complete,client_parse_ms=parse_ms,decoded_bytes=len(body),full_response_sha256=digest)
@@ -59,15 +64,15 @@ def pair(tag,direct=False):
     start=time.perf_counter()
     with concurrent.futures.ThreadPoolExecutor(2) as pool:list(pool.map(lambda s:call(s,tag+'-'+s,direct),('SPY','QQQ')))
     print(json.dumps(dict(batch=tag,wall_ms=(time.perf_counter()-start)*1000)),flush=True)
-def run(label,limited,first,alloc=False):
+def run(label,limited,first,variant,alloc=False):
     names=[]
     try:
-        common=['--network',NETWORK,'--memory','512m','--memory-swap','512m','--pids-limit','128',
+        common=['--network',NETWORK,'--memory','512m','--memory-swap','512m',
             '-v',str(REPO)+':/repo:ro','-v',str(OUT)+':/results','-e','DIAGNOSTIC_REPO=/repo','-e','DIAGNOSTIC_OUTPUT=/results']
         if limited:common+=['--cpus','0.15']
         name=label+'-backend';names.append(name)
         args=['docker','run','-d','--name',name,'--network-alias','backend',*common,'-p','127.0.0.1:8768:8768','alphaos-profile-python',
-            'python','/repo/tests/performance/lifecycle_backend.py','--log','/results/'+label+'-backend.jsonl']
+            'python','/repo/tests/performance/lifecycle_backend.py','--log','/results/'+label+'-backend.jsonl','--variant',variant]
         if alloc:args+=['--allocations']
         command(*args,stdout=subprocess.DEVNULL)
         ready('https://127.0.0.1:8768/health',str(OUT/'cert.pem'))
@@ -91,14 +96,17 @@ def run(label,limited,first,alloc=False):
             with (OUT/(name+'-inspect.json')).open('w') as f:subprocess.run(['docker','inspect',name],stdout=f)
             subprocess.run(['docker','rm','-f',name],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
 def main():
+    (OUT/'baseline_app.py').write_bytes(subprocess.check_output(['git','show','ff0a42efe74f964733cd2f0ea79e7456a1e862c8:alphaos_api/app.py']))
     key=rsa.generate_private_key(public_exponent=65537,key_size=2048);name=x509.Name([x509.NameAttribute(NameOID.COMMON_NAME,'AlphaOS local fixture')]);now=datetime.now(timezone.utc)
     cert=x509.CertificateBuilder().subject_name(name).issuer_name(name).public_key(key.public_key()).serial_number(x509.random_serial_number()).not_valid_before(now-timedelta(days=1)).not_valid_after(now+timedelta(days=1)).add_extension(x509.BasicConstraints(ca=True,path_length=None),critical=True).add_extension(x509.SubjectAlternativeName([x509.IPAddress(ipaddress.ip_address('127.0.0.1')),x509.DNSName('backend')]),critical=False).sign(key,hashes.SHA256())
     (OUT/'key.pem').write_bytes(key.private_bytes(serialization.Encoding.PEM,serialization.PrivateFormat.PKCS8,serialization.NoEncryption()));(OUT/'cert.pem').write_bytes(cert.public_bytes(serialization.Encoding.PEM))
     command('docker','network','create',NETWORK,stdout=subprocess.DEVNULL)
     try:
         for limited in (False,True):
-            for i,first in enumerate(('SPY','QQQ','pair')):run(('limited' if limited else 'control')+str(i),limited,first)
-        run('allocations',False,'pair',alloc=True)
+            for i,first in enumerate(('SPY','QQQ','pair')):
+                for variant in (('baseline','candidate') if i%2==0 else ('candidate','baseline')):
+                    run(variant+'-'+('limited' if limited else 'control')+str(i),limited,first,variant)
+        for variant in ('baseline','candidate'):run(variant+'-allocations',False,'pair',variant,alloc=True)
     finally:
         subprocess.run(['docker','network','rm',NETWORK],stdout=subprocess.DEVNULL)
         (OUT/'key.pem').unlink(missing_ok=True);(OUT/'cert.pem').unlink(missing_ok=True)

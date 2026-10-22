@@ -10,6 +10,8 @@ jobs:
     timeout-minutes: 40
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v6
         with:
           python-version-file: .python-version
@@ -35,4 +37,5 @@ jobs:
             lifecycle-results/*.json
             lifecycle-results/*.jsonl
             lifecycle-results/*.txt
+            lifecycle-results/*.json.gz
           retention-days: 7

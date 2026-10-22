@@ -1,11 +1,11 @@
 """Local-only instrumented fixture server. Never deploy this harness."""
-import argparse,sys,os,json,time,gc,threading,hashlib,gzip,logging,tracemalloc
+import argparse,sys,os,json,time,gc,threading,hashlib,gzip,logging,tracemalloc,ast
 from pathlib import Path
 from contextvars import ContextVar
 from datetime import datetime
 REPO=Path(os.environ['DIAGNOSTIC_REPO']);ROOT=Path(os.environ['DIAGNOSTIC_OUTPUT'])
 sys.path[:0]=[str(REPO),str(REPO/'tests')]
-parser=argparse.ArgumentParser();parser.add_argument('--cores',type=float,default=0);parser.add_argument('--log',required=True);parser.add_argument('--allocations',action='store_true');args=parser.parse_args()
+parser=argparse.ArgumentParser();parser.add_argument('--cores',type=float,default=0);parser.add_argument('--log',required=True);parser.add_argument('--allocations',action='store_true');parser.add_argument('--variant',choices=['baseline','candidate'],default='candidate');args=parser.parse_args()
 import uvicorn
 from modules.research_timing import _trace
 from modules.supabase_archive import read_latest_option_snapshot
@@ -42,6 +42,12 @@ def measured(name,fn):
         try:return fn(*a,**kw)
         finally:emit(kind='operation',stage=name,wall_ms=(time.perf_counter()-wall)*1000,cpu_ms=(time.thread_time()-cpu)*1000)
     return wrapped
+if args.variant=='baseline':
+    source=ast.parse((ROOT/'baseline_app.py').read_text())
+    function=next(n for n in source.body if isinstance(n,ast.FunctionDef) and n.name=='sanitized')
+    namespace=dict(api.__dict__)
+    exec(compile(ast.Module(body=[function],type_ignores=[]),'<baseline sanitizer>','exec'),namespace)
+    api.sanitized=namespace['sanitized']
 api.sanitized=measured('sanitization_redaction',api.sanitized)
 api.encode_json=measured('json_encoding',api.encode_json)
 GZipResponder._compress_body=measured('compression',GZipResponder._compress_body)
@@ -79,12 +85,13 @@ class Profile:
             start=time.perf_counter();await send(message);send_ms+=(time.perf_counter()-start)*1000
         try:await self.app(scope,receive,tracked)
         finally:
-            data=dict(kind='request_end',status=status,headers_ms=headers_ms,complete_ms=(time.perf_counter()-wall)*1000,process_cpu_ms=(time.process_time()-cpu)*1000,wire_bytes=wire,asgi_send_ms=send_ms,peak_rss_bytes=peak_rss(),cgroup_peak_memory_bytes=peak_commit(),cpu_stat=Path('/sys/fs/cgroup/cpu.stat').read_text())
+            data=dict(kind='request_end',status=status,headers_ms=headers_ms,complete_ms=(time.perf_counter()-wall)*1000,process_cpu_ms=(time.process_time()-cpu)*1000,wire_bytes=wire,asgi_send_ms=send_ms,peak_rss_bytes=peak_rss(),cgroup_peak_memory_bytes=peak_commit(),cpu_stat=Path('/sys/fs/cgroup/cpu.stat').read_text(),memory_events=Path('/sys/fs/cgroup/memory.events').read_text())
             if args.allocations:
                 data['traced_current_bytes'],data['traced_peak_bytes']=tracemalloc.get_traced_memory()
                 data['top_allocations']=[str(s) for s in tracemalloc.take_snapshot().statistics('lineno')[:8]]
             emit(**data);request.reset(token)
 config=limits(args.cores)
-emit(kind='configuration',limits=config,imports_before_cap=True,provider_authentication='stubbed, not measured',history_http='20ms synthetic stub',platform=sys.platform,python=sys.version)
+from importlib.metadata import version
+emit(kind='configuration',variant=args.variant,limits=config,imports_before_cap=False,provider_authentication='stubbed, not measured',history_http='20ms synthetic stub',platform=sys.platform,python=sys.version,cpu_model=next((line for line in Path('/proc/cpuinfo').read_text().splitlines() if line.startswith('model name')),''),packages={name:version(name) for name in ['numpy','pandas','fastapi','orjson','starlette','publicdotcom-py']})
 if args.allocations:tracemalloc.start(1)
 uvicorn.run(Profile(api.app),host='0.0.0.0',port=8768,ssl_keyfile=str(ROOT/'key.pem'),ssl_certfile=str(ROOT/'cert.pem'),log_level='error')
