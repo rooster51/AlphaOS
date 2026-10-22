@@ -267,8 +267,9 @@ nor a compact response contract is substituted.
 
 Final source: **1,184 Python tests + 64 subtests passed**, four existing SDK
 warnings; **100 website tests**, **29 browser tests**, typecheck, and production
-build passed. The local build initially stopped on an existing dependency
-advisory; retrying the same build succeeded. No dependencies, settings, or
+build passed. The initial local build stopped on a dependency advisory;
+retrying succeeded, but CI subsequently blocked the vulnerable Next.js pin.
+The scoped security correction below replaces that pin. No settings or
 deployment files were changed. Thirteen new tests cover contract/safety/lifetime
 edge cases; all 16 full-body parity cases also pass on the final implementation.
 
@@ -313,3 +314,43 @@ profiling. Workflow artifacts have seven-day retention; local ZIP copies remain
 in the workspace parent (`issue60-buffered-*.zip`, `issue60-buffered-repeat-*.zip`,
 and `issue60-buffered-final-*.zip`). No production credentials/private TLS keys
 are included. **Issue #60 and Milestone 1 remain open.**
+
+## PR #64 dependency audit correction (2026-10-22)
+
+[Run 39838466447](https://github.com/rooster51/AlphaOS/actions/runs/39838466447),
+web job 120032874295, failed at the unchanged
+`npm audit --omit=dev --audit-level=moderate` command. Next.js 16.4.0 was
+affected by [image optimization RCE](https://github.com/advisories/GHSA-2464-fhr4-w9xw),
+[Server Actions denial of service](https://github.com/advisories/GHSA-p3m5-59mp-jv5r),
+and [typed-array cache RCE](https://github.com/advisories/GHSA-673q-mjm6-r5xr).
+All three advisories list **16.4.1** as the first patched 16.x version.
+Although npm suggested 16.4.2, the smallest compatible correction is the exact
+16.4.1 pin in both `web/package.json` and `web/package-lock.json`.
+
+Only Next.js, its matching `@next/env` and platform SWC packages change in the
+lockfile; its sharp dependency minimum becomes 0.35.5 (the existing lock already
+resolves a sufficient version). React remains 18.3.1; supported peers and the
+Node >=20.9.0 engine requirement remain compatible with CI Node 22. No routes,
+application code, audit exceptions, deployment configuration, or Python code
+change in this correction. React 18's existing Next.js 16 deprecation warning
+is not a compatibility failure and is outside this patch's scope.
+
+Validation on the corrected dependency tree:
+
+- Clean `npm ci`; production audit: **zero vulnerabilities**.
+- Full audit: only the existing Issue #41 development-tool advisories (two
+  moderate, five high, zero critical); unchanged CI exception validation passes.
+- **100 website tests**, **29 Chromium browser tests**, typecheck, and production
+  build pass with Next.js 16.4.1.
+- Buffered encoder contract/redaction/failure/lifetime tests: **13 passed**.
+- Complete Python 3.12.14 suite: **1,184 passed + 64 subtests**, four existing
+  SDK deprecation warnings, 511.64 seconds on the local Windows environment.
+- All **16 complete-response SHA-256 hashes, byte sizes, and candidate/exclusion
+  counts** match both main and pre-security-patch PR #64. These fixtures span
+  SPY/QQQ, monthly/long-dated expirations, $150/unrestricted capital, and
+  Auto/manual $5 widths. Byte identity includes exact economic outputs.
+
+The performance measurements earlier in this report precede this dependency
+patch. These checks establish compatibility and fixture parity, not production
+latency acceptance. No merge or deployment was performed; **Issue #60 and
+Milestone 1 remain open pending complete-response production validation**.
