@@ -44,12 +44,14 @@ router=APIRouter(prefix='/v1',dependencies=[Depends(authenticate)],responses={
     status:{'model':ErrorResponse} for status in (400,401,403,404,409,410,422,429,500,503)})
 
 
-def sanitized(value):
+def sanitized(value, *, _state=None, _release=False):
     secrets_to_redact = tuple(secret_value for key in ('PUBLIC_API_SECRET','PUBLIC_ACCOUNT_NUMBER','ALPHAOS_API_TOKEN','SUPABASE_SERVICE_ROLE_KEY','SUPABASE_URL') if (secret_value := os.environ.get(key)))
     key_policy = {}
     redacted_strings = {}
     normalized_lists = {}
     unlimited = isinstance(value, dict) and isinstance(value.get('schema_version'), str) and value.get('schema_version') == 'alphaos-interface-v2'
+    if _state is not None:
+        secrets_to_redact, key_policy, redacted_strings, unlimited = _state
     def clean(item):
         kind = type(item)
         if item is None or kind is int or kind is bool:
@@ -85,12 +87,17 @@ def sanitized(value):
             return int(item)
         # Retain the existing pandas/numpy/date conversions for legacy routes.
         return clean(json_value(item))
-    return clean(value)
+    try:
+        return clean(value)
+    finally:
+        if _release:
+            clean = None
 
 
 def respond(value):
     with stage('response_serialization'):
-        return Response(content=encode_json(sanitized(value)),media_type='application/json')
+        from .buffered_research_json import encode_research_response
+        return Response(content=encode_research_response(value, sanitize=sanitized, encode=encode_json),media_type='application/json')
 
 
 def error_response(code,status):
