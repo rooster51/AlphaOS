@@ -1,0 +1,2265 @@
+{
+  "run_ids": [
+    40010959213,
+    40011594792
+  ],
+  "version": 3,
+  "tested_commit": "e567fb55ddbdafa3272bec974e2d93c53d400293",
+  "percentile_method": "nearest rank ceil(0.95*n)",
+  "trials": {
+    "40010959213/0": {
+      "disabled": {
+        "first_request": {
+          "n": 2,
+          "median_ms": 3455.9537844999963,
+          "p95_ms": 3804.837456000001,
+          "worst_ms": 3804.837456000001,
+          "deadline_successes": 2
+        },
+        "warm_sequential": {
+          "n": 6,
+          "median_ms": 1232.342121000002,
+          "p95_ms": 1773.2411989999832,
+          "worst_ms": 1773.2411989999832,
+          "deadline_successes": 6
+        },
+        "warm_concurrent": {
+          "n": 12,
+          "median_ms": 2177.0541114999987,
+          "p95_ms": 2570.2171990000124,
+          "worst_ms": 2570.2171990000124,
+          "deadline_successes": 12
+        },
+        "startup_to_health_ms": 4812.38989900001,
+        "peak_memory_bytes": 277508096,
+        "memory_events": "low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\noom_group_kill 0\n",
+        "cpu_max": "15000 100000\n",
+        "behavior": [
+          {
+            "scenario": "delayed",
+            "symbol": "SPY",
+            "status": 200,
+            "code": null,
+            "complete_ms": 975.8939529999964
+          },
+          {
+            "scenario": "delayed",
+            "symbol": "QQQ",
+            "status": 200,
+            "code": null,
+            "complete_ms": 975.4196159999964
+          },
+          {
+            "scenario": "gzip",
+            "symbol": "SPY",
+            "status": 200,
+            "code": null,
+            "complete_ms": 3494.940675999999
+          },
+          {
+            "scenario": "gzip",
+            "symbol": "QQQ",
+            "status": 200,
+            "code": null,
+            "complete_ms": 3496.9843920000017
+          },
+          {
+            "scenario": "unicode",
+            "symbol": "SPY",
+            "status": 200,
+            "code": null,
+            "complete_ms": 535.2363529999877
+          },
+          {
+            "scenario": "unicode",
+            "symbol": "QQQ",
+            "status": 200,
+            "code": null,
+            "complete_ms": 535.7239789999966
+          },
+          {
+            "scenario": "malformed",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 15.254122000001757
+          },
+          {
+            "scenario": "malformed",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 15.364077000000975
+          },
+          {
+            "scenario": "partial",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 596.6855279999947
+          },
+          {
+            "scenario": "partial",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 597.1803510000058
+          },
+          {
+            "scenario": "interrupted",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 599.3926480000056
+          },
+          {
+            "scenario": "interrupted",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 599.6886829999966
+          },
+          {
+            "scenario": "timeout_headers",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12006.849868000003
+          },
+          {
+            "scenario": "timeout_headers",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12091.745976999988
+          },
+          {
+            "scenario": "timeout_body",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12007.124201999999
+          },
+          {
+            "scenario": "timeout_body",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12008.309343999998
+          }
+        ]
+      },
+      "enabled": {
+        "first_request": {
+          "n": 2,
+          "median_ms": 3709.1025975000066,
+          "p95_ms": 3723.6347520000095,
+          "worst_ms": 3723.6347520000095,
+          "deadline_successes": 2
+        },
+        "warm_sequential": {
+          "n": 6,
+          "median_ms": 1223.6203689999884,
+          "p95_ms": 1600.098571000018,
+          "worst_ms": 1600.098571000018,
+          "deadline_successes": 6
+        },
+        "warm_concurrent": {
+          "n": 12,
+          "median_ms": 2174.462534,
+          "p95_ms": 2669.9273579999954,
+          "worst_ms": 2669.9273579999954,
+          "deadline_successes": 12
+        },
+        "startup_to_health_ms": 4697.650748000001,
+        "peak_memory_bytes": 285917184,
+        "memory_events": "low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\noom_group_kill 0\n",
+        "cpu_max": "15000 100000\n",
+        "behavior": [
+          {
+            "scenario": "delayed",
+            "symbol": "QQQ",
+            "status": 200,
+            "code": null,
+            "complete_ms": 952.7336989999924
+          },
+          {
+            "scenario": "delayed",
+            "symbol": "SPY",
+            "status": 200,
+            "code": null,
+            "complete_ms": 953.3776430000103
+          },
+          {
+            "scenario": "gzip",
+            "symbol": "QQQ",
+            "status": 200,
+            "code": null,
+            "complete_ms": 3091.895444000016
+          },
+          {
+            "scenario": "gzip",
+            "symbol": "SPY",
+            "status": 200,
+            "code": null,
+            "complete_ms": 3184.4304280000133
+          },
+          {
+            "scenario": "unicode",
+            "symbol": "SPY",
+            "status": 200,
+            "code": null,
+            "complete_ms": 481.6752830000155
+          },
+          {
+            "scenario": "unicode",
+            "symbol": "QQQ",
+            "status": 200,
+            "code": null,
+            "complete_ms": 563.8944459999777
+          },
+          {
+            "scenario": "malformed",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 7.679820999982212
+          },
+          {
+            "scenario": "malformed",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 9.163970999992443
+          },
+          {
+            "scenario": "partial",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 507.0187160000046
+          },
+          {
+            "scenario": "partial",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 507.54349999999704
+          },
+          {
+            "scenario": "interrupted",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 592.3507440000151
+          },
+          {
+            "scenario": "interrupted",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 592.9054259999873
+          },
+          {
+            "scenario": "timeout_headers",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12005.926549000009
+          },
+          {
+            "scenario": "timeout_headers",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12007.637571000003
+          },
+          {
+            "scenario": "timeout_body",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12006.774597999993
+          },
+          {
+            "scenario": "timeout_body",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12086.700440999977
+          }
+        ]
+      }
+    },
+    "40010959213/1": {
+      "disabled": {
+        "first_request": {
+          "n": 2,
+          "median_ms": 2506.503516500004,
+          "p95_ms": 2508.4806739999976,
+          "worst_ms": 2508.4806739999976,
+          "deadline_successes": 2
+        },
+        "warm_sequential": {
+          "n": 6,
+          "median_ms": 873.0537075000058,
+          "p95_ms": 1184.2271000000153,
+          "worst_ms": 1184.2271000000153,
+          "deadline_successes": 6
+        },
+        "warm_concurrent": {
+          "n": 12,
+          "median_ms": 1575.365473500014,
+          "p95_ms": 1881.5478719999987,
+          "worst_ms": 1881.5478719999987,
+          "deadline_successes": 12
+        },
+        "startup_to_health_ms": 3303.422068999993,
+        "peak_memory_bytes": 301760512,
+        "memory_events": "low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\noom_group_kill 0\n",
+        "cpu_max": "15000 100000\n",
+        "behavior": [
+          {
+            "scenario": "delayed",
+            "symbol": "QQQ",
+            "status": 200,
+            "code": null,
+            "complete_ms": 967.6104499999951
+          },
+          {
+            "scenario": "delayed",
+            "symbol": "SPY",
+            "status": 200,
+            "code": null,
+            "complete_ms": 967.8768189999971
+          },
+          {
+            "scenario": "gzip",
+            "symbol": "QQQ",
+            "status": 200,
+            "code": null,
+            "complete_ms": 1693.5601930000246
+          },
+          {
+            "scenario": "gzip",
+            "symbol": "SPY",
+            "status": 200,
+            "code": null,
+            "complete_ms": 2292.931750000008
+          },
+          {
+            "scenario": "unicode",
+            "symbol": "SPY",
+            "status": 200,
+            "code": null,
+            "complete_ms": 442.03605500001686
+          },
+          {
+            "scenario": "unicode",
+            "symbol": "QQQ",
+            "status": 200,
+            "code": null,
+            "complete_ms": 442.7412160000017
+          },
+          {
+            "scenario": "malformed",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 6.212255999997751
+          },
+          {
+            "scenario": "malformed",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 7.17489599998089
+          },
+          {
+            "scenario": "partial",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 507.4646799999982
+          },
+          {
+            "scenario": "partial",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 527.707587000009
+          },
+          {
+            "scenario": "interrupted",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 513.751678999995
+          },
+          {
+            "scenario": "interrupted",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 514.6862480000038
+          },
+          {
+            "scenario": "timeout_headers",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12004.73108
+          },
+          {
+            "scenario": "timeout_headers",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12006.833610000001
+          },
+          {
+            "scenario": "timeout_body",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12006.032016999996
+          },
+          {
+            "scenario": "timeout_body",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12007.087248000005
+          }
+        ]
+      },
+      "enabled": {
+        "first_request": {
+          "n": 2,
+          "median_ms": 2308.3207154999955,
+          "p95_ms": 2511.7478649999894,
+          "worst_ms": 2511.7478649999894,
+          "deadline_successes": 2
+        },
+        "warm_sequential": {
+          "n": 6,
+          "median_ms": 885.8892800000007,
+          "p95_ms": 1086.714139999998,
+          "worst_ms": 1086.714139999998,
+          "deadline_successes": 6
+        },
+        "warm_concurrent": {
+          "n": 12,
+          "median_ms": 1385.5188730000023,
+          "p95_ms": 1880.1037180000008,
+          "worst_ms": 1880.1037180000008,
+          "deadline_successes": 12
+        },
+        "startup_to_health_ms": 3082.261540999994,
+        "peak_memory_bytes": 282996736,
+        "memory_events": "low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\noom_group_kill 0\n",
+        "cpu_max": "15000 100000\n",
+        "behavior": [
+          {
+            "scenario": "delayed",
+            "symbol": "SPY",
+            "status": 200,
+            "code": null,
+            "complete_ms": 979.6769129999916
+          },
+          {
+            "scenario": "delayed",
+            "symbol": "QQQ",
+            "status": 200,
+            "code": null,
+            "complete_ms": 979.2997229999969
+          },
+          {
+            "scenario": "gzip",
+            "symbol": "QQQ",
+            "status": 200,
+            "code": null,
+            "complete_ms": 2087.183975000002
+          },
+          {
+            "scenario": "gzip",
+            "symbol": "SPY",
+            "status": 200,
+            "code": null,
+            "complete_ms": 2191.0268299999984
+          },
+          {
+            "scenario": "unicode",
+            "symbol": "QQQ",
+            "status": 200,
+            "code": null,
+            "complete_ms": 453.63254500000494
+          },
+          {
+            "scenario": "unicode",
+            "symbol": "SPY",
+            "status": 200,
+            "code": null,
+            "complete_ms": 455.64043400000287
+          },
+          {
+            "scenario": "malformed",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 7.138906999998085
+          },
+          {
+            "scenario": "malformed",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 8.305110999998533
+          },
+          {
+            "scenario": "partial",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 521.6578680000055
+          },
+          {
+            "scenario": "partial",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 523.4427790000069
+          },
+          {
+            "scenario": "interrupted",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 598.044599000005
+          },
+          {
+            "scenario": "interrupted",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 598.7133369999924
+          },
+          {
+            "scenario": "timeout_headers",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12004.541900000007
+          },
+          {
+            "scenario": "timeout_headers",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12007.896122000006
+          },
+          {
+            "scenario": "timeout_body",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12006.062626999992
+          },
+          {
+            "scenario": "timeout_body",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12007.053599999992
+          }
+        ]
+      }
+    },
+    "40010959213/2": {
+      "disabled": {
+        "first_request": {
+          "n": 2,
+          "median_ms": 2697.3123950000113,
+          "p95_ms": 2707.076477000015,
+          "worst_ms": 2707.076477000015,
+          "deadline_successes": 2
+        },
+        "warm_sequential": {
+          "n": 6,
+          "median_ms": 980.1480834999978,
+          "p95_ms": 1190.0324480000108,
+          "worst_ms": 1190.0324480000108,
+          "deadline_successes": 6
+        },
+        "warm_concurrent": {
+          "n": 12,
+          "median_ms": 1585.0600560000032,
+          "p95_ms": 1881.6068509999866,
+          "worst_ms": 1881.6068509999866,
+          "deadline_successes": 12
+        },
+        "startup_to_health_ms": 3230.6940169999907,
+        "peak_memory_bytes": 276926464,
+        "memory_events": "low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\noom_group_kill 0\n",
+        "cpu_max": "15000 100000\n",
+        "behavior": [
+          {
+            "scenario": "delayed",
+            "symbol": "QQQ",
+            "status": 200,
+            "code": null,
+            "complete_ms": 916.6011659999924
+          },
+          {
+            "scenario": "delayed",
+            "symbol": "SPY",
+            "status": 200,
+            "code": null,
+            "complete_ms": 916.9833130000029
+          },
+          {
+            "scenario": "gzip",
+            "symbol": "SPY",
+            "status": 200,
+            "code": null,
+            "complete_ms": 1348.124949999999
+          },
+          {
+            "scenario": "gzip",
+            "symbol": "QQQ",
+            "status": 200,
+            "code": null,
+            "complete_ms": 1747.8094559999988
+          },
+          {
+            "scenario": "unicode",
+            "symbol": "QQQ",
+            "status": 200,
+            "code": null,
+            "complete_ms": 466.4585969999848
+          },
+          {
+            "scenario": "unicode",
+            "symbol": "SPY",
+            "status": 200,
+            "code": null,
+            "complete_ms": 468.13199299998587
+          },
+          {
+            "scenario": "malformed",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 6.4414450000072065
+          },
+          {
+            "scenario": "malformed",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 6.675311999998712
+          },
+          {
+            "scenario": "partial",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 507.7873089999798
+          },
+          {
+            "scenario": "partial",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 508.47564299999704
+          },
+          {
+            "scenario": "interrupted",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 594.1972140000189
+          },
+          {
+            "scenario": "interrupted",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 594.9355810000156
+          },
+          {
+            "scenario": "timeout_headers",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12004.493239
+          },
+          {
+            "scenario": "timeout_headers",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12005.985232
+          },
+          {
+            "scenario": "timeout_body",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12006.810538999986
+          },
+          {
+            "scenario": "timeout_body",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12007.629349999974
+          }
+        ]
+      },
+      "enabled": {
+        "first_request": {
+          "n": 2,
+          "median_ms": 2451.9192975000124,
+          "p95_ms": 2453.4959720000134,
+          "worst_ms": 2453.4959720000134,
+          "deadline_successes": 2
+        },
+        "warm_sequential": {
+          "n": 6,
+          "median_ms": 784.958759999995,
+          "p95_ms": 1179.7745340000176,
+          "worst_ms": 1179.7745340000176,
+          "deadline_successes": 6
+        },
+        "warm_concurrent": {
+          "n": 12,
+          "median_ms": 1428.872119999994,
+          "p95_ms": 1970.7268239999962,
+          "worst_ms": 1970.7268239999962,
+          "deadline_successes": 12
+        },
+        "startup_to_health_ms": 3315.1244590000033,
+        "peak_memory_bytes": 314396672,
+        "memory_events": "low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\noom_group_kill 0\n",
+        "cpu_max": "15000 100000\n",
+        "behavior": [
+          {
+            "scenario": "delayed",
+            "symbol": "QQQ",
+            "status": 200,
+            "code": null,
+            "complete_ms": 966.2346700000057
+          },
+          {
+            "scenario": "delayed",
+            "symbol": "SPY",
+            "status": 200,
+            "code": null,
+            "complete_ms": 968.8706870000203
+          },
+          {
+            "scenario": "gzip",
+            "symbol": "QQQ",
+            "status": 200,
+            "code": null,
+            "complete_ms": 1896.4223140000058
+          },
+          {
+            "scenario": "gzip",
+            "symbol": "SPY",
+            "status": 200,
+            "code": null,
+            "complete_ms": 2090.6969339999932
+          },
+          {
+            "scenario": "unicode",
+            "symbol": "QQQ",
+            "status": 200,
+            "code": null,
+            "complete_ms": 451.40808400000765
+          },
+          {
+            "scenario": "unicode",
+            "symbol": "SPY",
+            "status": 200,
+            "code": null,
+            "complete_ms": 452.3767929999849
+          },
+          {
+            "scenario": "malformed",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 5.5391789999816865
+          },
+          {
+            "scenario": "malformed",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 6.520106000010628
+          },
+          {
+            "scenario": "partial",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 527.1053639999934
+          },
+          {
+            "scenario": "partial",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 527.9249369999945
+          },
+          {
+            "scenario": "interrupted",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 595.8103170000015
+          },
+          {
+            "scenario": "interrupted",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 596.6590669999903
+          },
+          {
+            "scenario": "timeout_headers",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12005.160577999988
+          },
+          {
+            "scenario": "timeout_headers",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12006.470275999987
+          },
+          {
+            "scenario": "timeout_body",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12006.167185999999
+          },
+          {
+            "scenario": "timeout_body",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12007.942966000002
+          }
+        ]
+      }
+    },
+    "40011594792/0": {
+      "disabled": {
+        "first_request": {
+          "n": 2,
+          "median_ms": 2800.0874709999975,
+          "p95_ms": 2801.5267819999963,
+          "worst_ms": 2801.5267819999963,
+          "deadline_successes": 2
+        },
+        "warm_sequential": {
+          "n": 6,
+          "median_ms": 1079.5575464999843,
+          "p95_ms": 1372.6975859999868,
+          "worst_ms": 1372.6975859999868,
+          "deadline_successes": 6
+        },
+        "warm_concurrent": {
+          "n": 12,
+          "median_ms": 1871.3690405000136,
+          "p95_ms": 2064.604720999995,
+          "worst_ms": 2064.604720999995,
+          "deadline_successes": 12
+        },
+        "startup_to_health_ms": 3977.4607169999995,
+        "peak_memory_bytes": 278585344,
+        "memory_events": "low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\noom_group_kill 0\n",
+        "cpu_max": "15000 100000\n",
+        "behavior": [
+          {
+            "scenario": "delayed",
+            "symbol": "SPY",
+            "status": 200,
+            "code": null,
+            "complete_ms": 969.2179000000039
+          },
+          {
+            "scenario": "delayed",
+            "symbol": "QQQ",
+            "status": 200,
+            "code": null,
+            "complete_ms": 969.3625240000046
+          },
+          {
+            "scenario": "gzip",
+            "symbol": "QQQ",
+            "status": 200,
+            "code": null,
+            "complete_ms": 1886.386465000001
+          },
+          {
+            "scenario": "gzip",
+            "symbol": "SPY",
+            "status": 200,
+            "code": null,
+            "complete_ms": 2383.5453479999983
+          },
+          {
+            "scenario": "unicode",
+            "symbol": "QQQ",
+            "status": 200,
+            "code": null,
+            "complete_ms": 458.81393300000184
+          },
+          {
+            "scenario": "unicode",
+            "symbol": "SPY",
+            "status": 200,
+            "code": null,
+            "complete_ms": 460.70811500000275
+          },
+          {
+            "scenario": "malformed",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 13.797593000006714
+          },
+          {
+            "scenario": "malformed",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 15.46308300000021
+          },
+          {
+            "scenario": "partial",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 507.04403199999604
+          },
+          {
+            "scenario": "partial",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 509.07788899999673
+          },
+          {
+            "scenario": "interrupted",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 592.7187489999994
+          },
+          {
+            "scenario": "interrupted",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 592.7909119999981
+          },
+          {
+            "scenario": "timeout_headers",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12005.072259000002
+          },
+          {
+            "scenario": "timeout_headers",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12006.682296999998
+          },
+          {
+            "scenario": "timeout_body",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12006.11871800001
+          },
+          {
+            "scenario": "timeout_body",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12007.477964000018
+          }
+        ]
+      },
+      "enabled": {
+        "first_request": {
+          "n": 2,
+          "median_ms": 3103.592749000001,
+          "p95_ms": 3105.4084920000096,
+          "worst_ms": 3105.4084920000096,
+          "deadline_successes": 2
+        },
+        "warm_sequential": {
+          "n": 6,
+          "median_ms": 977.2894224999931,
+          "p95_ms": 1282.4237550000248,
+          "worst_ms": 1282.4237550000248,
+          "deadline_successes": 6
+        },
+        "warm_concurrent": {
+          "n": 12,
+          "median_ms": 1866.2202295000016,
+          "p95_ms": 2275.093151999982,
+          "worst_ms": 2275.093151999982,
+          "deadline_successes": 12
+        },
+        "startup_to_health_ms": 3883.440743000023,
+        "peak_memory_bytes": 304508928,
+        "memory_events": "low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\noom_group_kill 0\n",
+        "cpu_max": "15000 100000\n",
+        "behavior": [
+          {
+            "scenario": "delayed",
+            "symbol": "QQQ",
+            "status": 200,
+            "code": null,
+            "complete_ms": 961.5523690000032
+          },
+          {
+            "scenario": "delayed",
+            "symbol": "SPY",
+            "status": 200,
+            "code": null,
+            "complete_ms": 965.4574999999852
+          },
+          {
+            "scenario": "gzip",
+            "symbol": "SPY",
+            "status": 200,
+            "code": null,
+            "complete_ms": 2788.357334000011
+          },
+          {
+            "scenario": "gzip",
+            "symbol": "QQQ",
+            "status": 200,
+            "code": null,
+            "complete_ms": 2894.2990680000094
+          },
+          {
+            "scenario": "unicode",
+            "symbol": "QQQ",
+            "status": 200,
+            "code": null,
+            "complete_ms": 534.1254840000147
+          },
+          {
+            "scenario": "unicode",
+            "symbol": "SPY",
+            "status": 200,
+            "code": null,
+            "complete_ms": 544.7415250000063
+          },
+          {
+            "scenario": "malformed",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 21.944883999992726
+          },
+          {
+            "scenario": "malformed",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 22.678096999982245
+          },
+          {
+            "scenario": "partial",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 507.310609000001
+          },
+          {
+            "scenario": "partial",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 508.69154699998376
+          },
+          {
+            "scenario": "interrupted",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 512.4600979999911
+          },
+          {
+            "scenario": "interrupted",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 513.4095279999826
+          },
+          {
+            "scenario": "timeout_headers",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12005.556667000008
+          },
+          {
+            "scenario": "timeout_headers",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12007.214324999979
+          },
+          {
+            "scenario": "timeout_body",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12007.885036000005
+          },
+          {
+            "scenario": "timeout_body",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12008.902699000004
+          }
+        ]
+      }
+    },
+    "40011594792/1": {
+      "disabled": {
+        "first_request": {
+          "n": 2,
+          "median_ms": 4197.68301149999,
+          "p95_ms": 4201.897952999985,
+          "worst_ms": 4201.897952999985,
+          "deadline_successes": 2
+        },
+        "warm_sequential": {
+          "n": 6,
+          "median_ms": 1273.712691499995,
+          "p95_ms": 1400.4930880000188,
+          "worst_ms": 1400.4930880000188,
+          "deadline_successes": 6
+        },
+        "warm_concurrent": {
+          "n": 12,
+          "median_ms": 2455.679858500005,
+          "p95_ms": 2781.1230840000007,
+          "worst_ms": 2781.1230840000007,
+          "deadline_successes": 12
+        },
+        "startup_to_health_ms": 5150.772743999994,
+        "peak_memory_bytes": 261767168,
+        "memory_events": "low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\noom_group_kill 0\n",
+        "cpu_max": "15000 100000\n",
+        "behavior": [
+          {
+            "scenario": "delayed",
+            "symbol": "QQQ",
+            "status": 200,
+            "code": null,
+            "complete_ms": 1163.8710480000043
+          },
+          {
+            "scenario": "delayed",
+            "symbol": "SPY",
+            "status": 200,
+            "code": null,
+            "complete_ms": 1164.351603
+          },
+          {
+            "scenario": "gzip",
+            "symbol": "SPY",
+            "status": 200,
+            "code": null,
+            "complete_ms": 3289.993906999996
+          },
+          {
+            "scenario": "gzip",
+            "symbol": "QQQ",
+            "status": 200,
+            "code": null,
+            "complete_ms": 3594.7310180000045
+          },
+          {
+            "scenario": "unicode",
+            "symbol": "SPY",
+            "status": 200,
+            "code": null,
+            "complete_ms": 553.9551260000053
+          },
+          {
+            "scenario": "unicode",
+            "symbol": "QQQ",
+            "status": 200,
+            "code": null,
+            "complete_ms": 641.4128639999888
+          },
+          {
+            "scenario": "malformed",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 17.848927000017056
+          },
+          {
+            "scenario": "malformed",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 18.151025999998183
+          },
+          {
+            "scenario": "partial",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 508.86789500000873
+          },
+          {
+            "scenario": "partial",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 509.6623199999897
+          },
+          {
+            "scenario": "interrupted",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 594.5783479999989
+          },
+          {
+            "scenario": "interrupted",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 594.8905269999898
+          },
+          {
+            "scenario": "timeout_headers",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12007.343565000014
+          },
+          {
+            "scenario": "timeout_headers",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12008.547238000006
+          },
+          {
+            "scenario": "timeout_body",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12008.042492999977
+          },
+          {
+            "scenario": "timeout_body",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12083.951423999992
+          }
+        ]
+      },
+      "enabled": {
+        "first_request": {
+          "n": 2,
+          "median_ms": 4599.220030000006,
+          "p95_ms": 4613.195755000007,
+          "worst_ms": 4613.195755000007,
+          "deadline_successes": 2
+        },
+        "warm_sequential": {
+          "n": 6,
+          "median_ms": 1471.7724854999972,
+          "p95_ms": 1676.914992999997,
+          "worst_ms": 1676.914992999997,
+          "deadline_successes": 6
+        },
+        "warm_concurrent": {
+          "n": 12,
+          "median_ms": 2667.0656025000026,
+          "p95_ms": 2971.749263999982,
+          "worst_ms": 2971.749263999982,
+          "deadline_successes": 12
+        },
+        "startup_to_health_ms": 5265.761424999993,
+        "peak_memory_bytes": 274890752,
+        "memory_events": "low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\noom_group_kill 0\n",
+        "cpu_max": "15000 100000\n",
+        "behavior": [
+          {
+            "scenario": "delayed",
+            "symbol": "SPY",
+            "status": 200,
+            "code": null,
+            "complete_ms": 1059.7148439999983
+          },
+          {
+            "scenario": "delayed",
+            "symbol": "QQQ",
+            "status": 200,
+            "code": null,
+            "complete_ms": 1059.2117820000055
+          },
+          {
+            "scenario": "gzip",
+            "symbol": "SPY",
+            "status": 200,
+            "code": null,
+            "complete_ms": 3382.1573289999947
+          },
+          {
+            "scenario": "gzip",
+            "symbol": "QQQ",
+            "status": 200,
+            "code": null,
+            "complete_ms": 3386.8595090000044
+          },
+          {
+            "scenario": "unicode",
+            "symbol": "SPY",
+            "status": 200,
+            "code": null,
+            "complete_ms": 559.9680730000074
+          },
+          {
+            "scenario": "unicode",
+            "symbol": "QQQ",
+            "status": 200,
+            "code": null,
+            "complete_ms": 560.6691700000113
+          },
+          {
+            "scenario": "malformed",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 8.361734000004617
+          },
+          {
+            "scenario": "malformed",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 9.911098000003449
+          },
+          {
+            "scenario": "partial",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 585.3621609999919
+          },
+          {
+            "scenario": "partial",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 586.0192380000058
+          },
+          {
+            "scenario": "interrupted",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 596.7654100000033
+          },
+          {
+            "scenario": "interrupted",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 598.0491389999969
+          },
+          {
+            "scenario": "timeout_headers",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12006.449829000005
+          },
+          {
+            "scenario": "timeout_headers",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12092.608036000001
+          },
+          {
+            "scenario": "timeout_body",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12006.244041999991
+          },
+          {
+            "scenario": "timeout_body",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12009.775191000002
+          }
+        ]
+      }
+    },
+    "40011594792/2": {
+      "disabled": {
+        "first_request": {
+          "n": 2,
+          "median_ms": 3003.774580500007,
+          "p95_ms": 3008.72092900002,
+          "worst_ms": 3008.72092900002,
+          "deadline_successes": 2
+        },
+        "warm_sequential": {
+          "n": 6,
+          "median_ms": 973.9252275000041,
+          "p95_ms": 1183.5939160000066,
+          "worst_ms": 1183.5939160000066,
+          "deadline_successes": 6
+        },
+        "warm_concurrent": {
+          "n": 12,
+          "median_ms": 1965.2805809999877,
+          "p95_ms": 2182.5502840000013,
+          "worst_ms": 2182.5502840000013,
+          "deadline_successes": 12
+        },
+        "startup_to_health_ms": 3845.472182999998,
+        "peak_memory_bytes": 286384128,
+        "memory_events": "low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\noom_group_kill 0\n",
+        "cpu_max": "15000 100000\n",
+        "behavior": [
+          {
+            "scenario": "delayed",
+            "symbol": "QQQ",
+            "status": 200,
+            "code": null,
+            "complete_ms": 953.0673319999892
+          },
+          {
+            "scenario": "delayed",
+            "symbol": "SPY",
+            "status": 200,
+            "code": null,
+            "complete_ms": 960.4412219999858
+          },
+          {
+            "scenario": "gzip",
+            "symbol": "QQQ",
+            "status": 200,
+            "code": null,
+            "complete_ms": 2185.0432759999876
+          },
+          {
+            "scenario": "gzip",
+            "symbol": "SPY",
+            "status": 200,
+            "code": null,
+            "complete_ms": 2285.643238000006
+          },
+          {
+            "scenario": "unicode",
+            "symbol": "QQQ",
+            "status": 200,
+            "code": null,
+            "complete_ms": 473.7813849999952
+          },
+          {
+            "scenario": "unicode",
+            "symbol": "SPY",
+            "status": 200,
+            "code": null,
+            "complete_ms": 562.2036430000037
+          },
+          {
+            "scenario": "malformed",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 6.811203000012256
+          },
+          {
+            "scenario": "malformed",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 8.12112400001297
+          },
+          {
+            "scenario": "partial",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 507.5287089999847
+          },
+          {
+            "scenario": "partial",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 508.4673510000073
+          },
+          {
+            "scenario": "interrupted",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 598.8750960000004
+          },
+          {
+            "scenario": "interrupted",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 599.6294109999951
+          },
+          {
+            "scenario": "timeout_headers",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12004.679526999978
+          },
+          {
+            "scenario": "timeout_headers",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12006.327264000021
+          },
+          {
+            "scenario": "timeout_body",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12006.149311000001
+          },
+          {
+            "scenario": "timeout_body",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12007.987856
+          }
+        ]
+      },
+      "enabled": {
+        "first_request": {
+          "n": 2,
+          "median_ms": 2639.653257499987,
+          "p95_ms": 3087.1137449999824,
+          "worst_ms": 3087.1137449999824,
+          "deadline_successes": 2
+        },
+        "warm_sequential": {
+          "n": 6,
+          "median_ms": 978.2572980000026,
+          "p95_ms": 1185.3550499999983,
+          "worst_ms": 1185.3550499999983,
+          "deadline_successes": 6
+        },
+        "warm_concurrent": {
+          "n": 12,
+          "median_ms": 1578.3229619999872,
+          "p95_ms": 2278.3797360000053,
+          "worst_ms": 2278.3797360000053,
+          "deadline_successes": 12
+        },
+        "startup_to_health_ms": 3842.2441169999784,
+        "peak_memory_bytes": 262365184,
+        "memory_events": "low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\noom_group_kill 0\n",
+        "cpu_max": "15000 100000\n",
+        "behavior": [
+          {
+            "scenario": "delayed",
+            "symbol": "SPY",
+            "status": 200,
+            "code": null,
+            "complete_ms": 979.9189780000006
+          },
+          {
+            "scenario": "delayed",
+            "symbol": "QQQ",
+            "status": 200,
+            "code": null,
+            "complete_ms": 987.0021639999891
+          },
+          {
+            "scenario": "gzip",
+            "symbol": "QQQ",
+            "status": 200,
+            "code": null,
+            "complete_ms": 1680.6019610000078
+          },
+          {
+            "scenario": "gzip",
+            "symbol": "SPY",
+            "status": 200,
+            "code": null,
+            "complete_ms": 2288.8856760000067
+          },
+          {
+            "scenario": "unicode",
+            "symbol": "QQQ",
+            "status": 200,
+            "code": null,
+            "complete_ms": 383.4899759999928
+          },
+          {
+            "scenario": "unicode",
+            "symbol": "SPY",
+            "status": 200,
+            "code": null,
+            "complete_ms": 446.89872699999
+          },
+          {
+            "scenario": "malformed",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 6.928714999986596
+          },
+          {
+            "scenario": "malformed",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 19.47980799999982
+          },
+          {
+            "scenario": "partial",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 506.8738119999807
+          },
+          {
+            "scenario": "partial",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 507.8383809999991
+          },
+          {
+            "scenario": "interrupted",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 594.8708920000172
+          },
+          {
+            "scenario": "interrupted",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 595.6575250000071
+          },
+          {
+            "scenario": "timeout_headers",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12004.273619999993
+          },
+          {
+            "scenario": "timeout_headers",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12005.877190999996
+          },
+          {
+            "scenario": "timeout_body",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12007.136393999986
+          },
+          {
+            "scenario": "timeout_body",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12008.148425000001
+          }
+        ]
+      }
+    }
+  },
+  "pooled": {
+    "first_request": {
+      "disabled": {
+        "n": 12,
+        "median_ms": 2900.177506999995,
+        "p95_ms": 4201.897952999985,
+        "worst_ms": 4201.897952999985,
+        "deadline_successes": 12
+      },
+      "enabled": {
+        "n": 12,
+        "median_ms": 3094.445375499987,
+        "p95_ms": 4613.195755000007,
+        "worst_ms": 4613.195755000007,
+        "deadline_successes": 12
+      }
+    },
+    "warm_sequential": {
+      "disabled": {
+        "n": 36,
+        "median_ms": 1076.0769105000065,
+        "p95_ms": 1572.845610999991,
+        "worst_ms": 1773.2411989999832,
+        "deadline_successes": 36
+      },
+      "enabled": {
+        "n": 36,
+        "median_ms": 984.5784019999968,
+        "p95_ms": 1600.098571000018,
+        "worst_ms": 1676.914992999997,
+        "deadline_successes": 36
+      }
+    },
+    "warm_concurrent": {
+      "disabled": {
+        "n": 72,
+        "median_ms": 1881.5773614999925,
+        "p95_ms": 2772.5224510000144,
+        "worst_ms": 2781.1230840000007,
+        "deadline_successes": 72
+      },
+      "enabled": {
+        "n": 72,
+        "median_ms": 1866.2202295000016,
+        "p95_ms": 2672.278656000003,
+        "worst_ms": 2971.749263999982,
+        "deadline_successes": 72
+      }
+    }
+  },
+  "body_intervals": {
+    "complete": {
+      "n": 72,
+      "median_ms": 1098.4744999999998,
+      "p95_ms": 1799.392,
+      "worst_ms": 2101.758,
+      "deadline_successes": 72
+    },
+    "delayed": {
+      "n": 12,
+      "median_ms": 903.91,
+      "p95_ms": 908.775,
+      "worst_ms": 908.775,
+      "deadline_successes": 12
+    },
+    "gzip": {
+      "n": 12,
+      "median_ms": 1768.029,
+      "p95_ms": 2601.195,
+      "worst_ms": 2601.195,
+      "deadline_successes": 12
+    }
+  },
+  "requests": 432,
+  "successful_per_mode": {
+    "disabled": 156,
+    "enabled": 156
+  },
+  "aborts": [
+    {
+      "mode": "disabled",
+      "client_closed_ms": 500.7501380000008,
+      "upstream_close": [
+        {
+          "event": "origin_close",
+          "request_id": "2a7287966d2c42339920c64d13184476",
+          "scenario": "client_abort",
+          "symbol": "SPY",
+          "elapsed_ms": 494.2655010000017,
+          "finished": false
+        }
+      ],
+      "bridge_abort_logs": [
+        {
+          "event": "research_bridge",
+          "request_id": "2a7287966d2c42339920c64d13184476",
+          "stage": "response_body",
+          "symbol": "SPY",
+          "research_mode": "current",
+          "fetch_headers_ms": 5,
+          "upstream_status": 200,
+          "upstream_json": true,
+          "backend_correlated": true,
+          "response_body_ms": 493,
+          "status": 499,
+          "timeout_ms": 12000,
+          "elapsed_ms": 499
+        }
+      ]
+    },
+    {
+      "mode": "enabled",
+      "client_closed_ms": 500.8888559999889,
+      "upstream_close": [
+        {
+          "event": "origin_close",
+          "request_id": "933a77376c704b038a2ca1033012cfac",
+          "scenario": "client_abort",
+          "symbol": "SPY",
+          "elapsed_ms": 495.162473999997,
+          "finished": false
+        }
+      ],
+      "bridge_abort_logs": [
+        {
+          "event": "research_bridge",
+          "request_id": "933a77376c704b038a2ca1033012cfac",
+          "stage": "response_body",
+          "symbol": "SPY",
+          "research_mode": "current",
+          "fetch_headers_ms": 5,
+          "upstream_status": 200,
+          "upstream_json": true,
+          "backend_correlated": true,
+          "response_body_ms": 494,
+          "status": 499,
+          "timeout_ms": 12000,
+          "elapsed_ms": 500
+        }
+      ]
+    },
+    {
+      "mode": "enabled",
+      "client_closed_ms": 500.63787800000625,
+      "upstream_close": [
+        {
+          "event": "origin_close",
+          "request_id": "dcf167df21d54455a421e023017b1a63",
+          "scenario": "client_abort",
+          "symbol": "SPY",
+          "elapsed_ms": 496.0816219999979,
+          "finished": false
+        }
+      ],
+      "bridge_abort_logs": [
+        {
+          "event": "research_bridge",
+          "request_id": "dcf167df21d54455a421e023017b1a63",
+          "stage": "response_body",
+          "symbol": "SPY",
+          "research_mode": "current",
+          "fetch_headers_ms": 4,
+          "upstream_status": 200,
+          "upstream_json": true,
+          "backend_correlated": true,
+          "response_body_ms": 495,
+          "status": 499,
+          "timeout_ms": 12000,
+          "elapsed_ms": 500
+        }
+      ]
+    },
+    {
+      "mode": "disabled",
+      "client_closed_ms": 500.75751800000035,
+      "upstream_close": [
+        {
+          "event": "origin_close",
+          "request_id": "420cb48df0734a8181004b048f44846e",
+          "scenario": "client_abort",
+          "symbol": "SPY",
+          "elapsed_ms": 494.8139220000012,
+          "finished": false
+        }
+      ],
+      "bridge_abort_logs": [
+        {
+          "event": "research_bridge",
+          "request_id": "420cb48df0734a8181004b048f44846e",
+          "stage": "response_body",
+          "symbol": "SPY",
+          "research_mode": "current",
+          "fetch_headers_ms": 5,
+          "upstream_status": 200,
+          "upstream_json": true,
+          "backend_correlated": true,
+          "response_body_ms": 494,
+          "status": 499,
+          "timeout_ms": 12000,
+          "elapsed_ms": 499
+        }
+      ]
+    },
+    {
+      "mode": "disabled",
+      "client_closed_ms": 500.63326299999744,
+      "upstream_close": [
+        {
+          "event": "origin_close",
+          "request_id": "32beadb455c245a8a448f12021874c6e",
+          "scenario": "client_abort",
+          "symbol": "SPY",
+          "elapsed_ms": 495.7494000000006,
+          "finished": false
+        }
+      ],
+      "bridge_abort_logs": [
+        {
+          "event": "research_bridge",
+          "request_id": "32beadb455c245a8a448f12021874c6e",
+          "stage": "response_body",
+          "symbol": "SPY",
+          "research_mode": "current",
+          "fetch_headers_ms": 4,
+          "upstream_status": 200,
+          "upstream_json": true,
+          "backend_correlated": true,
+          "response_body_ms": 495,
+          "status": 499,
+          "timeout_ms": 12000,
+          "elapsed_ms": 500
+        }
+      ]
+    },
+    {
+      "mode": "enabled",
+      "client_closed_ms": 500.65789499998914,
+      "upstream_close": [
+        {
+          "event": "origin_close",
+          "request_id": "0b8642a0a64e43009a6cce5e7149a466",
+          "scenario": "client_abort",
+          "symbol": "SPY",
+          "elapsed_ms": 495.8057600000029,
+          "finished": false
+        }
+      ],
+      "bridge_abort_logs": [
+        {
+          "event": "research_bridge",
+          "request_id": "0b8642a0a64e43009a6cce5e7149a466",
+          "stage": "response_body",
+          "symbol": "SPY",
+          "research_mode": "current",
+          "fetch_headers_ms": 4,
+          "upstream_status": 200,
+          "upstream_json": true,
+          "backend_correlated": true,
+          "response_body_ms": 495,
+          "status": 499,
+          "timeout_ms": 12000,
+          "elapsed_ms": 500
+        }
+      ]
+    },
+    {
+      "mode": "disabled",
+      "client_closed_ms": 500.6971930000077,
+      "upstream_close": [
+        {
+          "event": "origin_close",
+          "request_id": "0b199373fdc040feb9a5d56f5e6fc098",
+          "scenario": "client_abort",
+          "symbol": "SPY",
+          "elapsed_ms": 495.27685299999575,
+          "finished": false
+        }
+      ],
+      "bridge_abort_logs": [
+        {
+          "event": "research_bridge",
+          "request_id": "0b199373fdc040feb9a5d56f5e6fc098",
+          "stage": "response_body",
+          "symbol": "SPY",
+          "research_mode": "current",
+          "fetch_headers_ms": 4,
+          "upstream_status": 200,
+          "upstream_json": true,
+          "backend_correlated": true,
+          "response_body_ms": 495,
+          "status": 499,
+          "timeout_ms": 12000,
+          "elapsed_ms": 499
+        }
+      ]
+    },
+    {
+      "mode": "enabled",
+      "client_closed_ms": 500.6673799999817,
+      "upstream_close": [
+        {
+          "event": "origin_close",
+          "request_id": "ad2bac53bd734a82ad5cd3455d75947d",
+          "scenario": "client_abort",
+          "symbol": "SPY",
+          "elapsed_ms": 495.9781020000082,
+          "finished": false
+        }
+      ],
+      "bridge_abort_logs": [
+        {
+          "event": "research_bridge",
+          "request_id": "ad2bac53bd734a82ad5cd3455d75947d",
+          "stage": "response_body",
+          "symbol": "SPY",
+          "research_mode": "current",
+          "fetch_headers_ms": 4,
+          "upstream_status": 200,
+          "upstream_json": true,
+          "backend_correlated": true,
+          "response_body_ms": 495,
+          "status": 499,
+          "timeout_ms": 12000,
+          "elapsed_ms": 500
+        }
+      ]
+    },
+    {
+      "mode": "enabled",
+      "client_closed_ms": 500.8996809999928,
+      "upstream_close": [
+        {
+          "event": "origin_close",
+          "request_id": "498fb09c1c3b472c977a84745734d09a",
+          "scenario": "client_abort",
+          "symbol": "SPY",
+          "elapsed_ms": 499.18579899999895,
+          "finished": false
+        }
+      ],
+      "bridge_abort_logs": [
+        {
+          "event": "research_bridge",
+          "request_id": "498fb09c1c3b472c977a84745734d09a",
+          "stage": "response_body",
+          "symbol": "SPY",
+          "research_mode": "current",
+          "fetch_headers_ms": 1,
+          "upstream_status": 200,
+          "upstream_json": true,
+          "backend_correlated": true,
+          "response_body_ms": 498,
+          "status": 499,
+          "timeout_ms": 12000,
+          "elapsed_ms": 500
+        }
+      ]
+    },
+    {
+      "mode": "disabled",
+      "client_closed_ms": 501.0667680000154,
+      "upstream_close": [
+        {
+          "event": "origin_close",
+          "request_id": "daebbeadc4f349fbb76e18e283103cd5",
+          "scenario": "client_abort",
+          "symbol": "SPY",
+          "elapsed_ms": 494.5980659999914,
+          "finished": false
+        }
+      ],
+      "bridge_abort_logs": [
+        {
+          "event": "research_bridge",
+          "request_id": "daebbeadc4f349fbb76e18e283103cd5",
+          "stage": "response_body",
+          "symbol": "SPY",
+          "research_mode": "current",
+          "fetch_headers_ms": 6,
+          "upstream_status": 200,
+          "upstream_json": true,
+          "backend_correlated": true,
+          "response_body_ms": 494,
+          "status": 499,
+          "timeout_ms": 12000,
+          "elapsed_ms": 500
+        }
+      ]
+    },
+    {
+      "mode": "disabled",
+      "client_closed_ms": 500.67894000000024,
+      "upstream_close": [
+        {
+          "event": "origin_close",
+          "request_id": "753cb4457cf24a0b8ec500222a5b4d5e",
+          "scenario": "client_abort",
+          "symbol": "SPY",
+          "elapsed_ms": 494.9058619999996,
+          "finished": false
+        }
+      ],
+      "bridge_abort_logs": [
+        {
+          "event": "research_bridge",
+          "request_id": "753cb4457cf24a0b8ec500222a5b4d5e",
+          "stage": "response_body",
+          "symbol": "SPY",
+          "research_mode": "current",
+          "fetch_headers_ms": 5,
+          "upstream_status": 200,
+          "upstream_json": true,
+          "backend_correlated": true,
+          "response_body_ms": 494,
+          "status": 499,
+          "timeout_ms": 12000,
+          "elapsed_ms": 499
+        }
+      ]
+    },
+    {
+      "mode": "enabled",
+      "client_closed_ms": 500.6741029999944,
+      "upstream_close": [
+        {
+          "event": "origin_close",
+          "request_id": "92c820b9079848679ad8efc0d9798ad2",
+          "scenario": "client_abort",
+          "symbol": "SPY",
+          "elapsed_ms": 495.89183299998695,
+          "finished": false
+        }
+      ],
+      "bridge_abort_logs": [
+        {
+          "event": "research_bridge",
+          "request_id": "92c820b9079848679ad8efc0d9798ad2",
+          "stage": "response_body",
+          "symbol": "SPY",
+          "research_mode": "current",
+          "fetch_headers_ms": 4,
+          "upstream_status": 200,
+          "upstream_json": true,
+          "backend_correlated": true,
+          "response_body_ms": 495,
+          "status": 499,
+          "timeout_ms": 12000,
+          "elapsed_ms": 499
+        }
+      ]
+    }
+  ],
+  "route_only_controls": {
+    "0": {
+      "baseline": {
+        "cpu_model": "model name\t: AMD EPYC 7763 64-Core Processor",
+        "warm_concurrent": {
+          "n": 12,
+          "median_ms": 997.5274935000002,
+          "p95_ms": 1187.4441070000012,
+          "worst_ms": 1187.4441070000012,
+          "deadline_successes": 12
+        }
+      },
+      "disabled": {
+        "cpu_model": "model name\t: AMD EPYC 7763 64-Core Processor",
+        "warm_concurrent": {
+          "n": 12,
+          "median_ms": 909.1921999999995,
+          "p95_ms": 1101.363961000001,
+          "worst_ms": 1101.363961000001,
+          "deadline_successes": 12
+        }
+      },
+      "enabled": {
+        "cpu_model": "model name\t: AMD EPYC 7763 64-Core Processor",
+        "warm_concurrent": {
+          "n": 12,
+          "median_ms": 1002.7026495,
+          "p95_ms": 1198.4903790000008,
+          "worst_ms": 1198.4903790000008,
+          "deadline_successes": 12
+        }
+      }
+    },
+    "1": {
+      "baseline": {
+        "cpu_model": "model name\t: AMD EPYC 9V45 96-Core Processor",
+        "warm_concurrent": {
+          "n": 12,
+          "median_ms": 497.57700499999964,
+          "p95_ms": 599.1775699999998,
+          "worst_ms": 599.1775699999998,
+          "deadline_successes": 12
+        }
+      },
+      "disabled": {
+        "cpu_model": "model name\t: AMD EPYC 9V45 96-Core Processor",
+        "warm_concurrent": {
+          "n": 12,
+          "median_ms": 603.9121970000001,
+          "p95_ms": 707.6566490000005,
+          "worst_ms": 707.6566490000005,
+          "deadline_successes": 12
+        }
+      },
+      "enabled": {
+        "cpu_model": "model name\t: AMD EPYC 9V45 96-Core Processor",
+        "warm_concurrent": {
+          "n": 12,
+          "median_ms": 597.5919269999997,
+          "p95_ms": 699.6100690000003,
+          "worst_ms": 699.6100690000003,
+          "deadline_successes": 12
+        }
+      }
+    },
+    "2": {
+      "baseline": {
+        "cpu_model": "model name\t: AMD EPYC 9V74 80-Core Processor",
+        "warm_concurrent": {
+          "n": 12,
+          "median_ms": 701.1840900000002,
+          "p95_ms": 899.5739170000006,
+          "worst_ms": 899.5739170000006,
+          "deadline_successes": 12
+        }
+      },
+      "disabled": {
+        "cpu_model": "model name\t: AMD EPYC 9V74 80-Core Processor",
+        "warm_concurrent": {
+          "n": 12,
+          "median_ms": 607.0087530000001,
+          "p95_ms": 796.6434980000004,
+          "worst_ms": 796.6434980000004,
+          "deadline_successes": 12
+        }
+      },
+      "enabled": {
+        "cpu_model": "model name\t: AMD EPYC 9V74 80-Core Processor",
+        "warm_concurrent": {
+          "n": 12,
+          "median_ms": 691.3835789999998,
+          "p95_ms": 795.0823659999996,
+          "worst_ms": 795.0823659999996,
+          "deadline_successes": 12
+        }
+      }
+    }
+  }
+}
