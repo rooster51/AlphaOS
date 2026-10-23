@@ -1,6 +1,11 @@
 name: Issue60 isolated bridge probe validation
 on:
   workflow_dispatch:
+    inputs:
+      http_only:
+        description: Rerun focused HTTP validation without unchanged regression jobs
+        type: boolean
+        default: false
 permissions:
   contents: read
 jobs:
@@ -32,6 +37,7 @@ jobs:
             bridge-http-results/*.txt
           retention-days: 7
   constrained-overhead:
+    if: ${{ !inputs.http_only }}
     runs-on: ubuntu-latest
     timeout-minutes: 25
     strategy:
@@ -70,6 +76,7 @@ jobs:
           path: results/*.json
           retention-days: 7
   python:
+    if: ${{ !inputs.http_only }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -82,6 +89,7 @@ jobs:
         env:
           PYTHONPATH: ${{ github.workspace }}
   website:
+    if: ${{ !inputs.http_only }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     defaults:

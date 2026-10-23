@@ -88,7 +88,9 @@ def run_client(mode):
  for n in range(6):pair(mode,'complete','warm_concurrent')
  (OUT/f'client-{mode}.json').write_text(json.dumps(dict(rows=rows,aborts=aborts,launch=launch)))
 
-if os.environ.get('HTTP_FIXTURE_CLIENT_MODE'):
+if os.environ.get('HTTP_FIXTURE_CHECK_ORIGIN'):
+ ready('https://origin:8768/health',str(OUT/'cert.pem'))
+elif os.environ.get('HTTP_FIXTURE_CLIENT_MODE'):
  run_client(os.environ['HTTP_FIXTURE_CLIENT_MODE'])
 else:
  cert();command('docker','build','-f','tests/performance/Dockerfile.bridge-http','-t','alphaos-bridge-http','.')
@@ -96,7 +98,7 @@ else:
  command('docker','network','create','--internal','bridge-probe-http')
  command('docker','run','-d','--name','origin','--network','bridge-probe-http','--cpus','.15','--memory','512m','--memory-swap','512m','-v',f'{OUT}:/out','-v',f'{ROOT}/tests/performance/bridge-http-origin.mjs:/origin.mjs:ro','node:24.21.0-bookworm-slim','node','/origin.mjs')
  try:
-  command('docker','run','--rm','--network','bridge-probe-http','-v',f'{OUT}:/out:ro','alphaos-bridge-http-client','python','-c',"import requests; assert requests.get('https://origin:8768/health',verify='/out/cert.pem',timeout=20).status_code==200")
+  command('docker','run','--rm','--network','bridge-probe-http','-v',f'{ROOT}:/repo:ro','-v',f'{OUT}:/out:ro','-e','HTTP_FIXTURE_OUTPUT=/out','-e','HTTP_FIXTURE_CHECK_ORIGIN=1','alphaos-bridge-http-client','python','tests/performance/bridge_http_lifecycle.py')
   for mode in (['disabled','enabled'] if TRIAL%2==0 else ['enabled','disabled']):
    before=time.perf_counter()
    command('docker','run','-d','--name','next','--network','bridge-probe-http','--cpus','.15','--memory','512m','--memory-swap','512m','-v',f'{OUT}/cert.pem:/cert.pem:ro','-e','NODE_EXTRA_CA_CERTS=/cert.pem','-e','ALPHAOS_API_URL=https://origin:8768','-e',f'ALPHAOS_API_TOKEN={KEY}','-e',f'ALPHAOS_BRIDGE_TIMING_PROBE={1 if mode=="enabled" else 0}','alphaos-bridge-http')
