@@ -1,7 +1,5 @@
 name: Issue60 isolated bridge probe validation
 on:
-  push:
-    branches: [diagnostics/issue60-bridge-timing]
   workflow_dispatch:
 permissions:
   contents: read
