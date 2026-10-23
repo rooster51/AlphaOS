@@ -8,7 +8,7 @@ from cryptography.x509.oid import NameOID
 from cryptography.hazmat.primitives import hashes,serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 
-ROOT=Path.cwd();OUT=ROOT/'bridge-http-results';OUT.mkdir(exist_ok=True)
+ROOT=Path.cwd();OUT=Path(os.environ.get('HTTP_FIXTURE_OUTPUT',ROOT/'bridge-http-results'));OUT.mkdir(exist_ok=True)
 TRIAL=int(os.environ.get('TRIAL','0'));KEY='CONTROL_ONLY_CREDENTIAL_CANARY';rows=[];aborts=[];launch=[]
 def command(*args,**kw):return subprocess.run(args,check=True,**kw)
 def cert():
@@ -25,7 +25,7 @@ def ready(url,verify=True):
  raise RuntimeError('controlled server startup failed')
 def call(mode,symbol,scenario,kind):
  start=time.perf_counter()
- with requests.post('http://127.0.0.1:3000/api/research/market',json={'symbol':symbol,'objective':scenario},headers={'Accept-Encoding':'gzip'},stream=True,timeout=40) as r:
+ with requests.post(os.environ.get('HTTP_WEB_URL','http://127.0.0.1:3000')+'/api/research/market',json={'symbol':symbol,'objective':scenario},headers={'Accept-Encoding':'gzip'},stream=True,timeout=40) as r:
   headers=(time.perf_counter()-start)*1000;wire=r.raw.read(decode_content=False);complete=(time.perf_counter()-start)*1000
   body=gzip.decompress(wire) if r.headers.get('Content-Encoding')=='gzip' else wire
   assert KEY.encode() not in body
@@ -34,7 +34,7 @@ def call(mode,symbol,scenario,kind):
 def pair(mode,scenario,kind):
  with concurrent.futures.ThreadPoolExecutor(2) as pool:return list(pool.map(lambda s:call(mode,s,scenario,kind),['SPY','QQQ']))
 def client_abort(mode):
- conn=http.client.HTTPConnection('127.0.0.1',3000,timeout=5);start=time.perf_counter();conn.request('POST','/api/research/market',body=json.dumps({'symbol':'SPY','objective':'client_abort'}),headers={'Content-Type':'application/json'});time.sleep(.5);conn.close();aborts.append(dict(mode=mode,client_closed_ms=(time.perf_counter()-start)*1000));time.sleep(2)
+ conn=http.client.HTTPConnection(os.environ.get('HTTP_WEB_HOST','127.0.0.1'),3000,timeout=5);start=time.perf_counter();conn.request('POST','/api/research/market',body=json.dumps({'symbol':'SPY','objective':'client_abort'}),headers={'Content-Type':'application/json'});time.sleep(.5);conn.close();aborts.append(dict(mode=mode,client_closed_ms=(time.perf_counter()-start)*1000));time.sleep(2)
 def snapshot(container,path):
  (OUT/path).write_bytes(subprocess.check_output(['docker','logs',container],stderr=subprocess.STDOUT))
 def inspect_usage(container,mode):
@@ -78,25 +78,34 @@ def validate():
  result=dict(trial=TRIAL,response_parity=True,correlation=True,timing_order=True,privacy=True,aborts=aborts,probe_timings=timings,rows=rows,launch=launch)
  (OUT/'report.json').write_text(json.dumps(result,indent=2));print(json.dumps(dict(trial=TRIAL,requests=len(rows),response_parity=True,privacy=True)))
 
-cert();command('docker','build','-f','tests/performance/Dockerfile.bridge-http','-t','alphaos-bridge-http','.')
-command('docker','network','create','--internal','bridge-probe-http')
-command('docker','run','-d','--name','origin','--network','bridge-probe-http','--cpus','.15','--memory','512m','--memory-swap','512m','-p','127.0.0.1:8768:8768','-v',f'{OUT}:/out','-v',f'{ROOT}/tests/performance/bridge-http-origin.mjs:/origin.mjs:ro','node:24.21.0-bookworm-slim','node','/origin.mjs')
-ready('https://localhost:8768/health',str(OUT/'cert.pem'))
-try:
- for mode in (['disabled','enabled'] if TRIAL%2==0 else ['enabled','disabled']):
-  before=time.perf_counter()
-  command('docker','run','-d','--name','next','--network','bridge-probe-http','--cpus','.15','--memory','512m','--memory-swap','512m','-p','127.0.0.1:3000:3000','-v',f'{OUT}/cert.pem:/cert.pem:ro','-e','NODE_EXTRA_CA_CERTS=/cert.pem','-e','ALPHAOS_API_URL=https://origin:8768','-e',f'ALPHAOS_API_TOKEN={KEY}','-e',f'ALPHAOS_BRIDGE_TIMING_PROBE={1 if mode=="enabled" else 0}','alphaos-bridge-http')
-  try:
-   ready('http://127.0.0.1:3000/api/health');launch.append(dict(mode=mode,startup_to_health_ms=(time.perf_counter()-before)*1000))
-   pair(mode,'complete','first_request')
-   for scenario in ['delayed','gzip','unicode','malformed','partial','interrupted','timeout_headers','timeout_body']:pair(mode,scenario,'behavior')
-   client_abort(mode)
-   for n in range(3):
-    for s in ['SPY','QQQ']:call(mode,s,'complete','warm_sequential')
-   for n in range(6):pair(mode,'complete','warm_concurrent')
-  finally:
-   snapshot('next',f'{mode}-next.log');inspect_usage('next',mode);command('docker','rm','-f','next')
- validate()
-finally:
- snapshot('origin','origin-console.log');command('docker','rm','-f','origin');command('docker','network','rm','bridge-probe-http')
- (OUT/'measurements.json').write_text(json.dumps(dict(rows=rows,aborts=aborts,launch=launch),indent=2))
+def run_client(mode):
+ before=time.perf_counter();ready('http://next:3000/api/health');launch.append(dict(mode=mode,startup_to_health_ms=(time.perf_counter()-float(os.environ.get('HTTP_NEXT_LAUNCHED_MONO',before)))*1000))
+ pair(mode,'complete','first_request')
+ for scenario in ['delayed','gzip','unicode','malformed','partial','interrupted','timeout_headers','timeout_body']:pair(mode,scenario,'behavior')
+ client_abort(mode)
+ for n in range(3):
+  for symbol in ['SPY','QQQ']:call(mode,symbol,'complete','warm_sequential')
+ for n in range(6):pair(mode,'complete','warm_concurrent')
+ (OUT/f'client-{mode}.json').write_text(json.dumps(dict(rows=rows,aborts=aborts,launch=launch)))
+
+if os.environ.get('HTTP_FIXTURE_CLIENT_MODE'):
+ run_client(os.environ['HTTP_FIXTURE_CLIENT_MODE'])
+else:
+ cert();command('docker','build','-f','tests/performance/Dockerfile.bridge-http','-t','alphaos-bridge-http','.')
+ command('docker','build','-f','tests/performance/Dockerfile.bridge-http-client','-t','alphaos-bridge-http-client','.')
+ command('docker','network','create','--internal','bridge-probe-http')
+ command('docker','run','-d','--name','origin','--network','bridge-probe-http','--cpus','.15','--memory','512m','--memory-swap','512m','-v',f'{OUT}:/out','-v',f'{ROOT}/tests/performance/bridge-http-origin.mjs:/origin.mjs:ro','node:24.21.0-bookworm-slim','node','/origin.mjs')
+ try:
+  command('docker','run','--rm','--network','bridge-probe-http','-v',f'{OUT}:/out:ro','alphaos-bridge-http-client','python','-c',"import requests; assert requests.get('https://origin:8768/health',verify='/out/cert.pem',timeout=20).status_code==200")
+  for mode in (['disabled','enabled'] if TRIAL%2==0 else ['enabled','disabled']):
+   before=time.perf_counter()
+   command('docker','run','-d','--name','next','--network','bridge-probe-http','--cpus','.15','--memory','512m','--memory-swap','512m','-v',f'{OUT}/cert.pem:/cert.pem:ro','-e','NODE_EXTRA_CA_CERTS=/cert.pem','-e','ALPHAOS_API_URL=https://origin:8768','-e',f'ALPHAOS_API_TOKEN={KEY}','-e',f'ALPHAOS_BRIDGE_TIMING_PROBE={1 if mode=="enabled" else 0}','alphaos-bridge-http')
+   try:
+    command('docker','run','--rm','--network','bridge-probe-http','-v',f'{ROOT}:/repo:ro','-v',f'{OUT}:/out','-e','HTTP_FIXTURE_OUTPUT=/out','-e',f'HTTP_FIXTURE_CLIENT_MODE={mode}','-e',f'HTTP_NEXT_LAUNCHED_MONO={before}','-e','HTTP_WEB_URL=http://next:3000','-e','HTTP_WEB_HOST=next','alphaos-bridge-http-client','python','tests/performance/bridge_http_lifecycle.py')
+    result=json.loads((OUT/f'client-{mode}.json').read_text());rows.extend(result['rows']);aborts.extend(result['aborts']);launch.extend(result['launch'])
+   finally:
+    snapshot('next',f'{mode}-next.log');inspect_usage('next',mode);command('docker','rm','-f','next')
+  validate()
+ finally:
+  snapshot('origin','origin-console.log');command('docker','rm','-f','origin');command('docker','network','rm','bridge-probe-http')
+  (OUT/'measurements.json').write_text(json.dumps(dict(rows=rows,aborts=aborts,launch=launch),indent=2))
