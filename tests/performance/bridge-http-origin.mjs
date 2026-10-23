@@ -23,10 +23,11 @@ const server=https.createServer({key:readFileSync('/out/key.pem'),cert:readFileS
  if(scenario==='partial'||scenario==='interrupted')raw=cached[symbol].complete;
  const headers={'Content-Type':'application/json','X-AlphaOS-Request-ID':id,'Content-Length':raw.length};
  if(scenario==='gzip')headers['Content-Encoding']='gzip';
+ if(scenario==='partial')headers.Connection='close';
  function begin(){
   if(closed)return;res.writeHead(200,headers);res.flushHeaders();record('origin_headers');
   if(scenario==='partial'||scenario==='interrupted'){
-   res.write(raw.subarray(0,64));timer=setTimeout(()=>res.destroy(),100);return;
+   res.write(raw.subarray(0,64));timer=setTimeout(()=>scenario==='partial'?res.end():res.destroy(),500);return;
   }
   let offset=0;
   function send(){
