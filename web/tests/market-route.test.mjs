@@ -2,6 +2,19 @@ import assert from "node:assert/strict";
 import { afterEach, test } from "node:test";
 import { POST } from "../src/app/api/research/market/route.ts";
 
+test("validated ordinary research avoids stringify even with exponent-like archive hashes", async () => {
+  setBackendConfig();
+  const data={...envelope("SPY"),archive_hash:"e319e312e221e713e99",normal:1.25};
+  globalThis.fetch=async()=>new Response(JSON.stringify(data));
+  const original=Response.json;let calls=0;
+  try {
+    Response.json=(...args)=>{calls++;return original(...args);};
+    const result=await POST(request({symbol:"SPY"}));
+    assert.equal(result.status,200);assert.deepEqual((await result.json()).research,data);
+    assert.equal(calls,0);
+  }finally{Response.json=original;}
+});
+
 test("validated JSON wrapper preserves number normalization and all research fields", async () => {
   setBackendConfig();
   const literals = ["0", "-0", "-0.0", "-0e-5", "9007199254740993", "-9007199254740993",

@@ -303,8 +303,8 @@ async function marketRequest(request: Request, trace: BridgeTrace, timeout: () =
   const requiresNumberNormalization =
     /(?:^|[\[,:\s])-?\d{16,}/.test(responseText) ||
     /(?:^|[\[,:\s])-0(?:\.0*)?(?:[eE][+-]?\d+)?(?=[,\]}\s]|$)/.test(responseText) ||
-    /[eE][+-]?\d{3,}/.test(responseText) ||
-    /[eE]\+?(?:1[5-9]|[2-9]\d)(?!\d)/.test(responseText) ||
+    /(?:^|[\[,:\s])-?\d+(?:\.\d+)?[eE][+-]?\d{3,}/.test(responseText) ||
+    /(?:^|[\[,:\s])-?\d+(?:\.\d+)?[eE]\+?(?:1[5-9]|[2-9]\d)(?!\d)/.test(responseText) ||
     /-0\.0{15}/.test(responseText);
   if (requiresNumberNormalization) {
     return Response.json(
