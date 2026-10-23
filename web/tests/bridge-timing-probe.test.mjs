@@ -29,7 +29,7 @@ test('enabled and disabled routes preserve bytes/status/cache and validation/err
    const r=await POST(input());results.push({status:r.status,body:await r.text(),cache:r.headers.get('cache-control')});
    assert.ok(!JSON.stringify(logs).includes('BODY_CANARY'));assert.ok(!JSON.stringify(logs).includes('credential-canary'));
    const probe=logs.find(x=>x.event==='research_bridge_probe');assert.equal(!!probe,enabled);
-   if(probe){assert.match(probe.request_id,/^[a-f0-9]{32}$/);assert.equal(probe.request_id,r.headers.get('x-alphaos-request-id'));assert.ok(probe.decoded_text_code_units>0);}
+   if(probe){assert.match(probe.request_id,/^[a-f0-9]{32}$/);assert.equal(probe.request_id,r.headers.get('x-alphaos-request-id'));assert.ok(probe.body_decompression_decode_parse_ms>=0);}
   }
   assert.deepEqual(results[0],results[1]);
  }
@@ -73,17 +73,27 @@ test('unexpected exceptions remain thrown without logging their messages or data
  await assert.rejects(POST(input()),/PRIVATE_EXCEPTION/);assert.ok(!JSON.stringify(logs).includes('PRIVATE_EXCEPTION'));assert.equal(logs.filter(x=>x.event==='research_bridge_probe').length,1);
 });
 
-test('native text telemetry distinguishes code units from declared bytes and rejects raw header logging',async()=>{
- const logs=[];console.warn=x=>logs.push(JSON.parse(x));const text='{"x":"π🙂"}';
+test('probe calls native json once without cloning or separately consuming the body',async()=>{
+ const logs=[];console.warn=x=>logs.push(JSON.parse(x));
  for(const declared of ['999','PRIVATE_HEADER_CANARY']){
-  const p=new BridgeTimingProbe('c'.repeat(32));
-  assert.deepEqual(await p.json(new Response(text,{headers:{'content-length':declared}})),JSON.parse(text));
+  const p=new BridgeTimingProbe('c'.repeat(32));let calls=0;
+  const response={headers:new Headers({'content-length':declared}),json:async()=>{calls++;return {ok:true};},
+   text(){throw Error('extra consumption');},arrayBuffer(){throw Error('extra buffering');},clone(){throw Error('extra clone');}};
+  assert.deepEqual(await p.json(response),{ok:true});assert.equal(calls,1);
   p.finish(200,new AbortController().signal);
  }
- assert.equal(logs[0].decoded_text_code_units,text.length);
- assert.notEqual(text.length,new TextEncoder().encode(text).length);
  assert.equal(logs[0].upstream_declared_content_length_bytes,999);
  assert.equal(logs[1].upstream_declared_content_length_bytes,null);
+ assert.ok(logs.every(x=>x.body_json_completed && x.body_decompression_decode_parse_ms>=0));
  assert.ok(!JSON.stringify(logs).includes('PRIVATE_HEADER_CANARY'));
- assert.ok(!('utf8_decode_ms' in logs[0]));assert.ok(!('decoded_body_bytes' in logs[0]));
+ for(const field of ['json_parse_ms','decoded_text_code_units','event_loop_samples','event_loop_delay_max_ms'])assert.ok(!(field in logs[0]));
+});
+
+test('native body rejection records an incomplete combined interval and preserves exception identity',async()=>{
+ const logs=[];console.warn=x=>logs.push(JSON.parse(x));const error=new TypeError('PRIVATE_ERROR');
+ const p=new BridgeTimingProbe('d'.repeat(32));
+ await assert.rejects(p.json({headers:new Headers(),json:async()=>{throw error;}}),e=>e===error);
+ p.finish(502,new AbortController().signal);
+ assert.equal(logs[0].body_json_completed,false);assert.ok(logs[0].body_decompression_decode_parse_ms>=0);
+ assert.ok(!JSON.stringify(logs).includes('PRIVATE_ERROR'));
 });

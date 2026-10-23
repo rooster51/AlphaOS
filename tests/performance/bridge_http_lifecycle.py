@@ -43,7 +43,7 @@ def inspect_usage(container,mode):
 def validate():
  origin=[json.loads(line) for line in (OUT/'origin.jsonl').read_text().splitlines()]
  cases={};timings=[];privacy=True
- allowed={'event','version','request_id','status','fetch_started_ms','headers_received_ms','body_decoded_ms','parsed_ms','validated_ms','decoded_text_code_units','body_read_including_decompression_utf8_ms','upstream_declared_content_length_bytes','json_parse_ms','elapsed_ms','deadline_elapsed_ms','deadline_budget_exceeded','timeout_signal_aborted','timeout_observed_ms','client_aborted','event_loop_samples','event_loop_delay_max_ms'}
+ allowed={'event','version','request_id','status','fetch_started_ms','headers_received_ms','body_consumption_end_ms','validated_ms','body_json_completed','body_decompression_decode_parse_ms','upstream_declared_content_length_bytes','elapsed_ms','deadline_elapsed_ms','deadline_budget_exceeded','timeout_signal_aborted','timeout_observed_ms','client_aborted'}
  for mode in ['disabled','enabled']:
   logs=[]
   for line in (OUT/f'{mode}-next.log').read_text().splitlines():
@@ -58,8 +58,8 @@ def validate():
    assert len(probes)==(1 if mode=='enabled' else 0)
    if probes:
     p=probes[0];assert set(p)<=allowed;assert p['status']==r['status'];assert p['elapsed_ms']>=p.get('headers_received_ms',0)
-    present=[p[k] for k in ['fetch_started_ms','headers_received_ms','body_decoded_ms','parsed_ms','validated_ms','elapsed_ms'] if k in p];assert present==sorted(present)
-    if r['status']==200:assert p['body_decoded_ms']<=p['parsed_ms']<=p['validated_ms'];assert p['decoded_text_code_units']>0
+    present=[p[k] for k in ['fetch_started_ms','headers_received_ms','body_consumption_end_ms','validated_ms','elapsed_ms'] if k in p];assert present==sorted(present)
+    if r['status']==200:assert p['body_consumption_end_ms']<=p['validated_ms'];assert p['body_json_completed']
     # Native timer expiry and separately sampled performance.now() are not the
     # same clock boundary (sub-ms origin/rounding). Do not conflate these facts.
     if r['scenario'] in ['timeout_body','timeout_headers']:assert p['timeout_signal_aborted'] and p['timeout_observed_ms'] is not None
