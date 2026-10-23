@@ -1,5 +1,7 @@
 # Issue 60: disabled metadata-only website bridge probe
 
+> Historical v1 route-only report. Current probe v2 and actual HTTP validation are documented in [ISSUE60_BRIDGE_HTTP_VALIDATION.md](ISSUE60_BRIDGE_HTTP_VALIDATION.md); field names and decoding limits changed there. Preserve the measurements below as v1 evidence, not current deployment approval.
+
 Baseline: `76a6a1696d007aeb6aab31fa33c6dad847608688`. Isolated branch: `diagnostics/issue60-bridge-timing`. Application/test revision measured: `47723be70429db1696fd818d791ac3ec79acabf9`.
 
 **Recommendation: NO-GO for enabling in production yet.** Correctness tests pass, but the enabled probe changed concurrent median latency by up to ~101ms (20.2%) in one constrained control trial. No full Next-over-HTTP constrained measurement was run. Review/accept the observer overhead and its limits before requesting deployment approval; do not interpret these controls as SPY/QQQ research acceptance. No runtime optimization, provider request/data capture, timeout increase, PR, merge, deployment, or production configuration change occurred. Issue #60 and Milestone 1 remain open.

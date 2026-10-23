@@ -1,0 +1,878 @@
+{
+  "run_id": 40008496780,
+  "version": 2,
+  "trials": {
+    "0": {
+      "disabled": {
+        "first_request": {
+          "n": 2,
+          "median_ms": 3492.8057260000005,
+          "p95_ms": 3887.1884499999965,
+          "worst_ms": 3887.1884499999965,
+          "deadline_successes": 2
+        },
+        "warm_sequential": {
+          "n": 6,
+          "median_ms": 1122.3066300000041,
+          "p95_ms": 1499.603067999999,
+          "worst_ms": 1499.603067999999,
+          "deadline_successes": 6
+        },
+        "warm_concurrent": {
+          "n": 12,
+          "median_ms": 2279.4630209999978,
+          "p95_ms": 2674.485112999989,
+          "worst_ms": 2674.485112999989,
+          "deadline_successes": 12
+        },
+        "startup_to_health_ms": 4650.683516000001,
+        "peak_memory_bytes": 251412480,
+        "memory_events": "low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\noom_group_kill 0\n",
+        "behavior_statuses": [
+          {
+            "scenario": "delayed",
+            "symbol": "SPY",
+            "status": 200,
+            "code": null,
+            "complete_ms": 1085.201067
+          },
+          {
+            "scenario": "delayed",
+            "symbol": "QQQ",
+            "status": 200,
+            "code": null,
+            "complete_ms": 1084.7214310000054
+          },
+          {
+            "scenario": "gzip",
+            "symbol": "SPY",
+            "status": 200,
+            "code": null,
+            "complete_ms": 3088.303576000001
+          },
+          {
+            "scenario": "gzip",
+            "symbol": "QQQ",
+            "status": 200,
+            "code": null,
+            "complete_ms": 3092.2908269999994
+          },
+          {
+            "scenario": "unicode",
+            "symbol": "QQQ",
+            "status": 200,
+            "code": null,
+            "complete_ms": 653.3981189999878
+          },
+          {
+            "scenario": "unicode",
+            "symbol": "SPY",
+            "status": 200,
+            "code": null,
+            "complete_ms": 654.8824670000073
+          },
+          {
+            "scenario": "malformed",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 7.7696780000025
+          },
+          {
+            "scenario": "malformed",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 8.350863000003983
+          },
+          {
+            "scenario": "partial",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 588.5872979999931
+          },
+          {
+            "scenario": "partial",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 589.7456920000081
+          },
+          {
+            "scenario": "interrupted",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 514.6470359999995
+          },
+          {
+            "scenario": "interrupted",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 593.8589029999974
+          },
+          {
+            "scenario": "timeout_headers",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12006.888692000004
+          },
+          {
+            "scenario": "timeout_headers",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12007.897064000004
+          },
+          {
+            "scenario": "timeout_body",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12005.485124999992
+          },
+          {
+            "scenario": "timeout_body",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12089.612430000003
+          }
+        ]
+      },
+      "enabled": {
+        "first_request": {
+          "n": 2,
+          "median_ms": 3353.260747999997,
+          "p95_ms": 3898.4936699999935,
+          "worst_ms": 3898.4936699999935,
+          "deadline_successes": 2
+        },
+        "warm_sequential": {
+          "n": 6,
+          "median_ms": 1325.7871634999958,
+          "p95_ms": 1598.0755360000103,
+          "worst_ms": 1598.0755360000103,
+          "deadline_successes": 6
+        },
+        "warm_concurrent": {
+          "n": 12,
+          "median_ms": 2271.569080500001,
+          "p95_ms": 2758.8949150000135,
+          "worst_ms": 2758.8949150000135,
+          "deadline_successes": 12
+        },
+        "startup_to_health_ms": 4577.237329000013,
+        "peak_memory_bytes": 273842176,
+        "memory_events": "low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\noom_group_kill 0\n",
+        "behavior_statuses": [
+          {
+            "scenario": "delayed",
+            "symbol": "SPY",
+            "status": 200,
+            "code": null,
+            "complete_ms": 983.1392149999942
+          },
+          {
+            "scenario": "delayed",
+            "symbol": "QQQ",
+            "status": 200,
+            "code": null,
+            "complete_ms": 1076.5948480000134
+          },
+          {
+            "scenario": "gzip",
+            "symbol": "SPY",
+            "status": 200,
+            "code": null,
+            "complete_ms": 2299.725986999988
+          },
+          {
+            "scenario": "gzip",
+            "symbol": "QQQ",
+            "status": 200,
+            "code": null,
+            "complete_ms": 2899.587445999998
+          },
+          {
+            "scenario": "unicode",
+            "symbol": "SPY",
+            "status": 200,
+            "code": null,
+            "complete_ms": 567.0865449999951
+          },
+          {
+            "scenario": "unicode",
+            "symbol": "QQQ",
+            "status": 200,
+            "code": null,
+            "complete_ms": 660.620219000009
+          },
+          {
+            "scenario": "malformed",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 6.048830999986876
+          },
+          {
+            "scenario": "malformed",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 9.151453000015408
+          },
+          {
+            "scenario": "partial",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 506.1838919999957
+          },
+          {
+            "scenario": "partial",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 591.5985219999982
+          },
+          {
+            "scenario": "interrupted",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 513.8071940000088
+          },
+          {
+            "scenario": "interrupted",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 514.3703319999986
+          },
+          {
+            "scenario": "timeout_headers",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12010.959490000005
+          },
+          {
+            "scenario": "timeout_headers",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12012.108635999994
+          },
+          {
+            "scenario": "timeout_body",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12005.73466900002
+          },
+          {
+            "scenario": "timeout_body",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12066.919646000002
+          }
+        ]
+      }
+    },
+    "1": {
+      "disabled": {
+        "first_request": {
+          "n": 2,
+          "median_ms": 3848.4704874999807,
+          "p95_ms": 3898.6922619999405,
+          "worst_ms": 3898.6922619999405,
+          "deadline_successes": 2
+        },
+        "warm_sequential": {
+          "n": 6,
+          "median_ms": 1273.6574079999627,
+          "p95_ms": 1696.9407429999137,
+          "worst_ms": 1696.9407429999137,
+          "deadline_successes": 6
+        },
+        "warm_concurrent": {
+          "n": 12,
+          "median_ms": 2421.0529964999523,
+          "p95_ms": 2771.0584179999387,
+          "worst_ms": 2771.0584179999387,
+          "deadline_successes": 12
+        },
+        "startup_to_health_ms": 5149.155157999985,
+        "peak_memory_bytes": 270217216,
+        "memory_events": "low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\noom_group_kill 0\n",
+        "behavior_statuses": [
+          {
+            "scenario": "delayed",
+            "symbol": "SPY",
+            "status": 200,
+            "code": null,
+            "complete_ms": 914.5795929998712
+          },
+          {
+            "scenario": "delayed",
+            "symbol": "QQQ",
+            "status": 200,
+            "code": null,
+            "complete_ms": 973.8694919999489
+          },
+          {
+            "scenario": "gzip",
+            "symbol": "SPY",
+            "status": 200,
+            "code": null,
+            "complete_ms": 3289.8651969999264
+          },
+          {
+            "scenario": "gzip",
+            "symbol": "QQQ",
+            "status": 200,
+            "code": null,
+            "complete_ms": 3296.3960189999852
+          },
+          {
+            "scenario": "unicode",
+            "symbol": "SPY",
+            "status": 200,
+            "code": null,
+            "complete_ms": 547.0838520000143
+          },
+          {
+            "scenario": "unicode",
+            "symbol": "QQQ",
+            "status": 200,
+            "code": null,
+            "complete_ms": 552.7630520000457
+          },
+          {
+            "scenario": "malformed",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 8.405433999996603
+          },
+          {
+            "scenario": "malformed",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 8.72076299992841
+          },
+          {
+            "scenario": "partial",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 594.3692900000315
+          },
+          {
+            "scenario": "partial",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 594.7300379998524
+          },
+          {
+            "scenario": "interrupted",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 514.4956870001351
+          },
+          {
+            "scenario": "interrupted",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 598.0782999999974
+          },
+          {
+            "scenario": "timeout_headers",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12007.152593
+          },
+          {
+            "scenario": "timeout_headers",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12009.229599999799
+          },
+          {
+            "scenario": "timeout_body",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12006.590275000008
+          },
+          {
+            "scenario": "timeout_body",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12085.612494000088
+          }
+        ]
+      },
+      "enabled": {
+        "first_request": {
+          "n": 2,
+          "median_ms": 3797.4829374999217,
+          "p95_ms": 4099.824396999793,
+          "worst_ms": 4099.824396999793,
+          "deadline_successes": 2
+        },
+        "warm_sequential": {
+          "n": 6,
+          "median_ms": 1321.497238500001,
+          "p95_ms": 1459.2572009999003,
+          "worst_ms": 1459.2572009999003,
+          "deadline_successes": 6
+        },
+        "warm_concurrent": {
+          "n": 12,
+          "median_ms": 2550.6960244999846,
+          "p95_ms": 2577.6388310000584,
+          "worst_ms": 2577.6388310000584,
+          "deadline_successes": 12
+        },
+        "startup_to_health_ms": 4967.433166000092,
+        "peak_memory_bytes": 273969152,
+        "memory_events": "low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\noom_group_kill 0\n",
+        "behavior_statuses": [
+          {
+            "scenario": "delayed",
+            "symbol": "SPY",
+            "status": 200,
+            "code": null,
+            "complete_ms": 1268.1656500001282
+          },
+          {
+            "scenario": "delayed",
+            "symbol": "QQQ",
+            "status": 200,
+            "code": null,
+            "complete_ms": 1272.3769710000852
+          },
+          {
+            "scenario": "gzip",
+            "symbol": "SPY",
+            "status": 200,
+            "code": null,
+            "complete_ms": 3286.281560000134
+          },
+          {
+            "scenario": "gzip",
+            "symbol": "QQQ",
+            "status": 200,
+            "code": null,
+            "complete_ms": 3287.9795750000085
+          },
+          {
+            "scenario": "unicode",
+            "symbol": "SPY",
+            "status": 200,
+            "code": null,
+            "complete_ms": 649.0704860000278
+          },
+          {
+            "scenario": "unicode",
+            "symbol": "QQQ",
+            "status": 200,
+            "code": null,
+            "complete_ms": 649.5878019998145
+          },
+          {
+            "scenario": "malformed",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 8.573136999984854
+          },
+          {
+            "scenario": "malformed",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 9.235198000169476
+          },
+          {
+            "scenario": "partial",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 508.3463110001958
+          },
+          {
+            "scenario": "partial",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 592.9140910000115
+          },
+          {
+            "scenario": "interrupted",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 513.828674000024
+          },
+          {
+            "scenario": "interrupted",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 515.1455889999852
+          },
+          {
+            "scenario": "timeout_headers",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12006.971036000095
+          },
+          {
+            "scenario": "timeout_headers",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12008.087042999932
+          },
+          {
+            "scenario": "timeout_body",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12007.137401999898
+          },
+          {
+            "scenario": "timeout_body",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12010.000066999964
+          }
+        ]
+      }
+    },
+    "2": {
+      "disabled": {
+        "first_request": {
+          "n": 2,
+          "median_ms": 4341.313970499982,
+          "p95_ms": 4491.533368999967,
+          "worst_ms": 4491.533368999967,
+          "deadline_successes": 2
+        },
+        "warm_sequential": {
+          "n": 6,
+          "median_ms": 1486.0398149999696,
+          "p95_ms": 1860.9669620000204,
+          "worst_ms": 1860.9669620000204,
+          "deadline_successes": 6
+        },
+        "warm_concurrent": {
+          "n": 12,
+          "median_ms": 2552.3150844999805,
+          "p95_ms": 3269.2350699999224,
+          "worst_ms": 3269.2350699999224,
+          "deadline_successes": 12
+        },
+        "startup_to_health_ms": 5227.149617999999,
+        "peak_memory_bytes": 271785984,
+        "memory_events": "low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\noom_group_kill 0\n",
+        "behavior_statuses": [
+          {
+            "scenario": "delayed",
+            "symbol": "SPY",
+            "status": 200,
+            "code": null,
+            "complete_ms": 1076.4070449999963
+          },
+          {
+            "scenario": "delayed",
+            "symbol": "QQQ",
+            "status": 200,
+            "code": null,
+            "complete_ms": 1075.9674980000682
+          },
+          {
+            "scenario": "gzip",
+            "symbol": "QQQ",
+            "status": 200,
+            "code": null,
+            "complete_ms": 2684.0983649999544
+          },
+          {
+            "scenario": "gzip",
+            "symbol": "SPY",
+            "status": 200,
+            "code": null,
+            "complete_ms": 3593.042897000032
+          },
+          {
+            "scenario": "unicode",
+            "symbol": "SPY",
+            "status": 200,
+            "code": null,
+            "complete_ms": 553.1215869999642
+          },
+          {
+            "scenario": "unicode",
+            "symbol": "QQQ",
+            "status": 200,
+            "code": null,
+            "complete_ms": 554.0631160000657
+          },
+          {
+            "scenario": "malformed",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 10.388891000047806
+          },
+          {
+            "scenario": "malformed",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 10.90395299991087
+          },
+          {
+            "scenario": "partial",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 508.6800750000293
+          },
+          {
+            "scenario": "partial",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 598.0206699999826
+          },
+          {
+            "scenario": "interrupted",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 515.7371110000213
+          },
+          {
+            "scenario": "interrupted",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 595.3274040000451
+          },
+          {
+            "scenario": "timeout_headers",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12007.13329100006
+          },
+          {
+            "scenario": "timeout_headers",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12009.202034000054
+          },
+          {
+            "scenario": "timeout_body",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12009.155227999941
+          },
+          {
+            "scenario": "timeout_body",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12086.992989999999
+          }
+        ]
+      },
+      "enabled": {
+        "first_request": {
+          "n": 2,
+          "median_ms": 3691.2807340000313,
+          "p95_ms": 4394.893238000009,
+          "worst_ms": 4394.893238000009,
+          "deadline_successes": 2
+        },
+        "warm_sequential": {
+          "n": 6,
+          "median_ms": 1321.1838314999795,
+          "p95_ms": 1798.8062580000133,
+          "worst_ms": 1798.8062580000133,
+          "deadline_successes": 6
+        },
+        "warm_concurrent": {
+          "n": 12,
+          "median_ms": 2617.7145634999874,
+          "p95_ms": 2973.3679270000266,
+          "worst_ms": 2973.3679270000266,
+          "deadline_successes": 12
+        },
+        "startup_to_health_ms": 5167.32787400008,
+        "peak_memory_bytes": 278859776,
+        "memory_events": "low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\noom_group_kill 0\n",
+        "behavior_statuses": [
+          {
+            "scenario": "delayed",
+            "symbol": "SPY",
+            "status": 200,
+            "code": null,
+            "complete_ms": 1083.1235790000164
+          },
+          {
+            "scenario": "delayed",
+            "symbol": "QQQ",
+            "status": 200,
+            "code": null,
+            "complete_ms": 1167.205652000007
+          },
+          {
+            "scenario": "gzip",
+            "symbol": "SPY",
+            "status": 200,
+            "code": null,
+            "complete_ms": 2901.2878459999456
+          },
+          {
+            "scenario": "gzip",
+            "symbol": "QQQ",
+            "status": 200,
+            "code": null,
+            "complete_ms": 2996.048821000045
+          },
+          {
+            "scenario": "unicode",
+            "symbol": "SPY",
+            "status": 200,
+            "code": null,
+            "complete_ms": 565.9363720000101
+          },
+          {
+            "scenario": "unicode",
+            "symbol": "QQQ",
+            "status": 200,
+            "code": null,
+            "complete_ms": 566.9017310000299
+          },
+          {
+            "scenario": "malformed",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 96.18890599995211
+          },
+          {
+            "scenario": "malformed",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 99.36915700006921
+          },
+          {
+            "scenario": "partial",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 509.6536260000448
+          },
+          {
+            "scenario": "partial",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 510.98990399998456
+          },
+          {
+            "scenario": "interrupted",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 587.447128000008
+          },
+          {
+            "scenario": "interrupted",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "response_schema_mismatch",
+            "complete_ms": 587.8187910000179
+          },
+          {
+            "scenario": "timeout_headers",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12005.906229999937
+          },
+          {
+            "scenario": "timeout_headers",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12008.148900000037
+          },
+          {
+            "scenario": "timeout_body",
+            "symbol": "QQQ",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12006.834346000005
+          },
+          {
+            "scenario": "timeout_body",
+            "symbol": "SPY",
+            "status": 502,
+            "code": "backend_timeout",
+            "complete_ms": 12085.914600000024
+          }
+        ]
+      }
+    }
+  },
+  "pooled": {
+    "disabled-warm_sequential": {
+      "n": 18,
+      "median_ms": 1227.2574254999568,
+      "p95_ms": 1860.9669620000204,
+      "worst_ms": 1860.9669620000204
+    },
+    "disabled-warm_concurrent": {
+      "n": 36,
+      "median_ms": 2469.8518999999806,
+      "p95_ms": 3167.673221999962,
+      "worst_ms": 3269.2350699999224
+    },
+    "enabled-warm_sequential": {
+      "n": 18,
+      "median_ms": 1325.5124519999554,
+      "p95_ms": 1798.8062580000133,
+      "worst_ms": 1798.8062580000133
+    },
+    "enabled-warm_concurrent": {
+      "n": 36,
+      "median_ms": 2553.5076705000392,
+      "p95_ms": 2946.838903000071,
+      "worst_ms": 2973.3679270000266
+    }
+  }
+}
