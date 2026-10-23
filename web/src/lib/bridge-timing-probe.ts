@@ -4,14 +4,14 @@ import { monitorEventLoopDelay } from "node:perf_hooks";
 export class BridgeTimingProbe {
   private readonly started = performance.now();
   private readonly delay = monitorEventLoopDelay({ resolution: 20 });
-  private readonly times: Partial<Record<"fetch_started_ms" | "headers_received_ms" | "body_received_ms" | "parsed_ms" | "validated_ms", number>> = {};
+  private readonly times: Partial<Record<"fetch_started_ms" | "headers_received_ms" | "body_decoded_ms" | "parsed_ms" | "validated_ms", number>> = {};
   private deadlineStart?: number;
   private deadlineSignal?: AbortSignal;
   private abortAt?: number;
   private readonly onAbort = () => { this.abortAt = performance.now() - this.started; };
-  private bytes?: number;
+  private textCodeUnits?: number;
+  private declaredBytes?: number;
   private readMs?: number;
-  private decodeMs?: number;
   private parseMs?: number;
   private readonly requestId: string;
   constructor(requestId: string) { this.requestId = requestId; this.delay.enable(); }
@@ -24,15 +24,16 @@ export class BridgeTimingProbe {
     return signal;
   }
   async json(response: Response): Promise<unknown> {
+    const declared = response.headers.get("content-length");
+    if (declared && /^\d{1,15}$/.test(declared)) this.declaredBytes = Number(declared);
     const readStarted = performance.now();
-    let buffer: ArrayBuffer;
-    try { buffer = await response.arrayBuffer(); }
+    let text: string;
+    // Use Fetch's native UTF-8/BOM decoder; avoid the probe's additional
+    // ArrayBuffer materialization. Do not invent a separate decoding duration.
+    try { text = await response.text(); }
     finally { this.readMs = performance.now() - readStarted; }
-    this.bytes = buffer.byteLength; // Fetch has already decompressed these bytes.
-    this.mark("body_received_ms");
-    const decodeStarted = performance.now();
-    const text = new TextDecoder().decode(buffer); // Fetch JSON uses UTF-8 with BOM removal.
-    this.decodeMs = performance.now() - decodeStarted;
+    this.textCodeUnits = text.length; // O(1), UTF-16 code units, NOT wire bytes.
+    this.mark("body_decoded_ms");
     const parseStarted = performance.now();
     try { return JSON.parse(text); }
     finally { this.parseMs = performance.now() - parseStarted; this.mark("parsed_ms"); }
@@ -43,10 +44,11 @@ export class BridgeTimingProbe {
     this.deadlineSignal?.removeEventListener("abort", this.onAbort);
     const rounded = (value: number | undefined) => value === undefined ? null : Math.round(value * 1000) / 1000;
     console.warn(JSON.stringify({
-      event: "research_bridge_probe", version: 1, request_id: this.requestId,
+      event: "research_bridge_probe", version: 2, request_id: this.requestId,
       status: status ?? null, ...Object.fromEntries(Object.entries(this.times).map(([k,v]) => [k,rounded(v)])),
-      decoded_body_bytes: this.bytes ?? null, body_read_including_decompression_ms: rounded(this.readMs),
-      utf8_decode_ms: rounded(this.decodeMs), json_parse_ms: rounded(this.parseMs),
+      decoded_text_code_units: this.textCodeUnits ?? null,
+      upstream_declared_content_length_bytes: this.declaredBytes ?? null,
+      body_read_including_decompression_utf8_ms: rounded(this.readMs), json_parse_ms: rounded(this.parseMs),
       elapsed_ms: rounded(now - this.started),
       deadline_elapsed_ms: this.deadlineStart === undefined ? null : rounded(now - this.deadlineStart),
       deadline_budget_exceeded: this.deadlineStart === undefined ? null : now - this.deadlineStart >= 12000,

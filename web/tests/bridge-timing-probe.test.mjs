@@ -29,7 +29,7 @@ test('enabled and disabled routes preserve bytes/status/cache and validation/err
    const r=await POST(input());results.push({status:r.status,body:await r.text(),cache:r.headers.get('cache-control')});
    assert.ok(!JSON.stringify(logs).includes('BODY_CANARY'));assert.ok(!JSON.stringify(logs).includes('credential-canary'));
    const probe=logs.find(x=>x.event==='research_bridge_probe');assert.equal(!!probe,enabled);
-   if(probe){assert.match(probe.request_id,/^[a-f0-9]{32}$/);assert.equal(probe.request_id,r.headers.get('x-alphaos-request-id'));assert.ok(probe.decoded_body_bytes>0);}
+   if(probe){assert.match(probe.request_id,/^[a-f0-9]{32}$/);assert.equal(probe.request_id,r.headers.get('x-alphaos-request-id'));assert.ok(probe.decoded_text_code_units>0);}
   }
   assert.deepEqual(results[0],results[1]);
  }
@@ -71,4 +71,19 @@ test('deadline telemetry observes exceeded budget without introducing cancellati
 test('unexpected exceptions remain thrown without logging their messages or data',async()=>{
  config(true);const logs=[];console.warn=x=>logs.push(JSON.parse(x));globalThis.fetch=async()=>{throw Error('PRIVATE_EXCEPTION');};
  await assert.rejects(POST(input()),/PRIVATE_EXCEPTION/);assert.ok(!JSON.stringify(logs).includes('PRIVATE_EXCEPTION'));assert.equal(logs.filter(x=>x.event==='research_bridge_probe').length,1);
+});
+
+test('native text telemetry distinguishes code units from declared bytes and rejects raw header logging',async()=>{
+ const logs=[];console.warn=x=>logs.push(JSON.parse(x));const text='{"x":"π🙂"}';
+ for(const declared of ['999','PRIVATE_HEADER_CANARY']){
+  const p=new BridgeTimingProbe('c'.repeat(32));
+  assert.deepEqual(await p.json(new Response(text,{headers:{'content-length':declared}})),JSON.parse(text));
+  p.finish(200,new AbortController().signal);
+ }
+ assert.equal(logs[0].decoded_text_code_units,text.length);
+ assert.notEqual(text.length,new TextEncoder().encode(text).length);
+ assert.equal(logs[0].upstream_declared_content_length_bytes,999);
+ assert.equal(logs[1].upstream_declared_content_length_bytes,null);
+ assert.ok(!JSON.stringify(logs).includes('PRIVATE_HEADER_CANARY'));
+ assert.ok(!('utf8_decode_ms' in logs[0]));assert.ok(!('decoded_body_bytes' in logs[0]));
 });
