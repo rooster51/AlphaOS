@@ -4,6 +4,33 @@ on:
 permissions:
   contents: read
 jobs:
+  http-lifecycle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        trial: [0, 1, 2]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - run: pip install requests cryptography
+      - name: Validate actual Next HTTP streaming and abort lifecycle
+        env:
+          TRIAL: ${{ matrix.trial }}
+        run: python tests/performance/bridge_http_lifecycle.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bridge-probe-http-${{ matrix.trial }}
+          path: |
+            bridge-http-results/*.json
+            bridge-http-results/*.jsonl
+            bridge-http-results/*.log
+            bridge-http-results/*.txt
+          retention-days: 7
   constrained-overhead:
     runs-on: ubuntu-latest
     timeout-minutes: 25
