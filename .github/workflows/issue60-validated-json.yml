@@ -1,7 +1,5 @@
 name: Issue 60 validated JSON lifecycle
 on:
-  push:
-    branches: [diagnostics/issue60-validated-json-lifecycle]
   workflow_dispatch:
 permissions:
   contents: read
@@ -14,6 +12,8 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v5
+        with:
+          ref: 78604eebd87259c5b656534eb32f45ef1b6a8093
       - uses: actions/setup-python@v6
         with:
           python-version-file: '.python-version'
@@ -36,6 +36,8 @@ jobs:
         working-directory: web
     steps:
       - uses: actions/checkout@v5
+        with:
+          ref: 78604eebd87259c5b656534eb32f45ef1b6a8093
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -95,6 +97,8 @@ jobs:
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0
+          # Reproduce the rejected measured candidate, never deploy it.
+          ref: 78604eebd87259c5b656534eb32f45ef1b6a8093
       - uses: actions/setup-python@v6
         with:
           python-version-file: .python-version

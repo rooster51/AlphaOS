@@ -1,0 +1,530 @@
+{
+  "0": {
+    "baseline": {
+      "warm": {
+        "n": 12,
+        "median_ms": 10189.246450499993,
+        "p95_nearest_rank_ms": 11012.148756000017,
+        "worst_ms": 11012.148756000017,
+        "http_200": 12,
+        "deadline_passes": 12,
+        "validated": 12
+      },
+      "cold": {
+        "n": 2,
+        "median_ms": 12650.907890500008,
+        "p95_nearest_rank_ms": 12709.046252999997,
+        "worst_ms": 12709.046252999997,
+        "http_200": 1,
+        "deadline_passes": 0,
+        "validated": 1
+      },
+      "sequential": {
+        "n": 2,
+        "median_ms": 5532.295917500022,
+        "p95_nearest_rank_ms": 5700.822660000029,
+        "worst_ms": 5700.822660000029,
+        "http_200": 2,
+        "deadline_passes": 2,
+        "validated": 2
+      },
+      "rest": {
+        "n": 2,
+        "median_ms": 5459.546054000015,
+        "p95_nearest_rank_ms": 5769.185351000033,
+        "worst_ms": 5769.185351000033,
+        "http_200": 2,
+        "deadline_passes": 2,
+        "validated": 2
+      },
+      "150": {
+        "n": 2,
+        "median_ms": 2506.7078585000218,
+        "p95_nearest_rank_ms": 2927.832656000021,
+        "worst_ms": 2927.832656000021,
+        "http_200": 2,
+        "deadline_passes": 2,
+        "validated": 2
+      },
+      "manual": {
+        "n": 2,
+        "median_ms": 317.9179450000049,
+        "p95_nearest_rank_ms": 358.22967999996536,
+        "worst_ms": 358.22967999996536,
+        "http_200": 2,
+        "deadline_passes": 2,
+        "validated": 2
+      },
+      "long": {
+        "n": 2,
+        "median_ms": 5495.270729499993,
+        "p95_nearest_rank_ms": 5498.596947999999,
+        "worst_ms": 5498.596947999999,
+        "http_200": 2,
+        "deadline_passes": 2,
+        "validated": 2
+      }
+    },
+    "candidate": {
+      "warm": {
+        "n": 12,
+        "median_ms": 9810.026365499994,
+        "p95_nearest_rank_ms": 11499.672161000035,
+        "worst_ms": 11499.672161000035,
+        "http_200": 12,
+        "deadline_passes": 12,
+        "validated": 12
+      },
+      "cold": {
+        "n": 2,
+        "median_ms": 12947.276919500013,
+        "p95_nearest_rank_ms": 12998.962422000033,
+        "worst_ms": 12998.962422000033,
+        "http_200": 1,
+        "deadline_passes": 0,
+        "validated": 1
+      },
+      "sequential": {
+        "n": 2,
+        "median_ms": 5175.319841000004,
+        "p95_nearest_rank_ms": 5342.067697000004,
+        "worst_ms": 5342.067697000004,
+        "http_200": 2,
+        "deadline_passes": 2,
+        "validated": 2
+      },
+      "rest": {
+        "n": 2,
+        "median_ms": 6278.598244499988,
+        "p95_nearest_rank_ms": 6565.613955999993,
+        "worst_ms": 6565.613955999993,
+        "http_200": 2,
+        "deadline_passes": 2,
+        "validated": 2
+      },
+      "150": {
+        "n": 2,
+        "median_ms": 2430.8270304999837,
+        "p95_nearest_rank_ms": 2768.519810999976,
+        "worst_ms": 2768.519810999976,
+        "http_200": 2,
+        "deadline_passes": 2,
+        "validated": 2
+      },
+      "manual": {
+        "n": 2,
+        "median_ms": 277.8389609999863,
+        "p95_nearest_rank_ms": 279.06660200000033,
+        "worst_ms": 279.06660200000033,
+        "http_200": 2,
+        "deadline_passes": 2,
+        "validated": 2
+      },
+      "long": {
+        "n": 2,
+        "median_ms": 5892.1332635,
+        "p95_nearest_rank_ms": 5992.553986000019,
+        "worst_ms": 5992.553986000019,
+        "http_200": 2,
+        "deadline_passes": 2,
+        "validated": 2
+      }
+    }
+  },
+  "1": {
+    "baseline": {
+      "warm": {
+        "n": 12,
+        "median_ms": 7087.143012000013,
+        "p95_nearest_rank_ms": 8976.549332000048,
+        "worst_ms": 8976.549332000048,
+        "http_200": 12,
+        "deadline_passes": 12,
+        "validated": 12
+      },
+      "cold": {
+        "n": 2,
+        "median_ms": 11152.840018500001,
+        "p95_nearest_rank_ms": 11798.623802999999,
+        "worst_ms": 11798.623802999999,
+        "http_200": 2,
+        "deadline_passes": 2,
+        "validated": 2
+      },
+      "sequential": {
+        "n": 2,
+        "median_ms": 3990.275615499996,
+        "p95_nearest_rank_ms": 4347.7843310000135,
+        "worst_ms": 4347.7843310000135,
+        "http_200": 2,
+        "deadline_passes": 2,
+        "validated": 2
+      },
+      "rest": {
+        "n": 2,
+        "median_ms": 5319.594300000006,
+        "p95_nearest_rank_ms": 5556.135841000014,
+        "worst_ms": 5556.135841000014,
+        "http_200": 2,
+        "deadline_passes": 2,
+        "validated": 2
+      },
+      "150": {
+        "n": 2,
+        "median_ms": 2247.920602999983,
+        "p95_nearest_rank_ms": 2612.6269509999815,
+        "worst_ms": 2612.6269509999815,
+        "http_200": 2,
+        "deadline_passes": 2,
+        "validated": 2
+      },
+      "manual": {
+        "n": 2,
+        "median_ms": 246.3619005000055,
+        "p95_nearest_rank_ms": 246.5163819999816,
+        "worst_ms": 246.5163819999816,
+        "http_200": 2,
+        "deadline_passes": 2,
+        "validated": 2
+      },
+      "long": {
+        "n": 2,
+        "median_ms": 4637.125797500005,
+        "p95_nearest_rank_ms": 4686.001622999982,
+        "worst_ms": 4686.001622999982,
+        "http_200": 2,
+        "deadline_passes": 2,
+        "validated": 2
+      }
+    },
+    "candidate": {
+      "warm": {
+        "n": 12,
+        "median_ms": 7859.295146500017,
+        "p95_nearest_rank_ms": 9614.530551000002,
+        "worst_ms": 9614.530551000002,
+        "http_200": 12,
+        "deadline_passes": 12,
+        "validated": 12
+      },
+      "cold": {
+        "n": 2,
+        "median_ms": 11052.88369200001,
+        "p95_nearest_rank_ms": 11704.967564000015,
+        "worst_ms": 11704.967564000015,
+        "http_200": 2,
+        "deadline_passes": 2,
+        "validated": 2
+      },
+      "sequential": {
+        "n": 2,
+        "median_ms": 4740.302665000001,
+        "p95_nearest_rank_ms": 5046.908938999991,
+        "worst_ms": 5046.908938999991,
+        "http_200": 2,
+        "deadline_passes": 2,
+        "validated": 2
+      },
+      "rest": {
+        "n": 2,
+        "median_ms": 5419.374456000014,
+        "p95_nearest_rank_ms": 5671.565246,
+        "worst_ms": 5671.565246,
+        "http_200": 2,
+        "deadline_passes": 2,
+        "validated": 2
+      },
+      "150": {
+        "n": 2,
+        "median_ms": 2425.0783005000185,
+        "p95_nearest_rank_ms": 2871.934211999985,
+        "worst_ms": 2871.934211999985,
+        "http_200": 2,
+        "deadline_passes": 2,
+        "validated": 2
+      },
+      "manual": {
+        "n": 2,
+        "median_ms": 691.0354144999928,
+        "p95_nearest_rank_ms": 984.7717879999891,
+        "worst_ms": 984.7717879999891,
+        "http_200": 2,
+        "deadline_passes": 2,
+        "validated": 2
+      },
+      "long": {
+        "n": 2,
+        "median_ms": 4567.285031500007,
+        "p95_nearest_rank_ms": 4893.02927600005,
+        "worst_ms": 4893.02927600005,
+        "http_200": 2,
+        "deadline_passes": 2,
+        "validated": 2
+      }
+    }
+  },
+  "2": {
+    "baseline": {
+      "warm": {
+        "n": 12,
+        "median_ms": 8490.461952999995,
+        "p95_nearest_rank_ms": 9510.88734999999,
+        "worst_ms": 9510.88734999999,
+        "http_200": 12,
+        "deadline_passes": 12,
+        "validated": 12
+      },
+      "cold": {
+        "n": 2,
+        "median_ms": 12504.013649999997,
+        "p95_nearest_rank_ms": 13202.796856999996,
+        "worst_ms": 13202.796856999996,
+        "http_200": 2,
+        "deadline_passes": 1,
+        "validated": 2
+      },
+      "sequential": {
+        "n": 2,
+        "median_ms": 4383.004055499995,
+        "p95_nearest_rank_ms": 4661.572204999999,
+        "worst_ms": 4661.572204999999,
+        "http_200": 2,
+        "deadline_passes": 2,
+        "validated": 2
+      },
+      "rest": {
+        "n": 2,
+        "median_ms": 6364.223228000001,
+        "p95_nearest_rank_ms": 6625.589746000003,
+        "worst_ms": 6625.589746000003,
+        "http_200": 2,
+        "deadline_passes": 2,
+        "validated": 2
+      },
+      "150": {
+        "n": 2,
+        "median_ms": 1979.3838829999827,
+        "p95_nearest_rank_ms": 2001.4182999999832,
+        "worst_ms": 2001.4182999999832,
+        "http_200": 2,
+        "deadline_passes": 2,
+        "validated": 2
+      },
+      "manual": {
+        "n": 2,
+        "median_ms": 259.5388460000123,
+        "p95_nearest_rank_ms": 276.52167800002303,
+        "worst_ms": 276.52167800002303,
+        "http_200": 2,
+        "deadline_passes": 2,
+        "validated": 2
+      },
+      "long": {
+        "n": 2,
+        "median_ms": 5022.334324499994,
+        "p95_nearest_rank_ms": 5271.958389999981,
+        "worst_ms": 5271.958389999981,
+        "http_200": 2,
+        "deadline_passes": 2,
+        "validated": 2
+      }
+    },
+    "candidate": {
+      "warm": {
+        "n": 12,
+        "median_ms": 8221.281018500009,
+        "p95_nearest_rank_ms": 9609.41491699998,
+        "worst_ms": 9609.41491699998,
+        "http_200": 12,
+        "deadline_passes": 12,
+        "validated": 12
+      },
+      "cold": {
+        "n": 2,
+        "median_ms": 12257.953485500024,
+        "p95_nearest_rank_ms": 12306.368318000012,
+        "worst_ms": 12306.368318000012,
+        "http_200": 2,
+        "deadline_passes": 0,
+        "validated": 2
+      },
+      "sequential": {
+        "n": 2,
+        "median_ms": 4927.3028844999935,
+        "p95_nearest_rank_ms": 4978.595593000023,
+        "worst_ms": 4978.595593000023,
+        "http_200": 2,
+        "deadline_passes": 2,
+        "validated": 2
+      },
+      "rest": {
+        "n": 2,
+        "median_ms": 5158.562131499992,
+        "p95_nearest_rank_ms": 5462.519596999982,
+        "worst_ms": 5462.519596999982,
+        "http_200": 2,
+        "deadline_passes": 2,
+        "validated": 2
+      },
+      "150": {
+        "n": 2,
+        "median_ms": 2131.661385499996,
+        "p95_nearest_rank_ms": 2497.484053999983,
+        "worst_ms": 2497.484053999983,
+        "http_200": 2,
+        "deadline_passes": 2,
+        "validated": 2
+      },
+      "manual": {
+        "n": 2,
+        "median_ms": 274.7353935000092,
+        "p95_nearest_rank_ms": 311.43208800000366,
+        "worst_ms": 311.43208800000366,
+        "http_200": 2,
+        "deadline_passes": 2,
+        "validated": 2
+      },
+      "long": {
+        "n": 2,
+        "median_ms": 5125.714338999984,
+        "p95_nearest_rank_ms": 5164.795644999969,
+        "worst_ms": 5164.795644999969,
+        "http_200": 2,
+        "deadline_passes": 2,
+        "validated": 2
+      }
+    }
+  },
+  "aggregate": {
+    "baseline": {
+      "warm": {
+        "n": 36,
+        "median_ms": 8508.110314999994,
+        "p95_nearest_rank_ms": 10784.806775000021,
+        "worst_ms": 11012.148756000017,
+        "http_200": 36,
+        "deadline_passes": 36,
+        "validated": 36
+      },
+      "cold": {
+        "n": 6,
+        "median_ms": 12198.99998550001,
+        "p95_nearest_rank_ms": 13202.796856999996,
+        "worst_ms": 13202.796856999996,
+        "http_200": 5,
+        "deadline_passes": 3,
+        "validated": 5
+      },
+      "sequential": {
+        "n": 6,
+        "median_ms": 4504.678268000006,
+        "p95_nearest_rank_ms": 5700.822660000029,
+        "worst_ms": 5700.822660000029,
+        "http_200": 6,
+        "deadline_passes": 6,
+        "validated": 6
+      },
+      "rest": {
+        "n": 6,
+        "median_ms": 5662.660596000023,
+        "p95_nearest_rank_ms": 6625.589746000003,
+        "worst_ms": 6625.589746000003,
+        "http_200": 6,
+        "deadline_passes": 6,
+        "validated": 6
+      },
+      "150": {
+        "n": 6,
+        "median_ms": 2043.500680500003,
+        "p95_nearest_rank_ms": 2927.832656000021,
+        "worst_ms": 2927.832656000021,
+        "http_200": 6,
+        "deadline_passes": 6,
+        "validated": 6
+      },
+      "manual": {
+        "n": 6,
+        "median_ms": 261.5190300000023,
+        "p95_nearest_rank_ms": 358.22967999996536,
+        "worst_ms": 358.22967999996536,
+        "http_200": 6,
+        "deadline_passes": 6,
+        "validated": 6
+      },
+      "long": {
+        "n": 6,
+        "median_ms": 5022.334324499994,
+        "p95_nearest_rank_ms": 5498.596947999999,
+        "worst_ms": 5498.596947999999,
+        "http_200": 6,
+        "deadline_passes": 6,
+        "validated": 6
+      }
+    },
+    "candidate": {
+      "warm": {
+        "n": 36,
+        "median_ms": 8835.383675999992,
+        "p95_nearest_rank_ms": 11229.36278000003,
+        "worst_ms": 11499.672161000035,
+        "http_200": 36,
+        "deadline_passes": 36,
+        "validated": 36
+      },
+      "cold": {
+        "n": 6,
+        "median_ms": 12257.953485500024,
+        "p95_nearest_rank_ms": 12998.962422000033,
+        "worst_ms": 12998.962422000033,
+        "http_200": 5,
+        "deadline_passes": 2,
+        "validated": 5
+      },
+      "sequential": {
+        "n": 6,
+        "median_ms": 4993.583789000013,
+        "p95_nearest_rank_ms": 5342.067697000004,
+        "worst_ms": 5342.067697000004,
+        "http_200": 6,
+        "deadline_passes": 6,
+        "validated": 6
+      },
+      "rest": {
+        "n": 6,
+        "median_ms": 5567.042421499991,
+        "p95_nearest_rank_ms": 6565.613955999993,
+        "worst_ms": 6565.613955999993,
+        "http_200": 6,
+        "deadline_passes": 6,
+        "validated": 6
+      },
+      "150": {
+        "n": 6,
+        "median_ms": 2295.309151999987,
+        "p95_nearest_rank_ms": 2871.934211999985,
+        "worst_ms": 2871.934211999985,
+        "http_200": 6,
+        "deadline_passes": 6,
+        "validated": 6
+      },
+      "manual": {
+        "n": 6,
+        "median_ms": 295.249345000002,
+        "p95_nearest_rank_ms": 984.7717879999891,
+        "worst_ms": 984.7717879999891,
+        "http_200": 6,
+        "deadline_passes": 6,
+        "validated": 6
+      },
+      "long": {
+        "n": 6,
+        "median_ms": 5125.714338999984,
+        "p95_nearest_rank_ms": 5992.553986000019,
+        "worst_ms": 5992.553986000019,
+        "http_200": 6,
+        "deadline_passes": 6,
+        "validated": 6
+      }
+    }
+  }
+}

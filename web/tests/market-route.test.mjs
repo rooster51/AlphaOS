@@ -2,35 +2,6 @@ import assert from "node:assert/strict";
 import { afterEach, test } from "node:test";
 import { POST } from "../src/app/api/research/market/route.ts";
 
-test("validated ordinary research avoids stringify even with exponent-like archive hashes", async () => {
-  setBackendConfig();
-  const data={...envelope("SPY"),archive_hash:"e319e312e221e713e99",normal:1.25};
-  globalThis.fetch=async()=>new Response(JSON.stringify(data));
-  const original=Response.json;let calls=0;
-  try {
-    Response.json=(...args)=>{calls++;return original(...args);};
-    const result=await POST(request({symbol:"SPY"}));
-    assert.equal(result.status,200);assert.deepEqual((await result.json()).research,data);
-    assert.equal(calls,0);
-  }finally{Response.json=original;}
-});
-
-test("validated JSON wrapper preserves number normalization and all research fields", async () => {
-  setBackendConfig();
-  const literals = ["0", "-0", "-0.0", "-0e-5", "9007199254740993", "-9007199254740993",
-    "1208925819614629174706176", "1.234567891234567e19", "1e400", "-1e-400",
-    "-0." + "0".repeat(350) + "1", "0.1", "1e-12"];
-  for (const literal of literals) {
-    const raw = JSON.stringify({...envelope("SPY"),extra:{literal:0,unicode:"café λ <script>",text:"escaped \\\" braces }"}})
-      .replace('"literal":0', '"literal":' + literal);
-    globalThis.fetch = async () => new Response(raw, {headers:{"Content-Type":"application/json"}});
-    const result = await POST(request({symbol:"SPY"}));
-    assert.equal(result.status,200);
-    assert.equal(result.headers.get("Cache-Control"),"no-store");
-    assert.deepEqual(await result.json(), JSON.parse(JSON.stringify({research:JSON.parse(raw),verified_for_trading:false,source:"alphaos_research_api"})), literal);
-  }
-});
-
 test("browser cancellation reaches only its upstream request with the existing deadline", async () => {
   setBackendConfig();
   const cancelled = new AbortController();
@@ -527,7 +498,7 @@ for(const status of [200,503]) {
  test(`response-body timeout after HTTP ${status} stays bounded and classified`,async()=>{
   setBackendConfig();const logs=[];const warn=console.warn;console.warn=v=>logs.push(JSON.parse(v));
   try {
-   globalThis.fetch=async()=>({ok:status===200,status,headers:new Headers(),text:async()=>{throw new DOMException("DO_NOT_LOG","TimeoutError");},json:async()=>{throw new DOMException("DO_NOT_LOG","TimeoutError");}});
+   globalThis.fetch=async()=>({ok:status===200,status,headers:new Headers(),json:async()=>{throw new DOMException("DO_NOT_LOG","TimeoutError");}});
    const r=await POST(request({symbol:"SPY"}));assert.equal(r.status,502);assert.equal((await r.json()).code,"backend_timeout");
    assert.equal(logs[0].stage,"response_body");assert.equal(logs[0].upstream_status,status);
   }finally{console.warn=warn;}
@@ -545,7 +516,7 @@ test("body AbortError is classified using the original 12000ms timeout signal",a
  setBackendConfig();const original=AbortSignal.timeout;const warn=console.warn;console.warn=()=>{};
  try {
   AbortSignal.timeout=ms=>{assert.equal(ms,12000);return AbortSignal.abort(new DOMException("private","TimeoutError"));};
-  globalThis.fetch=async()=>({ok:true,status:200,headers:new Headers(),text:async()=>{throw new DOMException("private","AbortError");},json:async()=>{throw new DOMException("private","AbortError");}});
+  globalThis.fetch=async()=>({ok:true,status:200,headers:new Headers(),json:async()=>{throw new DOMException("private","AbortError");}});
   const result=await POST(request({symbol:"SPY"}));assert.equal((await result.json()).code,"backend_timeout");
  }finally{AbortSignal.timeout=original;console.warn=warn;}
 });

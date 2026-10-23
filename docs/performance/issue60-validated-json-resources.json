@@ -1,0 +1,26 @@
+{
+  "all_limits_match": true,
+  "no_oom_kills": true,
+  "memory_peak_bytes": {
+    "baseline-backend": [
+      293167104,
+      296517632,
+      296087552
+    ],
+    "baseline-next": [
+      240160768,
+      214814720,
+      212197376
+    ],
+    "candidate-backend": [
+      298954752,
+      286744576,
+      294854656
+    ],
+    "candidate-next": [
+      205447168,
+      227528704,
+      240979968
+    ]
+  }
+}

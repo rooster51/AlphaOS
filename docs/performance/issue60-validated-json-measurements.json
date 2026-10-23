@@ -1,0 +1,2926 @@
+[
+  {
+    "tag": "0-baseline-cold-SPY",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 502,
+    "headers_ms": 12592.685855000014,
+    "request_id": "5d9bdf15eedf4047a62ad866a51b33bc",
+    "complete_ms": 12592.769528000019,
+    "decoded_bytes": 49,
+    "container_launch_to_body_ms": 24063.416156000018,
+    "code": "backend_timeout"
+  },
+  {
+    "tag": "0-baseline-cold-QQQ",
+    "symbol": "QQQ",
+    "direct": false,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 12293.827848000006,
+    "request_id": "a52596d09c734fac92b49dc9ca37c2a4",
+    "complete_ms": 12709.046252999997,
+    "decoded_bytes": 12542074,
+    "container_launch_to_body_ms": 24180.478687000003,
+    "code": null,
+    "full_semantic_sha256": "4210ffaa3d84d16311941fd2f2278c5ad2bf54e4769354f055479be625649483",
+    "validated": true
+  },
+  {
+    "tag": "0-baseline-warm-0-SPY",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 9083.492106999984,
+    "request_id": "66de2dbc361248ea97c5399f8d32c4d2",
+    "complete_ms": 10285.866591999991,
+    "decoded_bytes": 12542074,
+    "code": null,
+    "full_semantic_sha256": "3f4892922c1613eea0179c8b638d5a62996ded10ce01d811f6dd2b5b9ec22104",
+    "validated": true
+  },
+  {
+    "tag": "0-baseline-warm-0-QQQ",
+    "symbol": "QQQ",
+    "direct": false,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 10192.975271000023,
+    "request_id": "1e03f59fea7d43b480a40f30742366c4",
+    "complete_ms": 10784.806775000021,
+    "decoded_bytes": 12542074,
+    "code": null,
+    "full_semantic_sha256": "4210ffaa3d84d16311941fd2f2278c5ad2bf54e4769354f055479be625649483",
+    "validated": true
+  },
+  {
+    "tag": "0-baseline-warm-1-SPY",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 8709.914293999987,
+    "request_id": "22881eae5de444d08f2101a8455ba23f",
+    "complete_ms": 8814.897250999991,
+    "decoded_bytes": 12542074,
+    "code": null,
+    "full_semantic_sha256": "3f4892922c1613eea0179c8b638d5a62996ded10ce01d811f6dd2b5b9ec22104",
+    "validated": true
+  },
+  {
+    "tag": "0-baseline-warm-1-QQQ",
+    "symbol": "QQQ",
+    "direct": false,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 10710.979034000018,
+    "request_id": "23aa646a6f8446cb97206e331b99d6e8",
+    "complete_ms": 11012.148756000017,
+    "decoded_bytes": 12542074,
+    "code": null,
+    "full_semantic_sha256": "4210ffaa3d84d16311941fd2f2278c5ad2bf54e4769354f055479be625649483",
+    "validated": true
+  },
+  {
+    "tag": "0-baseline-warm-2-QQQ",
+    "symbol": "QQQ",
+    "direct": false,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 8926.730090999996,
+    "request_id": "bf1b0add158a473cbcca1ac0bdf8c1bd",
+    "complete_ms": 8939.14456600001,
+    "decoded_bytes": 12542074,
+    "code": null,
+    "full_semantic_sha256": "4210ffaa3d84d16311941fd2f2278c5ad2bf54e4769354f055479be625649483",
+    "validated": true
+  },
+  {
+    "tag": "0-baseline-warm-2-SPY",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 10328.433224000008,
+    "request_id": "2352ff9812094dba88871ebe57d32b3f",
+    "complete_ms": 10435.141328000014,
+    "decoded_bytes": 12542074,
+    "code": null,
+    "full_semantic_sha256": "3f4892922c1613eea0179c8b638d5a62996ded10ce01d811f6dd2b5b9ec22104",
+    "validated": true
+  },
+  {
+    "tag": "0-baseline-warm-3-QQQ",
+    "symbol": "QQQ",
+    "direct": false,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 8501.837005,
+    "request_id": "4589fb49ee034dffaa0f7d38948c93b5",
+    "complete_ms": 8610.480777999981,
+    "decoded_bytes": 12542074,
+    "code": null,
+    "full_semantic_sha256": "4210ffaa3d84d16311941fd2f2278c5ad2bf54e4769354f055479be625649483",
+    "validated": true
+  },
+  {
+    "tag": "0-baseline-warm-3-SPY",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 10400.736144000006,
+    "request_id": "7e968a3d43cc41adaea9f81a95a0b549",
+    "complete_ms": 10505.469680999993,
+    "decoded_bytes": 12542074,
+    "code": null,
+    "full_semantic_sha256": "3f4892922c1613eea0179c8b638d5a62996ded10ce01d811f6dd2b5b9ec22104",
+    "validated": true
+  },
+  {
+    "tag": "0-baseline-warm-4-SPY",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 8094.243518000013,
+    "request_id": "4e5332a32dfb43cf8ecd11b597ea5720",
+    "complete_ms": 8199.910555999992,
+    "decoded_bytes": 12542074,
+    "code": null,
+    "full_semantic_sha256": "3f4892922c1613eea0179c8b638d5a62996ded10ce01d811f6dd2b5b9ec22104",
+    "validated": true
+  },
+  {
+    "tag": "0-baseline-warm-4-QQQ",
+    "symbol": "QQQ",
+    "direct": false,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 9997.464968999991,
+    "request_id": "481a28474dac45a5aa03d5349c05f069",
+    "complete_ms": 10092.626308999996,
+    "decoded_bytes": 12542074,
+    "code": null,
+    "full_semantic_sha256": "4210ffaa3d84d16311941fd2f2278c5ad2bf54e4769354f055479be625649483",
+    "validated": true
+  },
+  {
+    "tag": "0-baseline-warm-5-QQQ",
+    "symbol": "QQQ",
+    "direct": false,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 7910.898533000022,
+    "request_id": "923d9e4a70b74b9d93855543d59172b7",
+    "complete_ms": 8405.73985200001,
+    "decoded_bytes": 12542074,
+    "code": null,
+    "full_semantic_sha256": "4210ffaa3d84d16311941fd2f2278c5ad2bf54e4769354f055479be625649483",
+    "validated": true
+  },
+  {
+    "tag": "0-baseline-warm-5-SPY",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 10305.818552000004,
+    "request_id": "8d67259c17704455bcc4a46cbdc1e350",
+    "complete_ms": 10412.427619000027,
+    "decoded_bytes": 12542074,
+    "code": null,
+    "full_semantic_sha256": "3f4892922c1613eea0179c8b638d5a62996ded10ce01d811f6dd2b5b9ec22104",
+    "validated": true
+  },
+  {
+    "tag": "0-baseline-sequential-SPY",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 5598.122724000006,
+    "request_id": "4acfe8cfae72421e989664652fa45854",
+    "complete_ms": 5700.822660000029,
+    "decoded_bytes": 12542074,
+    "code": null,
+    "full_semantic_sha256": "3f4892922c1613eea0179c8b638d5a62996ded10ce01d811f6dd2b5b9ec22104",
+    "validated": true
+  },
+  {
+    "tag": "0-baseline-sequential-QQQ",
+    "symbol": "QQQ",
+    "direct": false,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 5074.9674410000125,
+    "request_id": "a2f1ceb17d934cfab8a1ea5a75b50f2f",
+    "complete_ms": 5363.769175000016,
+    "decoded_bytes": 12542074,
+    "code": null,
+    "full_semantic_sha256": "4210ffaa3d84d16311941fd2f2278c5ad2bf54e4769354f055479be625649483",
+    "validated": true
+  },
+  {
+    "tag": "0-baseline-rest-SPY",
+    "symbol": "SPY",
+    "direct": true,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 4859.140350999951,
+    "request_id": "afee1106e9f2061deadf2c9d5890ad66",
+    "complete_ms": 5149.906756999997,
+    "decoded_bytes": 12735756,
+    "code": null,
+    "full_semantic_sha256": "3f4892922c1613eea0179c8b638d5a62996ded10ce01d811f6dd2b5b9ec22104",
+    "validated": true
+  },
+  {
+    "tag": "0-baseline-rest-QQQ",
+    "symbol": "QQQ",
+    "direct": true,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 5750.665828000024,
+    "request_id": "7a630cacd8243c12c0b77c84addbfb4e",
+    "complete_ms": 5769.185351000033,
+    "decoded_bytes": 12735756,
+    "code": null,
+    "full_semantic_sha256": "4210ffaa3d84d16311941fd2f2278c5ad2bf54e4769354f055479be625649483",
+    "validated": true
+  },
+  {
+    "tag": "0-baseline-150-SPY",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18",
+      "available_capital": 150
+    },
+    "status": 200,
+    "headers_ms": 2080.3895270000226,
+    "request_id": "62b5e9d2bbf54a388dc0ec74f0c61186",
+    "complete_ms": 2085.5830610000226,
+    "decoded_bytes": 5419932,
+    "code": null,
+    "full_semantic_sha256": "b665e1cc2227bc6417dbdb90a7174e48949ff5967f5668dab1abb6678945a150",
+    "validated": true
+  },
+  {
+    "tag": "0-baseline-manual-SPY",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18",
+      "width": 5,
+      "available_capital": 150
+    },
+    "status": 200,
+    "headers_ms": 357.7591359999701,
+    "request_id": "887ac31fc9c047a99884484f44b88de1",
+    "complete_ms": 358.22967999996536,
+    "decoded_bytes": 332762,
+    "code": null,
+    "full_semantic_sha256": "cc7315a17b71e12e642bc3144e460370cb2af8b3356e4e26b3f2f4bddfea1c67",
+    "validated": true
+  },
+  {
+    "tag": "0-baseline-long-SPY",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2031-01-17"
+    },
+    "status": 200,
+    "headers_ms": 5394.198741000026,
+    "request_id": "0e3d988e45f245e59b470396502e1990",
+    "complete_ms": 5498.596947999999,
+    "decoded_bytes": 12544123,
+    "code": null,
+    "full_semantic_sha256": "3ed530696d640a6d114bbb09da0deaac021408c8c90a31ab9fed945ec0547e89",
+    "validated": true
+  },
+  {
+    "tag": "0-baseline-150-QQQ",
+    "symbol": "QQQ",
+    "direct": false,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2030-01-18",
+      "available_capital": 150
+    },
+    "status": 200,
+    "headers_ms": 2729.2574180000315,
+    "request_id": "51c4e31c40994abc89ea1f3fca5dd503",
+    "complete_ms": 2927.832656000021,
+    "decoded_bytes": 5419932,
+    "code": null,
+    "full_semantic_sha256": "55747e6156d2c13ec9f607d7b7bffbc225514b6a9d689788ca6459e6fff55683",
+    "validated": true
+  },
+  {
+    "tag": "0-baseline-manual-QQQ",
+    "symbol": "QQQ",
+    "direct": false,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2030-01-18",
+      "width": 5,
+      "available_capital": 150
+    },
+    "status": 200,
+    "headers_ms": 277.0781820000252,
+    "request_id": "1e91de81a1584d42bc87a1ed7605defb",
+    "complete_ms": 277.6062100000445,
+    "decoded_bytes": 332762,
+    "code": null,
+    "full_semantic_sha256": "881d7748cc0be2b012395bbed63888db71308e6016e65b9bb77da24f5c85937e",
+    "validated": true
+  },
+  {
+    "tag": "0-baseline-long-QQQ",
+    "symbol": "QQQ",
+    "direct": false,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2031-01-17"
+    },
+    "status": 200,
+    "headers_ms": 5395.224821999989,
+    "request_id": "f2471f4f579b41f692a734a070759a87",
+    "complete_ms": 5491.944510999985,
+    "decoded_bytes": 12544123,
+    "code": null,
+    "full_semantic_sha256": "b2aa5937fe23912a85f3a0948c632539978fee5cc11b10331658b0dfbee97bed",
+    "validated": true
+  },
+  {
+    "tag": "0-baseline-invalid",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-02-30"
+    },
+    "status": 400,
+    "headers_ms": 4.662081999981638,
+    "request_id": "3b94fbbce6a24650859c39b4f691d440",
+    "complete_ms": 4.721388999996634,
+    "decoded_bytes": 36,
+    "code": null
+  },
+  {
+    "tag": "0-baseline-exact-mismatch",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-19"
+    },
+    "status": 502,
+    "headers_ms": 63.41010699998151,
+    "request_id": "55379d3ec9914490a5eccd3609fb4f75",
+    "complete_ms": 63.47786700001734,
+    "decoded_bytes": 64,
+    "code": "archive_expiration_unavailable"
+  },
+  {
+    "tag": "0-baseline-unauth",
+    "symbol": "SPY",
+    "direct": true,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 401,
+    "headers_ms": 4.376861000025656,
+    "request_id": "c2bbca3bde470eb561b98c5c68532833",
+    "complete_ms": 4.480614000044625,
+    "decoded_bytes": 119,
+    "code": "authentication_required"
+  },
+  {
+    "tag": "0-candidate-cold-SPY",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 502,
+    "headers_ms": 12895.495374999995,
+    "request_id": "cfc9a1f7d78e4ff0bdc4ff8ef467d2f8",
+    "complete_ms": 12895.591416999992,
+    "decoded_bytes": 49,
+    "container_launch_to_body_ms": 24074.641788999998,
+    "code": "backend_timeout"
+  },
+  {
+    "tag": "0-candidate-cold-QQQ",
+    "symbol": "QQQ",
+    "direct": false,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 12890.712008000037,
+    "request_id": "70522a09dbea4e6e8d2031b6a5c65974",
+    "complete_ms": 12998.962422000033,
+    "decoded_bytes": 12735830,
+    "container_launch_to_body_ms": 24179.32879,
+    "code": null,
+    "full_semantic_sha256": "4210ffaa3d84d16311941fd2f2278c5ad2bf54e4769354f055479be625649483",
+    "validated": true
+  },
+  {
+    "tag": "0-candidate-warm-0-SPY",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 9489.739258999976,
+    "request_id": "1c42e1788e8c4ae1b4f989ae383f3fe9",
+    "complete_ms": 9600.973769999997,
+    "decoded_bytes": 12735830,
+    "code": null,
+    "full_semantic_sha256": "3f4892922c1613eea0179c8b638d5a62996ded10ce01d811f6dd2b5b9ec22104",
+    "validated": true
+  },
+  {
+    "tag": "0-candidate-warm-0-QQQ",
+    "symbol": "QQQ",
+    "direct": false,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 11300.402103000011,
+    "request_id": "588eeec7ec4345a0aace17e152da9850",
+    "complete_ms": 11499.672161000035,
+    "decoded_bytes": 12735830,
+    "code": null,
+    "full_semantic_sha256": "4210ffaa3d84d16311941fd2f2278c5ad2bf54e4769354f055479be625649483",
+    "validated": true
+  },
+  {
+    "tag": "0-candidate-warm-1-QQQ",
+    "symbol": "QQQ",
+    "direct": false,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 8698.264659000017,
+    "request_id": "a3846f608f8e4f7d889aeab7bf064cbb",
+    "complete_ms": 8997.731998000007,
+    "decoded_bytes": 12735830,
+    "code": null,
+    "full_semantic_sha256": "4210ffaa3d84d16311941fd2f2278c5ad2bf54e4769354f055479be625649483",
+    "validated": true
+  },
+  {
+    "tag": "0-candidate-warm-1-SPY",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 10697.590768999988,
+    "request_id": "05904141ef794e658b2124737a174632",
+    "complete_ms": 10893.038420999972,
+    "decoded_bytes": 12735830,
+    "code": null,
+    "full_semantic_sha256": "3f4892922c1613eea0179c8b638d5a62996ded10ce01d811f6dd2b5b9ec22104",
+    "validated": true
+  },
+  {
+    "tag": "0-candidate-warm-2-QQQ",
+    "symbol": "QQQ",
+    "direct": false,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 8390.925226000036,
+    "request_id": "25d6e2b0dedd43ddb4dbba5b03a15401",
+    "complete_ms": 8592.320781000013,
+    "decoded_bytes": 12735830,
+    "code": null,
+    "full_semantic_sha256": "4210ffaa3d84d16311941fd2f2278c5ad2bf54e4769354f055479be625649483",
+    "validated": true
+  },
+  {
+    "tag": "0-candidate-warm-2-SPY",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 10400.820772000032,
+    "request_id": "d8f984cc7d3948d19d49baf9c438a433",
+    "complete_ms": 10601.26606099999,
+    "decoded_bytes": 12735830,
+    "code": null,
+    "full_semantic_sha256": "3f4892922c1613eea0179c8b638d5a62996ded10ce01d811f6dd2b5b9ec22104",
+    "validated": true
+  },
+  {
+    "tag": "0-candidate-warm-3-QQQ",
+    "symbol": "QQQ",
+    "direct": false,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 8899.471224000024,
+    "request_id": "2c7679cb2c734aaabb4adaa2c53f7dda",
+    "complete_ms": 9005.486888000007,
+    "decoded_bytes": 12735830,
+    "code": null,
+    "full_semantic_sha256": "4210ffaa3d84d16311941fd2f2278c5ad2bf54e4769354f055479be625649483",
+    "validated": true
+  },
+  {
+    "tag": "0-candidate-warm-3-SPY",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 10997.925209000015,
+    "request_id": "d8df5a2d2f2c4be898064ebb5e0c859f",
+    "complete_ms": 11102.249426000015,
+    "decoded_bytes": 12735830,
+    "code": null,
+    "full_semantic_sha256": "3f4892922c1613eea0179c8b638d5a62996ded10ce01d811f6dd2b5b9ec22104",
+    "validated": true
+  },
+  {
+    "tag": "0-candidate-warm-4-QQQ",
+    "symbol": "QQQ",
+    "direct": false,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 7715.626781000026,
+    "request_id": "c8d7bdf0ee6e4318a513ed497975ee0e",
+    "complete_ms": 7826.039932000014,
+    "decoded_bytes": 12735830,
+    "code": null,
+    "full_semantic_sha256": "4210ffaa3d84d16311941fd2f2278c5ad2bf54e4769354f055479be625649483",
+    "validated": true
+  },
+  {
+    "tag": "0-candidate-warm-4-SPY",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 9825.907820999986,
+    "request_id": "56c1333edbed4ffb80c378620af988df",
+    "complete_ms": 10019.078960999992,
+    "decoded_bytes": 12735830,
+    "code": null,
+    "full_semantic_sha256": "3f4892922c1613eea0179c8b638d5a62996ded10ce01d811f6dd2b5b9ec22104",
+    "validated": true
+  },
+  {
+    "tag": "0-candidate-warm-5-SPY",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 9429.987656999969,
+    "request_id": "9d7e1684dbb0485996f637b5a05f0ff7",
+    "complete_ms": 9444.164452999985,
+    "decoded_bytes": 12735830,
+    "code": null,
+    "full_semantic_sha256": "3f4892922c1613eea0179c8b638d5a62996ded10ce01d811f6dd2b5b9ec22104",
+    "validated": true
+  },
+  {
+    "tag": "0-candidate-warm-5-QQQ",
+    "symbol": "QQQ",
+    "direct": false,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 11130.213333000029,
+    "request_id": "18a21cec3b03427aabe168b27c976773",
+    "complete_ms": 11229.36278000003,
+    "decoded_bytes": 12735830,
+    "code": null,
+    "full_semantic_sha256": "4210ffaa3d84d16311941fd2f2278c5ad2bf54e4769354f055479be625649483",
+    "validated": true
+  },
+  {
+    "tag": "0-candidate-sequential-SPY",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 4997.476377999988,
+    "request_id": "b29a5aedafd64eb1a3086de5ca525d34",
+    "complete_ms": 5008.571985000003,
+    "decoded_bytes": 12735830,
+    "code": null,
+    "full_semantic_sha256": "3f4892922c1613eea0179c8b638d5a62996ded10ce01d811f6dd2b5b9ec22104",
+    "validated": true
+  },
+  {
+    "tag": "0-candidate-sequential-QQQ",
+    "symbol": "QQQ",
+    "direct": false,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 5239.656670999977,
+    "request_id": "35f44db5127d438cb9e1e6f40a8e1e71",
+    "complete_ms": 5342.067697000004,
+    "decoded_bytes": 12735830,
+    "code": null,
+    "full_semantic_sha256": "4210ffaa3d84d16311941fd2f2278c5ad2bf54e4769354f055479be625649483",
+    "validated": true
+  },
+  {
+    "tag": "0-candidate-rest-SPY",
+    "symbol": "SPY",
+    "direct": true,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 5973.761572999991,
+    "request_id": "06060e39fe9803844c47d708eadcbc51",
+    "complete_ms": 5991.582532999984,
+    "decoded_bytes": 12735756,
+    "code": null,
+    "full_semantic_sha256": "3f4892922c1613eea0179c8b638d5a62996ded10ce01d811f6dd2b5b9ec22104",
+    "validated": true
+  },
+  {
+    "tag": "0-candidate-rest-QQQ",
+    "symbol": "QQQ",
+    "direct": true,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 6089.677701000028,
+    "request_id": "3818053df6926509b1292cca5aed9c2a",
+    "complete_ms": 6565.613955999993,
+    "decoded_bytes": 12735756,
+    "code": null,
+    "full_semantic_sha256": "4210ffaa3d84d16311941fd2f2278c5ad2bf54e4769354f055479be625649483",
+    "validated": true
+  },
+  {
+    "tag": "0-candidate-150-SPY",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18",
+      "available_capital": 150
+    },
+    "status": 200,
+    "headers_ms": 2763.422011999978,
+    "request_id": "e4247d40f5964bef88339841824b332b",
+    "complete_ms": 2768.519810999976,
+    "decoded_bytes": 5501260,
+    "code": null,
+    "full_semantic_sha256": "b665e1cc2227bc6417dbdb90a7174e48949ff5967f5668dab1abb6678945a150",
+    "validated": true
+  },
+  {
+    "tag": "0-candidate-manual-SPY",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18",
+      "width": 5,
+      "available_capital": 150
+    },
+    "status": 200,
+    "headers_ms": 276.1619679999967,
+    "request_id": "d46326ade5b441e0bfe2e9cac196f313",
+    "complete_ms": 276.61131999997224,
+    "decoded_bytes": 338130,
+    "code": null,
+    "full_semantic_sha256": "cc7315a17b71e12e642bc3144e460370cb2af8b3356e4e26b3f2f4bddfea1c67",
+    "validated": true
+  },
+  {
+    "tag": "0-candidate-long-SPY",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2031-01-17"
+    },
+    "status": 200,
+    "headers_ms": 5492.743306000022,
+    "request_id": "3885a8a3dd304857952332e3bf2871b3",
+    "complete_ms": 5791.712540999981,
+    "decoded_bytes": 12737879,
+    "code": null,
+    "full_semantic_sha256": "3ed530696d640a6d114bbb09da0deaac021408c8c90a31ab9fed945ec0547e89",
+    "validated": true
+  },
+  {
+    "tag": "0-candidate-150-QQQ",
+    "symbol": "QQQ",
+    "direct": false,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2030-01-18",
+      "available_capital": 150
+    },
+    "status": 200,
+    "headers_ms": 2088.3890019999853,
+    "request_id": "6f0b7cb666fd4ae9b2e706b8805784cd",
+    "complete_ms": 2093.1342499999914,
+    "decoded_bytes": 5501260,
+    "code": null,
+    "full_semantic_sha256": "55747e6156d2c13ec9f607d7b7bffbc225514b6a9d689788ca6459e6fff55683",
+    "validated": true
+  },
+  {
+    "tag": "0-candidate-manual-QQQ",
+    "symbol": "QQQ",
+    "direct": false,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2030-01-18",
+      "width": 5,
+      "available_capital": 150
+    },
+    "status": 200,
+    "headers_ms": 278.2257420000178,
+    "request_id": "6cb0c594f9364db99f5b6cd455570610",
+    "complete_ms": 279.06660200000033,
+    "decoded_bytes": 338130,
+    "code": null,
+    "full_semantic_sha256": "881d7748cc0be2b012395bbed63888db71308e6016e65b9bb77da24f5c85937e",
+    "validated": true
+  },
+  {
+    "tag": "0-candidate-long-QQQ",
+    "symbol": "QQQ",
+    "direct": false,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2031-01-17"
+    },
+    "status": 200,
+    "headers_ms": 5895.539465000013,
+    "request_id": "4b664e41f63342fd956b2738257c5ef6",
+    "complete_ms": 5992.553986000019,
+    "decoded_bytes": 12737879,
+    "code": null,
+    "full_semantic_sha256": "b2aa5937fe23912a85f3a0948c632539978fee5cc11b10331658b0dfbee97bed",
+    "validated": true
+  },
+  {
+    "tag": "0-candidate-invalid",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-02-30"
+    },
+    "status": 400,
+    "headers_ms": 5.2076300000294395,
+    "request_id": "f327b801422b428da10fe9049fbd6095",
+    "complete_ms": 5.265826000027118,
+    "decoded_bytes": 36,
+    "code": null
+  },
+  {
+    "tag": "0-candidate-exact-mismatch",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-19"
+    },
+    "status": 502,
+    "headers_ms": 64.0893119999646,
+    "request_id": "4576bcb23a664faab51babc3b6fc3f93",
+    "complete_ms": 64.16051699994796,
+    "decoded_bytes": 64,
+    "code": "archive_expiration_unavailable"
+  },
+  {
+    "tag": "0-candidate-unauth",
+    "symbol": "SPY",
+    "direct": true,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 401,
+    "headers_ms": 4.935538999973232,
+    "request_id": "18ca527f975d83f5925155a019f7a1f6",
+    "complete_ms": 5.056136999996852,
+    "decoded_bytes": 119,
+    "code": "authentication_required"
+  },
+  {
+    "tag": "1-candidate-cold-SPY",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 10293.240360999987,
+    "request_id": "b0a6f6f09931478da6dd8c7185a40337",
+    "complete_ms": 10400.799820000004,
+    "decoded_bytes": 12735830,
+    "container_launch_to_body_ms": 19638.49683900003,
+    "code": null,
+    "full_semantic_sha256": "3f4892922c1613eea0179c8b638d5a62996ded10ce01d811f6dd2b5b9ec22104",
+    "validated": true
+  },
+  {
+    "tag": "1-candidate-cold-QQQ",
+    "symbol": "QQQ",
+    "direct": false,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 11598.833603000003,
+    "request_id": "3695f8f13fbb48c4975dfb8a81494622",
+    "complete_ms": 11704.967564000015,
+    "decoded_bytes": 12735830,
+    "container_launch_to_body_ms": 20943.401636000006,
+    "code": null,
+    "full_semantic_sha256": "4210ffaa3d84d16311941fd2f2278c5ad2bf54e4769354f055479be625649483",
+    "validated": true
+  },
+  {
+    "tag": "1-candidate-warm-0-QQQ",
+    "symbol": "QQQ",
+    "direct": false,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 5690.961888999993,
+    "request_id": "2b3f13605bff4d54897d5a5099d4fee0",
+    "complete_ms": 5787.021673999988,
+    "decoded_bytes": 12735830,
+    "code": null,
+    "full_semantic_sha256": "4210ffaa3d84d16311941fd2f2278c5ad2bf54e4769354f055479be625649483",
+    "validated": true
+  },
+  {
+    "tag": "1-candidate-warm-0-SPY",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 7484.781676000011,
+    "request_id": "9383ef77163647d28dccf1cde241ef17",
+    "complete_ms": 7494.333339000008,
+    "decoded_bytes": 12735830,
+    "code": null,
+    "full_semantic_sha256": "3f4892922c1613eea0179c8b638d5a62996ded10ce01d811f6dd2b5b9ec22104",
+    "validated": true
+  },
+  {
+    "tag": "1-candidate-warm-1-QQQ",
+    "symbol": "QQQ",
+    "direct": false,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 6709.294645,
+    "request_id": "3c65a5658af747cdb0fb4b8785db34e6",
+    "complete_ms": 6811.9382419999965,
+    "decoded_bytes": 12735830,
+    "code": null,
+    "full_semantic_sha256": "4210ffaa3d84d16311941fd2f2278c5ad2bf54e4769354f055479be625649483",
+    "validated": true
+  },
+  {
+    "tag": "1-candidate-warm-1-SPY",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 8820.10300799999,
+    "request_id": "acc628f4502849d38289364f08bafe59",
+    "complete_ms": 8918.849185,
+    "decoded_bytes": 12735830,
+    "code": null,
+    "full_semantic_sha256": "3f4892922c1613eea0179c8b638d5a62996ded10ce01d811f6dd2b5b9ec22104",
+    "validated": true
+  },
+  {
+    "tag": "1-candidate-warm-2-SPY",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 7812.309841000001,
+    "request_id": "dff2c9cd9f184e10b27aaf92656ffef8",
+    "complete_ms": 8021.152010000009,
+    "decoded_bytes": 12735830,
+    "code": null,
+    "full_semantic_sha256": "3f4892922c1613eea0179c8b638d5a62996ded10ce01d811f6dd2b5b9ec22104",
+    "validated": true
+  },
+  {
+    "tag": "1-candidate-warm-2-QQQ",
+    "symbol": "QQQ",
+    "direct": false,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 9425.195461999976,
+    "request_id": "addfce34e9b545e29238a0386b8bbfcc",
+    "complete_ms": 9614.530551000002,
+    "decoded_bytes": 12735830,
+    "code": null,
+    "full_semantic_sha256": "4210ffaa3d84d16311941fd2f2278c5ad2bf54e4769354f055479be625649483",
+    "validated": true
+  },
+  {
+    "tag": "1-candidate-warm-3-SPY",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 6723.585798000016,
+    "request_id": "75d552e07a7f4ab9b05a9526b1830c9b",
+    "complete_ms": 6820.735866000006,
+    "decoded_bytes": 12735830,
+    "code": null,
+    "full_semantic_sha256": "3f4892922c1613eea0179c8b638d5a62996ded10ce01d811f6dd2b5b9ec22104",
+    "validated": true
+  },
+  {
+    "tag": "1-candidate-warm-3-QQQ",
+    "symbol": "QQQ",
+    "direct": false,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 8824.27820999999,
+    "request_id": "a757cad3f3924d5b97e849a5acf32e70",
+    "complete_ms": 9017.872428000004,
+    "decoded_bytes": 12735830,
+    "code": null,
+    "full_semantic_sha256": "4210ffaa3d84d16311941fd2f2278c5ad2bf54e4769354f055479be625649483",
+    "validated": true
+  },
+  {
+    "tag": "1-candidate-warm-4-SPY",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 7508.093940000009,
+    "request_id": "375bb24e72704ad48ea8391690085460",
+    "complete_ms": 7697.438283000025,
+    "decoded_bytes": 12735830,
+    "code": null,
+    "full_semantic_sha256": "3f4892922c1613eea0179c8b638d5a62996ded10ce01d811f6dd2b5b9ec22104",
+    "validated": true
+  },
+  {
+    "tag": "1-candidate-warm-4-QQQ",
+    "symbol": "QQQ",
+    "direct": false,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 9305.752718999996,
+    "request_id": "cd019ae542c84fdeaa4e01289870f87b",
+    "complete_ms": 9400.750209999984,
+    "decoded_bytes": 12735830,
+    "code": null,
+    "full_semantic_sha256": "4210ffaa3d84d16311941fd2f2278c5ad2bf54e4769354f055479be625649483",
+    "validated": true
+  },
+  {
+    "tag": "1-candidate-warm-5-SPY",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 6358.619136000016,
+    "request_id": "f8b4bb2eb57a46a3bad821df28188233",
+    "complete_ms": 6654.9281759999985,
+    "decoded_bytes": 12735830,
+    "code": null,
+    "full_semantic_sha256": "3f4892922c1613eea0179c8b638d5a62996ded10ce01d811f6dd2b5b9ec22104",
+    "validated": true
+  },
+  {
+    "tag": "1-candidate-warm-5-QQQ",
+    "symbol": "QQQ",
+    "direct": false,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 8154.571282999996,
+    "request_id": "42758952ee634c92af38f40a0ce21da6",
+    "complete_ms": 8345.55142900001,
+    "decoded_bytes": 12735830,
+    "code": null,
+    "full_semantic_sha256": "4210ffaa3d84d16311941fd2f2278c5ad2bf54e4769354f055479be625649483",
+    "validated": true
+  },
+  {
+    "tag": "1-candidate-sequential-SPY",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 4848.690319000014,
+    "request_id": "fac7b5ced8764bf283aa2d2d1c8307f4",
+    "complete_ms": 5046.908938999991,
+    "decoded_bytes": 12735830,
+    "code": null,
+    "full_semantic_sha256": "3f4892922c1613eea0179c8b638d5a62996ded10ce01d811f6dd2b5b9ec22104",
+    "validated": true
+  },
+  {
+    "tag": "1-candidate-sequential-QQQ",
+    "symbol": "QQQ",
+    "direct": false,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 4137.941907000027,
+    "request_id": "482de2062d0e4e17afc478e325798850",
+    "complete_ms": 4433.696391000012,
+    "decoded_bytes": 12735830,
+    "code": null,
+    "full_semantic_sha256": "4210ffaa3d84d16311941fd2f2278c5ad2bf54e4769354f055479be625649483",
+    "validated": true
+  },
+  {
+    "tag": "1-candidate-rest-QQQ",
+    "symbol": "QQQ",
+    "direct": true,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 5151.997569999992,
+    "request_id": "1baf9e22e115bba3c400457920ca2e55",
+    "complete_ms": 5167.183666000028,
+    "decoded_bytes": 12735756,
+    "code": null,
+    "full_semantic_sha256": "4210ffaa3d84d16311941fd2f2278c5ad2bf54e4769354f055479be625649483",
+    "validated": true
+  },
+  {
+    "tag": "1-candidate-rest-SPY",
+    "symbol": "SPY",
+    "direct": true,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 5269.391681999991,
+    "request_id": "724fd10e52ae8a543c05f2ecac085cf6",
+    "complete_ms": 5671.565246,
+    "decoded_bytes": 12735756,
+    "code": null,
+    "full_semantic_sha256": "3f4892922c1613eea0179c8b638d5a62996ded10ce01d811f6dd2b5b9ec22104",
+    "validated": true
+  },
+  {
+    "tag": "1-candidate-150-SPY",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18",
+      "available_capital": 150
+    },
+    "status": 200,
+    "headers_ms": 1974.5051130000206,
+    "request_id": "6e68b297120a42618e40c023db9a438c",
+    "complete_ms": 1978.2223890000523,
+    "decoded_bytes": 5501260,
+    "code": null,
+    "full_semantic_sha256": "b665e1cc2227bc6417dbdb90a7174e48949ff5967f5668dab1abb6678945a150",
+    "validated": true
+  },
+  {
+    "tag": "1-candidate-manual-SPY",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18",
+      "width": 5,
+      "available_capital": 150
+    },
+    "status": 200,
+    "headers_ms": 982.9023020000136,
+    "request_id": "b10bd05e2bcc41aeb7373d873e3098d8",
+    "complete_ms": 984.7717879999891,
+    "decoded_bytes": 338130,
+    "code": null,
+    "full_semantic_sha256": "cc7315a17b71e12e642bc3144e460370cb2af8b3356e4e26b3f2f4bddfea1c67",
+    "validated": true
+  },
+  {
+    "tag": "1-candidate-long-SPY",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2031-01-17"
+    },
+    "status": 200,
+    "headers_ms": 4144.174006999947,
+    "request_id": "0ee245d23ad24a66a39593e4e8d6f7de",
+    "complete_ms": 4241.540786999963,
+    "decoded_bytes": 12737879,
+    "code": null,
+    "full_semantic_sha256": "3ed530696d640a6d114bbb09da0deaac021408c8c90a31ab9fed945ec0547e89",
+    "validated": true
+  },
+  {
+    "tag": "1-candidate-150-QQQ",
+    "symbol": "QQQ",
+    "direct": false,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2030-01-18",
+      "available_capital": 150
+    },
+    "status": 200,
+    "headers_ms": 2781.011375999981,
+    "request_id": "603ccaff5cf34ea28555a250be4b8b70",
+    "complete_ms": 2871.934211999985,
+    "decoded_bytes": 5501260,
+    "code": null,
+    "full_semantic_sha256": "55747e6156d2c13ec9f607d7b7bffbc225514b6a9d689788ca6459e6fff55683",
+    "validated": true
+  },
+  {
+    "tag": "1-candidate-manual-QQQ",
+    "symbol": "QQQ",
+    "direct": false,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2030-01-18",
+      "width": 5,
+      "available_capital": 150
+    },
+    "status": 200,
+    "headers_ms": 396.9090290000281,
+    "request_id": "d9c30b30166e425b9b54c8156c88d7e3",
+    "complete_ms": 397.2990409999966,
+    "decoded_bytes": 338130,
+    "code": null,
+    "full_semantic_sha256": "881d7748cc0be2b012395bbed63888db71308e6016e65b9bb77da24f5c85937e",
+    "validated": true
+  },
+  {
+    "tag": "1-candidate-long-QQQ",
+    "symbol": "QQQ",
+    "direct": false,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2031-01-17"
+    },
+    "status": 200,
+    "headers_ms": 4795.063371000026,
+    "request_id": "18a69d52df324fefae991b2eee259669",
+    "complete_ms": 4893.02927600005,
+    "decoded_bytes": 12737879,
+    "code": null,
+    "full_semantic_sha256": "b2aa5937fe23912a85f3a0948c632539978fee5cc11b10331658b0dfbee97bed",
+    "validated": true
+  },
+  {
+    "tag": "1-candidate-invalid",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-02-30"
+    },
+    "status": 400,
+    "headers_ms": 5.762880000020232,
+    "request_id": "332d21f012ff4be290d927279419c2e4",
+    "complete_ms": 5.835379000018293,
+    "decoded_bytes": 36,
+    "code": null
+  },
+  {
+    "tag": "1-candidate-exact-mismatch",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-19"
+    },
+    "status": 502,
+    "headers_ms": 62.98709800000779,
+    "request_id": "b1b11722a58b49c5ac6db69fd8190d14",
+    "complete_ms": 63.059656999996605,
+    "decoded_bytes": 64,
+    "code": "archive_expiration_unavailable"
+  },
+  {
+    "tag": "1-candidate-unauth",
+    "symbol": "SPY",
+    "direct": true,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 401,
+    "headers_ms": 4.502196000032654,
+    "request_id": "a610233305a8d626533b638555ec2b3e",
+    "complete_ms": 4.616509000015867,
+    "decoded_bytes": 119,
+    "code": "authentication_required"
+  },
+  {
+    "tag": "1-baseline-cold-QQQ",
+    "symbol": "QQQ",
+    "direct": false,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 10494.342894,
+    "request_id": "0a33451268134c5bb7aebc0795c1d136",
+    "complete_ms": 10507.056234000003,
+    "decoded_bytes": 12542074,
+    "container_launch_to_body_ms": 19922.121966999952,
+    "code": null,
+    "full_semantic_sha256": "4210ffaa3d84d16311941fd2f2278c5ad2bf54e4769354f055479be625649483",
+    "validated": true
+  },
+  {
+    "tag": "1-baseline-cold-SPY",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 11608.156699000006,
+    "request_id": "f436e82583fb404da61938503bee6b82",
+    "complete_ms": 11798.623802999999,
+    "decoded_bytes": 12542074,
+    "container_launch_to_body_ms": 21212.978657000007,
+    "code": null,
+    "full_semantic_sha256": "3f4892922c1613eea0179c8b638d5a62996ded10ce01d811f6dd2b5b9ec22104",
+    "validated": true
+  },
+  {
+    "tag": "1-baseline-warm-0-SPY",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 5700.247705999971,
+    "request_id": "1b15a4ea53cf429ab726920925786f3d",
+    "complete_ms": 5806.156349999981,
+    "decoded_bytes": 12542074,
+    "code": null,
+    "full_semantic_sha256": "3f4892922c1613eea0179c8b638d5a62996ded10ce01d811f6dd2b5b9ec22104",
+    "validated": true
+  },
+  {
+    "tag": "1-baseline-warm-0-QQQ",
+    "symbol": "QQQ",
+    "direct": false,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 7807.418071000029,
+    "request_id": "18c7403ed8aa42f7a882f3310f6e9fd5",
+    "complete_ms": 7908.262954000009,
+    "decoded_bytes": 12542074,
+    "code": null,
+    "full_semantic_sha256": "4210ffaa3d84d16311941fd2f2278c5ad2bf54e4769354f055479be625649483",
+    "validated": true
+  },
+  {
+    "tag": "1-baseline-warm-1-SPY",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 5683.6072720000175,
+    "request_id": "d2cfa7cd69da4354ada89bdac4e6dc12",
+    "complete_ms": 5781.537342000036,
+    "decoded_bytes": 12542074,
+    "code": null,
+    "full_semantic_sha256": "3f4892922c1613eea0179c8b638d5a62996ded10ce01d811f6dd2b5b9ec22104",
+    "validated": true
+  },
+  {
+    "tag": "1-baseline-warm-1-QQQ",
+    "symbol": "QQQ",
+    "direct": false,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 7376.943632999996,
+    "request_id": "5542ec374ad04cdeb3c4dfb65bda285f",
+    "complete_ms": 7574.764051999978,
+    "decoded_bytes": 12542074,
+    "code": null,
+    "full_semantic_sha256": "4210ffaa3d84d16311941fd2f2278c5ad2bf54e4769354f055479be625649483",
+    "validated": true
+  },
+  {
+    "tag": "1-baseline-warm-2-SPY",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 6884.412396000016,
+    "request_id": "c41433b55a32444f95e742e8fd6b50d6",
+    "complete_ms": 6892.5900830000155,
+    "decoded_bytes": 12542074,
+    "code": null,
+    "full_semantic_sha256": "3f4892922c1613eea0179c8b638d5a62996ded10ce01d811f6dd2b5b9ec22104",
+    "validated": true
+  },
+  {
+    "tag": "1-baseline-warm-2-QQQ",
+    "symbol": "QQQ",
+    "direct": false,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 8082.564998999998,
+    "request_id": "85af6497681d43d29febdf4a333bb461",
+    "complete_ms": 8183.165971999983,
+    "decoded_bytes": 12542074,
+    "code": null,
+    "full_semantic_sha256": "4210ffaa3d84d16311941fd2f2278c5ad2bf54e4769354f055479be625649483",
+    "validated": true
+  },
+  {
+    "tag": "1-baseline-warm-3-QQQ",
+    "symbol": "QQQ",
+    "direct": false,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 6806.552153999974,
+    "request_id": "bd1cc432f1344eceb485d29e868d49e0",
+    "complete_ms": 6817.2698440000095,
+    "decoded_bytes": 12542074,
+    "code": null,
+    "full_semantic_sha256": "4210ffaa3d84d16311941fd2f2278c5ad2bf54e4769354f055479be625649483",
+    "validated": true
+  },
+  {
+    "tag": "1-baseline-warm-3-SPY",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 8715.242848999991,
+    "request_id": "df8ff3a7b3f04515b80f50c7c0931591",
+    "complete_ms": 8813.562122000007,
+    "decoded_bytes": 12542074,
+    "code": null,
+    "full_semantic_sha256": "3f4892922c1613eea0179c8b638d5a62996ded10ce01d811f6dd2b5b9ec22104",
+    "validated": true
+  },
+  {
+    "tag": "1-baseline-warm-4-QQQ",
+    "symbol": "QQQ",
+    "direct": false,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 5983.872398000017,
+    "request_id": "1a982c09a4934ef2a643c47c8eb04ac8",
+    "complete_ms": 6083.623837000005,
+    "decoded_bytes": 12542074,
+    "code": null,
+    "full_semantic_sha256": "4210ffaa3d84d16311941fd2f2278c5ad2bf54e4769354f055479be625649483",
+    "validated": true
+  },
+  {
+    "tag": "1-baseline-warm-4-SPY",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 7177.57446600001,
+    "request_id": "1e52b185c91747e3bc311ccf62ebf7ba",
+    "complete_ms": 7280.059503000019,
+    "decoded_bytes": 12542074,
+    "code": null,
+    "full_semantic_sha256": "3f4892922c1613eea0179c8b638d5a62996ded10ce01d811f6dd2b5b9ec22104",
+    "validated": true
+  },
+  {
+    "tag": "1-baseline-warm-5-SPY",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 6790.270259999999,
+    "request_id": "0398730c6a244e6a83e3f726a90e7ffa",
+    "complete_ms": 6894.226521000008,
+    "decoded_bytes": 12542074,
+    "code": null,
+    "full_semantic_sha256": "3f4892922c1613eea0179c8b638d5a62996ded10ce01d811f6dd2b5b9ec22104",
+    "validated": true
+  },
+  {
+    "tag": "1-baseline-warm-5-QQQ",
+    "symbol": "QQQ",
+    "direct": false,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 8582.509925000011,
+    "request_id": "a57ad2bccb3c49ffbe21f3620acf4c1c",
+    "complete_ms": 8976.549332000048,
+    "decoded_bytes": 12542074,
+    "code": null,
+    "full_semantic_sha256": "4210ffaa3d84d16311941fd2f2278c5ad2bf54e4769354f055479be625649483",
+    "validated": true
+  },
+  {
+    "tag": "1-baseline-sequential-SPY",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 3532.036360999996,
+    "request_id": "a479b4f0473b4020b3bce7502a2a112b",
+    "complete_ms": 3632.7668999999787,
+    "decoded_bytes": 12542074,
+    "code": null,
+    "full_semantic_sha256": "3f4892922c1613eea0179c8b638d5a62996ded10ce01d811f6dd2b5b9ec22104",
+    "validated": true
+  },
+  {
+    "tag": "1-baseline-sequential-QQQ",
+    "symbol": "QQQ",
+    "direct": false,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 4246.216161999996,
+    "request_id": "fe748221616e4b08b5fb9f5da4ff5bbc",
+    "complete_ms": 4347.7843310000135,
+    "decoded_bytes": 12542074,
+    "code": null,
+    "full_semantic_sha256": "4210ffaa3d84d16311941fd2f2278c5ad2bf54e4769354f055479be625649483",
+    "validated": true
+  },
+  {
+    "tag": "1-baseline-rest-SPY",
+    "symbol": "SPY",
+    "direct": true,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 4975.6084740000115,
+    "request_id": "5fda18558179b355c3ae68fe24179dec",
+    "complete_ms": 5083.052758999997,
+    "decoded_bytes": 12735756,
+    "code": null,
+    "full_semantic_sha256": "3f4892922c1613eea0179c8b638d5a62996ded10ce01d811f6dd2b5b9ec22104",
+    "validated": true
+  },
+  {
+    "tag": "1-baseline-rest-QQQ",
+    "symbol": "QQQ",
+    "direct": true,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 5080.146428999968,
+    "request_id": "9691d3dc8ddc5b33b0bb4ec552f4b764",
+    "complete_ms": 5556.135841000014,
+    "decoded_bytes": 12735756,
+    "code": null,
+    "full_semantic_sha256": "4210ffaa3d84d16311941fd2f2278c5ad2bf54e4769354f055479be625649483",
+    "validated": true
+  },
+  {
+    "tag": "1-baseline-150-SPY",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18",
+      "available_capital": 150
+    },
+    "status": 200,
+    "headers_ms": 2421.4301520000276,
+    "request_id": "79ce25c4b61b451fa61a331b9321d47d",
+    "complete_ms": 2612.6269509999815,
+    "decoded_bytes": 5419932,
+    "code": null,
+    "full_semantic_sha256": "b665e1cc2227bc6417dbdb90a7174e48949ff5967f5668dab1abb6678945a150",
+    "validated": true
+  },
+  {
+    "tag": "1-baseline-manual-SPY",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18",
+      "width": 5,
+      "available_capital": 150
+    },
+    "status": 200,
+    "headers_ms": 246.1027449999733,
+    "request_id": "7684a1eaaaeb4cd1b4a5495b6cf34766",
+    "complete_ms": 246.5163819999816,
+    "decoded_bytes": 332762,
+    "code": null,
+    "full_semantic_sha256": "cc7315a17b71e12e642bc3144e460370cb2af8b3356e4e26b3f2f4bddfea1c67",
+    "validated": true
+  },
+  {
+    "tag": "1-baseline-long-SPY",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2031-01-17"
+    },
+    "status": 200,
+    "headers_ms": 4589.8927549999935,
+    "request_id": "bc56f933c9bf46bc97f941c43269125e",
+    "complete_ms": 4686.001622999982,
+    "decoded_bytes": 12544123,
+    "code": null,
+    "full_semantic_sha256": "3ed530696d640a6d114bbb09da0deaac021408c8c90a31ab9fed945ec0547e89",
+    "validated": true
+  },
+  {
+    "tag": "1-baseline-150-QQQ",
+    "symbol": "QQQ",
+    "direct": false,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2030-01-18",
+      "available_capital": 150
+    },
+    "status": 200,
+    "headers_ms": 1783.515733999991,
+    "request_id": "774c3dea504c495fa8adcd73e68f308b",
+    "complete_ms": 1883.2142549999844,
+    "decoded_bytes": 5419932,
+    "code": null,
+    "full_semantic_sha256": "55747e6156d2c13ec9f607d7b7bffbc225514b6a9d689788ca6459e6fff55683",
+    "validated": true
+  },
+  {
+    "tag": "1-baseline-manual-QQQ",
+    "symbol": "QQQ",
+    "direct": false,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2030-01-18",
+      "width": 5,
+      "available_capital": 150
+    },
+    "status": 200,
+    "headers_ms": 245.87017900000774,
+    "request_id": "c4acc37d243f4f7abb55ac2ead760b35",
+    "complete_ms": 246.2074190000294,
+    "decoded_bytes": 332762,
+    "code": null,
+    "full_semantic_sha256": "881d7748cc0be2b012395bbed63888db71308e6016e65b9bb77da24f5c85937e",
+    "validated": true
+  },
+  {
+    "tag": "1-baseline-long-QQQ",
+    "symbol": "QQQ",
+    "direct": false,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2031-01-17"
+    },
+    "status": 200,
+    "headers_ms": 4487.54685099999,
+    "request_id": "63b1a97133cd42978035fada881c57e1",
+    "complete_ms": 4588.249972000029,
+    "decoded_bytes": 12544123,
+    "code": null,
+    "full_semantic_sha256": "b2aa5937fe23912a85f3a0948c632539978fee5cc11b10331658b0dfbee97bed",
+    "validated": true
+  },
+  {
+    "tag": "1-baseline-invalid",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-02-30"
+    },
+    "status": 400,
+    "headers_ms": 5.445074000022032,
+    "request_id": "59793302a50b4803b473a34b50d38ccf",
+    "complete_ms": 5.517743999973845,
+    "decoded_bytes": 36,
+    "code": null
+  },
+  {
+    "tag": "1-baseline-exact-mismatch",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-19"
+    },
+    "status": 502,
+    "headers_ms": 63.71908500000245,
+    "request_id": "7e2bd99d653c42dc8831affb8590ebaa",
+    "complete_ms": 63.79223600004025,
+    "decoded_bytes": 64,
+    "code": "archive_expiration_unavailable"
+  },
+  {
+    "tag": "1-baseline-unauth",
+    "symbol": "SPY",
+    "direct": true,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 401,
+    "headers_ms": 5.06860399997322,
+    "request_id": "eaf10a091245a72eaa186c4b68a2ec05",
+    "complete_ms": 5.177878999973018,
+    "decoded_bytes": 119,
+    "code": "authentication_required"
+  },
+  {
+    "tag": "2-baseline-cold-QQQ",
+    "symbol": "QQQ",
+    "direct": false,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 11594.663679999996,
+    "request_id": "b0c90d56f6fc4e9dbe2056e7bafd9535",
+    "complete_ms": 11805.230442999999,
+    "decoded_bytes": 12542074,
+    "container_launch_to_body_ms": 21735.94975200001,
+    "code": null,
+    "full_semantic_sha256": "4210ffaa3d84d16311941fd2f2278c5ad2bf54e4769354f055479be625649483",
+    "validated": true
+  },
+  {
+    "tag": "2-baseline-cold-SPY",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 12997.024338000003,
+    "request_id": "9597bf842da544768458a441c56b30f0",
+    "complete_ms": 13202.796856999996,
+    "decoded_bytes": 12542074,
+    "container_launch_to_body_ms": 23132.449891999997,
+    "code": null,
+    "full_semantic_sha256": "3f4892922c1613eea0179c8b638d5a62996ded10ce01d811f6dd2b5b9ec22104",
+    "validated": true
+  },
+  {
+    "tag": "2-baseline-warm-0-SPY",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 6662.157327000017,
+    "request_id": "f6b38aee27f74317aabe7e5382279fb4",
+    "complete_ms": 6768.9627260000125,
+    "decoded_bytes": 12542074,
+    "code": null,
+    "full_semantic_sha256": "3f4892922c1613eea0179c8b638d5a62996ded10ce01d811f6dd2b5b9ec22104",
+    "validated": true
+  },
+  {
+    "tag": "2-baseline-warm-0-QQQ",
+    "symbol": "QQQ",
+    "direct": false,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 8361.904595999988,
+    "request_id": "38206bc77a6749879aecd602948569e1",
+    "complete_ms": 8665.46015199998,
+    "decoded_bytes": 12542074,
+    "code": null,
+    "full_semantic_sha256": "4210ffaa3d84d16311941fd2f2278c5ad2bf54e4769354f055479be625649483",
+    "validated": true
+  },
+  {
+    "tag": "2-baseline-warm-1-SPY",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 6509.794013000004,
+    "request_id": "40eed65297ce47e89d1f3cd7441195c6",
+    "complete_ms": 6612.222054999989,
+    "decoded_bytes": 12542074,
+    "code": null,
+    "full_semantic_sha256": "3f4892922c1613eea0179c8b638d5a62996ded10ce01d811f6dd2b5b9ec22104",
+    "validated": true
+  },
+  {
+    "tag": "2-baseline-warm-1-QQQ",
+    "symbol": "QQQ",
+    "direct": false,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 8611.493829000012,
+    "request_id": "82b10223092a4a528802e5e421bfec24",
+    "complete_ms": 8714.567828000014,
+    "decoded_bytes": 12542074,
+    "code": null,
+    "full_semantic_sha256": "4210ffaa3d84d16311941fd2f2278c5ad2bf54e4769354f055479be625649483",
+    "validated": true
+  },
+  {
+    "tag": "2-baseline-warm-2-SPY",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 7588.58166600001,
+    "request_id": "ee30ff2b811c4586970c4d30742ae3e3",
+    "complete_ms": 7692.294634999997,
+    "decoded_bytes": 12542074,
+    "code": null,
+    "full_semantic_sha256": "3f4892922c1613eea0179c8b638d5a62996ded10ce01d811f6dd2b5b9ec22104",
+    "validated": true
+  },
+  {
+    "tag": "2-baseline-warm-2-QQQ",
+    "symbol": "QQQ",
+    "direct": false,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 8784.986607000008,
+    "request_id": "ae0ec23217b54556b93c6168102c6ffb",
+    "complete_ms": 8888.587056999995,
+    "decoded_bytes": 12542074,
+    "code": null,
+    "full_semantic_sha256": "4210ffaa3d84d16311941fd2f2278c5ad2bf54e4769354f055479be625649483",
+    "validated": true
+  },
+  {
+    "tag": "2-baseline-warm-3-SPY",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 7675.690978000006,
+    "request_id": "f16607c66c484eb09dc04b6830f3e232",
+    "complete_ms": 7786.817339000009,
+    "decoded_bytes": 12542074,
+    "code": null,
+    "full_semantic_sha256": "3f4892922c1613eea0179c8b638d5a62996ded10ce01d811f6dd2b5b9ec22104",
+    "validated": true
+  },
+  {
+    "tag": "2-baseline-warm-3-QQQ",
+    "symbol": "QQQ",
+    "direct": false,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 8974.816619999985,
+    "request_id": "f44b9db971354e88b694021ea6d0f9ec",
+    "complete_ms": 9177.458788999986,
+    "decoded_bytes": 12542074,
+    "code": null,
+    "full_semantic_sha256": "4210ffaa3d84d16311941fd2f2278c5ad2bf54e4769354f055479be625649483",
+    "validated": true
+  },
+  {
+    "tag": "2-baseline-warm-4-SPY",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 7522.780546000007,
+    "request_id": "345bc557c9b946dc9196a6fee38976e0",
+    "complete_ms": 7534.61488100001,
+    "decoded_bytes": 12542074,
+    "code": null,
+    "full_semantic_sha256": "3f4892922c1613eea0179c8b638d5a62996ded10ce01d811f6dd2b5b9ec22104",
+    "validated": true
+  },
+  {
+    "tag": "2-baseline-warm-4-QQQ",
+    "symbol": "QQQ",
+    "direct": false,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 8732.986933000007,
+    "request_id": "063cf53f00b84b2aaf7a3ee15504a38c",
+    "complete_ms": 8930.048878000009,
+    "decoded_bytes": 12542074,
+    "code": null,
+    "full_semantic_sha256": "4210ffaa3d84d16311941fd2f2278c5ad2bf54e4769354f055479be625649483",
+    "validated": true
+  },
+  {
+    "tag": "2-baseline-warm-5-QQQ",
+    "symbol": "QQQ",
+    "direct": false,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 8209.744198999999,
+    "request_id": "9026cdf1c6e64fd2b05056ca831e17f5",
+    "complete_ms": 8315.463754000008,
+    "decoded_bytes": 12542074,
+    "code": null,
+    "full_semantic_sha256": "4210ffaa3d84d16311941fd2f2278c5ad2bf54e4769354f055479be625649483",
+    "validated": true
+  },
+  {
+    "tag": "2-baseline-warm-5-SPY",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 9418.060438999986,
+    "request_id": "325e2311366c419b8eafbe5cf39a6c01",
+    "complete_ms": 9510.88734999999,
+    "decoded_bytes": 12542074,
+    "code": null,
+    "full_semantic_sha256": "3f4892922c1613eea0179c8b638d5a62996ded10ce01d811f6dd2b5b9ec22104",
+    "validated": true
+  },
+  {
+    "tag": "2-baseline-sequential-SPY",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 3894.4010939999885,
+    "request_id": "9aafdcab7b104b739011545630ab4d22",
+    "complete_ms": 4104.4359059999915,
+    "decoded_bytes": 12542074,
+    "code": null,
+    "full_semantic_sha256": "3f4892922c1613eea0179c8b638d5a62996ded10ce01d811f6dd2b5b9ec22104",
+    "validated": true
+  },
+  {
+    "tag": "2-baseline-sequential-QQQ",
+    "symbol": "QQQ",
+    "direct": false,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 4648.131465999995,
+    "request_id": "736a60e26758459ab514b2259e6e2f6e",
+    "complete_ms": 4661.572204999999,
+    "decoded_bytes": 12542074,
+    "code": null,
+    "full_semantic_sha256": "4210ffaa3d84d16311941fd2f2278c5ad2bf54e4769354f055479be625649483",
+    "validated": true
+  },
+  {
+    "tag": "2-baseline-rest-QQQ",
+    "symbol": "QQQ",
+    "direct": true,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 5792.868363999986,
+    "request_id": "3d26847a3343be5a12143ea000558b18",
+    "complete_ms": 6102.856709999997,
+    "decoded_bytes": 12735756,
+    "code": null,
+    "full_semantic_sha256": "4210ffaa3d84d16311941fd2f2278c5ad2bf54e4769354f055479be625649483",
+    "validated": true
+  },
+  {
+    "tag": "2-baseline-rest-SPY",
+    "symbol": "SPY",
+    "direct": true,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 6610.952976000021,
+    "request_id": "23f74739055c32ea2d11b09d884100f9",
+    "complete_ms": 6625.589746000003,
+    "decoded_bytes": 12735756,
+    "code": null,
+    "full_semantic_sha256": "3f4892922c1613eea0179c8b638d5a62996ded10ce01d811f6dd2b5b9ec22104",
+    "validated": true
+  },
+  {
+    "tag": "2-baseline-150-SPY",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18",
+      "available_capital": 150
+    },
+    "status": 200,
+    "headers_ms": 1803.324631999999,
+    "request_id": "e079ffef83ec424a969c2cd259e3a1a2",
+    "complete_ms": 2001.4182999999832,
+    "decoded_bytes": 5419932,
+    "code": null,
+    "full_semantic_sha256": "b665e1cc2227bc6417dbdb90a7174e48949ff5967f5668dab1abb6678945a150",
+    "validated": true
+  },
+  {
+    "tag": "2-baseline-manual-SPY",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18",
+      "width": 5,
+      "available_capital": 150
+    },
+    "status": 200,
+    "headers_ms": 242.1432490000086,
+    "request_id": "94951bacc6a24463b8ba2ca993225a90",
+    "complete_ms": 242.5560140000016,
+    "decoded_bytes": 332762,
+    "code": null,
+    "full_semantic_sha256": "cc7315a17b71e12e642bc3144e460370cb2af8b3356e4e26b3f2f4bddfea1c67",
+    "validated": true
+  },
+  {
+    "tag": "2-baseline-long-SPY",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2031-01-17"
+    },
+    "status": 200,
+    "headers_ms": 5073.731534999979,
+    "request_id": "eb9b9817d07e4e918de9bc46ee5dc210",
+    "complete_ms": 5271.958389999981,
+    "decoded_bytes": 12544123,
+    "code": null,
+    "full_semantic_sha256": "3ed530696d640a6d114bbb09da0deaac021408c8c90a31ab9fed945ec0547e89",
+    "validated": true
+  },
+  {
+    "tag": "2-baseline-150-QQQ",
+    "symbol": "QQQ",
+    "direct": false,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2030-01-18",
+      "available_capital": 150
+    },
+    "status": 200,
+    "headers_ms": 1861.7749189999984,
+    "request_id": "21c992f85a5346f8ae84fb92a32c47fa",
+    "complete_ms": 1957.3494659999824,
+    "decoded_bytes": 5419932,
+    "code": null,
+    "full_semantic_sha256": "55747e6156d2c13ec9f607d7b7bffbc225514b6a9d689788ca6459e6fff55683",
+    "validated": true
+  },
+  {
+    "tag": "2-baseline-manual-QQQ",
+    "symbol": "QQQ",
+    "direct": false,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2030-01-18",
+      "width": 5,
+      "available_capital": 150
+    },
+    "status": 200,
+    "headers_ms": 276.0130370000127,
+    "request_id": "20ead01d54ca4f41a7502464d4c691f0",
+    "complete_ms": 276.52167800002303,
+    "decoded_bytes": 332762,
+    "code": null,
+    "full_semantic_sha256": "881d7748cc0be2b012395bbed63888db71308e6016e65b9bb77da24f5c85937e",
+    "validated": true
+  },
+  {
+    "tag": "2-baseline-long-QQQ",
+    "symbol": "QQQ",
+    "direct": false,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2031-01-17"
+    },
+    "status": 200,
+    "headers_ms": 4668.426820999997,
+    "request_id": "2f281f18459446ed952191a970000ea6",
+    "complete_ms": 4772.710259000007,
+    "decoded_bytes": 12544123,
+    "code": null,
+    "full_semantic_sha256": "b2aa5937fe23912a85f3a0948c632539978fee5cc11b10331658b0dfbee97bed",
+    "validated": true
+  },
+  {
+    "tag": "2-baseline-invalid",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-02-30"
+    },
+    "status": 400,
+    "headers_ms": 5.495558000006895,
+    "request_id": "d20e97de07d34097a01ace5ec569c039",
+    "complete_ms": 5.561497999991616,
+    "decoded_bytes": 36,
+    "code": null
+  },
+  {
+    "tag": "2-baseline-exact-mismatch",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-19"
+    },
+    "status": 502,
+    "headers_ms": 63.72198299999354,
+    "request_id": "ff39ae1174bc4f8d90a9f20321735526",
+    "complete_ms": 63.7922999999887,
+    "decoded_bytes": 64,
+    "code": "archive_expiration_unavailable"
+  },
+  {
+    "tag": "2-baseline-unauth",
+    "symbol": "SPY",
+    "direct": true,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 401,
+    "headers_ms": 28.054373000003352,
+    "request_id": "f7931749e161ad7550e5b4e8e99718d2",
+    "complete_ms": 28.174865000011096,
+    "decoded_bytes": 119,
+    "code": "authentication_required"
+  },
+  {
+    "tag": "2-candidate-cold-QQQ",
+    "symbol": "QQQ",
+    "direct": false,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 10901.801437000016,
+    "request_id": "b59cc478652d406cada0e98b64702478",
+    "complete_ms": 12209.538653000038,
+    "decoded_bytes": 12735830,
+    "container_launch_to_body_ms": 22647.517526999964,
+    "code": null,
+    "full_semantic_sha256": "4210ffaa3d84d16311941fd2f2278c5ad2bf54e4769354f055479be625649483",
+    "validated": true
+  },
+  {
+    "tag": "2-candidate-cold-SPY",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 12105.616130999977,
+    "request_id": "86f7f6baa88749aaa965750ba3289be3",
+    "complete_ms": 12306.368318000012,
+    "decoded_bytes": 12735830,
+    "container_launch_to_body_ms": 22743.329208999996,
+    "code": null,
+    "full_semantic_sha256": "3f4892922c1613eea0179c8b638d5a62996ded10ce01d811f6dd2b5b9ec22104",
+    "validated": true
+  },
+  {
+    "tag": "2-candidate-warm-0-SPY",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 7298.896452999998,
+    "request_id": "14eadd6666b34f82a7f5642df65e1475",
+    "complete_ms": 7493.379408999999,
+    "decoded_bytes": 12735830,
+    "code": null,
+    "full_semantic_sha256": "3f4892922c1613eea0179c8b638d5a62996ded10ce01d811f6dd2b5b9ec22104",
+    "validated": true
+  },
+  {
+    "tag": "2-candidate-warm-0-QQQ",
+    "symbol": "QQQ",
+    "direct": false,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 8896.966212999985,
+    "request_id": "abcc87eb77f1425a8121de6bd56cae04",
+    "complete_ms": 8994.420515999991,
+    "decoded_bytes": 12735830,
+    "code": null,
+    "full_semantic_sha256": "4210ffaa3d84d16311941fd2f2278c5ad2bf54e4769354f055479be625649483",
+    "validated": true
+  },
+  {
+    "tag": "2-candidate-warm-1-QQQ",
+    "symbol": "QQQ",
+    "direct": false,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 6343.562839000015,
+    "request_id": "e43507d092d1453d96d5a324e029d54c",
+    "complete_ms": 6534.995063999986,
+    "decoded_bytes": 12735830,
+    "code": null,
+    "full_semantic_sha256": "4210ffaa3d84d16311941fd2f2278c5ad2bf54e4769354f055479be625649483",
+    "validated": true
+  },
+  {
+    "tag": "2-candidate-warm-1-SPY",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 8346.014513,
+    "request_id": "1e90b7527b4b49fe9da1bab7efecf4ea",
+    "complete_ms": 8441.045839000026,
+    "decoded_bytes": 12735830,
+    "code": null,
+    "full_semantic_sha256": "3f4892922c1613eea0179c8b638d5a62996ded10ce01d811f6dd2b5b9ec22104",
+    "validated": true
+  },
+  {
+    "tag": "2-candidate-warm-2-QQQ",
+    "symbol": "QQQ",
+    "direct": false,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 7905.501206999987,
+    "request_id": "0069949ab27649fe9b5e3a4fbf24f804",
+    "complete_ms": 8001.51619799999,
+    "decoded_bytes": 12735830,
+    "code": null,
+    "full_semantic_sha256": "4210ffaa3d84d16311941fd2f2278c5ad2bf54e4769354f055479be625649483",
+    "validated": true
+  },
+  {
+    "tag": "2-candidate-warm-2-SPY",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 9512.783562999972,
+    "request_id": "5c63d92df6a448ea9fff16161ca48708",
+    "complete_ms": 9609.41491699998,
+    "decoded_bytes": 12735830,
+    "code": null,
+    "full_semantic_sha256": "3f4892922c1613eea0179c8b638d5a62996ded10ce01d811f6dd2b5b9ec22104",
+    "validated": true
+  },
+  {
+    "tag": "2-candidate-warm-3-QQQ",
+    "symbol": "QQQ",
+    "direct": false,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 7143.9903090000025,
+    "request_id": "003aabc1a45a48429a629d6f7463691d",
+    "complete_ms": 7160.930279000013,
+    "decoded_bytes": 12735830,
+    "code": null,
+    "full_semantic_sha256": "4210ffaa3d84d16311941fd2f2278c5ad2bf54e4769354f055479be625649483",
+    "validated": true
+  },
+  {
+    "tag": "2-candidate-warm-3-SPY",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 8646.33963099999,
+    "request_id": "b5dd0d615c0046b58c79540ea4ba39d4",
+    "complete_ms": 8751.918166999985,
+    "decoded_bytes": 12735830,
+    "code": null,
+    "full_semantic_sha256": "3f4892922c1613eea0179c8b638d5a62996ded10ce01d811f6dd2b5b9ec22104",
+    "validated": true
+  },
+  {
+    "tag": "2-candidate-warm-4-SPY",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 7566.462125999977,
+    "request_id": "45432039a27a4a05aeec058c9006916d",
+    "complete_ms": 7771.700571999986,
+    "decoded_bytes": 12735830,
+    "code": null,
+    "full_semantic_sha256": "3f4892922c1613eea0179c8b638d5a62996ded10ce01d811f6dd2b5b9ec22104",
+    "validated": true
+  },
+  {
+    "tag": "2-candidate-warm-4-QQQ",
+    "symbol": "QQQ",
+    "direct": false,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 9074.667482000052,
+    "request_id": "40ddde23f39c4bc19a6d1ea06b2481ac",
+    "complete_ms": 9366.042278999998,
+    "decoded_bytes": 12735830,
+    "code": null,
+    "full_semantic_sha256": "4210ffaa3d84d16311941fd2f2278c5ad2bf54e4769354f055479be625649483",
+    "validated": true
+  },
+  {
+    "tag": "2-candidate-warm-5-QQQ",
+    "symbol": "QQQ",
+    "direct": false,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 7803.52115200003,
+    "request_id": "9fb1e4e7e0844931b48f7bc4ae712916",
+    "complete_ms": 7816.95785300002,
+    "decoded_bytes": 12735830,
+    "code": null,
+    "full_semantic_sha256": "4210ffaa3d84d16311941fd2f2278c5ad2bf54e4769354f055479be625649483",
+    "validated": true
+  },
+  {
+    "tag": "2-candidate-warm-5-SPY",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 9414.730496000004,
+    "request_id": "3460b9a831874e179d7fad65c770d74b",
+    "complete_ms": 9507.341473999986,
+    "decoded_bytes": 12735830,
+    "code": null,
+    "full_semantic_sha256": "3f4892922c1613eea0179c8b638d5a62996ded10ce01d811f6dd2b5b9ec22104",
+    "validated": true
+  },
+  {
+    "tag": "2-candidate-sequential-SPY",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 4783.076085999994,
+    "request_id": "9b6faaa9da624b21a76fbcc18c833655",
+    "complete_ms": 4978.595593000023,
+    "decoded_bytes": 12735830,
+    "code": null,
+    "full_semantic_sha256": "3f4892922c1613eea0179c8b638d5a62996ded10ce01d811f6dd2b5b9ec22104",
+    "validated": true
+  },
+  {
+    "tag": "2-candidate-sequential-QQQ",
+    "symbol": "QQQ",
+    "direct": false,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 4772.909175999985,
+    "request_id": "e3186691592c46d9b8789ec2e7bfd770",
+    "complete_ms": 4876.010175999965,
+    "decoded_bytes": 12735830,
+    "code": null,
+    "full_semantic_sha256": "4210ffaa3d84d16311941fd2f2278c5ad2bf54e4769354f055479be625649483",
+    "validated": true
+  },
+  {
+    "tag": "2-candidate-rest-QQQ",
+    "symbol": "QQQ",
+    "direct": true,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 4645.313471000009,
+    "request_id": "338b4245529729787dca01f972347f41",
+    "complete_ms": 4854.604666,
+    "decoded_bytes": 12735756,
+    "code": null,
+    "full_semantic_sha256": "4210ffaa3d84d16311941fd2f2278c5ad2bf54e4769354f055479be625649483",
+    "validated": true
+  },
+  {
+    "tag": "2-candidate-rest-SPY",
+    "symbol": "SPY",
+    "direct": true,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 200,
+    "headers_ms": 5447.782920999998,
+    "request_id": "07c8561b8f68efe5f92ae70ddb4dfde4",
+    "complete_ms": 5462.519596999982,
+    "decoded_bytes": 12735756,
+    "code": null,
+    "full_semantic_sha256": "3f4892922c1613eea0179c8b638d5a62996ded10ce01d811f6dd2b5b9ec22104",
+    "validated": true
+  },
+  {
+    "tag": "2-candidate-150-SPY",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18",
+      "available_capital": 150
+    },
+    "status": 200,
+    "headers_ms": 2493.7590110000087,
+    "request_id": "2cc58a96baf2414988a3b43037192905",
+    "complete_ms": 2497.484053999983,
+    "decoded_bytes": 5501260,
+    "code": null,
+    "full_semantic_sha256": "b665e1cc2227bc6417dbdb90a7174e48949ff5967f5668dab1abb6678945a150",
+    "validated": true
+  },
+  {
+    "tag": "2-candidate-manual-SPY",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18",
+      "width": 5,
+      "available_capital": 150
+    },
+    "status": 200,
+    "headers_ms": 236.20840600000292,
+    "request_id": "f2e82667167845db970adbc6608dd289",
+    "complete_ms": 238.03869900001473,
+    "decoded_bytes": 338130,
+    "code": null,
+    "full_semantic_sha256": "cc7315a17b71e12e642bc3144e460370cb2af8b3356e4e26b3f2f4bddfea1c67",
+    "validated": true
+  },
+  {
+    "tag": "2-candidate-long-SPY",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2031-01-17"
+    },
+    "status": 200,
+    "headers_ms": 5065.850975999979,
+    "request_id": "4b3db0d4e05040409e0c3c21d53a7e00",
+    "complete_ms": 5164.795644999969,
+    "decoded_bytes": 12737879,
+    "code": null,
+    "full_semantic_sha256": "3ed530696d640a6d114bbb09da0deaac021408c8c90a31ab9fed945ec0547e89",
+    "validated": true
+  },
+  {
+    "tag": "2-candidate-150-QQQ",
+    "symbol": "QQQ",
+    "direct": false,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2030-01-18",
+      "available_capital": 150
+    },
+    "status": 200,
+    "headers_ms": 1761.9431260000056,
+    "request_id": "b0b24d0c347d49f191e5bd1e5bdfb465",
+    "complete_ms": 1765.8387170000083,
+    "decoded_bytes": 5501260,
+    "code": null,
+    "full_semantic_sha256": "55747e6156d2c13ec9f607d7b7bffbc225514b6a9d689788ca6459e6fff55683",
+    "validated": true
+  },
+  {
+    "tag": "2-candidate-manual-QQQ",
+    "symbol": "QQQ",
+    "direct": false,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2030-01-18",
+      "width": 5,
+      "available_capital": 150
+    },
+    "status": 200,
+    "headers_ms": 308.8061390000121,
+    "request_id": "2aa4fd27ccd749ca947a17f0c214d0a0",
+    "complete_ms": 311.43208800000366,
+    "decoded_bytes": 338130,
+    "code": null,
+    "full_semantic_sha256": "881d7748cc0be2b012395bbed63888db71308e6016e65b9bb77da24f5c85937e",
+    "validated": true
+  },
+  {
+    "tag": "2-candidate-long-QQQ",
+    "symbol": "QQQ",
+    "direct": false,
+    "payload": {
+      "symbol": "QQQ",
+      "research_mode": "historical",
+      "expiration": "2031-01-17"
+    },
+    "status": 200,
+    "headers_ms": 4795.68615300002,
+    "request_id": "f6b21734ce154fd1af25e1e936d8c5a7",
+    "complete_ms": 5086.633032999998,
+    "decoded_bytes": 12737879,
+    "code": null,
+    "full_semantic_sha256": "b2aa5937fe23912a85f3a0948c632539978fee5cc11b10331658b0dfbee97bed",
+    "validated": true
+  },
+  {
+    "tag": "2-candidate-invalid",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-02-30"
+    },
+    "status": 400,
+    "headers_ms": 6.076456000016606,
+    "request_id": "ce1be6d9581f4a03a5b4f9bf24e9fe64",
+    "complete_ms": 6.146192000016981,
+    "decoded_bytes": 36,
+    "code": null
+  },
+  {
+    "tag": "2-candidate-exact-mismatch",
+    "symbol": "SPY",
+    "direct": false,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-19"
+    },
+    "status": 502,
+    "headers_ms": 62.57883099999617,
+    "request_id": "14e0c293d9ec421795776047ce1098ce",
+    "complete_ms": 62.64792600001101,
+    "decoded_bytes": 64,
+    "code": "archive_expiration_unavailable"
+  },
+  {
+    "tag": "2-candidate-unauth",
+    "symbol": "SPY",
+    "direct": true,
+    "payload": {
+      "symbol": "SPY",
+      "research_mode": "historical",
+      "expiration": "2030-01-18"
+    },
+    "status": 401,
+    "headers_ms": 4.63130700001102,
+    "request_id": "add05d798b83e17ac4b97cea30be5b92",
+    "complete_ms": 4.761835000010706,
+    "decoded_bytes": 119,
+    "code": "authentication_required"
+  }
+]

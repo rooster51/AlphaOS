@@ -1,0 +1,62 @@
+{
+  "validated": 142,
+  "semantic_case_count": 8,
+  "all_semantic_case_hashes_match": true,
+  "error_pairs": {
+    "invalid": [
+      [
+        400,
+        null
+      ]
+    ],
+    "exact-mismatch": [
+      [
+        502,
+        "archive_expiration_unavailable"
+      ]
+    ],
+    "unauth": [
+      [
+        401,
+        "authentication_required"
+      ]
+    ]
+  },
+  "cold_totals": {
+    "baseline": {
+      "median": 22434.199822000002,
+      "worst": 24180.478687000003,
+      "readiness": [
+        11467.275849000003,
+        9413.935639999978,
+        9927.257075
+      ]
+    },
+    "candidate": {
+      "median": 22695.42336799998,
+      "worst": 24179.32879,
+      "readiness": [
+        11178.682320000007,
+        9234.625637000023,
+        10436.58571399996
+      ]
+    }
+  },
+  "artifact_manifest": [
+    {
+      "trial": 0,
+      "size": 1623478,
+      "sha256": "4c16e5012b39186691b49b6894500df08ab01a295b2f190108826ad11202eb29"
+    },
+    {
+      "trial": 1,
+      "size": 1630881,
+      "sha256": "b343cc4f0cfd90016be0c067a45f38cd1a944ae89a02aa4c672a9b677abac439"
+    },
+    {
+      "trial": 2,
+      "size": 1628587,
+      "sha256": "0c1931db523e05c15cc3e516b730c343e26dd93519c6bdaaf29ebfb6cbba8671"
+    }
+  ]
+}
