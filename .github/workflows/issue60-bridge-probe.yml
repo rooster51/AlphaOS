@@ -1,0 +1,76 @@
+name: Issue60 isolated bridge probe validation
+on:
+  push:
+    branches: [diagnostics/issue60-bridge-timing]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  constrained-overhead:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        trial: [0, 1, 2]
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Prepare unchanged baseline and constrained Node runtime
+        run: |
+          mkdir -p baseline results
+          git archive 76a6a1696d007aeb6aab31fa33c6dad847608688 | tar -x -C baseline
+          docker pull node:24.21.0-bookworm-slim
+      - name: Measure controlled route-only probe overhead (no provider access)
+        env:
+          TRIAL: ${{ matrix.trial }}
+        run: |
+          modes="baseline disabled enabled"
+          if [ "$TRIAL" = 1 ]; then modes="enabled disabled baseline"; fi
+          if [ "$TRIAL" = 2 ]; then modes="disabled baseline enabled"; fi
+          for mode in $modes; do
+            route=/work/web/src/app/api/research/market/route.ts
+            if [ "$mode" = baseline ]; then route=/work/baseline/web/src/app/api/research/market/route.ts; fi
+            docker run --rm --network none --cpus .15 --memory 512m --memory-swap 512m \
+              -v "$PWD:/work" -w /work/web \
+              -e PROBE_MODE="$mode" -e PROBE_ROUTE="$route" \
+              -e PROBE_OUTPUT="/work/results/$mode.json" \
+              node:24.21.0-bookworm-slim \
+              node --experimental-strip-types tests/bridge-probe-overhead.mjs
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bridge-probe-overhead-${{ matrix.trial }}
+          path: results/*.json
+          retention-days: 7
+  python:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version-file: .python-version
+      - run: pip install -r requirements.txt -r requirements-api.txt pytest
+      - run: python -m pytest -q
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+  website:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.21.0'
+      - run: npm ci
+      - run: npm audit --omit=dev --audit-level=moderate
+      - run: npm test
+      - run: npm run typecheck
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e

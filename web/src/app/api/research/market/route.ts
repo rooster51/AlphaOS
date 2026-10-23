@@ -1,3 +1,4 @@
+import { BridgeTimingProbe } from "../../../../lib/bridge-timing-probe.ts";
 import { validArchiveObservation } from "../../../../lib/archive-observation.ts";
 
 type MarketPayload = {
@@ -100,10 +101,10 @@ function upstreamErrorCode(value: unknown): string | null {
   return typeof code === "string" && /^[a-z][a-z0-9_]{0,63}$/.test(code) ? code : null;
 }
 
-async function readErrorPayload(response: Response, trace: BridgeTrace): Promise<unknown> {
+async function readErrorPayload(response: Response, trace: BridgeTrace, probe?: BridgeTimingProbe): Promise<unknown> {
   const started = performance.now();
   try {
-    return await response.json();
+    return await (probe ? probe.json(response) : response.json());
   } catch (error) {
     if (error instanceof SyntaxError || error instanceof TypeError) return null;
     throw error;
@@ -140,10 +141,11 @@ const KNOWN_UPSTREAM_CODES = new Set([
 export async function POST(request: Request) {
   const trace: BridgeTrace = {request_id: crypto.randomUUID().replaceAll("-", ""), stage: "request_validation"};
   const started = performance.now();
+  const probe = process.env.ALPHAOS_BRIDGE_TIMING_PROBE === "1" ? new BridgeTimingProbe(trace.request_id) : undefined;
   let result: Response;
   let timeoutSignal: AbortSignal | undefined;
   try {
-    result = await marketRequest(request, trace, () => timeoutSignal = AbortSignal.timeout(12000));
+    result = await marketRequest(request, trace, () => { timeoutSignal = AbortSignal.timeout(12000); return probe ? probe.deadline(timeoutSignal) : timeoutSignal; }, probe);
   } catch (error) {
     const clientCancelled = request.signal.aborted;
     const timeout = error instanceof DOMException && (error.name === "TimeoutError" ||
@@ -152,6 +154,7 @@ export async function POST(request: Request) {
     if (!clientCancelled && !timeout && !(error instanceof TypeError)) {
       console.warn(JSON.stringify({event: "research_bridge", ...trace, outcome: "unexpected_error",
         elapsed_ms: Math.round(performance.now() - started)}));
+      probe?.finish(undefined, request.signal);
       throw error;
     }
     result = Response.json({status: "unavailable", code: clientCancelled ? "request_cancelled" : timeout ? "backend_timeout" : "backend_unreachable"},
@@ -160,10 +163,11 @@ export async function POST(request: Request) {
   result.headers.set("X-AlphaOS-Request-ID", trace.request_id);
   console.warn(JSON.stringify({event: "research_bridge", ...trace, status: result.status,
     timeout_ms: 12000, elapsed_ms: Math.round(performance.now() - started)}));
+  probe?.finish(result.status, request.signal);
   return result;
 }
 
-async function marketRequest(request: Request, trace: BridgeTrace, timeout: () => AbortSignal) {
+async function marketRequest(request: Request, trace: BridgeTrace, timeout: () => AbortSignal, probe?: BridgeTimingProbe) {
   let payload: MarketPayload | null;
   try {
     payload = parseMarketPayload(await request.json());
@@ -199,6 +203,7 @@ async function marketRequest(request: Request, trace: BridgeTrace, timeout: () =
 
   trace.stage = "fetch";
   const fetchStarted = performance.now();
+  probe?.mark("fetch_started_ms");
   let response: Response;
   try {
     const {view,...backendPayload} = payload;
@@ -223,13 +228,14 @@ async function marketRequest(request: Request, trace: BridgeTrace, timeout: () =
     );
   }
 
+  probe?.mark("headers_received_ms");
   trace.fetch_headers_ms = Math.round(performance.now() - fetchStarted);
   trace.upstream_status = response.status;
   trace.upstream_json = (response.headers.get("Content-Type") ?? "").toLowerCase().includes("application/json");
   trace.backend_correlated = response.headers.get("X-AlphaOS-Request-ID") === trace.request_id;
   trace.stage = "response_body";
   if (!response.ok) {
-    const code = upstreamErrorCode(await readErrorPayload(response, trace));
+    const code = upstreamErrorCode(await readErrorPayload(response, trace, probe));
     trace.upstream_code = KNOWN_UPSTREAM_CODES.has(code ?? "") ? code! : "unrecognized_or_missing";
     const detail = response.status === 401
       ? "backend_authentication_required"
@@ -269,7 +275,7 @@ async function marketRequest(request: Request, trace: BridgeTrace, timeout: () =
   let responsePayload: unknown;
   const bodyStarted = performance.now();
   try {
-    responsePayload = await response.json();
+    responsePayload = await (probe ? probe.json(response) : response.json());
   } catch (error) {
     if (error instanceof SyntaxError || error instanceof TypeError) {
       return Response.json(
@@ -286,6 +292,7 @@ async function marketRequest(request: Request, trace: BridgeTrace, timeout: () =
   const valid = payload.view === "observation"
     ? validArchiveObservation(responsePayload,payload.symbol,payload.research_mode ?? "current",payload.expiration)
     : validResearchEnvelope(responsePayload, payload.symbol, payload.research_mode, payload.expiration, payload.width);
+  probe?.mark("validated_ms");
   trace.schema_validation_ms = Math.round(performance.now() - validationStarted);
   if (!valid) {
     return Response.json(
