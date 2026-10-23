@@ -1,5 +1,7 @@
 # Issue 60 — real Next HTTP probe validation
 
+**Historical v2 report.** The current native `response.json()` v3 evaluation is [native JSON validation](ISSUE60_BRIDGE_NATIVE_JSON_VALIDATION.md). V3 also received NO-GO; the original evidence is retained below.
+
 **Decision: NO-GO for requesting production diagnostic enablement under the current no-meaningful-regression criterion.** Functional, cancellation, privacy and timing-order checks pass. Observer overhead remains variable and is not established as negligible near the production deadline. Leave the probe disabled; do not treat control-fixture deadline passes as research acceptance. Issue #60 / Milestone 1 remain open.
 
 Existing branch: `diagnostics/issue60-bridge-timing`; research baseline `76a6a16`. Current tested probe revision: `4fb30878e438d33d6525e76dde5b960049ca46fa`. No new branch, research optimization, provider request/data capture, PR, merge, production configuration or deployment.
