@@ -1,0 +1,92 @@
+{
+  "0-baseline": {
+    "concurrent_median_ms": 795.143092499999,
+    "concurrent_worst_ms": 1004.1792400000004,
+    "sequential_median_ms": 401.7776104999998,
+    "pair_cpu_median_ms": 132.5645,
+    "peak_memory_bytes": 341884928,
+    "import_ms": 600.855614,
+    "deadline_passes": 12,
+    "n": 12
+  },
+  "0-disabled": {
+    "concurrent_median_ms": 898.313091,
+    "concurrent_worst_ms": 1105.0935510000008,
+    "sequential_median_ms": 409.0699755000005,
+    "pair_cpu_median_ms": 147.863,
+    "peak_memory_bytes": 339677184,
+    "import_ms": 691.86216,
+    "deadline_passes": 12,
+    "n": 12
+  },
+  "0-enabled": {
+    "concurrent_median_ms": 896.4247754999992,
+    "concurrent_worst_ms": 1010.5064680000005,
+    "sequential_median_ms": 402.8841809999999,
+    "pair_cpu_median_ms": 144.24450000000002,
+    "peak_memory_bytes": 314462208,
+    "import_ms": 695.126386,
+    "deadline_passes": 12,
+    "n": 12
+  },
+  "1-baseline": {
+    "concurrent_median_ms": 502.304071,
+    "concurrent_worst_ms": 797.955438,
+    "sequential_median_ms": 297.1020495,
+    "pair_cpu_median_ms": 92.6445,
+    "peak_memory_bytes": 336654336,
+    "import_ms": 397.74645699999996,
+    "deadline_passes": 12,
+    "n": 12
+  },
+  "1-disabled": {
+    "concurrent_median_ms": 500.2517579999999,
+    "concurrent_worst_ms": 695.9300789999998,
+    "sequential_median_ms": 299.53109199999994,
+    "pair_cpu_median_ms": 88.1975,
+    "peak_memory_bytes": 336666624,
+    "import_ms": 495.65896299999997,
+    "deadline_passes": 12,
+    "n": 12
+  },
+  "1-enabled": {
+    "concurrent_median_ms": 601.0739919999996,
+    "concurrent_worst_ms": 700.1147189999992,
+    "sequential_median_ms": 299.608481,
+    "pair_cpu_median_ms": 98.1965,
+    "peak_memory_bytes": 349175808,
+    "import_ms": 497.51874899999996,
+    "deadline_passes": 12,
+    "n": 12
+  },
+  "2-baseline": {
+    "concurrent_median_ms": 696.7672629999993,
+    "concurrent_worst_ms": 895.960615,
+    "sequential_median_ms": 302.5953290000002,
+    "pair_cpu_median_ms": 113.081,
+    "peak_memory_bytes": 337551360,
+    "import_ms": 394.56964700000003,
+    "deadline_passes": 12,
+    "n": 12
+  },
+  "2-disabled": {
+    "concurrent_median_ms": 692.6405969999996,
+    "concurrent_worst_ms": 804.4334530000006,
+    "sequential_median_ms": 305.01157250000006,
+    "pair_cpu_median_ms": 110.41,
+    "peak_memory_bytes": 340774912,
+    "import_ms": 490.961137,
+    "deadline_passes": 12,
+    "n": 12
+  },
+  "2-enabled": {
+    "concurrent_median_ms": 704.4024154999997,
+    "concurrent_worst_ms": 800.3586430000005,
+    "sequential_median_ms": 390.0281380000001,
+    "pair_cpu_median_ms": 117.6345,
+    "peak_memory_bytes": 338001920,
+    "import_ms": 592.8603270000001,
+    "deadline_passes": 12,
+    "n": 12
+  }
+}
