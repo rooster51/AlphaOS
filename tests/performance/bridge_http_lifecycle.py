@@ -60,9 +60,11 @@ def validate():
     p=probes[0];assert set(p)<=allowed;assert p['status']==r['status'];assert p['elapsed_ms']>=p.get('headers_received_ms',0)
     present=[p[k] for k in ['fetch_started_ms','headers_received_ms','body_received_ms','parsed_ms','validated_ms','elapsed_ms'] if k in p];assert present==sorted(present)
     if r['status']==200:assert p['body_received_ms']<=p['parsed_ms']<=p['validated_ms'];assert p['decoded_body_bytes']>0
-    if r['scenario'] in ['timeout_body','timeout_headers']:assert p['timeout_signal_aborted'] and p['deadline_budget_exceeded']
+    # Native timer expiry and separately sampled performance.now() are not the
+    # same clock boundary (sub-ms origin/rounding). Do not conflate these facts.
+    if r['scenario'] in ['timeout_body','timeout_headers']:assert p['timeout_signal_aborted'] and p['timeout_observed_ms'] is not None
     timings.append(p)
-   if r['scenario'] in ['complete','delayed','gzip','unicode']:assert r['status']==200
+   if r['scenario'] in ['complete','delayed','gzip','unicode']:assert r['status']==200 and base['backend_correlated']
    if r['scenario'] in ['partial','interrupted','malformed']:assert (r['status'],r['code'])==(502,'response_schema_mismatch')
    if r['scenario'].startswith('timeout'):assert (r['status'],r['code'])==(502,'backend_timeout')
    key=(r['scenario'],r['symbol']);fingerprint=(r['status'],r['sha256'],r['decoded_bytes'],r['code'],r['cache']);cases.setdefault(key,set()).add(fingerprint)
@@ -73,6 +75,10 @@ def validate():
   # Compare cancellation classifications without pretending a disconnected client received a response.
   abort_logs=[x for x in logs if x.get('event')=='research_bridge' and x.get('request_id')==mode_abort['request_id']]
   aborts[[x['mode'] for x in aborts].index(mode)]['bridge_abort_logs']=abort_logs
+  assert peer and not peer[0]['finished'] and peer[0]['elapsed_ms']<2500,'upstream cancellation missing'
+  assert abort_logs and abort_logs[0]['status']==499,'bridge cancellation missing'
+  for entry in logs:
+   if entry.get('event')=='research_bridge_probe':assert set(entry)<=allowed
  assert all(len(v)==1 for v in cases.values()),'response bytes/status/error parity failed'
  cancellation=[[(r['status'],r.get('stage')) for r in x['bridge_abort_logs']] for x in aborts];assert cancellation[0]==cancellation[1],'client cancellation parity failed'
  result=dict(trial=TRIAL,response_parity=True,correlation=True,timing_order=True,privacy=True,aborts=aborts,probe_timings=timings,rows=rows,launch=launch)
