@@ -1,0 +1,8 @@
+FROM node:24.21.0-bookworm-slim
+WORKDIR /repo/web
+COPY web/package.json web/package-lock.json ./
+RUN npm ci
+COPY web/ ./
+ENV ALPHAOS_DEMO_MODE=false
+RUN npm run build
+CMD ["npm", "start", "--", "--hostname", "0.0.0.0"]

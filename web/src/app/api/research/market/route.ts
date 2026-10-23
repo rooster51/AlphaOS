@@ -267,9 +267,11 @@ async function marketRequest(request: Request, trace: BridgeTrace, timeout: () =
   }
 
   let responsePayload: unknown;
+  let responseText: string;
   const bodyStarted = performance.now();
   try {
-    responsePayload = await response.json();
+    responseText = await response.text();
+    responsePayload = JSON.parse(responseText);
   } catch (error) {
     if (error instanceof SyntaxError || error instanceof TypeError) {
       return Response.json(
@@ -293,8 +295,25 @@ async function marketRequest(request: Request, trace: BridgeTrace, timeout: () =
       { status: 502, headers: { "Cache-Control": "no-store" } },
     );
   }
-  return Response.json(
-    { research: responsePayload, verified_for_trading: false, source: "alphaos_research_api" },
-    { headers: { "Cache-Control": "no-store" } }
+  // Parsing and the existing complete envelope checks must finish before any
+  // success response is constructed. Reuse only that validated JSON text.
+  // Preserve JSON.stringify's number normalization for unusual numeric bodies
+  // (including unsafe integers, negative zero, overflow and underflow). These
+  // conservative guards may also match strings; that only selects the old path.
+  const requiresNumberNormalization =
+    /(?:^|[\[,:\s])-?\d{16,}/.test(responseText) ||
+    /(?:^|[\[,:\s])-0(?:\.0*)?(?:[eE][+-]?\d+)?(?=[,\]}\s]|$)/.test(responseText) ||
+    /[eE][+-]?\d{3,}/.test(responseText) ||
+    /[eE]\+?(?:1[5-9]|[2-9]\d)(?!\d)/.test(responseText) ||
+    /-0\.0{15}/.test(responseText);
+  if (requiresNumberNormalization) {
+    return Response.json(
+      { research: responsePayload, verified_for_trading: false, source: "alphaos_research_api" },
+      { headers: { "Cache-Control": "no-store" } },
+    );
+  }
+  return new Response(
+    '{"research":' + responseText + ',"verified_for_trading":false,"source":"alphaos_research_api"}',
+    { headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } },
   );
 }

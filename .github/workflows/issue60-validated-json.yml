@@ -1,0 +1,123 @@
+name: Issue 60 validated JSON lifecycle
+on:
+  push:
+    branches: [diagnostics/issue60-validated-json-lifecycle]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version-file: '.python-version'
+          cache: pip
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt -r requirements-api.txt
+          pip install pytest
+      - name: Run full regression suite
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: python -m pytest -q
+
+  web:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --audit-level=moderate
+      # Temporary exception tracked in https://github.com/rooster51/AlphaOS/issues/41
+      # The full audit is always run. Only the two reviewed dev-tool advisories
+      # may be non-blocking; any additional advisory or audit error fails CI.
+      - name: Audit all dependencies (reviewed exception only)
+        shell: bash
+        run: |
+          npm audit --json --audit-level=moderate > audit-report.json || audit_status=$?
+          node <<'NODE'
+          const fs = require('node:fs');
+          const audit = JSON.parse(fs.readFileSync('audit-report.json', 'utf8'));
+          if (audit.error || !audit.vulnerabilities || !audit.metadata?.vulnerabilities) {
+            console.error('Full dependency audit failed or returned an unexpected report.');
+            process.exit(1);
+          }
+          const allowed = new Set([
+            'GHSA-vfj7-8cjw-p6xm',
+            'GHSA-rj75-hqrm-r3gf'
+          ]);
+          const advisories = Object.values(audit.vulnerabilities)
+            .flatMap(v => v.via)
+            .filter(v => typeof v === 'object');
+          const unexpected = advisories.filter(v => ![...allowed].some(id => v.url?.includes(id)));
+          const counts = audit.metadata.vulnerabilities;
+          const total = counts.total;
+          if (unexpected.length || total > 7 || !advisories.length) {
+            console.error('Unapproved audit findings or changed report:', JSON.stringify({unexpected, counts}));
+            process.exit(1);
+          }
+          console.log('Temporary exception: known Tailwind 3 dev-tool advisories only; see issue #41.');
+          console.log('Full audit counts:', JSON.stringify(counts));
+          NODE
+      - run: npx playwright install --with-deps chromium
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+        env:
+          ALPHAOS_DEMO_MODE: 'false'
+          ALPHAOS_API_TOKEN: ''
+      - run: npm run test:e2e
+
+  lifecycle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        trial: [0, 1, 2]
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version-file: .python-version
+      - name: Prepare existing Linux diagnostic dependencies
+        run: |
+          cat > /tmp/issue60-python.Dockerfile <<'EOF'
+          FROM python:3.12.14-slim-bookworm
+          WORKDIR /repo
+          COPY requirements.txt requirements-api.txt /tmp/
+          RUN pip install --no-cache-dir -r /tmp/requirements.txt -r /tmp/requirements-api.txt pytest
+          EOF
+          docker build -f /tmp/issue60-python.Dockerfile -t alphaos-profile-python .
+          docker pull node:24.21.0-bookworm-slim
+          python -m pip install requests cryptography
+      - name: Run matched actual Next lifecycle pairs
+        env:
+          TRIAL: ${{ matrix.trial }}
+        run: python tests/performance/validated_lifecycle.py
+      - name: Preserve diagnostic results without TLS keys or credentials
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue60-validated-json-${{ matrix.trial }}
+          path: |
+            lifecycle-results/*.json
+            lifecycle-results/*.jsonl
+            lifecycle-results/*.txt
+            lifecycle-results/*.json.gz
+          retention-days: 7
