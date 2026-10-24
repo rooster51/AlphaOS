@@ -1,5 +1,12 @@
 # Issue #60: bound research work and response cost
 
+> **Status 2026-10-24.** Merged as PR #61 (`8a374fb`; application commit
+> `3772a36`) and deployed per owner report, production baseline `76a6a16`. Issue
+> #60 and Milestone 1 remain **open**: the production acceptance described here has
+> not been recorded against a deployment, and no further Issue #60 optimization
+> experiments are authorized. The body is preserved as the dated change record.
+> See [current status](STATUS.md).
+
 Incident: [GitHub Issue #60](https://github.com/rooster51/AlphaOS/issues/60).
 
 Baseline: main `dd1196b`, including PR #59. No deployment or production success

@@ -9,7 +9,8 @@ production-health or service-configuration assertion.
 
 # AlphaOS 2.0 Build Status
 
-> Current release status updated 2026-10-14. Research outputs are not rankings or execution recommendations.
+> Release status as of 2026-10-14 (historical; superseded by [current status](docs/STATUS.md)).
+> Research outputs are not rankings or execution recommendations.
 
 ## Current milestone: Release 1 SPY/QQQ acceptance
 

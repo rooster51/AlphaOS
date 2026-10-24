@@ -1,8 +1,16 @@
 # AlphaOS remote MCP
 
 Current branch additions and compatibility decisions: [AlphaOS 2.0 integration](ALPHAOS2_API_MCP.md).
-The new tools are not deployed by this milestone. The setup guide below describes
-the historical Phase 8 connection; live ChatGPT UI and production remain unverified here.
+
+> **Status 2026-10-24.** All 17 tools are present in `main` at `76a6a16`, the
+> reported production baseline; earlier text here said the newer tools were not
+> deployed. The tables below describe the original Phase 8 ten-tool connection,
+> and the additional AlphaOS 2.0 tools are listed in
+> [ALPHAOS2_API_MCP.md](ALPHAOS2_API_MCP.md). Live ChatGPT connector state is
+> unverified. See [current status](STATUS.md).
+
+The setup guide below describes the historical Phase 8 connection; live ChatGPT UI
+and production remain unverified here.
 
 Production target: **https://alphaos.onrender.com/mcp**.
 

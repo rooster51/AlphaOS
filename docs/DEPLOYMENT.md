@@ -6,6 +6,24 @@ Names are service identifiers, not guarantees that a service is unused: the
 website's service is named **alphaos-web-staging** but is the current user-facing
 research website inspected in the Release 1 work.
 
+> **Currency update (2026-10-24).** Corrections to code and version facts that
+> changed after this audit. The service table, settings and deployment
+> observations below are preserved as recorded.
+>
+> - Production baseline is **reported** at `76a6a16` with PR #64 deployed. This
+>   was not independently observed: no Render control-plane read was made for
+>   this record. The `d1c9e08` rows below are the 2026-10-16 observation.
+> - `requirements-api.txt` now pins **`orjson==3.13.0`** (added by PR #63). The
+>   API dependency row below predates it. FastAPI, Uvicorn, pandas, NumPy,
+>   python-dateutil, Public SDK 0.1.17, pandas-market-calendars 5.4.0, tzdata,
+>   MCP 2.2.0 and Supabase 2.x are unchanged.
+> - Website: **Next.js 16.4.1**, not 16.4.0 (PR #64 patched reviewed audit
+>   advisories). React and React DOM remain 18.
+> - API surface: `POST /v1/research/observation` now serves the dashboard; the
+>   unchanged 12,000 ms bridge deadline applies to full research only.
+>
+> Issue #60 and Milestone 1 remain open. See [current status](STATUS.md).
+
 | Render service | Live origin / region | Selected branch and live commit | Build / start | Health and scaling |
 |---|---|---|---|---|
 | AlphaOS (`srv-daqillmgekts73ak0mj0`) | `https://alphaos.onrender.com`, Virginia | `main`, `d1c9e087...` | `pip install -r requirements-api.txt` / `python -m alphaos_api` | `/health`; one instance; app enforces one worker; automatic deployment off |
