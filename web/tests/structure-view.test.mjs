@@ -11,6 +11,7 @@ import {
 const single = JSON.parse(readFileSync(new URL("./fixtures/structure-parity.json", import.meta.url), "utf8"));
 const compared = JSON.parse(readFileSync(new URL("./fixtures/structure-compare-parity.json", import.meta.url), "utf8"));
 const spyPutCredit = JSON.parse(readFileSync(new URL("./fixtures/structure-spy-put-credit-parity.json", import.meta.url), "utf8"));
+const ironButterfly = JSON.parse(readFileSync(new URL("./fixtures/structure-iron-butterfly-parity.json", import.meta.url), "utf8"));
 
 function clone(value) {
   return structuredClone(value);
@@ -87,6 +88,8 @@ test("envelope tampering fails closed instead of rendering partial evidence", ()
     (copy) => { copy.request.spot = 501; },
     (copy) => { copy.request.credit = 1.2; },
     (copy) => { copy.request.expiration = "2030-01-03"; },
+    (copy) => { copy.research.expiration = "2030-01-03"; },
+    (copy) => { copy.research.position.expiration = "2030-01-03"; },
     (copy) => { copy.request.legs[0].qty = -1; },
     (copy) => { copy.research.position.symbol = "SPY"; },
     (copy) => { copy.research.position.legs[0].strike = 501; },
@@ -241,6 +244,41 @@ test("a SPY put credit spread renders backend credit economics without local mat
     ["Buy", "Put", 600, 1],
   ]);
   assert.equal(view.pricingAssumption, "Supplied signed package cashflow; not a verified quote or fill");
+});
+
+test("a four-leg symmetric iron butterfly keeps the backend family, credit and roots", () => {
+  const view = structureView(ironButterfly);
+  assert.ok(view);
+  assert.equal(view.family, "butterfly");
+  assert.equal(view.direction, "neutral");
+  assert.equal(view.expiration, "2030-01-18");
+  assert.equal(view.dte, 16);
+  assert.deepEqual(view.maxProfit, { kind: "value", value: 200 });
+  assert.deepEqual(view.maxLoss, { kind: "value", value: 300 });
+  assert.deepEqual(view.breakevens, [98, 102]);
+  assert.equal(view.entryCredit, 2);
+  assert.equal(view.entryDebit, 0);
+  assert.deepEqual(view.legs.map((leg) => [leg.action, leg.type, leg.strike, leg.quantity]), [
+    ["Buy", "Put", 95, 1],
+    ["Sell", "Put", 100, 1],
+    ["Sell", "Call", 100, 1],
+    ["Buy", "Call", 105, 1],
+  ]);
+  assert.equal(view.historical.evidenceStatus, "unavailable");
+  assert.deepEqual(view.historical.missing, ["unsupported_expiration_session_horizon"]);
+});
+
+test("no expected value, probability or eligibility claim is exposed for a supplied scenario", () => {
+  for (const envelope of [ironButterfly, single, spyPutCredit]) {
+    const view = structureView(envelope);
+    assert.ok(view);
+    const keys = Object.keys(view).join(" ");
+    assert.equal(/expected.?value|probability|pop|eligible_for_consideration/i.test(keys), false, keys);
+    const historicalKeys = Object.keys(view.historical).join(" ");
+    assert.equal(/expected.?value|probability|pop|candidate/i.test(historicalKeys), false, historicalKeys);
+    assert.equal(JSON.stringify(view).includes("expected_value_dollars"), false);
+    assert.equal(JSON.stringify(view).includes("eligible_for_consideration"), false);
+  }
 });
 
 test("missing archive evidence stays unavailable while supplied-cashflow economics remain labelled", () => {

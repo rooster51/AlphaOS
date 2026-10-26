@@ -47,6 +47,9 @@ test("a QQQ call debit spread is researched through the backend contract", async
   await openWorkbench(page);
   await expect(page.getByRole("heading", { name: "Structure Lab" })).toBeVisible();
   await expect(page.getByText("No structures saved yet.")).toBeVisible();
+  // Scenario evaluation must not imply market discovery or monthly/LEAPS availability.
+  await expect(page.getByText(/not market opportunity discovery/)).toBeVisible();
+  await expect(page.getByText(/implies no monthly or long-dated \(LEAPS\) availability/)).toBeVisible();
 
   await fillScenario(page);
   await page.getByRole("button", { name: "Research this structure" }).click();
@@ -61,6 +64,8 @@ test("a QQQ call debit spread is researched through the backend contract", async
   await expect(page.getByText("UNAVAILABLE").first()).toBeVisible();
   await expect(page.getByText("unsupported expiration session horizon")).toBeVisible();
   await expect(page.getByText(/Pricing assumption: Supplied signed package cashflow/)).toBeVisible();
+  await expect(page.getByText(/supported 1, 2, 3, 5 and 10 exchange-session horizons/)).toBeVisible();
+  await expect(page.getByText(/no estimate is substituted/)).toBeVisible();
 
   expect(sent).toHaveLength(1);
   expect(sent[0]).toEqual(single.request);

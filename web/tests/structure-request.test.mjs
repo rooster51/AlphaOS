@@ -142,6 +142,63 @@ test("comparison bodies keep the supplied order and reject out-of-contract shape
   }
 });
 
+/** Mirrors the twelve explicit geometries in Codex's monthly/LEAPS capability matrix. */
+const GEOMETRIES = [
+  { label: "long call", side: "debit", price: 2, legs: [["Call", "Buy", 100, 1]] },
+  { label: "long put", side: "debit", price: 2, legs: [["Put", "Buy", 100, 1]] },
+  { label: "call debit spread", side: "debit", price: 2, legs: [["Call", "Buy", 100, 1], ["Call", "Sell", 105, 1]] },
+  { label: "put debit spread", side: "debit", price: 2, legs: [["Put", "Buy", 100, 1], ["Put", "Sell", 95, 1]] },
+  { label: "put credit spread", side: "credit", price: 2, legs: [["Put", "Buy", 95, 1], ["Put", "Sell", 100, 1]] },
+  { label: "call credit spread", side: "credit", price: 2, legs: [["Call", "Sell", 100, 1], ["Call", "Buy", 105, 1]] },
+  { label: "call butterfly", side: "debit", price: 2, legs: [["Call", "Buy", 95, 1], ["Call", "Sell", 100, 2], ["Call", "Buy", 105, 1]] },
+  { label: "put butterfly", side: "debit", price: 2, legs: [["Put", "Buy", 95, 1], ["Put", "Sell", 100, 2], ["Put", "Buy", 105, 1]] },
+  { label: "bullish broken-wing butterfly", side: "credit", price: 1, legs: [["Put", "Buy", 90, 1], ["Put", "Sell", 100, 2], ["Put", "Buy", 105, 1]] },
+  { label: "bearish broken-wing butterfly", side: "credit", price: 1, legs: [["Call", "Buy", 95, 1], ["Call", "Sell", 100, 2], ["Call", "Buy", 110, 1]] },
+  { label: "iron condor", side: "credit", price: 2, legs: [["Put", "Buy", 90, 1], ["Put", "Sell", 95, 1], ["Call", "Sell", 105, 1], ["Call", "Buy", 115, 1]] },
+  { label: "symmetric credit iron butterfly", side: "credit", price: 2, legs: [["Put", "Buy", 95, 1], ["Put", "Sell", 100, 1], ["Call", "Sell", 100, 1], ["Call", "Buy", 105, 1]] },
+];
+
+test("all twelve backend-supported geometries are expressible through the form", () => {
+  assert.equal(GEOMETRIES.length, 12);
+  for (const item of GEOMETRIES) {
+    const result = buildStructureRequest(form({
+      symbol: "SPY",
+      expiration: "2030-01-18",
+      asOf: "2030-01-02",
+      spot: "100",
+      side: item.side,
+      packagePrice: String(item.price),
+      fees: "0",
+      legs: item.legs.map(([type, action, strike, quantity]) => ({
+        type, action, strike: String(strike), quantity: String(quantity),
+      })),
+    }));
+    assert.equal(result.ok, true, item.label);
+    assert.deepEqual(
+      result.value.legs,
+      item.legs.map(([type, action, strike, quantity]) => ({
+        type, strike, qty: action === "Buy" ? quantity : -quantity,
+      })),
+      item.label,
+    );
+    assert.equal(result.value.credit, item.side === "credit" ? item.price : -item.price, item.label);
+  }
+});
+
+test("unimplemented geometries still reach the backend instead of being guessed client-side", () => {
+  const unsupported = [
+    { label: "straddle", credit: -4, legs: [{ type: "Call", strike: 100, qty: 1 }, { type: "Put", strike: 100, qty: 1 }] },
+    { label: "strangle", credit: -4, legs: [{ type: "Call", strike: 105, qty: 1 }, { type: "Put", strike: 95, qty: 1 }] },
+    { label: "naked short call", credit: 2, legs: [{ type: "Call", strike: 100, qty: -1 }] },
+    { label: "naked short put", credit: 2, legs: [{ type: "Put", strike: 100, qty: -1 }] },
+  ];
+  for (const item of unsupported) {
+    const parsed = parseStructureRequest({ ...fixture.request, credit: item.credit, legs: item.legs });
+    assert.notEqual(parsed, null, item.label);
+    assert.deepEqual(parsed.legs, item.legs, item.label);
+  }
+});
+
 test("scenario labels stay descriptive and deterministic", () => {
   assert.equal(
     structureLabel(fixture.request),

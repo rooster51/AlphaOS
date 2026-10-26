@@ -7,6 +7,7 @@ import { POST as postCompare } from "../src/app/api/research/structures/compare/
 const single = JSON.parse(readFileSync(new URL("./fixtures/structure-parity.json", import.meta.url), "utf8"));
 const compared = JSON.parse(readFileSync(new URL("./fixtures/structure-compare-parity.json", import.meta.url), "utf8"));
 const spyPutCredit = JSON.parse(readFileSync(new URL("./fixtures/structure-spy-put-credit-parity.json", import.meta.url), "utf8"));
+const ironButterfly = JSON.parse(readFileSync(new URL("./fixtures/structure-iron-butterfly-parity.json", import.meta.url), "utf8"));
 
 const originalToken = process.env.ALPHAOS_API_TOKEN;
 const originalUrl = process.env.ALPHAOS_API_URL;
@@ -95,6 +96,7 @@ test("both bridges preserve the backend envelope byte-for-byte for REST parity",
   const cases = [
     [postStructure, single, "/api/research/structure"],
     [postStructure, spyPutCredit, "/api/research/structure"],
+    [postStructure, ironButterfly, "/api/research/structure"],
     [postCompare, compared, "/api/research/structures/compare"],
   ];
   for (const [handler, fixture, path] of cases) {
@@ -137,6 +139,28 @@ test("an unsupported leg combination reaches the backend and surfaces only its r
   const body = await response.json();
   assert.deepEqual(body, { status: "unavailable", code: "invalid_structure" });
   assert.equal("research" in body, false);
+});
+
+test("unimplemented geometries are forwarded and keep the backend's invalid_structure error", async () => {
+  setConfig();
+  const unsupported = [
+    { label: "straddle", credit: -4, legs: [{ type: "Call", strike: 100, qty: 1 }, { type: "Put", strike: 100, qty: 1 }] },
+    { label: "strangle", credit: -4, legs: [{ type: "Call", strike: 105, qty: 1 }, { type: "Put", strike: 95, qty: 1 }] },
+    { label: "naked short call", credit: 2, legs: [{ type: "Call", strike: 100, qty: -1 }] },
+    { label: "naked short put", credit: 2, legs: [{ type: "Put", strike: 100, qty: -1 }] },
+  ];
+  for (const item of unsupported) {
+    const scenario = { ...ironButterfly.request, credit: item.credit, legs: item.legs };
+    let forwarded;
+    globalThis.fetch = async (_, options) => {
+      forwarded = JSON.parse(options.body);
+      return Response.json({ error: { code: "invalid_structure" } }, { status: 422 });
+    };
+    const response = await postStructure(request("/api/research/structure", scenario));
+    assert.deepEqual(forwarded, scenario, item.label);
+    assert.equal(response.status, 502, item.label);
+    assert.deepEqual(await response.json(), { status: "unavailable", code: "invalid_structure" });
+  }
 });
 
 test("missing archive evidence is preserved as data, not turned into an error or a number", async () => {

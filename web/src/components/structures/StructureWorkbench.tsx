@@ -282,6 +282,13 @@ export function StructureWorkbench() {
             Entry prices are submitted as one signed package cashflow per share for the whole
             package, which is what the backend accepts; it does not accept per-leg fill prices.
           </p>
+          <p className="mt-2 max-w-4xl font-mono text-xs leading-relaxed text-terminal-500">
+            This is scenario evaluation, not market opportunity discovery: the backend does not
+            search the archive for contracts, quotes or Greeks here. Expiration, strikes, quantities
+            and cashflow are used exactly as entered and a date is never substituted. The workbench
+            does not verify that an expiration exists in the production archive, and it implies no
+            monthly or long-dated (LEAPS) availability.
+          </p>
         </section>
 
         <Section
@@ -471,8 +478,10 @@ export function StructureWorkbench() {
               Add leg
             </button>
             <span className="font-mono text-[10px] text-terminal-500">
-              Supported families come from the backend: long call/put, debit or credit vertical,
-              butterfly, broken-wing butterfly and iron condor.
+              Backend-supported geometries: long call/put, debit or credit vertical, long butterfly,
+              broken-wing butterfly, iron condor and symmetric credit iron butterfly. Straddles,
+              strangles, naked short options and multi-expiration structures are rejected as
+              unsupported structures.
             </span>
           </div>
           {formErrors.length > 0 && (
@@ -639,6 +648,12 @@ export function StructureWorkbench() {
               title="Historical evidence"
               subtitle="Only the backend's archive-backed evidence is shown; nothing is imputed."
             >
+              <p className="font-mono text-[10px] text-terminal-500">
+                No historical expected value, probability or eligibility is displayed for a supplied
+                scenario. Archive-backed evidence exists only at the backend&apos;s supported 1, 2, 3,
+                5 and 10 exchange-session horizons, so longer monthly and long-dated scenarios report
+                missing evidence and no estimate is substituted.
+              </p>
               <div className="flex flex-wrap items-center gap-2">
                 <StatusPill
                   label={
