@@ -1,6 +1,6 @@
 import { COMPARE_PATH, postStructure } from "../../../../../lib/structure-bridge.ts";
 import { parseCompareRequest } from "../../../../../lib/structure-contract.ts";
-import { compareView } from "../../../../../lib/structure-view.ts";
+import { compareViewFor } from "../../../../../lib/structure-view.ts";
 
 /**
  * Read-only bridge for comparing explicit structures in supplied order.
@@ -19,5 +19,8 @@ export async function POST(request: Request) {
       { status: 400, headers: { "Cache-Control": "no-store" } },
     );
   }
-  return postStructure(COMPARE_PATH, payload, request, (envelope) => compareView(envelope) !== null);
+  // Every echoed structure and researched candidate must match the submitted
+  // scenario at the same position.
+  return postStructure(COMPARE_PATH, payload, request,
+    (envelope) => compareViewFor(envelope, payload) !== null);
 }

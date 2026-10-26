@@ -5,6 +5,7 @@
  * envelope, labels what the backend returned, and marks anything missing as
  * unavailable instead of filling it in.
  */
+import type { CompareRequestInput, StructureRequestInput } from "./structure-contract.ts";
 
 export type Scalar =
   | { kind: "value"; value: number }
@@ -51,6 +52,8 @@ export interface StructureView {
   breakevens: number[];
   entryDebit: number | null;
   entryCredit: number | null;
+  /** The backend's signed package cashflow; zero is a real value, not missing. */
+  packageCashflow: number;
   fees: number | null;
   width: number | null;
   creditWidth: number | null;
@@ -296,6 +299,7 @@ export function structureView(value: unknown): StructureView | null {
     // of the backend's own package cashflow labels the same value.
     entryDebit: number(research.entry_debit) ?? (credit < 0 ? -credit : null),
     entryCredit: number(research.entry_credit) ?? (credit > 0 ? credit : null),
+    packageCashflow: credit,
     fees: number(trade.fees),
     width: number(payoff?.width),
     creditWidth: number(payoff?.credit_width),
@@ -405,6 +409,94 @@ export function compareView(value: unknown): CompareView | null {
     pairs,
     caveats: strings(comparison.caveats),
   };
+}
+
+/**
+ * Bind a validated envelope to the exact normalized request that was sent.
+ *
+ * A self-consistent envelope can still describe a different scenario than the
+ * one submitted. Every echoed field, leg and leg order must match, and for a
+ * comparison each researched candidate must match its submitted scenario in
+ * supplied order. Anything else is treated as unrenderable.
+ */
+function echoesLegs(echoed: unknown, submitted: StructureRequestInput["legs"]): boolean {
+  const legs = list(echoed);
+  if (legs.length !== submitted.length) return false;
+  return submitted.every((leg, index) => {
+    const row = object(legs[index]);
+    return row !== null &&
+      row.type === leg.type &&
+      number(row.strike) === leg.strike &&
+      number(row.qty) === leg.qty;
+  });
+}
+
+function echoesStructure(echoed: unknown, submitted: StructureRequestInput): boolean {
+  const echo = object(echoed);
+  if (!echo) return false;
+  const fees = echo.fees === undefined ? 0 : number(echo.fees);
+  return echo.symbol === submitted.symbol &&
+    echo.expiration === submitted.expiration &&
+    echo.as_of === submitted.as_of &&
+    number(echo.spot) === submitted.spot &&
+    number(echo.credit) === submitted.credit &&
+    fees === submitted.fees &&
+    echoesLegs(echo.legs, submitted.legs);
+}
+
+function candidateExpiration(research: Record<string, unknown>): string | null {
+  return date(research.expiration) ??
+    date(object(research.trade)?.expiration) ??
+    date(object(research.position)?.expiration);
+}
+
+/** One researched candidate must describe the scenario submitted at its index. */
+function candidateMatches(research: unknown, submitted: StructureRequestInput): boolean {
+  const row = object(research);
+  const trade = object(row?.trade);
+  const position = object(row?.position);
+  if (!row || !trade || !position) return false;
+  return row.underlying === submitted.symbol &&
+    candidateExpiration(row) === submitted.expiration &&
+    number(trade.spot) === submitted.spot &&
+    number(trade.credit) === submitted.credit &&
+    echoesLegs(position.legs, submitted.legs);
+}
+
+export function structureViewFor(
+  value: unknown,
+  submitted: StructureRequestInput,
+): StructureView | null {
+  const envelope = envelopeOf(value);
+  if (!envelope) return null;
+  const view = structureView(envelope);
+  if (!view || !echoesStructure(envelope.request, submitted)) return null;
+  return view;
+}
+
+export function compareViewFor(
+  value: unknown,
+  submitted: CompareRequestInput,
+): CompareView | null {
+  const envelope = envelopeOf(value);
+  if (!envelope) return null;
+  const view = compareView(envelope);
+  if (!view) return null;
+  const request = object(envelope.request);
+  const researched = list(object(envelope.research)?.candidates);
+  const echoed = list(request?.structures);
+  if (echoed.length !== submitted.structures.length) return null;
+  if (researched.length !== submitted.structures.length) return null;
+  if (!submitted.structures.every((item, index) => echoesStructure(echoed[index], item))) {
+    return null;
+  }
+  if (!submitted.structures.every((item, index) => candidateMatches(researched[index], item))) {
+    return null;
+  }
+  // The thesis is echoed context, not a filter; it must still be the one sent.
+  return (typeof request?.thesis === "string" ? request.thesis : undefined) === submitted.thesis
+    ? view
+    : null;
 }
 
 /**

@@ -195,9 +195,12 @@ export function buildStructureRequest(form: StructureForm): BuildResult {
   }
   const spot = positiveNumber(Number(String(form.spot ?? "").trim()));
   if (spot === null) errors.push("Spot must be a positive number.");
-  const price = positiveNumber(Number(String(form.packagePrice ?? "").trim()));
+  // An explicitly entered zero is a real cashflow (a zero-cost package stays
+  // zero); blank text is missing input, not zero, so it is still rejected.
+  const priceText = String(form.packagePrice ?? "").trim();
+  const price = priceText === "" ? null : nonNegativeNumber(Number(priceText));
   if (price === null) {
-    errors.push("Package price per share must be a positive number.");
+    errors.push("Package price per share must be zero or a positive number.");
   }
   const feesText = String(form.fees ?? "").trim();
   const fees = feesText === "" ? 0 : nonNegativeNumber(Number(feesText));
@@ -233,6 +236,7 @@ export function buildStructureRequest(form: StructureForm): BuildResult {
   });
 
   if (errors.length) return { ok: false, errors };
+  const signed = form.side === "credit" ? (price as number) : -(price as number);
   return {
     ok: true,
     value: {
@@ -240,7 +244,8 @@ export function buildStructureRequest(form: StructureForm): BuildResult {
       expiration: expiration as string,
       as_of: asOf as string,
       spot: spot as number,
-      credit: form.side === "credit" ? (price as number) : -(price as number),
+      // A zero-cost debit normalizes from -0 to 0 so the wire value is exact.
+      credit: signed === 0 ? 0 : signed,
       fees: fees as number,
       legs,
     },
@@ -254,6 +259,8 @@ export function structureLabel(request: StructureRequestInput): string {
     .join(" · ");
   const cashflow = request.credit < 0
     ? `debit ${Math.abs(request.credit)}`
-    : `credit ${request.credit}`;
+    : request.credit > 0
+      ? `credit ${request.credit}`
+      : "zero cost";
   return `${request.symbol} ${request.expiration} · ${legs} · ${cashflow}`;
 }

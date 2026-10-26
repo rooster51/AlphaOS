@@ -8,6 +8,7 @@ const single = JSON.parse(readFileSync(new URL("./fixtures/structure-parity.json
 const compared = JSON.parse(readFileSync(new URL("./fixtures/structure-compare-parity.json", import.meta.url), "utf8"));
 const spyPutCredit = JSON.parse(readFileSync(new URL("./fixtures/structure-spy-put-credit-parity.json", import.meta.url), "utf8"));
 const ironButterfly = JSON.parse(readFileSync(new URL("./fixtures/structure-iron-butterfly-parity.json", import.meta.url), "utf8"));
+const zeroCost = JSON.parse(readFileSync(new URL("./fixtures/structure-zero-cost-bwb-parity.json", import.meta.url), "utf8"));
 
 const originalToken = process.env.ALPHAOS_API_TOKEN;
 const originalUrl = process.env.ALPHAOS_API_URL;
@@ -269,6 +270,74 @@ test("tampered or mismatched upstream envelopes are rejected before rendering", 
   assert.deepEqual(await response.json(), { status: "unavailable", code: "response_schema_mismatch" });
 });
 
+test("a zero-cost package keeps its zero cashflow through the bridge", async () => {
+  setConfig();
+  globalThis.fetch = async () => Response.json(zeroCost);
+  const response = await postStructure(request("/api/research/structure", zeroCost.request));
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.deepEqual(body.research, zeroCost);
+  assert.equal(body.research.research.entry_debit, 0);
+  assert.equal(body.research.research.entry_credit, 0);
+  assert.equal(body.research.research.capital_at_risk, 400);
+});
+
+test("an internally valid envelope for a different request is refused", async () => {
+  setConfig();
+  const mismatches = [
+    (copy) => { copy.request.as_of = "2030-01-03"; },
+    (copy) => { copy.request.fees = 2; },
+    (copy) => { copy.request.symbol = "SPY"; },
+    (copy) => { copy.request.expiration = "2030-01-09"; },
+    (copy) => { copy.request.spot = 501; },
+    (copy) => { copy.request.credit = -1.5; },
+    (copy) => { copy.request.legs.reverse(); },
+  ];
+  for (const mutate of mismatches) {
+    const copy = structuredClone(single);
+    mutate(copy);
+    globalThis.fetch = async () => Response.json(copy);
+    const response = await postStructure(structureRoute());
+    assert.equal(response.status, 502, mutate.toString());
+    assert.deepEqual(await response.json(), {
+      status: "unavailable",
+      code: "response_schema_mismatch",
+    }, mutate.toString());
+  }
+});
+
+test("a comparison echo must match the submitted scenarios in order", async () => {
+  setConfig();
+  const defects = [
+    { label: "reordered structures", mutate: (copy) => { copy.request.structures.reverse(); } },
+    { label: "reordered candidates", mutate: (copy) => {
+      [copy.research.candidates[0], copy.research.candidates[1]] =
+        [copy.research.candidates[1], copy.research.candidates[0]];
+    } },
+    { label: "candidate legs", mutate: (copy) => {
+      copy.research.candidates[1].position.legs[0].strike = 501;
+    } },
+    { label: "candidate cashflow", mutate: (copy) => {
+      copy.research.candidates[0].trade.credit = -1.3;
+    } },
+    { label: "candidate expiration", mutate: (copy) => {
+      copy.research.candidates[0].expiration = "2030-01-09";
+    } },
+    { label: "thesis", mutate: (copy) => { copy.request.thesis = "a different thesis"; } },
+  ];
+  for (const defect of defects) {
+    const copy = structuredClone(compared);
+    defect.mutate(copy);
+    globalThis.fetch = async () => Response.json(copy);
+    const response = await postCompare(compareRoute());
+    assert.equal(response.status, 502, defect.label);
+    assert.deepEqual(await response.json(), {
+      status: "unavailable",
+      code: "response_schema_mismatch",
+    }, defect.label);
+  }
+});
+
 test("transport failures stay distinguishable and never leak details", async () => {
   setConfig();
   globalThis.fetch = async () => { throw new DOMException("DO_NOT_LOG", "TimeoutError"); };
@@ -294,6 +363,82 @@ test("transport failures stay distinguishable and never leak details", async () 
   const cancelled = await postStructure(pending);
   assert.equal(cancelled.status, 499);
   assert.deepEqual(await cancelled.json(), { status: "unavailable", code: "request_cancelled" });
+});
+
+test("body failures after headers keep timeout, cancellation and malformed JSON distinct", async () => {
+  setConfig();
+  const bodyFailure = (error) => ({
+    ok: true,
+    status: 200,
+    headers: new Headers(),
+    json: async () => { throw error; },
+  });
+
+  // The body never arrives and the request times out while it is consumed.
+  globalThis.fetch = async () => bodyFailure(new DOMException("DO_NOT_LOG", "TimeoutError"));
+  const timedOut = await postStructure(structureRoute());
+  assert.equal(timedOut.status, 502);
+  assert.deepEqual(await timedOut.json(), { status: "unavailable", code: "backend_timeout" });
+
+  // The timeout signal aborted after the headers, even though the rejection is
+  // a generic transport error.
+  const originalTimeout = AbortSignal.timeout;
+  const timeoutController = new AbortController();
+  timeoutController.abort();
+  AbortSignal.timeout = () => timeoutController.signal;
+  try {
+    globalThis.fetch = async () => bodyFailure(new TypeError("DO_NOT_LOG"));
+    const abortedBody = await postStructure(structureRoute());
+    assert.equal(abortedBody.status, 502);
+    assert.deepEqual(await abortedBody.json(), { status: "unavailable", code: "backend_timeout" });
+  } finally {
+    AbortSignal.timeout = originalTimeout;
+  }
+
+  // The caller cancelled while the body arrived.
+  const cancel = new AbortController();
+  const pending = new Request("http://localhost/api/research/structure", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(single.request),
+    signal: cancel.signal,
+  });
+  globalThis.fetch = async () => {
+    cancel.abort();
+    return bodyFailure(new DOMException("DO_NOT_LOG", "AbortError"));
+  };
+  const cancelled = await postStructure(pending);
+  assert.equal(cancelled.status, 499);
+  assert.deepEqual(await cancelled.json(), { status: "unavailable", code: "request_cancelled" });
+
+  // A truncated body is a transport failure, not a contract mismatch.
+  globalThis.fetch = async () => bodyFailure(new TypeError("terminated"));
+  const truncated = await postStructure(structureRoute());
+  assert.equal(truncated.status, 502);
+  assert.deepEqual(await truncated.json(), { status: "unavailable", code: "backend_unreachable" });
+
+  // Malformed JSON that actually arrived stays a contract mismatch.
+  globalThis.fetch = async () => new Response("{\"research\":", { status: 200 });
+  const malformed = await postStructure(structureRoute());
+  assert.equal(malformed.status, 502);
+  assert.deepEqual(await malformed.json(), {
+    status: "unavailable",
+    code: "response_schema_mismatch",
+  });
+
+  // An error response whose body times out is reported as a timeout, not as a
+  // generic backend failure.
+  globalThis.fetch = async () => ({
+    ok: false,
+    status: 500,
+    headers: new Headers(),
+    json: async () => { throw new DOMException("DO_NOT_LOG", "TimeoutError"); },
+  });
+  const errorBody = await postStructure(structureRoute());
+  assert.equal(errorBody.status, 502);
+  const errorBodyJson = await errorBody.json();
+  assert.deepEqual(errorBodyJson, { status: "unavailable", code: "backend_timeout" });
+  assert.equal(JSON.stringify(errorBodyJson).includes("DO_NOT_LOG"), false);
 });
 
 test("missing or invalid backend configuration fails without fetching", async () => {

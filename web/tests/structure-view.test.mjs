@@ -3,15 +3,18 @@ import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import {
   compareView,
+  compareViewFor,
   observationSeed,
   structureMessage,
   structureView,
+  structureViewFor,
 } from "../src/lib/structure-view.ts";
 
 const single = JSON.parse(readFileSync(new URL("./fixtures/structure-parity.json", import.meta.url), "utf8"));
 const compared = JSON.parse(readFileSync(new URL("./fixtures/structure-compare-parity.json", import.meta.url), "utf8"));
 const spyPutCredit = JSON.parse(readFileSync(new URL("./fixtures/structure-spy-put-credit-parity.json", import.meta.url), "utf8"));
 const ironButterfly = JSON.parse(readFileSync(new URL("./fixtures/structure-iron-butterfly-parity.json", import.meta.url), "utf8"));
+const zeroCost = JSON.parse(readFileSync(new URL("./fixtures/structure-zero-cost-bwb-parity.json", import.meta.url), "utf8"));
 
 function clone(value) {
   return structuredClone(value);
@@ -312,6 +315,88 @@ test("risk metrics the backend omits are unavailable rather than inferred", () =
   delete noProfit.research.max_profit;
   const withoutProfit = structureView(noProfit);
   assert.equal(withoutProfit.maxProfit.kind, "unavailable");
+});
+
+test("a zero-cost broken-wing butterfly keeps its real zero cashflow", () => {
+  const view = structureView(zeroCost);
+  assert.ok(view);
+  assert.equal(view.family, "bullish_bwb");
+  assert.equal(view.direction, "bullish");
+  assert.equal(view.packageCashflow, 0);
+  assert.equal(view.entryDebit, 0);
+  assert.equal(view.entryCredit, 0);
+  assert.deepEqual(view.maxProfit, { kind: "value", value: 200 });
+  assert.deepEqual(view.maxLoss, { kind: "value", value: 400 });
+  assert.deepEqual(view.capitalRequired, { kind: "value", value: 400 });
+  assert.deepEqual(view.breakevens, [98, 102]);
+  assert.equal(view.historical.evidenceStatus, "unavailable");
+  assert.deepEqual(view.historical.missing, ["as_of_session_not_complete"]);
+});
+
+test("a validated envelope must describe the exact submitted scenario", () => {
+  assert.ok(structureViewFor(single, single.request));
+  assert.ok(structureViewFor(zeroCost, zeroCost.request));
+
+  const mismatched = [
+    { ...single.request, symbol: "SPY" },
+    { ...single.request, expiration: "2030-01-03" },
+    { ...single.request, as_of: "2030-01-03" },
+    { ...single.request, spot: 501 },
+    { ...single.request, credit: -1.25 },
+    { ...single.request, fees: 1 },
+    { ...single.request, legs: [single.request.legs[0]] },
+    { ...single.request, legs: [...single.request.legs].reverse() },
+    { ...single.request, legs: [{ ...single.request.legs[0], strike: 501 }, single.request.legs[1]] },
+    { ...single.request, legs: [{ ...single.request.legs[0], qty: 2 }, single.request.legs[1]] },
+  ];
+  for (const submitted of mismatched) {
+    assert.equal(structureViewFor(single, submitted), null, JSON.stringify(submitted).slice(0, 120));
+  }
+  // A reordered comparison is not the submitted comparison, even if self-consistent.
+  const reordered = {
+    ...compared,
+    request: { ...compared.request, structures: [...compared.request.structures].reverse() },
+  };
+  assert.ok(compareView(reordered));
+  assert.equal(compareViewFor(reordered, compared.request), null);
+});
+
+test("a comparison must return each submitted scenario at its supplied position", () => {
+  assert.ok(compareViewFor(compared, compared.request));
+  assert.ok(compareViewFor(compared, {
+    structures: compared.request.structures,
+    thesis: compared.request.thesis,
+  }));
+  // An echoed thesis the caller never sent is also a mismatch.
+  assert.equal(compareViewFor(compared, { structures: compared.request.structures }), null);
+
+  // Internally valid, but the researched candidates no longer match their slots.
+  const swapped = clone(compared);
+  [swapped.research.candidates[0], swapped.research.candidates[1]] =
+    [swapped.research.candidates[1], swapped.research.candidates[0]];
+  assert.ok(compareView(swapped));
+  assert.equal(compareViewFor(swapped, compared.request), null);
+
+  const wrongLegs = clone(compared);
+  wrongLegs.research.candidates[1].position.legs[0].strike = 501;
+  assert.equal(compareViewFor(wrongLegs, compared.request), null);
+
+  const wrongSymbol = clone(compared);
+  wrongSymbol.research.candidates[0].underlying = "SPY";
+  assert.equal(compareViewFor(wrongSymbol, compared.request), null);
+
+  const wrongExpiration = clone(compared);
+  wrongExpiration.research.candidates[0].expiration = "2030-01-03";
+  assert.equal(compareViewFor(wrongExpiration, compared.request), null);
+
+  assert.equal(compareViewFor(compared, {
+    structures: [compared.request.structures[1], compared.request.structures[0]],
+    thesis: compared.request.thesis,
+  }), null);
+  assert.equal(compareViewFor(compared, {
+    structures: compared.request.structures,
+    thesis: "a different thesis",
+  }), null);
 });
 
 test("error codes map to safe operator-facing messages", () => {

@@ -11,6 +11,7 @@ import {
 } from "../src/lib/structure-contract.ts";
 
 const fixture = JSON.parse(readFileSync(new URL("./fixtures/structure-parity.json", import.meta.url), "utf8"));
+const zeroCost = JSON.parse(readFileSync(new URL("./fixtures/structure-zero-cost-bwb-parity.json", import.meta.url), "utf8"));
 
 function form(overrides = {}) {
   return {
@@ -77,7 +78,6 @@ test("invalid form input is reported without producing a partial request", () =>
     [{ expiration: "2030-01-01", asOf: "2030-01-02" }, /must not precede/],
     [{ spot: "0" }, /Spot must be a positive/],
     [{ spot: "abc" }, /Spot must be a positive/],
-    [{ packagePrice: "0" }, /positive number/],
     [{ fees: "-1" }, /Fees must be a nonnegative/],
     [{ legs: [] }, /between 1 and/],
     [{ legs: Array.from({ length: MAX_LEGS + 1 }, () => ({ type: "Call", action: "Buy", strike: "500", quantity: "1" })) }, /between 1 and/],
@@ -92,6 +92,43 @@ test("invalid form input is reported without producing a partial request", () =>
     const result = buildStructureRequest(form(overrides));
     assert.equal(result.ok, false, JSON.stringify(overrides));
     assert.ok(result.errors.some((error) => message.test(error)), JSON.stringify(result.errors));
+  }
+});
+
+test("an explicitly entered zero package price stays a zero-cost package", () => {
+  const result = buildStructureRequest(form({
+    symbol: "QQQ",
+    expiration: "2030-01-02",
+    asOf: "2030-01-02",
+    spot: "100",
+    side: "debit",
+    packagePrice: "0",
+    fees: "0",
+    legs: [
+      { type: "Put", action: "Buy", strike: "94", quantity: "1" },
+      { type: "Put", action: "Sell", strike: "100", quantity: "2" },
+      { type: "Put", action: "Buy", strike: "102", quantity: "1" },
+    ],
+  }));
+  assert.equal(result.ok, true);
+  assert.equal(result.value.credit, 0);
+  assert.equal(Object.is(result.value.credit, -0), false);
+  // The generated fixture is real backend output for this exact request.
+  assert.deepEqual(result.value, zeroCost.request);
+  assert.equal(
+    structureLabel(result.value),
+    "QQQ 2030-01-02 · Put 94 Buy 1 · Put 100 Sell 2 · Put 102 Buy 1 · zero cost",
+  );
+});
+
+test("blank or non-finite package prices are rejected instead of becoming zero", () => {
+  for (const packagePrice of ["", "   ", "abc", "-0.01", "Infinity", "NaN", "1.2.3"]) {
+    const result = buildStructureRequest(form({ packagePrice }));
+    assert.equal(result.ok, false, JSON.stringify(packagePrice));
+    assert.ok(
+      result.errors.some((error) => /Package price per share must be zero or a positive number/.test(error)),
+      JSON.stringify(result.errors),
+    );
   }
 });
 
@@ -203,5 +240,9 @@ test("scenario labels stay descriptive and deterministic", () => {
   assert.equal(
     structureLabel(fixture.request),
     "QQQ 2030-01-02 · Call 500 Buy 1 · Call 505 Sell 1 · debit 1.2",
+  );
+  assert.equal(
+    structureLabel({ ...fixture.request, credit: 0 }),
+    "QQQ 2030-01-02 · Call 500 Buy 1 · Call 505 Sell 1 · zero cost",
   );
 });

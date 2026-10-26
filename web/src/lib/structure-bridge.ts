@@ -84,7 +84,30 @@ export async function postStructure(
   }
 
   trace.stage = "fetch";
-  const signals = AbortSignal.any([AbortSignal.timeout(UPSTREAM_TIMEOUT_MS), request.signal]);
+  // Kept separate from the combined signal so a timeout that fires while the
+  // response body is being consumed is still recognisable as a timeout.
+  const timeout = AbortSignal.timeout(UPSTREAM_TIMEOUT_MS);
+  const signals = AbortSignal.any([timeout, request.signal]);
+
+  /** Classify a transport failure without trusting the exception's message. */
+  function transportOutcome(error: unknown): Outcome | null {
+    if (request.signal.aborted) return { status: 499, code: "request_cancelled" };
+    if (timeout.aborted || (error instanceof DOMException && error.name === "TimeoutError")) {
+      return { status: 502, code: "backend_timeout" };
+    }
+    if (error instanceof DOMException || error instanceof TypeError) {
+      return { status: 502, code: "backend_unreachable" };
+    }
+    return null;
+  }
+
+  function unavailable(outcome: Outcome): Response {
+    trace.outcome = outcome.code;
+    trace.elapsed_ms = Math.round(performance.now() - started);
+    console.warn(JSON.stringify(trace));
+    return json({ status: "unavailable", code: outcome.code }, outcome.status, requestId);
+  }
+
   let response: Response;
   try {
     response = await fetch(new URL(path, origin), {
@@ -100,23 +123,14 @@ export async function postStructure(
       signal: signals,
     });
   } catch (error) {
-    const cancelled = request.signal.aborted;
-    const timedOut = error instanceof DOMException && error.name === "TimeoutError";
-    if (!cancelled && !timedOut && !(error instanceof TypeError)) {
+    const outcome = transportOutcome(error);
+    if (!outcome) {
       trace.outcome = "unexpected_error";
       trace.elapsed_ms = Math.round(performance.now() - started);
       console.warn(JSON.stringify(trace));
       throw error;
     }
-    const outcome: Outcome = cancelled
-      ? { status: 499, code: "request_cancelled" }
-      : timedOut
-        ? { status: 502, code: "backend_timeout" }
-        : { status: 502, code: "backend_unreachable" };
-    trace.outcome = outcome.code;
-    trace.elapsed_ms = Math.round(performance.now() - started);
-    console.warn(JSON.stringify(trace));
-    return json({ status: "unavailable", code: outcome.code }, outcome.status, requestId);
+    return unavailable(outcome);
   }
 
   trace.upstream_status = response.status;
@@ -126,33 +140,30 @@ export async function postStructure(
     let code: string | null = null;
     try {
       code = upstreamCode(await response.json());
-    } catch {
+    } catch (error) {
+      // A timeout or cancellation while reading the error body is that outcome,
+      // not a generic backend failure.
+      const transport = transportOutcome(error);
+      if (transport) return unavailable(transport);
       code = null;
     }
-    const outcome = failure(response.status, code);
-    trace.outcome = outcome.code;
-    trace.elapsed_ms = Math.round(performance.now() - started);
-    console.warn(JSON.stringify(trace));
-    return json({ status: "unavailable", code: outcome.code }, outcome.status, requestId);
+    return unavailable(failure(response.status, code));
   }
 
   trace.stage = "response_body";
   let envelope: unknown;
   try {
     envelope = await response.json();
-  } catch {
-    trace.outcome = "response_schema_mismatch";
-    trace.elapsed_ms = Math.round(performance.now() - started);
-    console.warn(JSON.stringify(trace));
-    return json({ status: "unavailable", code: "response_schema_mismatch" }, 502, requestId);
+  } catch (error) {
+    // Headers already arrived, so malformed JSON and a body that timed out or
+    // was cancelled must stay distinguishable.
+    return unavailable(transportOutcome(error) ??
+      { status: 502, code: "response_schema_mismatch" });
   }
 
   trace.stage = "schema_validation";
   if (!isValidEnvelope(envelope)) {
-    trace.outcome = "response_schema_mismatch";
-    trace.elapsed_ms = Math.round(performance.now() - started);
-    console.warn(JSON.stringify(trace));
-    return json({ status: "unavailable", code: "response_schema_mismatch" }, 502, requestId);
+    return unavailable({ status: 502, code: "response_schema_mismatch" });
   }
 
   trace.outcome = "ok";

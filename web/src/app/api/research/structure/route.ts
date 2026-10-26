@@ -1,6 +1,6 @@
 import { STRUCTURE_PATH, postStructure } from "../../../../lib/structure-bridge.ts";
 import { parseStructureRequest } from "../../../../lib/structure-contract.ts";
-import { structureView } from "../../../../lib/structure-view.ts";
+import { structureViewFor } from "../../../../lib/structure-view.ts";
 
 /**
  * Read-only bridge for one explicit option structure.
@@ -19,5 +19,8 @@ export async function POST(request: Request) {
       { status: 400, headers: { "Cache-Control": "no-store" } },
     );
   }
-  return postStructure(STRUCTURE_PATH, payload, request, (envelope) => structureView(envelope) !== null);
+  // The envelope must describe this exact normalized request, not merely be
+  // internally consistent.
+  return postStructure(STRUCTURE_PATH, payload, request,
+    (envelope) => structureViewFor(envelope, payload) !== null);
 }

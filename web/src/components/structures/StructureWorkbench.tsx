@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Header } from "@/components/shell/Header";
 import { StatusPill } from "@/components/shell/StatusPill";
 import {
@@ -168,6 +168,11 @@ export function StructureWorkbench() {
   const [single, setSingle] = useState<SingleState>({ kind: "idle" });
   const [comparison, setComparison] = useState<CompareState>({ kind: "idle" });
   const [seed, setSeed] = useState<SeedState>({ kind: "idle" });
+  // Tracks the newest observation request and the symbol currently selected, so
+  // a slow response can never prefill a different scenario than the one shown.
+  const observationRequest = useRef(0);
+  const currentSymbol = useRef<"SPY" | "QQQ">(symbol);
+  currentSymbol.current = symbol;
 
   const form: StructureForm = {
     symbol,
@@ -194,8 +199,13 @@ export function StructureWorkbench() {
   }
 
   async function loadObservation() {
+    const requested = symbol;
+    const sequence = ++observationRequest.current;
     setSeed({ kind: "loading" });
-    const outcome = await requestObservation(symbol);
+    const outcome = await requestObservation(requested);
+    // Ignore a superseded request or one resolved for a symbol the user has
+    // since changed; nothing from another scenario may reach the form.
+    if (observationRequest.current !== sequence || currentSymbol.current !== requested) return;
     if (!outcome.ok) {
       setSeed({ kind: "error", message: structureMessage(outcome.code) });
       return;
@@ -204,6 +214,21 @@ export function StructureWorkbench() {
     setExpiration(outcome.seed.expiration);
     setAsOf(outcome.seed.asOf);
     setSeed({ kind: "loaded", seed: outcome.seed });
+  }
+
+  function selectSymbol(next: "SPY" | "QQQ") {
+    if (next === symbol) return;
+    // Invalidate any pending prefill and drop the observation label. Values it
+    // supplied are cleared unless the user has since edited them.
+    observationRequest.current += 1;
+    if (seed.kind === "loaded") {
+      const { seed: loaded } = seed;
+      setSpot((value) => (value === String(loaded.spot) ? "" : value));
+      setExpiration((value) => (value === loaded.expiration ? "" : value));
+      setAsOf((value) => (value === loaded.asOf ? "" : value));
+    }
+    setSeed({ kind: "idle" });
+    setSymbol(next);
   }
 
   function built(): StructureRequestInput | null {
@@ -301,7 +326,7 @@ export function StructureWorkbench() {
                 id="structure-symbol"
                 className={INPUT}
                 value={symbol}
-                onChange={(event) => setSymbol(event.target.value === "SPY" ? "SPY" : "QQQ")}
+                onChange={(event) => selectSymbol(event.target.value === "SPY" ? "SPY" : "QQQ")}
               >
                 <option value="QQQ">QQQ</option>
                 <option value="SPY">SPY</option>
@@ -562,11 +587,11 @@ export function StructureWorkbench() {
                 <div className="rounded border border-terminal-800 bg-terminal-900 p-3">
                   <p className="font-mono text-[11px] uppercase tracking-wider text-terminal-400">Package cashflow</p>
                   <p className="mt-1 font-mono text-lg font-bold text-terminal-100">
-                    {single.view.entryDebit
-                      ? `${money(single.view.entryDebit)} debit`
-                      : single.view.entryCredit
-                        ? `${money(single.view.entryCredit)} credit`
-                        : "Unavailable"}
+                    {single.view.packageCashflow < 0
+                      ? `${money(Math.abs(single.view.packageCashflow))} debit`
+                      : single.view.packageCashflow > 0
+                        ? `${money(single.view.packageCashflow)} credit`
+                        : "Zero cost"}
                   </p>
                   <p className="font-mono text-[10px] text-terminal-500">
                     fees {single.view.fees === null ? "unavailable" : money(single.view.fees)}
