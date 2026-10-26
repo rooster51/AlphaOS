@@ -1,5 +1,14 @@
 # Issue 60: retained response graphs and buffered encoding experiment
 
+> **Status 2026-10-24.** Merged as PR #64 (`76a6a16`; application commits
+> `54dcf5b`, `931fb11`) and deployed per owner report at that baseline. The draft
+> constraint below ("no merge or deployment is authorized") and the statement that
+> this change is undeployed describe it when written. The follow-on wrapper-reuse
+> experiment on the diagnostic branches was rejected. Issue #60 and Milestone 1
+> remain **open** because the production checklist here has not been recorded, and
+> no further optimization experiments are authorized. See
+> [current status](STATUS.md).
+
 Baseline: main `ff0a42efe74f964733cd2f0ea79e7456a1e862c8`. Date: 2026-10-22.
 Issue #60 and Milestone 1 remain open. This is a constrained fixture investigation,
 not production acceptance. No deployment, infrastructure, provider, authentication,

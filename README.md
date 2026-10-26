@@ -13,6 +13,8 @@ separate; unknown evidence is never filled with synthetic observations.
 
 ## Current architecture and local entrypoints
 
+- [Current status](docs/STATUS.md): dated record of merged work, reported
+  production state, open Issue #60 acceptance and current restrictions.
 - [Architecture and consolidation inventory](docs/ARCHITECTURE.md): canonical call
   paths, retained compatibility code, cleanup decisions and migration boundaries.
 - [Actual deployment/dependency map](docs/DEPLOYMENT.md): audited services,

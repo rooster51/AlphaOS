@@ -1,5 +1,12 @@
 # Issue #60: response completion and dashboard observation contract
 
+> **Status 2026-10-24.** Merged as PR #63 (`ff0a42e`; application commits
+> `e60ef57`, `cc4bda2`) and deployed per owner report, production baseline
+> `76a6a16`. "Not deployed" below describes this change when written. Issue #60
+> and Milestone 1 remain **open**: the production acceptance checklist in this
+> document has not been executed against a deployment. See
+> [current status](STATUS.md).
+
 Base: latest main `b9697ebe` (merged PR #62). **Not deployed. Milestone 1 acceptance
 remains open.** The website bridge deadline remains 12,000 ms.
 

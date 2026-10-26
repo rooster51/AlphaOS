@@ -4,6 +4,25 @@ Audited October 16, 2026, starting from `main` at
 `d1c9e087a3dbf09490fd113d095c004fecdac738` (PR #44 merged).
 This is an inventory and behavior-preserving cleanup, not a new research engine.
 
+> **Currency update (2026-10-24).** The audit below remains the dated
+> 2026-10-16 record. Three current facts have moved:
+>
+> - `main` is now `76a6a16` (merge of PR #64). PRs #61-#64 changed request
+>   budgeting and cancellation, response encoding and the dashboard contract;
+>   the documented strategy families, routing evidence gates, expiry matching and
+>   freshness policy are unchanged.
+> - The operation set is now **20 paths**: `/health` plus **19 authenticated
+>   `/v1` operations**, because PR #63 added `POST /v1/research/observation`. The
+>   19/18 figures below were correct at audit time and are asserted today by
+>   `tests/test_architecture_consolidation.py`. MCP still exposes **17 tools**;
+>   the observation route is dashboard-only.
+> - [architecture-branches.json](architecture-branches.json) remains the
+>   2026-10-16 snapshot of 48 heads. The remote had **68** heads on 2026-10-24;
+>   they are not reclassified here.
+>
+> Production is reported at `76a6a16` with PR #64 deployed (owner-confirmed, not
+> independently verified in this repository). See [current status](STATUS.md).
+
 Release 1.5B starts from PR #45 merge
 `18655f055a7667706f639c83bfb4ef3de75b7d99`. It consolidates only the pure SDK
 option-row formatter shared by the headless and Streamlit adapters. See
@@ -145,6 +164,8 @@ metadata, as done in this audit.
 
 Documentation authority:
 
+- [STATUS.md](STATUS.md): dated record of merged work, reported production state
+  and open Issue #60 acceptance.
 - This document: current code ownership, status and cleanup decisions.
 - [DEPLOYMENT.md](DEPLOYMENT.md): audited services, real dependency map and deployment boundaries.
 - `RELEASE1_AFTER_HOURS_RESEARCH.md`, `RELEASE1_CANDIDATE_GENERATION_DIAGNOSTICS.md`:

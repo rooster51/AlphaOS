@@ -1,5 +1,11 @@
 # Issue #60: reliability follow-up to PR #61
 
+> **Status 2026-10-24.** Merged as PR #62 (`b9697eb`; application commit
+> `27d2ac3`) and deployed per owner report, production baseline `76a6a16`.
+> "Not deployed" below describes this change when written; fixture results are
+> not production acceptance. Issue #60 and Milestone 1 remain **open**, and no
+> further optimization experiments are authorized. See [current status](STATUS.md).
+
 Base: merged PR #61, `8a374fbd`. Milestone 1 production acceptance remains **open**.
 This change is not deployed. Fixture results below are not production acceptance.
 
