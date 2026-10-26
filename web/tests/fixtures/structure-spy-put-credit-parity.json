@@ -1,0 +1,732 @@
+{
+ "schema_version": "alphaos-interface-v2",
+ "request": {
+  "symbol": "SPY",
+  "expiration": "2030-01-02",
+  "as_of": "2030-01-02",
+  "spot": 610.0,
+  "credit": 1.1,
+  "fees": 0.65,
+  "legs": [
+   {
+    "type": "Put",
+    "strike": 605.0,
+    "qty": -1
+   },
+   {
+    "type": "Put",
+    "strike": 600.0,
+    "qty": 1
+   }
+  ]
+ },
+ "read_only": true,
+ "research": {
+  "version": "structure-research-v1",
+  "underlying": "SPY",
+  "strategy_family": "put_credit_spread",
+  "direction": "bullish",
+  "expiration": "2030-01-02",
+  "legs": [
+   {
+    "type": "Put",
+    "strike": 605.0,
+    "qty": -1.0
+   },
+   {
+    "type": "Put",
+    "strike": 600.0,
+    "qty": 1.0
+   }
+  ],
+  "trade": {
+   "symbol": "SPY",
+   "expiration": "2030-01-02",
+   "spot": 610.0,
+   "credit": 1.1,
+   "shares": 0.0,
+   "fees": 0.65,
+   "source": "Explicit user-supplied scenario",
+   "legs": [
+    {
+     "type": "Put",
+     "strike": 605.0,
+     "qty": -1.0
+    },
+    {
+     "type": "Put",
+     "strike": 600.0,
+     "qty": 1.0
+    }
+   ],
+   "pricing_assumption": "Supplied signed package cashflow; not a verified quote or fill",
+   "stock_basis": 610.0,
+   "strategy": "put_credit_spread",
+   "strategy_family": "put_credit_spread"
+  },
+  "entry_debit": 0,
+  "entry_credit": 1.1,
+  "capital_at_risk": 390.65,
+  "max_loss": 390.65,
+  "max_profit": 109.35000000000001,
+  "breakeven": 603.9065,
+  "breakevens": [
+   603.9065
+  ],
+  "required_move": -6.093499999999949,
+  "required_move_pct": -0.009989344262294999,
+  "breakeven_moves": [
+   {
+    "breakeven": 603.9065,
+    "move": -6.093499999999949,
+    "move_pct": -0.009989344262294999
+   }
+  ],
+  "dte": 0,
+  "expected_move_context": null,
+  "payoff": {
+   "trade": {
+    "symbol": "SPY",
+    "expiration": "2030-01-02",
+    "spot": 610.0,
+    "credit": 1.1,
+    "shares": 0.0,
+    "fees": 0.65,
+    "source": "Explicit user-supplied scenario",
+    "legs": [
+     {
+      "type": "Put",
+      "strike": 605.0,
+      "qty": -1.0
+     },
+     {
+      "type": "Put",
+      "strike": 600.0,
+      "qty": 1.0
+     }
+    ],
+    "pricing_assumption": "Supplied signed package cashflow; not a verified quote or fill",
+    "stock_basis": 610.0,
+    "strategy": "put_credit_spread",
+    "strategy_family": "put_credit_spread"
+   },
+   "units": 1,
+   "max_profit": 109.35000000000001,
+   "max_loss": 390.65,
+   "return_on_risk": 0.2799180852425445,
+   "option_premium": 110.00000000000001,
+   "fees": 0.65,
+   "net_cash": 109.35000000000001,
+   "breakevens": [
+    603.9065
+   ],
+   "strikes": [
+    600.0,
+    605.0
+   ],
+   "width": 5.0,
+   "credit_width": 0.22000000000000003,
+   "grid": [
+    {
+     "Terminal underlying ($)": 598.0,
+     "Move from spot (%)": -1.967213114754096,
+     "Expiration P&L ($)": -390.65,
+     "Return on max risk (%)": -100.0,
+     "Landmark": ""
+    },
+    {
+     "Terminal underlying ($)": 598.5,
+     "Move from spot (%)": -1.885245901639343,
+     "Expiration P&L ($)": -390.65,
+     "Return on max risk (%)": -100.0,
+     "Landmark": ""
+    },
+    {
+     "Terminal underlying ($)": 599.0,
+     "Move from spot (%)": -1.80327868852459,
+     "Expiration P&L ($)": -390.65,
+     "Return on max risk (%)": -100.0,
+     "Landmark": ""
+    },
+    {
+     "Terminal underlying ($)": 599.5,
+     "Move from spot (%)": -1.7213114754098369,
+     "Expiration P&L ($)": -390.65,
+     "Return on max risk (%)": -100.0,
+     "Landmark": ""
+    },
+    {
+     "Terminal underlying ($)": 600.0,
+     "Move from spot (%)": -1.6393442622950838,
+     "Expiration P&L ($)": -390.65,
+     "Return on max risk (%)": -100.0,
+     "Landmark": "Strike"
+    },
+    {
+     "Terminal underlying ($)": 600.5,
+     "Move from spot (%)": -1.5573770491803307,
+     "Expiration P&L ($)": -340.65,
+     "Return on max risk (%)": -87.20081914757456,
+     "Landmark": ""
+    },
+    {
+     "Terminal underlying ($)": 601.0,
+     "Move from spot (%)": -1.4754098360655776,
+     "Expiration P&L ($)": -290.65,
+     "Return on max risk (%)": -74.40163829514911,
+     "Landmark": ""
+    },
+    {
+     "Terminal underlying ($)": 601.5,
+     "Move from spot (%)": -1.3934426229508245,
+     "Expiration P&L ($)": -240.64999999999998,
+     "Return on max risk (%)": -61.60245744272367,
+     "Landmark": ""
+    },
+    {
+     "Terminal underlying ($)": 601.95325,
+     "Move from spot (%)": -1.3191393442622878,
+     "Expiration P&L ($)": -195.32499999999743,
+     "Return on max risk (%)": -49.999999999999346,
+     "Landmark": ""
+    },
+    {
+     "Terminal underlying ($)": 602.0,
+     "Move from spot (%)": -1.3114754098360604,
+     "Expiration P&L ($)": -190.64999999999998,
+     "Return on max risk (%)": -48.80327659029822,
+     "Landmark": ""
+    },
+    {
+     "Terminal underlying ($)": 602.5,
+     "Move from spot (%)": -1.2295081967213073,
+     "Expiration P&L ($)": -140.64999999999998,
+     "Return on max risk (%)": -36.004095737872774,
+     "Landmark": ""
+    },
+    {
+     "Terminal underlying ($)": 603.0,
+     "Move from spot (%)": -1.1475409836065542,
+     "Expiration P&L ($)": -90.64999999999999,
+     "Return on max risk (%)": -23.20491488544733,
+     "Landmark": ""
+    },
+    {
+     "Terminal underlying ($)": 603.5,
+     "Move from spot (%)": -1.0655737704918011,
+     "Expiration P&L ($)": -40.64999999999999,
+     "Return on max risk (%)": -10.405734033021885,
+     "Landmark": ""
+    },
+    {
+     "Terminal underlying ($)": 603.9065,
+     "Move from spot (%)": -0.998934426229503,
+     "Expiration P&L ($)": 5.101696842757519e-12,
+     "Return on max risk (%)": 1.3059508108940278e-12,
+     "Landmark": "Breakeven"
+    },
+    {
+     "Terminal underlying ($)": 604.0,
+     "Move from spot (%)": -0.983606557377048,
+     "Expiration P&L ($)": 9.350000000000009,
+     "Return on max risk (%)": 2.3934468194035605,
+     "Landmark": ""
+    },
+    {
+     "Terminal underlying ($)": 604.45325,
+     "Move from spot (%)": -0.9093032786885225,
+     "Expiration P&L ($)": 54.675000000002555,
+     "Return on max risk (%)": 13.995904262127878,
+     "Landmark": ""
+    },
+    {
+     "Terminal underlying ($)": 604.5,
+     "Move from spot (%)": -0.901639344262295,
+     "Expiration P&L ($)": 59.35000000000001,
+     "Return on max risk (%)": 15.192627671829007,
+     "Landmark": ""
+    },
+    {
+     "Terminal underlying ($)": 605.0,
+     "Move from spot (%)": -0.8196721311475419,
+     "Expiration P&L ($)": 109.35000000000001,
+     "Return on max risk (%)": 27.991808524254452,
+     "Landmark": "Strike"
+    },
+    {
+     "Terminal underlying ($)": 605.5,
+     "Move from spot (%)": -0.7377049180327888,
+     "Expiration P&L ($)": 109.35000000000001,
+     "Return on max risk (%)": 27.991808524254452,
+     "Landmark": ""
+    },
+    {
+     "Terminal underlying ($)": 606.0,
+     "Move from spot (%)": -0.6557377049180357,
+     "Expiration P&L ($)": 109.35000000000001,
+     "Return on max risk (%)": 27.991808524254452,
+     "Landmark": ""
+    },
+    {
+     "Terminal underlying ($)": 606.5,
+     "Move from spot (%)": -0.5737704918032827,
+     "Expiration P&L ($)": 109.35000000000001,
+     "Return on max risk (%)": 27.991808524254452,
+     "Landmark": ""
+    },
+    {
+     "Terminal underlying ($)": 607.0,
+     "Move from spot (%)": -0.4918032786885296,
+     "Expiration P&L ($)": 109.35000000000001,
+     "Return on max risk (%)": 27.991808524254452,
+     "Landmark": ""
+    },
+    {
+     "Terminal underlying ($)": 607.5,
+     "Move from spot (%)": -0.4098360655737654,
+     "Expiration P&L ($)": 109.35000000000001,
+     "Return on max risk (%)": 27.991808524254452,
+     "Landmark": ""
+    },
+    {
+     "Terminal underlying ($)": 608.0,
+     "Move from spot (%)": -0.3278688524590123,
+     "Expiration P&L ($)": 109.35000000000001,
+     "Return on max risk (%)": 27.991808524254452,
+     "Landmark": ""
+    },
+    {
+     "Terminal underlying ($)": 608.5,
+     "Move from spot (%)": -0.24590163934425924,
+     "Expiration P&L ($)": 109.35000000000001,
+     "Return on max risk (%)": 27.991808524254452,
+     "Landmark": ""
+    },
+    {
+     "Terminal underlying ($)": 609.0,
+     "Move from spot (%)": -0.16393442622950616,
+     "Expiration P&L ($)": 109.35000000000001,
+     "Return on max risk (%)": 27.991808524254452,
+     "Landmark": ""
+    },
+    {
+     "Terminal underlying ($)": 609.5,
+     "Move from spot (%)": -0.08196721311475308,
+     "Expiration P&L ($)": 109.35000000000001,
+     "Return on max risk (%)": 27.991808524254452,
+     "Landmark": ""
+    },
+    {
+     "Terminal underlying ($)": 610.0,
+     "Move from spot (%)": 0.0,
+     "Expiration P&L ($)": 109.35000000000001,
+     "Return on max risk (%)": 27.991808524254452,
+     "Landmark": "Spot"
+    },
+    {
+     "Terminal underlying ($)": 610.5,
+     "Move from spot (%)": 0.08196721311475308,
+     "Expiration P&L ($)": 109.35000000000001,
+     "Return on max risk (%)": 27.991808524254452,
+     "Landmark": ""
+    },
+    {
+     "Terminal underlying ($)": 611.0,
+     "Move from spot (%)": 0.16393442622950616,
+     "Expiration P&L ($)": 109.35000000000001,
+     "Return on max risk (%)": 27.991808524254452,
+     "Landmark": ""
+    },
+    {
+     "Terminal underlying ($)": 611.5,
+     "Move from spot (%)": 0.24590163934425924,
+     "Expiration P&L ($)": 109.35000000000001,
+     "Return on max risk (%)": 27.991808524254452,
+     "Landmark": ""
+    },
+    {
+     "Terminal underlying ($)": 612.0,
+     "Move from spot (%)": 0.3278688524590123,
+     "Expiration P&L ($)": 109.35000000000001,
+     "Return on max risk (%)": 27.991808524254452,
+     "Landmark": ""
+    }
+   ],
+   "extremes": [
+    {
+     "Terminal underlying ($)": 305.0,
+     "Move from spot (%)": -50.0,
+     "Expiration P&L ($)": -390.65,
+     "Return on max risk (%)": -100.0,
+     "Landmark": ""
+    },
+    {
+     "Terminal underlying ($)": 427.0,
+     "Move from spot (%)": -30.000000000000004,
+     "Expiration P&L ($)": -390.65,
+     "Return on max risk (%)": -100.0,
+     "Landmark": ""
+    },
+    {
+     "Terminal underlying ($)": 488.0,
+     "Move from spot (%)": -19.999999999999996,
+     "Expiration P&L ($)": -390.65,
+     "Return on max risk (%)": -100.0,
+     "Landmark": ""
+    },
+    {
+     "Terminal underlying ($)": 549.0,
+     "Move from spot (%)": -9.999999999999998,
+     "Expiration P&L ($)": -390.65,
+     "Return on max risk (%)": -100.0,
+     "Landmark": ""
+    },
+    {
+     "Terminal underlying ($)": 579.5,
+     "Move from spot (%)": -5.000000000000004,
+     "Expiration P&L ($)": -390.65,
+     "Return on max risk (%)": -100.0,
+     "Landmark": ""
+    },
+    {
+     "Terminal underlying ($)": 610.0,
+     "Move from spot (%)": 0.0,
+     "Expiration P&L ($)": 109.35000000000001,
+     "Return on max risk (%)": 27.991808524254452,
+     "Landmark": "Spot"
+    },
+    {
+     "Terminal underlying ($)": 640.5,
+     "Move from spot (%)": 5.000000000000004,
+     "Expiration P&L ($)": 109.35000000000001,
+     "Return on max risk (%)": 27.991808524254452,
+     "Landmark": ""
+    },
+    {
+     "Terminal underlying ($)": 671.0,
+     "Move from spot (%)": 10.000000000000009,
+     "Expiration P&L ($)": 109.35000000000001,
+     "Return on max risk (%)": 27.991808524254452,
+     "Landmark": ""
+    },
+    {
+     "Terminal underlying ($)": 732.0,
+     "Move from spot (%)": 19.999999999999996,
+     "Expiration P&L ($)": 109.35000000000001,
+     "Return on max risk (%)": 27.991808524254452,
+     "Landmark": ""
+    },
+    {
+     "Terminal underlying ($)": 793.0,
+     "Move from spot (%)": 30.000000000000004,
+     "Expiration P&L ($)": 109.35000000000001,
+     "Return on max risk (%)": 27.991808524254452,
+     "Landmark": ""
+    },
+    {
+     "Terminal underlying ($)": 915.0,
+     "Move from spot (%)": 50.0,
+     "Expiration P&L ($)": 109.35000000000001,
+     "Return on max risk (%)": 27.991808524254452,
+     "Landmark": ""
+    }
+   ]
+  },
+  "evidence": {
+   "source": "Explicit user-supplied scenario",
+   "option_legs": [
+    {
+     "type": "Put",
+     "strike": 605.0,
+     "expiration": "2030-01-02",
+     "qty": -1.0,
+     "quantity": 1.0,
+     "action": "Sell",
+     "contract": null,
+     "bid": null,
+     "ask": null,
+     "mid": null,
+     "delta": null,
+     "gamma": null,
+     "theta": null,
+     "vega": null,
+     "rho": null,
+     "iv": null,
+     "volume": null,
+     "open_interest": null,
+     "bid_timestamp": null,
+     "ask_timestamp": null,
+     "last_timestamp": null,
+     "quote_timestamp": null,
+     "observation_timestamp": null,
+     "observed_at": null,
+     "archive_quality": null,
+     "quality_warnings": null,
+     "missing_fields": null
+    },
+    {
+     "type": "Put",
+     "strike": 600.0,
+     "expiration": "2030-01-02",
+     "qty": 1.0,
+     "quantity": 1.0,
+     "action": "Buy",
+     "contract": null,
+     "bid": null,
+     "ask": null,
+     "mid": null,
+     "delta": null,
+     "gamma": null,
+     "theta": null,
+     "vega": null,
+     "rho": null,
+     "iv": null,
+     "volume": null,
+     "open_interest": null,
+     "bid_timestamp": null,
+     "ask_timestamp": null,
+     "last_timestamp": null,
+     "quote_timestamp": null,
+     "observation_timestamp": null,
+     "observed_at": null,
+     "archive_quality": null,
+     "quality_warnings": null,
+     "missing_fields": null
+    }
+   ],
+   "expected_move_status": "unknown",
+   "pricing_assumption": "Supplied signed package cashflow; not a verified quote or fill"
+  },
+  "candidate_order": "input/generator order; not a ranking",
+  "caveats": [
+   "Deterministic expiration payoff, not a forecast or probability of profit.",
+   "Standard 100-share multiplier; credit/debit are per-share package cashflows; payoff/risk and fees are dollars.",
+   "Signed moves are distances to expiration breakevens, not predicted moves. Multiple roots remain separate.",
+   "Direction describes structure bias, not inferred market evidence. No winner or recommendation.",
+   "Missing Greeks, IV, liquidity, timestamps and expected-move evidence remain unavailable."
+  ],
+  "position": {
+   "symbol": "SPY",
+   "expiration": "2030-01-02",
+   "strategy_family": "put_credit_spread",
+   "legs": [
+    {
+     "type": "Put",
+     "strike": 605.0,
+     "expiration": "2030-01-02",
+     "qty": -1.0,
+     "quantity": 1.0,
+     "action": "Sell",
+     "contract": null,
+     "bid": null,
+     "ask": null,
+     "mid": null,
+     "delta": null,
+     "gamma": null,
+     "theta": null,
+     "vega": null,
+     "rho": null,
+     "iv": null,
+     "volume": null,
+     "open_interest": null,
+     "bid_timestamp": null,
+     "ask_timestamp": null,
+     "last_timestamp": null,
+     "quote_timestamp": null,
+     "observation_timestamp": null,
+     "observed_at": null,
+     "archive_quality": null,
+     "quality_warnings": null,
+     "missing_fields": null
+    },
+    {
+     "type": "Put",
+     "strike": 600.0,
+     "expiration": "2030-01-02",
+     "qty": 1.0,
+     "quantity": 1.0,
+     "action": "Buy",
+     "contract": null,
+     "bid": null,
+     "ask": null,
+     "mid": null,
+     "delta": null,
+     "gamma": null,
+     "theta": null,
+     "vega": null,
+     "rho": null,
+     "iv": null,
+     "volume": null,
+     "open_interest": null,
+     "bid_timestamp": null,
+     "ask_timestamp": null,
+     "last_timestamp": null,
+     "quote_timestamp": null,
+     "observation_timestamp": null,
+     "observed_at": null,
+     "archive_quality": null,
+     "quality_warnings": null,
+     "missing_fields": null
+    }
+   ],
+   "credit": 1.1,
+   "fees": 0.65
+  },
+  "historical_economics": {
+   "version": "historical-economics-v1",
+   "structure_identity": {
+    "symbol": "SPY",
+    "expiration": "2030-01-02",
+    "strategy_family": "put_credit_spread",
+    "legs": [
+     {
+      "type": "Put",
+      "strike": 605.0,
+      "expiration": "2030-01-02",
+      "qty": -1.0,
+      "quantity": 1.0,
+      "action": "Sell",
+      "contract": null,
+      "bid": null,
+      "ask": null,
+      "mid": null,
+      "delta": null,
+      "gamma": null,
+      "theta": null,
+      "vega": null,
+      "rho": null,
+      "iv": null,
+      "volume": null,
+      "open_interest": null,
+      "bid_timestamp": null,
+      "ask_timestamp": null,
+      "last_timestamp": null,
+      "quote_timestamp": null,
+      "observation_timestamp": null,
+      "observed_at": null,
+      "archive_quality": null,
+      "quality_warnings": null,
+      "missing_fields": null
+     },
+     {
+      "type": "Put",
+      "strike": 600.0,
+      "expiration": "2030-01-02",
+      "qty": 1.0,
+      "quantity": 1.0,
+      "action": "Buy",
+      "contract": null,
+      "bid": null,
+      "ask": null,
+      "mid": null,
+      "delta": null,
+      "gamma": null,
+      "theta": null,
+      "vega": null,
+      "rho": null,
+      "iv": null,
+      "volume": null,
+      "open_interest": null,
+      "bid_timestamp": null,
+      "ask_timestamp": null,
+      "last_timestamp": null,
+      "quote_timestamp": null,
+      "observation_timestamp": null,
+      "observed_at": null,
+      "archive_quality": null,
+      "quality_warnings": null,
+      "missing_fields": null
+     }
+    ],
+    "credit": 1.1,
+    "fees": 0.65,
+    "multiplier": 100
+   },
+   "holding_period": "swing",
+   "valuation": "expiration",
+   "deterministic_expiration": {
+    "max_profit": 109.35000000000001,
+    "max_profit_unlimited": false,
+    "max_loss": 390.65,
+    "breakevens": [
+     603.9065
+    ],
+    "required_moves": [
+     {
+      "dollars": -6.093499999999949,
+      "fraction": -0.00998934426229503
+     }
+    ]
+   },
+   "capital_requirement": {
+    "expiration_max_loss": 390.65,
+    "broker_buying_power": null
+   },
+   "capital_eligibility": {
+    "status": "not_assessed",
+    "available_capital": null,
+    "basis": "expiration max loss, not broker buying power"
+   },
+   "assumptions": {
+    "multiplier": 100,
+    "premium": "signed package per-share cashflow",
+    "fees_dollars": 0.65,
+    "slippage_dollars": 0.0,
+    "cost_basis": "total package costs once, not per leg or per scenario period",
+    "weighting": "equal observations",
+    "quantiles": "linear interpolation",
+    "minimum_samples": 30
+   },
+   "historical_economics": {
+    "expected_value_dollars": null,
+    "ev_over_max_risk": null,
+    "positive_payoff_frequency": null,
+    "profit_factor": null,
+    "median_payoff": null,
+    "p10_payoff": null,
+    "p90_payoff": null,
+    "average_winning_payoff": null,
+    "average_losing_payoff": null
+   },
+   "sample_size": 0,
+   "scenario_payoffs": [],
+   "evidence": null,
+   "robustness": {
+    "status": "unavailable",
+    "reason": "Distinct validated analog subsets not supplied."
+   },
+   "touch_breach": {
+    "status": "unavailable",
+    "reason": "Terminal returns do not establish path behavior."
+   },
+   "execution_evidence": {
+    "status": "unavailable",
+    "reason": "Executable quotes/liquidity not validated by this evaluator."
+   },
+   "early_exit": {
+    "status": "unavailable",
+    "reason": "Historical option marks or validated repricing inputs required."
+   },
+   "eligibility": "ECONOMICS_INCOMPLETE",
+   "eligible_for_consideration": false,
+   "missing_evidence": [
+    "unsupported_expiration_session_horizon"
+   ],
+   "research_only_reasons": [
+    "No execution validation or independent robustness validation."
+   ],
+   "historical_evidence_status": "unavailable",
+   "economics_coverage": "deterministic_only",
+   "integration_version": "structure-historical-v1",
+   "temporal_basis": "Explicit as_of completed NYSE session; historical, not live",
+   "provenance": {
+    "verification": "unavailable",
+    "pricing": "caller-supplied scenario"
+   }
+  }
+ },
+ "provenance": {
+  "source": "Explicit user-supplied scenario"
+ },
+ "caveats": []
+}

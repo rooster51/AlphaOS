@@ -6,6 +6,7 @@ import { POST as postCompare } from "../src/app/api/research/structures/compare/
 
 const single = JSON.parse(readFileSync(new URL("./fixtures/structure-parity.json", import.meta.url), "utf8"));
 const compared = JSON.parse(readFileSync(new URL("./fixtures/structure-compare-parity.json", import.meta.url), "utf8"));
+const spyPutCredit = JSON.parse(readFileSync(new URL("./fixtures/structure-spy-put-credit-parity.json", import.meta.url), "utf8"));
 
 const originalToken = process.env.ALPHAOS_API_TOKEN;
 const originalUrl = process.env.ALPHAOS_API_URL;
@@ -91,20 +92,67 @@ test("structure comparison is forwarded in supplied order with its thesis", asyn
 
 test("both bridges preserve the backend envelope byte-for-byte for REST parity", async () => {
   setConfig();
-  for (const [handler, fixture, route] of [
-    [postStructure, single, structureRoute],
-    [postCompare, compared, compareRoute],
-  ]) {
+  const cases = [
+    [postStructure, single, "/api/research/structure"],
+    [postStructure, spyPutCredit, "/api/research/structure"],
+    [postCompare, compared, "/api/research/structures/compare"],
+  ];
+  for (const [handler, fixture, path] of cases) {
+    let forwarded;
     globalThis.fetch = async (_, options) => {
-      assert.deepEqual(JSON.parse(options.body), fixture.request);
+      forwarded = JSON.parse(options.body);
       return Response.json(fixture);
     };
-    const response = await handler(route());
+    const response = await handler(request(path, fixture.request));
     assert.equal(response.status, 200);
+    assert.deepEqual(forwarded, fixture.request);
     const body = await response.json();
     assert.deepEqual(body.research, fixture);
     assert.equal(body.source, "alphaos_research_structure_api");
+    assert.equal(body.verified_for_trading, false);
   }
+});
+
+test("an unsupported leg combination reaches the backend and surfaces only its rejection", async () => {
+  setConfig();
+  // Two same-type legs in the same direction have no supported family; the
+  // website forwards the scenario and lets the backend reject it.
+  const unsupported = {
+    ...spyPutCredit.request,
+    credit: -3.4,
+    legs: [
+      { type: "Call", strike: 610, qty: 1 },
+      { type: "Call", strike: 615, qty: 2 },
+    ],
+  };
+  let forwarded;
+  globalThis.fetch = async (_, options) => {
+    forwarded = JSON.parse(options.body);
+    return Response.json({ error: { code: "invalid_structure" } }, { status: 422 });
+  };
+  const response = await postStructure(request("/api/research/structure", unsupported));
+
+  assert.deepEqual(forwarded, unsupported);
+  assert.equal(response.status, 502);
+  const body = await response.json();
+  assert.deepEqual(body, { status: "unavailable", code: "invalid_structure" });
+  assert.equal("research" in body, false);
+});
+
+test("missing archive evidence is preserved as data, not turned into an error or a number", async () => {
+  setConfig();
+  const copy = structuredClone(spyPutCredit);
+  copy.research.historical_economics.missing_evidence = ["verified_archive_unavailable"];
+  copy.research.historical_economics.evidence = null;
+  globalThis.fetch = async () => Response.json(copy);
+  const response = await postStructure(request("/api/research/structure", copy.request));
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.deepEqual(
+    body.research.research.historical_economics.missing_evidence,
+    ["verified_archive_unavailable"],
+  );
+  assert.equal(body.research.research.historical_economics.historical_evidence_status, "unavailable");
 });
 
 test("out-of-contract request bodies fail before any backend access", async () => {

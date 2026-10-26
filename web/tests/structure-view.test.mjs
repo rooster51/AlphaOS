@@ -10,6 +10,7 @@ import {
 
 const single = JSON.parse(readFileSync(new URL("./fixtures/structure-parity.json", import.meta.url), "utf8"));
 const compared = JSON.parse(readFileSync(new URL("./fixtures/structure-compare-parity.json", import.meta.url), "utf8"));
+const spyPutCredit = JSON.parse(readFileSync(new URL("./fixtures/structure-spy-put-credit-parity.json", import.meta.url), "utf8"));
 
 function clone(value) {
   return structuredClone(value);
@@ -222,9 +223,63 @@ test("archive observations prefill only from an explicit observation envelope", 
   assert.equal(observationSeed(single, "QQQ"), null);
 });
 
+test("a SPY put credit spread renders backend credit economics without local math", () => {
+  const view = structureView(spyPutCredit);
+  assert.ok(view);
+  assert.equal(view.symbol, "SPY");
+  assert.equal(view.family, "put_credit_spread");
+  assert.equal(view.direction, "bullish");
+  assert.deepEqual(view.maxProfit, { kind: "value", value: 109.35000000000001 });
+  assert.deepEqual(view.maxLoss, { kind: "value", value: 390.65 });
+  assert.deepEqual(view.capitalRequired, { kind: "value", value: 390.65 });
+  assert.deepEqual(view.breakevens, [603.9065]);
+  assert.equal(view.entryCredit, 1.1);
+  assert.equal(view.entryDebit, 0);
+  assert.equal(view.fees, 0.65);
+  assert.deepEqual(view.legs.map((leg) => [leg.action, leg.type, leg.strike, leg.quantity]), [
+    ["Sell", "Put", 605, 1],
+    ["Buy", "Put", 600, 1],
+  ]);
+  assert.equal(view.pricingAssumption, "Supplied signed package cashflow; not a verified quote or fill");
+});
+
+test("missing archive evidence stays unavailable while supplied-cashflow economics remain labelled", () => {
+  const copy = clone(spyPutCredit);
+  copy.research.historical_economics.missing_evidence = ["verified_archive_unavailable"];
+  copy.research.historical_economics.evidence = null;
+  copy.research.historical_economics.sample_size = 0;
+  const view = structureView(copy);
+  assert.ok(view);
+  assert.equal(view.historical.evidenceStatus, "unavailable");
+  assert.deepEqual(view.historical.missing, ["verified_archive_unavailable"]);
+  assert.equal(view.historical.sampleSize, 0);
+  assert.deepEqual(view.maxLoss, { kind: "value", value: 390.65 });
+
+  const missingInputs = clone(spyPutCredit);
+  missingInputs.request.spot = 609;
+  assert.equal(structureView(missingInputs), null);
+});
+
+test("risk metrics the backend omits are unavailable rather than inferred", () => {
+  const copy = clone(spyPutCredit);
+  delete copy.research.max_loss;
+  delete copy.research.capital_at_risk;
+  const view = structureView(copy);
+  assert.ok(view);
+  assert.deepEqual(view.maxLoss, { kind: "unavailable", reason: "not provided by the backend" });
+  assert.deepEqual(view.capitalRequired, { kind: "unavailable", reason: "not provided by the backend" });
+  assert.deepEqual(view.integrity, []);
+
+  const noProfit = clone(spyPutCredit);
+  delete noProfit.research.max_profit;
+  const withoutProfit = structureView(noProfit);
+  assert.equal(withoutProfit.maxProfit.kind, "unavailable");
+});
+
 test("error codes map to safe operator-facing messages", () => {
   assert.match(structureMessage("invalid_structure"), /does not support this leg combination/);
   assert.match(structureMessage("backend_timeout"), /timed out/);
+  assert.match(structureMessage("archive_unavailable"), /No substitute economics/);
   assert.equal(structureMessage("some_new_code"), structureMessage("research_unavailable"));
   assert.equal(JSON.stringify(structureMessage("some_new_code")).includes("some_new_code"), false);
 });
