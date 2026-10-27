@@ -19,7 +19,9 @@
     "upload:workers": "cf workers versions create --prebuilt",
     "cf-typegen": "cf workers types",
     "preview:workers": "cf previews deploy",
-    "test:workers": "node --test tests/workers/*.test.mjs"
+    "test:workers": "node --test tests/workers/*.test.mjs",
+    "prebuild": "npm run cf-typegen",
+    "pretypecheck": "npm run cf-typegen"
   },
   "dependencies": {
     "@vinext/cloudflare": "1.2.1",

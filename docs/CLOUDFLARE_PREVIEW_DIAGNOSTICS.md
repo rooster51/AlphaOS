@@ -35,6 +35,9 @@ reads Node `process.env` at call time. Vite explicitly aliases the same import
 to `runtime-cloudflare.ts`, which reads native `env` from `cloudflare:workers`.
 No process-environment fallback or module-level secret snapshot is used in
 Workers. This follows [Cloudflare's vinext bindings guidance](https://developers.cloudflare.com/workers/framework-guides/web-apps/nextjs/#access-cloudflare-bindings).
+The npm `prebuild` and `pretypecheck` hooks generate Cloudflare types locally,
+so the Next.js/Render path also type-checks the Worker accessor on a clean
+checkout without requiring a Cloudflare login or a remote API call.
 
 Market research, structure research, comparison, health and the legacy market/
 strategy helpers share this accessor. Render continues using its server-side
