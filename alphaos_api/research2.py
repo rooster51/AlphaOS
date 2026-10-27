@@ -1,5 +1,6 @@
 """Read-only interface orchestration; research stays in the AlphaOS modules."""
 from datetime import date, datetime, timezone
+from copy import deepcopy
 from math import isfinite
 import os
 from typing import Literal
@@ -8,7 +9,7 @@ from anyio import to_thread
 from fastapi import Request as HTTPRequest
 from starlette.responses import Response
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 from modules.position_research import research_position
 from modules.market_archive_adapter import ArchiveExpirationUnavailable
 from modules.strategy_compare import compare_strategy_research
@@ -17,6 +18,7 @@ from modules.structure_economics import structure_historical_economics, compare_
 from modules.supabase_archive import research_archive_client as archive_client, read_latest_option_snapshot, ArchiveUnavailable
 from .contracts import APIError
 from modules.research_timing import execution, stage as timing_stage
+from modules.structure_provenance import resolve_structure, hypothetical_evidence, ProvenanceError
 
 VERSION = 'alphaos-interface-v2'
 
@@ -62,6 +64,12 @@ class StructureLeg(Request):
     type: Literal['Call', 'Put']
     strike: float = Field(gt=0)
     qty: int = Field(ge=-100, le=100, strict=True)
+    contract: str | None = Field(default=None, pattern=r'^[A-Z]{1,6}\s*\d{6}[CP]\d{8}$', max_length=32)
+
+
+class ArchiveReference(Request):
+    snapshot_id: str = Field(min_length=1, max_length=128)
+    archive_sha256: str = Field(pattern=r'^[a-f0-9]{64}$')
 
 
 class StructureRequest(Request):
@@ -72,6 +80,17 @@ class StructureRequest(Request):
     credit: float  # signed package cashflow per share, debit negative
     fees: float = Field(default=0, ge=0)
     legs: list[StructureLeg] = Field(min_length=1, max_length=4)
+    market_data: ArchiveReference | None = None
+
+    @model_validator(mode='after')
+    def evidence_mode(self):
+        if self.market_data is None and any(leg.contract is not None for leg in self.legs):
+            raise ValueError('Contract identities require an archive reference.')
+        if self.market_data is not None and any(not leg.contract for leg in self.legs):
+            raise ValueError('Every archive-backed leg requires a contract identity.')
+        if any(leg.qty == 0 for leg in self.legs):
+            raise ValueError('Leg quantities must be nonzero.')
+        return self
 
 
 class StructuresRequest(Request):
@@ -91,7 +110,8 @@ def json_safe(value):
 
 
 def envelope(request, research, source, caveats=(), *, json_ready=True):
-    value = dict(schema_version=VERSION, request=request.model_dump(mode='json'),
+    value = dict(schema_version=VERSION, request=request.model_dump(mode='json',
+        exclude_none=isinstance(request, (StructureRequest, StructuresRequest))),
         read_only=True, research=research, provenance=dict(source=source), caveats=list(caveats))
     return json_safe(value) if json_ready else value
 
@@ -218,31 +238,59 @@ class ArchiveResearchService:
             caveats.append('Historical archive research at the observation timestamp; candidates are not current trading opportunities or executable quotes.')
         return envelope(request, result, 'Verified Supabase archive; completed Public daily history when available', caveats, json_ready=json_ready)
 
-    @staticmethod
-    def _structure(request):
-        trade = request.model_dump(mode='json', exclude={'as_of'})
+    def _structure(self, request, *, now=None, records=None):
+        trade = request.model_dump(mode='json', exclude={'as_of', 'market_data'}, exclude_none=True)
         trade.update(shares=0, source='Explicit user-supplied scenario',
             pricing_assumption='Supplied signed package cashflow; not a verified quote or fill')
+        evidence = hypothetical_evidence()
+        if request.market_data is not None:
+            now = now or self.clock()
+            records = {} if records is None else records
+            try:
+                if request.symbol not in records:
+                    records[request.symbol] = self.read_snapshot(request.symbol, now.isoformat())
+                trade['legs'], evidence = resolve_structure(request, records[request.symbol], now)
+            except ArchiveUnavailable as error:
+                raise APIError(error.code, 503) from None
+            except ProvenanceError as error:
+                raise APIError(error.code, 422) from None
+            except ArchiveExpirationUnavailable:
+                raise APIError('archive_expiration_unavailable', 422) from None
+            except Exception:
+                raise APIError('market_data_unavailable', 503) from None
+            trade.update(source='Verified Supabase archive',
+                pricing_assumption='Observed buy ask / sell bid; user-supplied fees; not an executable fill')
         try:
-            return research_position(trade, symbol=request.symbol, spot=request.spot, as_of=request.as_of.isoformat())
+            research = research_position(trade, symbol=request.symbol, spot=request.spot, as_of=request.as_of.isoformat())
         except (ValueError, TypeError, KeyError, OverflowError):
             raise APIError('invalid_structure', 422) from None
+        research['evidence']['market_data'] = evidence
+        research['evidence']['pricing_assumption'] = trade['pricing_assumption']
+        if request.market_data is not None:
+            # The outright-option adapter creates its own payoff trade. Preserve
+            # the canonical quote-bearing identity there too, without repricing.
+            research['payoff']['trade'] = deepcopy(research['trade'])
+        return research
 
     def structure(self, request):
-        research = self._structure(request)
+        now = self.clock()
+        research = self._structure(request, now=now)
         research['historical_economics'] = structure_historical_economics(research,
-            as_of=request.as_of.isoformat(), now=self.clock(),
+            as_of=request.as_of.isoformat(), now=now,
             read_snapshot=self.read_snapshot, history_loader=self.history_loader)
-        return envelope(request, research, 'Explicit user-supplied scenario')
+        return envelope(request, research, 'Verified Supabase archive' if request.market_data else 'Explicit user-supplied scenario')
 
     def compare(self, request):
-        researched = [self._structure(item) for item in request.structures]
+        now, records = self.clock(), {}
+        researched = [self._structure(item, now=now, records=records) for item in request.structures]
         historical = compare_historical_economics(researched,
-            as_of_dates=[item.as_of.isoformat() for item in request.structures], now=self.clock(),
+            as_of_dates=[item.as_of.isoformat() for item in request.structures], now=now,
             read_snapshot=self.read_snapshot, history_loader=self.history_loader)
         return envelope(request, dict(candidates=researched, historical_comparison=historical,
             comparison=compare_strategy_research(researched, thesis=request.thesis)),
-            'Explicit user-supplied scenarios', ['Input order is not preference. Different dates, symbols and spots remain explicit per candidate.'])
+            'Per-candidate verified archive or hypothetical provenance' if any(item.market_data for item in request.structures)
+            else 'Explicit user-supplied scenarios',
+            ['Input order is not preference. Different dates, symbols and spots remain explicit per candidate.'])
 
 
 def register_research2(router, service, respond):

@@ -43,7 +43,8 @@ def research_position(candidate, *, symbol, spot, as_of, expected_move=None, pay
         normalized.append(dict(type=leg['type'], strike=leg['strike'],
             expiration=result['trade']['expiration'], qty=leg['qty'],
             quantity=abs(leg['qty']), action='Buy' if leg['qty'] > 0 else 'Sell',
-            **{key: leg.get(key) for key in OBSERVATIONS}))
+            **{key: leg.get(key) for key in OBSERVATIONS},
+            **{key: leg[key] for key in ('snapshot_id','freshness','entry_side','entry_price') if key in leg}))
     result['position'] = dict(symbol=symbol, expiration=result['trade']['expiration'],
         strategy_family=result['strategy_family'], legs=normalized,
         credit=result['trade']['credit'], fees=result['trade']['fees'])
