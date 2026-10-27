@@ -1,10 +1,8 @@
-import { fetchResearchEnvelope, supportedMarketSymbol, verifiedMarketPair } from "./research-evidence";
+import { fetchResearchEnvelope, supportedMarketSymbol, verifiedMarketPair, ResearchUnavailableError } from "./research-evidence";
 import { MarketSnapshot } from "@/types/research";
 import { MOCK_MARKET_SNAPSHOTS } from "./mock-data";
+import { getServerConfig } from "./server-config.ts";
 
-const API_BASE = process.env.ALPHAOS_API_URL || "https://alphaos.onrender.com";
-const API_TOKEN = process.env.ALPHAOS_API_TOKEN || "";
-const DEMO = process.env.ALPHAOS_DEMO_MODE === "true";
 type JsonObject = Record<string, unknown>;
 
 function record(value: unknown): JsonObject {
@@ -18,7 +16,11 @@ function symbolValue(symbol: string): "QQQ" | "SPY" {
   return supportedMarketSymbol(symbol);
 }
 async function research(path: string): Promise<JsonObject> {
-  return await fetchResearchEnvelope(`${API_BASE}${path}`, API_TOKEN);
+  const { base, token, diagnostics } = getServerConfig();
+  if (!base || !token || diagnostics.configuration !== "ready") {
+    throw new ResearchUnavailableError("Research backend not configured");
+  }
+  return await fetchResearchEnvelope(`${base}${path}`, token);
 }
 
 /** Only actual, explicitly verified provider observations can be displayed as live. */
@@ -28,7 +30,7 @@ export async function getMarketSnapshotServer(symbol: string): Promise<{
   warning?: string;
 }> {
   const normSymbol = symbolValue(symbol);
-  if (DEMO) {
+  if (getServerConfig().demo) {
     return {
       data: { ...MOCK_MARKET_SNAPSHOTS[normSymbol], source: "mock_fixture" },
       isLive: false,

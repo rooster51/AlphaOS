@@ -13,6 +13,9 @@ permissions:
 
 jobs:
   workers:
+    strategy:
+      matrix:
+        preview: ['false', 'true']
     runs-on: ubuntu-latest
     timeout-minutes: 15
     defaults:
@@ -24,6 +27,7 @@ jobs:
       ALPHAOS_DEMO_MODE: 'false'
       ALPHAOS_API_TOKEN: ''
       ALPHAOS_API_URL: ''
+      CLOUDFLARE_PREVIEW_BUILD: ${{ matrix.preview }}
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v4
@@ -40,12 +44,13 @@ jobs:
         env:
           ALPHAOS_API_TOKEN: alphaos-build-only-credential-canary
       - run: node scripts/check-worker-assets.mjs
-      # Packaging only: no Cloudflare credentials or remote deployment in Actions.
+      # Read-only validation for both output contexts; never call cf deploy here.
       - run: npm run check:workers
+      - run: npm run test:workers
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
-          name: workers-test-results
+          name: workers-test-results-preview-${{ matrix.preview }}
           path: web/test-results

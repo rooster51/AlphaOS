@@ -227,6 +227,8 @@ test("stale archive response gets a specific status instead of a generic unavail
 test("mobile backdrop closes the navigation menu", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/dashboard");
+  // Streaming SSR can expose the button before React attaches its handler.
+  await page.waitForLoadState("networkidle");
   await page.locator('button[aria-controls="mobile-primary-navigation"]').click();
   await page.getByRole("button", { name: "Close navigation menu" }).last().click({ position: { x: 330, y: 400 } });
   await expect(page.locator('button[aria-controls="mobile-primary-navigation"]')).toHaveAttribute("aria-expanded", "false");

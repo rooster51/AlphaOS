@@ -4,6 +4,9 @@ Prepared from main `77ef046` (PR #66). This change does not deploy anything.
 The existing Render website, Python/FastAPI API, MCP OAuth origin, collectors,
 archive jobs, and data stores remain on Render/their existing infrastructure.
 
+For the confirmed missing bindings in PR #67's active Preview and the exact
+repair steps, see [Preview diagnostics](CLOUDFLARE_PREVIEW_DIAGNOSTICS.md).
+
 ## Runtime and compatibility
 
 The website retains Next.js **16.4.1** and its existing `dev`, `build`, and
@@ -15,8 +18,7 @@ and [vinext](https://github.com/cloudflare/vinext).
 
 React/React DOM and RSC use 19.3.1, as required by vinext. Both build paths are
 tested. The compatibility scan reports 96%: all used imports work; the partial
-item is automatic App Router development StrictMode wrapping. No application
-source or research handler changed. The market request timeout remains
+item is automatic App Router development StrictMode wrapping. The market request timeout remains
 `AbortSignal.timeout(12000)`, including body reading and validation, as covered
 by the existing route tests.
 
@@ -65,7 +67,9 @@ No Cloudflare dashboard resources were changed by this branch.
 2. Set root directory **web**, production branch **main**, and build Node
    version **22.23.0** (set `NODE_VERSION` if required by the build image).
 3. Build command: `npm ci && npm run cf-typegen && npm run typecheck && npm test && npm run build:vinext && npm run check:workers`.
-   Production deploy command: `npm run deploy:workers` (`cf deploy --prebuilt`).
+   Production deploy command: `npm run deploy:workers` (`cf deploy --prebuilt`),
+   only for approved main production builds. `check:workers` validates artifacts
+   locally and never invokes a deployment command in either output context.
 4. Enable **Worker Preview builds** for non-production branches/PRs and GitHub
    PR comments. Preview command: `npm run preview:workers` (`cf previews deploy`).
    This command builds in Preview context itself; do not pass `--prebuilt` to
@@ -111,7 +115,7 @@ npm run check:workers
 npm run test:e2e
 ```
 
-The Workers workflow runs build, packaging dry run, route tests and the full
+The Workers workflow runs both production and Preview builds, local artifact validation, route tests and the full
 Playwright suite in local workerd; it never uploads or deploys. The existing
 workflow retains Next.js and Python regression checks. `typecheck` regenerates
 Next.js types first because vinext also writes route types under `.next/types`.

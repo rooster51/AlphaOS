@@ -1,4 +1,5 @@
 import { validArchiveObservation } from "../../../../lib/archive-observation.ts";
+import { getServerConfig } from "../../../../lib/server-config.ts";
 
 type MarketPayload = {
   view?: "observation";
@@ -118,6 +119,7 @@ async function readErrorPayload(response: Response, trace: BridgeTrace): Promise
  * Credentials remain server-side.
  */
 type BridgeTrace = {
+  configuration?: ReturnType<typeof getServerConfig>["diagnostics"];
   request_id: string;
   stage: string;
   symbol?: MarketPayload["symbol"];
@@ -176,8 +178,8 @@ async function marketRequest(request: Request, trace: BridgeTrace, timeout: () =
   trace.symbol = payload.symbol;
   trace.research_mode = payload.research_mode ?? "current";
 
-  const token = process.env.ALPHAOS_API_TOKEN;
-  const base = process.env.ALPHAOS_API_URL;
+  const { token, base, diagnostics } = getServerConfig();
+  trace.configuration = diagnostics;
   if (!token || !base) {
     return Response.json(
       { status: "unavailable", code: "backend_not_configured" },
