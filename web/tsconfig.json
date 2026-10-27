@@ -30,6 +30,7 @@
     "target": "ES2017"
   },
   "include": [
+    ".cloudflare/types/**/*.d.ts",
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",

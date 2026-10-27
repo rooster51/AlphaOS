@@ -1,5 +1,9 @@
 # Audited deployment and dependency map
 
+For the prepared website-only Workers deployment and required manual GitHub/
+Cloudflare settings, see [Cloudflare website deployment](CLOUDFLARE_WEBSITE.md).
+That preparation does not change the Render services audited below.
+
 Read-only control-plane audit: October 16, 2026. Both user-facing services are
 manually deployed at `d1c9e087a3dbf09490fd113d095c004fecdac738` (main after PR #44).
 Names are service identifiers, not guarantees that a service is unused: the
