@@ -1,0 +1,4421 @@
+{
+  "note": "Synthetic test archive; not real market prices",
+  "single": {
+    "SPY": {
+      "schema_version": "alphaos-interface-v2",
+      "request": {
+        "symbol": "SPY",
+        "expiration": "2030-01-18",
+        "as_of": "2030-01-02",
+        "spot": 500.0,
+        "credit": -2.1,
+        "fees": 1.25,
+        "legs": [
+          {
+            "type": "Call",
+            "strike": 500.0,
+            "qty": 1,
+            "contract": "SPY300118C00500000"
+          },
+          {
+            "type": "Call",
+            "strike": 505.0,
+            "qty": -1,
+            "contract": "SPY300118C00505000"
+          }
+        ],
+        "market_data": {
+          "snapshot_id": "fixture",
+          "archive_sha256": "c90d159f3930c779b9b1b2edb3bd38195cb2fe63b3b87ef5538e54cc89d75403"
+        }
+      },
+      "read_only": true,
+      "research": {
+        "version": "structure-research-v1",
+        "underlying": "SPY",
+        "strategy_family": "call_debit_spread",
+        "direction": "bullish",
+        "expiration": "2030-01-18",
+        "legs": [
+          {
+            "type": "Call",
+            "strike": 500.0,
+            "qty": 1.0,
+            "symbol": "SPY",
+            "expiration": "2030-01-18",
+            "contract": "SPY300118C00500000",
+            "bid": 3.0,
+            "ask": 3.1,
+            "bid_timestamp": "2030-01-02T20:30:00+00:00",
+            "ask_timestamp": "2030-01-02T20:30:00+00:00",
+            "observation_timestamp": "2030-01-02T20:30:00+00:00",
+            "archive_quality": "valid_contracts",
+            "quality_warnings": [
+              "Synthetic test observation"
+            ],
+            "entry_side": "ask",
+            "entry_price": 3.1,
+            "snapshot_id": "fixture",
+            "freshness": {
+              "evaluated_at": "2030-01-02T20:33:00+00:00",
+              "max_age_seconds": 900,
+              "bid_age_seconds": 180.0,
+              "ask_age_seconds": 180.0
+            }
+          },
+          {
+            "type": "Call",
+            "strike": 505.0,
+            "qty": -1.0,
+            "symbol": "SPY",
+            "expiration": "2030-01-18",
+            "contract": "SPY300118C00505000",
+            "bid": 1.0,
+            "ask": 1.1,
+            "bid_timestamp": "2030-01-02T20:30:00+00:00",
+            "ask_timestamp": "2030-01-02T20:30:00+00:00",
+            "observation_timestamp": "2030-01-02T20:30:00+00:00",
+            "archive_quality": "valid_contracts",
+            "quality_warnings": [
+              "Synthetic test observation"
+            ],
+            "entry_side": "bid",
+            "entry_price": 1.0,
+            "snapshot_id": "fixture",
+            "freshness": {
+              "evaluated_at": "2030-01-02T20:33:00+00:00",
+              "max_age_seconds": 900,
+              "bid_age_seconds": 180.0,
+              "ask_age_seconds": 180.0
+            }
+          }
+        ],
+        "trade": {
+          "symbol": "SPY",
+          "expiration": "2030-01-18",
+          "spot": 500.0,
+          "credit": -2.1,
+          "shares": 0.0,
+          "fees": 1.25,
+          "source": "Verified Supabase archive",
+          "legs": [
+            {
+              "type": "Call",
+              "strike": 500.0,
+              "qty": 1.0,
+              "symbol": "SPY",
+              "expiration": "2030-01-18",
+              "contract": "SPY300118C00500000",
+              "bid": 3.0,
+              "ask": 3.1,
+              "bid_timestamp": "2030-01-02T20:30:00+00:00",
+              "ask_timestamp": "2030-01-02T20:30:00+00:00",
+              "observation_timestamp": "2030-01-02T20:30:00+00:00",
+              "archive_quality": "valid_contracts",
+              "quality_warnings": [
+                "Synthetic test observation"
+              ],
+              "entry_side": "ask",
+              "entry_price": 3.1,
+              "snapshot_id": "fixture",
+              "freshness": {
+                "evaluated_at": "2030-01-02T20:33:00+00:00",
+                "max_age_seconds": 900,
+                "bid_age_seconds": 180.0,
+                "ask_age_seconds": 180.0
+              }
+            },
+            {
+              "type": "Call",
+              "strike": 505.0,
+              "qty": -1.0,
+              "symbol": "SPY",
+              "expiration": "2030-01-18",
+              "contract": "SPY300118C00505000",
+              "bid": 1.0,
+              "ask": 1.1,
+              "bid_timestamp": "2030-01-02T20:30:00+00:00",
+              "ask_timestamp": "2030-01-02T20:30:00+00:00",
+              "observation_timestamp": "2030-01-02T20:30:00+00:00",
+              "archive_quality": "valid_contracts",
+              "quality_warnings": [
+                "Synthetic test observation"
+              ],
+              "entry_side": "bid",
+              "entry_price": 1.0,
+              "snapshot_id": "fixture",
+              "freshness": {
+                "evaluated_at": "2030-01-02T20:33:00+00:00",
+                "max_age_seconds": 900,
+                "bid_age_seconds": 180.0,
+                "ask_age_seconds": 180.0
+              }
+            }
+          ],
+          "pricing_assumption": "Observed buy ask / sell bid; user-supplied fees; not an executable fill",
+          "stock_basis": 500.0,
+          "strategy": "call_debit_spread",
+          "strategy_family": "call_debit_spread"
+        },
+        "entry_debit": 2.1,
+        "entry_credit": 0,
+        "capital_at_risk": 211.25,
+        "max_loss": 211.25,
+        "max_profit": 288.75,
+        "breakeven": 502.1125,
+        "breakevens": [
+          502.1125
+        ],
+        "required_move": 2.1125000000000114,
+        "required_move_pct": 0.004225000000000023,
+        "breakeven_moves": [
+          {
+            "breakeven": 502.1125,
+            "move": 2.1125000000000114,
+            "move_pct": 0.004225000000000023
+          }
+        ],
+        "dte": 16,
+        "expected_move_context": null,
+        "payoff": {
+          "trade": {
+            "symbol": "SPY",
+            "expiration": "2030-01-18",
+            "spot": 500.0,
+            "credit": -2.1,
+            "shares": 0.0,
+            "fees": 1.25,
+            "source": "Verified Supabase archive",
+            "legs": [
+              {
+                "type": "Call",
+                "strike": 500.0,
+                "qty": 1.0,
+                "symbol": "SPY",
+                "expiration": "2030-01-18",
+                "contract": "SPY300118C00500000",
+                "bid": 3.0,
+                "ask": 3.1,
+                "bid_timestamp": "2030-01-02T20:30:00+00:00",
+                "ask_timestamp": "2030-01-02T20:30:00+00:00",
+                "observation_timestamp": "2030-01-02T20:30:00+00:00",
+                "archive_quality": "valid_contracts",
+                "quality_warnings": [
+                  "Synthetic test observation"
+                ],
+                "entry_side": "ask",
+                "entry_price": 3.1,
+                "snapshot_id": "fixture",
+                "freshness": {
+                  "evaluated_at": "2030-01-02T20:33:00+00:00",
+                  "max_age_seconds": 900,
+                  "bid_age_seconds": 180.0,
+                  "ask_age_seconds": 180.0
+                }
+              },
+              {
+                "type": "Call",
+                "strike": 505.0,
+                "qty": -1.0,
+                "symbol": "SPY",
+                "expiration": "2030-01-18",
+                "contract": "SPY300118C00505000",
+                "bid": 1.0,
+                "ask": 1.1,
+                "bid_timestamp": "2030-01-02T20:30:00+00:00",
+                "ask_timestamp": "2030-01-02T20:30:00+00:00",
+                "observation_timestamp": "2030-01-02T20:30:00+00:00",
+                "archive_quality": "valid_contracts",
+                "quality_warnings": [
+                  "Synthetic test observation"
+                ],
+                "entry_side": "bid",
+                "entry_price": 1.0,
+                "snapshot_id": "fixture",
+                "freshness": {
+                  "evaluated_at": "2030-01-02T20:33:00+00:00",
+                  "max_age_seconds": 900,
+                  "bid_age_seconds": 180.0,
+                  "ask_age_seconds": 180.0
+                }
+              }
+            ],
+            "pricing_assumption": "Observed buy ask / sell bid; user-supplied fees; not an executable fill",
+            "stock_basis": 500.0,
+            "strategy": "call_debit_spread",
+            "strategy_family": "call_debit_spread"
+          },
+          "units": 1,
+          "max_profit": 288.75,
+          "max_loss": 211.25,
+          "return_on_risk": 1.3668639053254439,
+          "option_premium": -210.0,
+          "fees": 1.25,
+          "net_cash": -211.25,
+          "breakevens": [
+            502.1125
+          ],
+          "strikes": [
+            500.0,
+            505.0
+          ],
+          "width": 5.0,
+          "credit_width": null,
+          "grid": [
+            {
+              "Terminal underlying ($)": 498.0,
+              "Move from spot (%)": -0.40000000000000036,
+              "Expiration P&L ($)": -211.25,
+              "Return on max risk (%)": -100.0,
+              "Landmark": ""
+            },
+            {
+              "Terminal underlying ($)": 498.5,
+              "Move from spot (%)": -0.30000000000000027,
+              "Expiration P&L ($)": -211.25,
+              "Return on max risk (%)": -100.0,
+              "Landmark": ""
+            },
+            {
+              "Terminal underlying ($)": 499.0,
+              "Move from spot (%)": -0.20000000000000018,
+              "Expiration P&L ($)": -211.25,
+              "Return on max risk (%)": -100.0,
+              "Landmark": ""
+            },
+            {
+              "Terminal underlying ($)": 499.5,
+              "Move from spot (%)": -0.10000000000000009,
+              "Expiration P&L ($)": -211.25,
+              "Return on max risk (%)": -100.0,
+              "Landmark": ""
+            },
+            {
+              "Terminal underlying ($)": 500.0,
+              "Move from spot (%)": 0.0,
+              "Expiration P&L ($)": -211.25,
+              "Return on max risk (%)": -100.0,
+              "Landmark": "Spot \u00b7 Strike"
+            },
+            {
+              "Terminal underlying ($)": 500.5,
+              "Move from spot (%)": 0.09999999999998899,
+              "Expiration P&L ($)": -161.25,
+              "Return on max risk (%)": -76.33136094674556,
+              "Landmark": ""
+            },
+            {
+              "Terminal underlying ($)": 501.0,
+              "Move from spot (%)": 0.20000000000000018,
+              "Expiration P&L ($)": -111.25,
+              "Return on max risk (%)": -52.662721893491124,
+              "Landmark": ""
+            },
+            {
+              "Terminal underlying ($)": 501.05625,
+              "Move from spot (%)": 0.21124999999999616,
+              "Expiration P&L ($)": -105.62500000000227,
+              "Return on max risk (%)": -50.00000000000108,
+              "Landmark": ""
+            },
+            {
+              "Terminal underlying ($)": 501.5,
+              "Move from spot (%)": 0.29999999999998916,
+              "Expiration P&L ($)": -61.25,
+              "Return on max risk (%)": -28.994082840236686,
+              "Landmark": ""
+            },
+            {
+              "Terminal underlying ($)": 502.0,
+              "Move from spot (%)": 0.40000000000000036,
+              "Expiration P&L ($)": -11.25,
+              "Return on max risk (%)": -5.325443786982249,
+              "Landmark": ""
+            },
+            {
+              "Terminal underlying ($)": 502.1125,
+              "Move from spot (%)": 0.4224999999999923,
+              "Expiration P&L ($)": 1.1368683772161603e-12,
+              "Return on max risk (%)": 5.381625454277682e-13,
+              "Landmark": "Breakeven"
+            },
+            {
+              "Terminal underlying ($)": 502.5,
+              "Move from spot (%)": 0.49999999999998934,
+              "Expiration P&L ($)": 38.75,
+              "Return on max risk (%)": 18.34319526627219,
+              "Landmark": ""
+            },
+            {
+              "Terminal underlying ($)": 503.0,
+              "Move from spot (%)": 0.6000000000000005,
+              "Expiration P&L ($)": 88.75,
+              "Return on max risk (%)": 42.01183431952663,
+              "Landmark": ""
+            },
+            {
+              "Terminal underlying ($)": 503.5,
+              "Move from spot (%)": 0.6999999999999895,
+              "Expiration P&L ($)": 138.75,
+              "Return on max risk (%)": 65.68047337278107,
+              "Landmark": ""
+            },
+            {
+              "Terminal underlying ($)": 503.55625,
+              "Move from spot (%)": 0.7112499999999855,
+              "Expiration P&L ($)": 144.37499999999773,
+              "Return on max risk (%)": 68.34319526627112,
+              "Landmark": ""
+            },
+            {
+              "Terminal underlying ($)": 504.0,
+              "Move from spot (%)": 0.8000000000000007,
+              "Expiration P&L ($)": 188.75,
+              "Return on max risk (%)": 89.3491124260355,
+              "Landmark": ""
+            },
+            {
+              "Terminal underlying ($)": 504.5,
+              "Move from spot (%)": 0.8999999999999897,
+              "Expiration P&L ($)": 238.75,
+              "Return on max risk (%)": 113.01775147928994,
+              "Landmark": ""
+            },
+            {
+              "Terminal underlying ($)": 505.0,
+              "Move from spot (%)": 1.0000000000000009,
+              "Expiration P&L ($)": 288.75,
+              "Return on max risk (%)": 136.68639053254438,
+              "Landmark": "Strike"
+            },
+            {
+              "Terminal underlying ($)": 505.5,
+              "Move from spot (%)": 1.0999999999999899,
+              "Expiration P&L ($)": 288.75,
+              "Return on max risk (%)": 136.68639053254438,
+              "Landmark": ""
+            },
+            {
+              "Terminal underlying ($)": 506.0,
+              "Move from spot (%)": 1.200000000000001,
+              "Expiration P&L ($)": 288.75,
+              "Return on max risk (%)": 136.68639053254438,
+              "Landmark": ""
+            },
+            {
+              "Terminal underlying ($)": 506.5,
+              "Move from spot (%)": 1.29999999999999,
+              "Expiration P&L ($)": 288.75,
+              "Return on max risk (%)": 136.68639053254438,
+              "Landmark": ""
+            },
+            {
+              "Terminal underlying ($)": 507.0,
+              "Move from spot (%)": 1.4000000000000012,
+              "Expiration P&L ($)": 288.75,
+              "Return on max risk (%)": 136.68639053254438,
+              "Landmark": ""
+            }
+          ],
+          "extremes": [
+            {
+              "Terminal underlying ($)": 250.0,
+              "Move from spot (%)": -50.0,
+              "Expiration P&L ($)": -211.25,
+              "Return on max risk (%)": -100.0,
+              "Landmark": ""
+            },
+            {
+              "Terminal underlying ($)": 350.0,
+              "Move from spot (%)": -30.000000000000004,
+              "Expiration P&L ($)": -211.25,
+              "Return on max risk (%)": -100.0,
+              "Landmark": ""
+            },
+            {
+              "Terminal underlying ($)": 400.0,
+              "Move from spot (%)": -19.999999999999996,
+              "Expiration P&L ($)": -211.25,
+              "Return on max risk (%)": -100.0,
+              "Landmark": ""
+            },
+            {
+              "Terminal underlying ($)": 450.0,
+              "Move from spot (%)": -9.999999999999998,
+              "Expiration P&L ($)": -211.25,
+              "Return on max risk (%)": -100.0,
+              "Landmark": ""
+            },
+            {
+              "Terminal underlying ($)": 475.0,
+              "Move from spot (%)": -5.000000000000004,
+              "Expiration P&L ($)": -211.25,
+              "Return on max risk (%)": -100.0,
+              "Landmark": ""
+            },
+            {
+              "Terminal underlying ($)": 500.0,
+              "Move from spot (%)": 0.0,
+              "Expiration P&L ($)": -211.25,
+              "Return on max risk (%)": -100.0,
+              "Landmark": "Spot \u00b7 Strike"
+            },
+            {
+              "Terminal underlying ($)": 525.0,
+              "Move from spot (%)": 5.000000000000004,
+              "Expiration P&L ($)": 288.75,
+              "Return on max risk (%)": 136.68639053254438,
+              "Landmark": ""
+            },
+            {
+              "Terminal underlying ($)": 550.0,
+              "Move from spot (%)": 10.000000000000009,
+              "Expiration P&L ($)": 288.75,
+              "Return on max risk (%)": 136.68639053254438,
+              "Landmark": ""
+            },
+            {
+              "Terminal underlying ($)": 600.0,
+              "Move from spot (%)": 19.999999999999996,
+              "Expiration P&L ($)": 288.75,
+              "Return on max risk (%)": 136.68639053254438,
+              "Landmark": ""
+            },
+            {
+              "Terminal underlying ($)": 650.0,
+              "Move from spot (%)": 30.000000000000004,
+              "Expiration P&L ($)": 288.75,
+              "Return on max risk (%)": 136.68639053254438,
+              "Landmark": ""
+            },
+            {
+              "Terminal underlying ($)": 750.0,
+              "Move from spot (%)": 50.0,
+              "Expiration P&L ($)": 288.75,
+              "Return on max risk (%)": 136.68639053254438,
+              "Landmark": ""
+            }
+          ]
+        },
+        "evidence": {
+          "source": "Verified Supabase archive",
+          "option_legs": [
+            {
+              "type": "Call",
+              "strike": 500.0,
+              "expiration": "2030-01-18",
+              "qty": 1.0,
+              "quantity": 1.0,
+              "action": "Buy",
+              "contract": "SPY300118C00500000",
+              "bid": 3.0,
+              "ask": 3.1,
+              "mid": null,
+              "delta": null,
+              "gamma": null,
+              "theta": null,
+              "vega": null,
+              "rho": null,
+              "iv": null,
+              "volume": null,
+              "open_interest": null,
+              "bid_timestamp": "2030-01-02T20:30:00+00:00",
+              "ask_timestamp": "2030-01-02T20:30:00+00:00",
+              "last_timestamp": null,
+              "quote_timestamp": null,
+              "observation_timestamp": "2030-01-02T20:30:00+00:00",
+              "observed_at": null,
+              "archive_quality": "valid_contracts",
+              "quality_warnings": [
+                "Synthetic test observation"
+              ],
+              "missing_fields": null,
+              "snapshot_id": "fixture",
+              "freshness": {
+                "evaluated_at": "2030-01-02T20:33:00+00:00",
+                "max_age_seconds": 900,
+                "bid_age_seconds": 180.0,
+                "ask_age_seconds": 180.0
+              },
+              "entry_side": "ask",
+              "entry_price": 3.1
+            },
+            {
+              "type": "Call",
+              "strike": 505.0,
+              "expiration": "2030-01-18",
+              "qty": -1.0,
+              "quantity": 1.0,
+              "action": "Sell",
+              "contract": "SPY300118C00505000",
+              "bid": 1.0,
+              "ask": 1.1,
+              "mid": null,
+              "delta": null,
+              "gamma": null,
+              "theta": null,
+              "vega": null,
+              "rho": null,
+              "iv": null,
+              "volume": null,
+              "open_interest": null,
+              "bid_timestamp": "2030-01-02T20:30:00+00:00",
+              "ask_timestamp": "2030-01-02T20:30:00+00:00",
+              "last_timestamp": null,
+              "quote_timestamp": null,
+              "observation_timestamp": "2030-01-02T20:30:00+00:00",
+              "observed_at": null,
+              "archive_quality": "valid_contracts",
+              "quality_warnings": [
+                "Synthetic test observation"
+              ],
+              "missing_fields": null,
+              "snapshot_id": "fixture",
+              "freshness": {
+                "evaluated_at": "2030-01-02T20:33:00+00:00",
+                "max_age_seconds": 900,
+                "bid_age_seconds": 180.0,
+                "ask_age_seconds": 180.0
+              },
+              "entry_side": "bid",
+              "entry_price": 1.0
+            }
+          ],
+          "expected_move_status": "unknown",
+          "pricing_assumption": "Observed buy ask / sell bid; user-supplied fees; not an executable fill",
+          "market_data": {
+            "version": "structure-market-data-v1",
+            "kind": "verified_archive",
+            "verified": true,
+            "verified_for_trading": false,
+            "snapshot": {
+              "id": "fixture",
+              "provider": "Public",
+              "symbol": "SPY",
+              "observed_at": "2030-01-02T20:30:00+00:00",
+              "session_date": "2030-01-02",
+              "archive_path": "options/symbol=SPY/date=2030-01-02/fixture.json.gz",
+              "archive_sha256": "c90d159f3930c779b9b1b2edb3bd38195cb2fe63b3b87ef5538e54cc89d75403",
+              "quality_status": "complete",
+              "slot_time": "2030-01-02T20:25:00+00:00",
+              "created_at": "2030-01-02T20:32:30+00:00"
+            },
+            "archive_freshness": {
+              "as_of": "2030-01-02T20:33:00+00:00",
+              "age_seconds": 180.0,
+              "max_age_seconds": 300,
+              "basis": "collection_start"
+            },
+            "evaluated_at": "2030-01-02T20:33:00+00:00",
+            "underlying": {
+              "spot": 500.0,
+              "timestamp": "2030-01-02T20:30:00+00:00"
+            },
+            "pricing": "natural_bid_ask",
+            "signed_package_cashflow": -2.1,
+            "fees": 1.25,
+            "legs": [
+              {
+                "type": "Call",
+                "strike": 500.0,
+                "qty": 1,
+                "symbol": "SPY",
+                "expiration": "2030-01-18",
+                "contract": "SPY300118C00500000",
+                "bid": 3.0,
+                "ask": 3.1,
+                "bid_timestamp": "2030-01-02T20:30:00+00:00",
+                "ask_timestamp": "2030-01-02T20:30:00+00:00",
+                "observation_timestamp": "2030-01-02T20:30:00+00:00",
+                "archive_quality": "valid_contracts",
+                "quality_warnings": [
+                  "Synthetic test observation"
+                ],
+                "entry_side": "ask",
+                "entry_price": 3.1,
+                "snapshot_id": "fixture",
+                "freshness": {
+                  "evaluated_at": "2030-01-02T20:33:00+00:00",
+                  "max_age_seconds": 900,
+                  "bid_age_seconds": 180.0,
+                  "ask_age_seconds": 180.0
+                }
+              },
+              {
+                "type": "Call",
+                "strike": 505.0,
+                "qty": -1,
+                "symbol": "SPY",
+                "expiration": "2030-01-18",
+                "contract": "SPY300118C00505000",
+                "bid": 1.0,
+                "ask": 1.1,
+                "bid_timestamp": "2030-01-02T20:30:00+00:00",
+                "ask_timestamp": "2030-01-02T20:30:00+00:00",
+                "observation_timestamp": "2030-01-02T20:30:00+00:00",
+                "archive_quality": "valid_contracts",
+                "quality_warnings": [
+                  "Synthetic test observation"
+                ],
+                "entry_side": "bid",
+                "entry_price": 1.0,
+                "snapshot_id": "fixture",
+                "freshness": {
+                  "evaluated_at": "2030-01-02T20:33:00+00:00",
+                  "max_age_seconds": 900,
+                  "bid_age_seconds": 180.0,
+                  "ask_age_seconds": 180.0
+                }
+              }
+            ],
+            "caveats": [
+              "Archived observations are not executable fills.",
+              "Provider quote delay and broker margin are not certified.",
+              "Fees are user-supplied total package dollars."
+            ]
+          }
+        },
+        "candidate_order": "input/generator order; not a ranking",
+        "caveats": [
+          "Deterministic expiration payoff, not a forecast or probability of profit.",
+          "Standard 100-share multiplier; credit/debit are per-share package cashflows; payoff/risk and fees are dollars.",
+          "Signed moves are distances to expiration breakevens, not predicted moves. Multiple roots remain separate.",
+          "Direction describes structure bias, not inferred market evidence. No winner or recommendation.",
+          "Missing Greeks, IV, liquidity, timestamps and expected-move evidence remain unavailable."
+        ],
+        "position": {
+          "symbol": "SPY",
+          "expiration": "2030-01-18",
+          "strategy_family": "call_debit_spread",
+          "legs": [
+            {
+              "type": "Call",
+              "strike": 500.0,
+              "expiration": "2030-01-18",
+              "qty": 1.0,
+              "quantity": 1.0,
+              "action": "Buy",
+              "contract": "SPY300118C00500000",
+              "bid": 3.0,
+              "ask": 3.1,
+              "mid": null,
+              "delta": null,
+              "gamma": null,
+              "theta": null,
+              "vega": null,
+              "rho": null,
+              "iv": null,
+              "volume": null,
+              "open_interest": null,
+              "bid_timestamp": "2030-01-02T20:30:00+00:00",
+              "ask_timestamp": "2030-01-02T20:30:00+00:00",
+              "last_timestamp": null,
+              "quote_timestamp": null,
+              "observation_timestamp": "2030-01-02T20:30:00+00:00",
+              "observed_at": null,
+              "archive_quality": "valid_contracts",
+              "quality_warnings": [
+                "Synthetic test observation"
+              ],
+              "missing_fields": null,
+              "snapshot_id": "fixture",
+              "freshness": {
+                "evaluated_at": "2030-01-02T20:33:00+00:00",
+                "max_age_seconds": 900,
+                "bid_age_seconds": 180.0,
+                "ask_age_seconds": 180.0
+              },
+              "entry_side": "ask",
+              "entry_price": 3.1
+            },
+            {
+              "type": "Call",
+              "strike": 505.0,
+              "expiration": "2030-01-18",
+              "qty": -1.0,
+              "quantity": 1.0,
+              "action": "Sell",
+              "contract": "SPY300118C00505000",
+              "bid": 1.0,
+              "ask": 1.1,
+              "mid": null,
+              "delta": null,
+              "gamma": null,
+              "theta": null,
+              "vega": null,
+              "rho": null,
+              "iv": null,
+              "volume": null,
+              "open_interest": null,
+              "bid_timestamp": "2030-01-02T20:30:00+00:00",
+              "ask_timestamp": "2030-01-02T20:30:00+00:00",
+              "last_timestamp": null,
+              "quote_timestamp": null,
+              "observation_timestamp": "2030-01-02T20:30:00+00:00",
+              "observed_at": null,
+              "archive_quality": "valid_contracts",
+              "quality_warnings": [
+                "Synthetic test observation"
+              ],
+              "missing_fields": null,
+              "snapshot_id": "fixture",
+              "freshness": {
+                "evaluated_at": "2030-01-02T20:33:00+00:00",
+                "max_age_seconds": 900,
+                "bid_age_seconds": 180.0,
+                "ask_age_seconds": 180.0
+              },
+              "entry_side": "bid",
+              "entry_price": 1.0
+            }
+          ],
+          "credit": -2.1,
+          "fees": 1.25
+        },
+        "historical_economics": {
+          "version": "historical-economics-v1",
+          "structure_identity": {
+            "symbol": "SPY",
+            "expiration": "2030-01-18",
+            "strategy_family": "call_debit_spread",
+            "legs": [
+              {
+                "type": "Call",
+                "strike": 500.0,
+                "expiration": "2030-01-18",
+                "qty": 1.0,
+                "quantity": 1.0,
+                "action": "Buy",
+                "contract": "SPY300118C00500000",
+                "bid": 3.0,
+                "ask": 3.1,
+                "mid": null,
+                "delta": null,
+                "gamma": null,
+                "theta": null,
+                "vega": null,
+                "rho": null,
+                "iv": null,
+                "volume": null,
+                "open_interest": null,
+                "bid_timestamp": "2030-01-02T20:30:00+00:00",
+                "ask_timestamp": "2030-01-02T20:30:00+00:00",
+                "last_timestamp": null,
+                "quote_timestamp": null,
+                "observation_timestamp": "2030-01-02T20:30:00+00:00",
+                "observed_at": null,
+                "archive_quality": "valid_contracts",
+                "quality_warnings": [
+                  "Synthetic test observation"
+                ],
+                "missing_fields": null,
+                "snapshot_id": "fixture",
+                "freshness": {
+                  "evaluated_at": "2030-01-02T20:33:00+00:00",
+                  "max_age_seconds": 900,
+                  "bid_age_seconds": 180.0,
+                  "ask_age_seconds": 180.0
+                },
+                "entry_side": "ask",
+                "entry_price": 3.1
+              },
+              {
+                "type": "Call",
+                "strike": 505.0,
+                "expiration": "2030-01-18",
+                "qty": -1.0,
+                "quantity": 1.0,
+                "action": "Sell",
+                "contract": "SPY300118C00505000",
+                "bid": 1.0,
+                "ask": 1.1,
+                "mid": null,
+                "delta": null,
+                "gamma": null,
+                "theta": null,
+                "vega": null,
+                "rho": null,
+                "iv": null,
+                "volume": null,
+                "open_interest": null,
+                "bid_timestamp": "2030-01-02T20:30:00+00:00",
+                "ask_timestamp": "2030-01-02T20:30:00+00:00",
+                "last_timestamp": null,
+                "quote_timestamp": null,
+                "observation_timestamp": "2030-01-02T20:30:00+00:00",
+                "observed_at": null,
+                "archive_quality": "valid_contracts",
+                "quality_warnings": [
+                  "Synthetic test observation"
+                ],
+                "missing_fields": null,
+                "snapshot_id": "fixture",
+                "freshness": {
+                  "evaluated_at": "2030-01-02T20:33:00+00:00",
+                  "max_age_seconds": 900,
+                  "bid_age_seconds": 180.0,
+                  "ask_age_seconds": 180.0
+                },
+                "entry_side": "bid",
+                "entry_price": 1.0
+              }
+            ],
+            "credit": -2.1,
+            "fees": 1.25,
+            "multiplier": 100
+          },
+          "holding_period": "swing",
+          "valuation": "expiration",
+          "deterministic_expiration": {
+            "max_profit": 288.75,
+            "max_profit_unlimited": false,
+            "max_loss": 211.25,
+            "breakevens": [
+              502.1125
+            ],
+            "required_moves": [
+              {
+                "dollars": 2.1125000000000114,
+                "fraction": 0.004224999999999923
+              }
+            ]
+          },
+          "capital_requirement": {
+            "expiration_max_loss": 211.25,
+            "broker_buying_power": null
+          },
+          "capital_eligibility": {
+            "status": "not_assessed",
+            "available_capital": null,
+            "basis": "expiration max loss, not broker buying power"
+          },
+          "assumptions": {
+            "multiplier": 100,
+            "premium": "signed package per-share cashflow",
+            "fees_dollars": 1.25,
+            "slippage_dollars": 0.0,
+            "cost_basis": "total package costs once, not per leg or per scenario period",
+            "weighting": "equal observations",
+            "quantiles": "linear interpolation",
+            "minimum_samples": 30
+          },
+          "historical_economics": {
+            "expected_value_dollars": null,
+            "ev_over_max_risk": null,
+            "positive_payoff_frequency": null,
+            "profit_factor": null,
+            "median_payoff": null,
+            "p10_payoff": null,
+            "p90_payoff": null,
+            "average_winning_payoff": null,
+            "average_losing_payoff": null
+          },
+          "sample_size": 0,
+          "scenario_payoffs": [],
+          "evidence": null,
+          "robustness": {
+            "status": "unavailable",
+            "reason": "Distinct validated analog subsets not supplied."
+          },
+          "touch_breach": {
+            "status": "unavailable",
+            "reason": "Terminal returns do not establish path behavior."
+          },
+          "execution_evidence": {
+            "status": "unavailable",
+            "reason": "Executable quotes/liquidity not validated by this evaluator."
+          },
+          "early_exit": {
+            "status": "unavailable",
+            "reason": "Historical option marks or validated repricing inputs required."
+          },
+          "eligibility": "ECONOMICS_INCOMPLETE",
+          "eligible_for_consideration": false,
+          "missing_evidence": [
+            "as_of_session_not_complete"
+          ],
+          "research_only_reasons": [
+            "No execution validation or independent robustness validation."
+          ],
+          "historical_evidence_status": "unavailable",
+          "economics_coverage": "deterministic_only",
+          "integration_version": "structure-historical-v1",
+          "temporal_basis": "Explicit as_of completed NYSE session; historical, not live",
+          "provenance": {
+            "verification": "unavailable",
+            "pricing": "caller-supplied scenario"
+          }
+        }
+      },
+      "provenance": {
+        "source": "Verified Supabase archive"
+      },
+      "caveats": []
+    },
+    "QQQ": {
+      "schema_version": "alphaos-interface-v2",
+      "request": {
+        "symbol": "QQQ",
+        "expiration": "2030-01-18",
+        "as_of": "2030-01-02",
+        "spot": 500.0,
+        "credit": -2.1,
+        "fees": 1.25,
+        "legs": [
+          {
+            "type": "Call",
+            "strike": 500.0,
+            "qty": 1,
+            "contract": "QQQ300118C00500000"
+          },
+          {
+            "type": "Call",
+            "strike": 505.0,
+            "qty": -1,
+            "contract": "QQQ300118C00505000"
+          }
+        ],
+        "market_data": {
+          "snapshot_id": "fixture",
+          "archive_sha256": "0a361d3cb97255d72e9cb123f32ecaa1da72092da988b7d0d01daa277558cf7f"
+        }
+      },
+      "read_only": true,
+      "research": {
+        "version": "structure-research-v1",
+        "underlying": "QQQ",
+        "strategy_family": "call_debit_spread",
+        "direction": "bullish",
+        "expiration": "2030-01-18",
+        "legs": [
+          {
+            "type": "Call",
+            "strike": 500.0,
+            "qty": 1.0,
+            "symbol": "QQQ",
+            "expiration": "2030-01-18",
+            "contract": "QQQ300118C00500000",
+            "bid": 3.0,
+            "ask": 3.1,
+            "bid_timestamp": "2030-01-02T20:30:00+00:00",
+            "ask_timestamp": "2030-01-02T20:30:00+00:00",
+            "observation_timestamp": "2030-01-02T20:30:00+00:00",
+            "archive_quality": "valid_contracts",
+            "quality_warnings": [
+              "Synthetic test observation"
+            ],
+            "entry_side": "ask",
+            "entry_price": 3.1,
+            "snapshot_id": "fixture",
+            "freshness": {
+              "evaluated_at": "2030-01-02T20:33:00+00:00",
+              "max_age_seconds": 900,
+              "bid_age_seconds": 180.0,
+              "ask_age_seconds": 180.0
+            }
+          },
+          {
+            "type": "Call",
+            "strike": 505.0,
+            "qty": -1.0,
+            "symbol": "QQQ",
+            "expiration": "2030-01-18",
+            "contract": "QQQ300118C00505000",
+            "bid": 1.0,
+            "ask": 1.1,
+            "bid_timestamp": "2030-01-02T20:30:00+00:00",
+            "ask_timestamp": "2030-01-02T20:30:00+00:00",
+            "observation_timestamp": "2030-01-02T20:30:00+00:00",
+            "archive_quality": "valid_contracts",
+            "quality_warnings": [
+              "Synthetic test observation"
+            ],
+            "entry_side": "bid",
+            "entry_price": 1.0,
+            "snapshot_id": "fixture",
+            "freshness": {
+              "evaluated_at": "2030-01-02T20:33:00+00:00",
+              "max_age_seconds": 900,
+              "bid_age_seconds": 180.0,
+              "ask_age_seconds": 180.0
+            }
+          }
+        ],
+        "trade": {
+          "symbol": "QQQ",
+          "expiration": "2030-01-18",
+          "spot": 500.0,
+          "credit": -2.1,
+          "shares": 0.0,
+          "fees": 1.25,
+          "source": "Verified Supabase archive",
+          "legs": [
+            {
+              "type": "Call",
+              "strike": 500.0,
+              "qty": 1.0,
+              "symbol": "QQQ",
+              "expiration": "2030-01-18",
+              "contract": "QQQ300118C00500000",
+              "bid": 3.0,
+              "ask": 3.1,
+              "bid_timestamp": "2030-01-02T20:30:00+00:00",
+              "ask_timestamp": "2030-01-02T20:30:00+00:00",
+              "observation_timestamp": "2030-01-02T20:30:00+00:00",
+              "archive_quality": "valid_contracts",
+              "quality_warnings": [
+                "Synthetic test observation"
+              ],
+              "entry_side": "ask",
+              "entry_price": 3.1,
+              "snapshot_id": "fixture",
+              "freshness": {
+                "evaluated_at": "2030-01-02T20:33:00+00:00",
+                "max_age_seconds": 900,
+                "bid_age_seconds": 180.0,
+                "ask_age_seconds": 180.0
+              }
+            },
+            {
+              "type": "Call",
+              "strike": 505.0,
+              "qty": -1.0,
+              "symbol": "QQQ",
+              "expiration": "2030-01-18",
+              "contract": "QQQ300118C00505000",
+              "bid": 1.0,
+              "ask": 1.1,
+              "bid_timestamp": "2030-01-02T20:30:00+00:00",
+              "ask_timestamp": "2030-01-02T20:30:00+00:00",
+              "observation_timestamp": "2030-01-02T20:30:00+00:00",
+              "archive_quality": "valid_contracts",
+              "quality_warnings": [
+                "Synthetic test observation"
+              ],
+              "entry_side": "bid",
+              "entry_price": 1.0,
+              "snapshot_id": "fixture",
+              "freshness": {
+                "evaluated_at": "2030-01-02T20:33:00+00:00",
+                "max_age_seconds": 900,
+                "bid_age_seconds": 180.0,
+                "ask_age_seconds": 180.0
+              }
+            }
+          ],
+          "pricing_assumption": "Observed buy ask / sell bid; user-supplied fees; not an executable fill",
+          "stock_basis": 500.0,
+          "strategy": "call_debit_spread",
+          "strategy_family": "call_debit_spread"
+        },
+        "entry_debit": 2.1,
+        "entry_credit": 0,
+        "capital_at_risk": 211.25,
+        "max_loss": 211.25,
+        "max_profit": 288.75,
+        "breakeven": 502.1125,
+        "breakevens": [
+          502.1125
+        ],
+        "required_move": 2.1125000000000114,
+        "required_move_pct": 0.004225000000000023,
+        "breakeven_moves": [
+          {
+            "breakeven": 502.1125,
+            "move": 2.1125000000000114,
+            "move_pct": 0.004225000000000023
+          }
+        ],
+        "dte": 16,
+        "expected_move_context": null,
+        "payoff": {
+          "trade": {
+            "symbol": "QQQ",
+            "expiration": "2030-01-18",
+            "spot": 500.0,
+            "credit": -2.1,
+            "shares": 0.0,
+            "fees": 1.25,
+            "source": "Verified Supabase archive",
+            "legs": [
+              {
+                "type": "Call",
+                "strike": 500.0,
+                "qty": 1.0,
+                "symbol": "QQQ",
+                "expiration": "2030-01-18",
+                "contract": "QQQ300118C00500000",
+                "bid": 3.0,
+                "ask": 3.1,
+                "bid_timestamp": "2030-01-02T20:30:00+00:00",
+                "ask_timestamp": "2030-01-02T20:30:00+00:00",
+                "observation_timestamp": "2030-01-02T20:30:00+00:00",
+                "archive_quality": "valid_contracts",
+                "quality_warnings": [
+                  "Synthetic test observation"
+                ],
+                "entry_side": "ask",
+                "entry_price": 3.1,
+                "snapshot_id": "fixture",
+                "freshness": {
+                  "evaluated_at": "2030-01-02T20:33:00+00:00",
+                  "max_age_seconds": 900,
+                  "bid_age_seconds": 180.0,
+                  "ask_age_seconds": 180.0
+                }
+              },
+              {
+                "type": "Call",
+                "strike": 505.0,
+                "qty": -1.0,
+                "symbol": "QQQ",
+                "expiration": "2030-01-18",
+                "contract": "QQQ300118C00505000",
+                "bid": 1.0,
+                "ask": 1.1,
+                "bid_timestamp": "2030-01-02T20:30:00+00:00",
+                "ask_timestamp": "2030-01-02T20:30:00+00:00",
+                "observation_timestamp": "2030-01-02T20:30:00+00:00",
+                "archive_quality": "valid_contracts",
+                "quality_warnings": [
+                  "Synthetic test observation"
+                ],
+                "entry_side": "bid",
+                "entry_price": 1.0,
+                "snapshot_id": "fixture",
+                "freshness": {
+                  "evaluated_at": "2030-01-02T20:33:00+00:00",
+                  "max_age_seconds": 900,
+                  "bid_age_seconds": 180.0,
+                  "ask_age_seconds": 180.0
+                }
+              }
+            ],
+            "pricing_assumption": "Observed buy ask / sell bid; user-supplied fees; not an executable fill",
+            "stock_basis": 500.0,
+            "strategy": "call_debit_spread",
+            "strategy_family": "call_debit_spread"
+          },
+          "units": 1,
+          "max_profit": 288.75,
+          "max_loss": 211.25,
+          "return_on_risk": 1.3668639053254439,
+          "option_premium": -210.0,
+          "fees": 1.25,
+          "net_cash": -211.25,
+          "breakevens": [
+            502.1125
+          ],
+          "strikes": [
+            500.0,
+            505.0
+          ],
+          "width": 5.0,
+          "credit_width": null,
+          "grid": [
+            {
+              "Terminal underlying ($)": 498.0,
+              "Move from spot (%)": -0.40000000000000036,
+              "Expiration P&L ($)": -211.25,
+              "Return on max risk (%)": -100.0,
+              "Landmark": ""
+            },
+            {
+              "Terminal underlying ($)": 498.5,
+              "Move from spot (%)": -0.30000000000000027,
+              "Expiration P&L ($)": -211.25,
+              "Return on max risk (%)": -100.0,
+              "Landmark": ""
+            },
+            {
+              "Terminal underlying ($)": 499.0,
+              "Move from spot (%)": -0.20000000000000018,
+              "Expiration P&L ($)": -211.25,
+              "Return on max risk (%)": -100.0,
+              "Landmark": ""
+            },
+            {
+              "Terminal underlying ($)": 499.5,
+              "Move from spot (%)": -0.10000000000000009,
+              "Expiration P&L ($)": -211.25,
+              "Return on max risk (%)": -100.0,
+              "Landmark": ""
+            },
+            {
+              "Terminal underlying ($)": 500.0,
+              "Move from spot (%)": 0.0,
+              "Expiration P&L ($)": -211.25,
+              "Return on max risk (%)": -100.0,
+              "Landmark": "Spot \u00b7 Strike"
+            },
+            {
+              "Terminal underlying ($)": 500.5,
+              "Move from spot (%)": 0.09999999999998899,
+              "Expiration P&L ($)": -161.25,
+              "Return on max risk (%)": -76.33136094674556,
+              "Landmark": ""
+            },
+            {
+              "Terminal underlying ($)": 501.0,
+              "Move from spot (%)": 0.20000000000000018,
+              "Expiration P&L ($)": -111.25,
+              "Return on max risk (%)": -52.662721893491124,
+              "Landmark": ""
+            },
+            {
+              "Terminal underlying ($)": 501.05625,
+              "Move from spot (%)": 0.21124999999999616,
+              "Expiration P&L ($)": -105.62500000000227,
+              "Return on max risk (%)": -50.00000000000108,
+              "Landmark": ""
+            },
+            {
+              "Terminal underlying ($)": 501.5,
+              "Move from spot (%)": 0.29999999999998916,
+              "Expiration P&L ($)": -61.25,
+              "Return on max risk (%)": -28.994082840236686,
+              "Landmark": ""
+            },
+            {
+              "Terminal underlying ($)": 502.0,
+              "Move from spot (%)": 0.40000000000000036,
+              "Expiration P&L ($)": -11.25,
+              "Return on max risk (%)": -5.325443786982249,
+              "Landmark": ""
+            },
+            {
+              "Terminal underlying ($)": 502.1125,
+              "Move from spot (%)": 0.4224999999999923,
+              "Expiration P&L ($)": 1.1368683772161603e-12,
+              "Return on max risk (%)": 5.381625454277682e-13,
+              "Landmark": "Breakeven"
+            },
+            {
+              "Terminal underlying ($)": 502.5,
+              "Move from spot (%)": 0.49999999999998934,
+              "Expiration P&L ($)": 38.75,
+              "Return on max risk (%)": 18.34319526627219,
+              "Landmark": ""
+            },
+            {
+              "Terminal underlying ($)": 503.0,
+              "Move from spot (%)": 0.6000000000000005,
+              "Expiration P&L ($)": 88.75,
+              "Return on max risk (%)": 42.01183431952663,
+              "Landmark": ""
+            },
+            {
+              "Terminal underlying ($)": 503.5,
+              "Move from spot (%)": 0.6999999999999895,
+              "Expiration P&L ($)": 138.75,
+              "Return on max risk (%)": 65.68047337278107,
+              "Landmark": ""
+            },
+            {
+              "Terminal underlying ($)": 503.55625,
+              "Move from spot (%)": 0.7112499999999855,
+              "Expiration P&L ($)": 144.37499999999773,
+              "Return on max risk (%)": 68.34319526627112,
+              "Landmark": ""
+            },
+            {
+              "Terminal underlying ($)": 504.0,
+              "Move from spot (%)": 0.8000000000000007,
+              "Expiration P&L ($)": 188.75,
+              "Return on max risk (%)": 89.3491124260355,
+              "Landmark": ""
+            },
+            {
+              "Terminal underlying ($)": 504.5,
+              "Move from spot (%)": 0.8999999999999897,
+              "Expiration P&L ($)": 238.75,
+              "Return on max risk (%)": 113.01775147928994,
+              "Landmark": ""
+            },
+            {
+              "Terminal underlying ($)": 505.0,
+              "Move from spot (%)": 1.0000000000000009,
+              "Expiration P&L ($)": 288.75,
+              "Return on max risk (%)": 136.68639053254438,
+              "Landmark": "Strike"
+            },
+            {
+              "Terminal underlying ($)": 505.5,
+              "Move from spot (%)": 1.0999999999999899,
+              "Expiration P&L ($)": 288.75,
+              "Return on max risk (%)": 136.68639053254438,
+              "Landmark": ""
+            },
+            {
+              "Terminal underlying ($)": 506.0,
+              "Move from spot (%)": 1.200000000000001,
+              "Expiration P&L ($)": 288.75,
+              "Return on max risk (%)": 136.68639053254438,
+              "Landmark": ""
+            },
+            {
+              "Terminal underlying ($)": 506.5,
+              "Move from spot (%)": 1.29999999999999,
+              "Expiration P&L ($)": 288.75,
+              "Return on max risk (%)": 136.68639053254438,
+              "Landmark": ""
+            },
+            {
+              "Terminal underlying ($)": 507.0,
+              "Move from spot (%)": 1.4000000000000012,
+              "Expiration P&L ($)": 288.75,
+              "Return on max risk (%)": 136.68639053254438,
+              "Landmark": ""
+            }
+          ],
+          "extremes": [
+            {
+              "Terminal underlying ($)": 250.0,
+              "Move from spot (%)": -50.0,
+              "Expiration P&L ($)": -211.25,
+              "Return on max risk (%)": -100.0,
+              "Landmark": ""
+            },
+            {
+              "Terminal underlying ($)": 350.0,
+              "Move from spot (%)": -30.000000000000004,
+              "Expiration P&L ($)": -211.25,
+              "Return on max risk (%)": -100.0,
+              "Landmark": ""
+            },
+            {
+              "Terminal underlying ($)": 400.0,
+              "Move from spot (%)": -19.999999999999996,
+              "Expiration P&L ($)": -211.25,
+              "Return on max risk (%)": -100.0,
+              "Landmark": ""
+            },
+            {
+              "Terminal underlying ($)": 450.0,
+              "Move from spot (%)": -9.999999999999998,
+              "Expiration P&L ($)": -211.25,
+              "Return on max risk (%)": -100.0,
+              "Landmark": ""
+            },
+            {
+              "Terminal underlying ($)": 475.0,
+              "Move from spot (%)": -5.000000000000004,
+              "Expiration P&L ($)": -211.25,
+              "Return on max risk (%)": -100.0,
+              "Landmark": ""
+            },
+            {
+              "Terminal underlying ($)": 500.0,
+              "Move from spot (%)": 0.0,
+              "Expiration P&L ($)": -211.25,
+              "Return on max risk (%)": -100.0,
+              "Landmark": "Spot \u00b7 Strike"
+            },
+            {
+              "Terminal underlying ($)": 525.0,
+              "Move from spot (%)": 5.000000000000004,
+              "Expiration P&L ($)": 288.75,
+              "Return on max risk (%)": 136.68639053254438,
+              "Landmark": ""
+            },
+            {
+              "Terminal underlying ($)": 550.0,
+              "Move from spot (%)": 10.000000000000009,
+              "Expiration P&L ($)": 288.75,
+              "Return on max risk (%)": 136.68639053254438,
+              "Landmark": ""
+            },
+            {
+              "Terminal underlying ($)": 600.0,
+              "Move from spot (%)": 19.999999999999996,
+              "Expiration P&L ($)": 288.75,
+              "Return on max risk (%)": 136.68639053254438,
+              "Landmark": ""
+            },
+            {
+              "Terminal underlying ($)": 650.0,
+              "Move from spot (%)": 30.000000000000004,
+              "Expiration P&L ($)": 288.75,
+              "Return on max risk (%)": 136.68639053254438,
+              "Landmark": ""
+            },
+            {
+              "Terminal underlying ($)": 750.0,
+              "Move from spot (%)": 50.0,
+              "Expiration P&L ($)": 288.75,
+              "Return on max risk (%)": 136.68639053254438,
+              "Landmark": ""
+            }
+          ]
+        },
+        "evidence": {
+          "source": "Verified Supabase archive",
+          "option_legs": [
+            {
+              "type": "Call",
+              "strike": 500.0,
+              "expiration": "2030-01-18",
+              "qty": 1.0,
+              "quantity": 1.0,
+              "action": "Buy",
+              "contract": "QQQ300118C00500000",
+              "bid": 3.0,
+              "ask": 3.1,
+              "mid": null,
+              "delta": null,
+              "gamma": null,
+              "theta": null,
+              "vega": null,
+              "rho": null,
+              "iv": null,
+              "volume": null,
+              "open_interest": null,
+              "bid_timestamp": "2030-01-02T20:30:00+00:00",
+              "ask_timestamp": "2030-01-02T20:30:00+00:00",
+              "last_timestamp": null,
+              "quote_timestamp": null,
+              "observation_timestamp": "2030-01-02T20:30:00+00:00",
+              "observed_at": null,
+              "archive_quality": "valid_contracts",
+              "quality_warnings": [
+                "Synthetic test observation"
+              ],
+              "missing_fields": null,
+              "snapshot_id": "fixture",
+              "freshness": {
+                "evaluated_at": "2030-01-02T20:33:00+00:00",
+                "max_age_seconds": 900,
+                "bid_age_seconds": 180.0,
+                "ask_age_seconds": 180.0
+              },
+              "entry_side": "ask",
+              "entry_price": 3.1
+            },
+            {
+              "type": "Call",
+              "strike": 505.0,
+              "expiration": "2030-01-18",
+              "qty": -1.0,
+              "quantity": 1.0,
+              "action": "Sell",
+              "contract": "QQQ300118C00505000",
+              "bid": 1.0,
+              "ask": 1.1,
+              "mid": null,
+              "delta": null,
+              "gamma": null,
+              "theta": null,
+              "vega": null,
+              "rho": null,
+              "iv": null,
+              "volume": null,
+              "open_interest": null,
+              "bid_timestamp": "2030-01-02T20:30:00+00:00",
+              "ask_timestamp": "2030-01-02T20:30:00+00:00",
+              "last_timestamp": null,
+              "quote_timestamp": null,
+              "observation_timestamp": "2030-01-02T20:30:00+00:00",
+              "observed_at": null,
+              "archive_quality": "valid_contracts",
+              "quality_warnings": [
+                "Synthetic test observation"
+              ],
+              "missing_fields": null,
+              "snapshot_id": "fixture",
+              "freshness": {
+                "evaluated_at": "2030-01-02T20:33:00+00:00",
+                "max_age_seconds": 900,
+                "bid_age_seconds": 180.0,
+                "ask_age_seconds": 180.0
+              },
+              "entry_side": "bid",
+              "entry_price": 1.0
+            }
+          ],
+          "expected_move_status": "unknown",
+          "pricing_assumption": "Observed buy ask / sell bid; user-supplied fees; not an executable fill",
+          "market_data": {
+            "version": "structure-market-data-v1",
+            "kind": "verified_archive",
+            "verified": true,
+            "verified_for_trading": false,
+            "snapshot": {
+              "id": "fixture",
+              "provider": "Public",
+              "symbol": "QQQ",
+              "observed_at": "2030-01-02T20:30:00+00:00",
+              "session_date": "2030-01-02",
+              "archive_path": "options/symbol=QQQ/date=2030-01-02/fixture.json.gz",
+              "archive_sha256": "0a361d3cb97255d72e9cb123f32ecaa1da72092da988b7d0d01daa277558cf7f",
+              "quality_status": "complete",
+              "slot_time": "2030-01-02T20:25:00+00:00",
+              "created_at": "2030-01-02T20:32:30+00:00"
+            },
+            "archive_freshness": {
+              "as_of": "2030-01-02T20:33:00+00:00",
+              "age_seconds": 180.0,
+              "max_age_seconds": 300,
+              "basis": "collection_start"
+            },
+            "evaluated_at": "2030-01-02T20:33:00+00:00",
+            "underlying": {
+              "spot": 500.0,
+              "timestamp": "2030-01-02T20:30:00+00:00"
+            },
+            "pricing": "natural_bid_ask",
+            "signed_package_cashflow": -2.1,
+            "fees": 1.25,
+            "legs": [
+              {
+                "type": "Call",
+                "strike": 500.0,
+                "qty": 1,
+                "symbol": "QQQ",
+                "expiration": "2030-01-18",
+                "contract": "QQQ300118C00500000",
+                "bid": 3.0,
+                "ask": 3.1,
+                "bid_timestamp": "2030-01-02T20:30:00+00:00",
+                "ask_timestamp": "2030-01-02T20:30:00+00:00",
+                "observation_timestamp": "2030-01-02T20:30:00+00:00",
+                "archive_quality": "valid_contracts",
+                "quality_warnings": [
+                  "Synthetic test observation"
+                ],
+                "entry_side": "ask",
+                "entry_price": 3.1,
+                "snapshot_id": "fixture",
+                "freshness": {
+                  "evaluated_at": "2030-01-02T20:33:00+00:00",
+                  "max_age_seconds": 900,
+                  "bid_age_seconds": 180.0,
+                  "ask_age_seconds": 180.0
+                }
+              },
+              {
+                "type": "Call",
+                "strike": 505.0,
+                "qty": -1,
+                "symbol": "QQQ",
+                "expiration": "2030-01-18",
+                "contract": "QQQ300118C00505000",
+                "bid": 1.0,
+                "ask": 1.1,
+                "bid_timestamp": "2030-01-02T20:30:00+00:00",
+                "ask_timestamp": "2030-01-02T20:30:00+00:00",
+                "observation_timestamp": "2030-01-02T20:30:00+00:00",
+                "archive_quality": "valid_contracts",
+                "quality_warnings": [
+                  "Synthetic test observation"
+                ],
+                "entry_side": "bid",
+                "entry_price": 1.0,
+                "snapshot_id": "fixture",
+                "freshness": {
+                  "evaluated_at": "2030-01-02T20:33:00+00:00",
+                  "max_age_seconds": 900,
+                  "bid_age_seconds": 180.0,
+                  "ask_age_seconds": 180.0
+                }
+              }
+            ],
+            "caveats": [
+              "Archived observations are not executable fills.",
+              "Provider quote delay and broker margin are not certified.",
+              "Fees are user-supplied total package dollars."
+            ]
+          }
+        },
+        "candidate_order": "input/generator order; not a ranking",
+        "caveats": [
+          "Deterministic expiration payoff, not a forecast or probability of profit.",
+          "Standard 100-share multiplier; credit/debit are per-share package cashflows; payoff/risk and fees are dollars.",
+          "Signed moves are distances to expiration breakevens, not predicted moves. Multiple roots remain separate.",
+          "Direction describes structure bias, not inferred market evidence. No winner or recommendation.",
+          "Missing Greeks, IV, liquidity, timestamps and expected-move evidence remain unavailable."
+        ],
+        "position": {
+          "symbol": "QQQ",
+          "expiration": "2030-01-18",
+          "strategy_family": "call_debit_spread",
+          "legs": [
+            {
+              "type": "Call",
+              "strike": 500.0,
+              "expiration": "2030-01-18",
+              "qty": 1.0,
+              "quantity": 1.0,
+              "action": "Buy",
+              "contract": "QQQ300118C00500000",
+              "bid": 3.0,
+              "ask": 3.1,
+              "mid": null,
+              "delta": null,
+              "gamma": null,
+              "theta": null,
+              "vega": null,
+              "rho": null,
+              "iv": null,
+              "volume": null,
+              "open_interest": null,
+              "bid_timestamp": "2030-01-02T20:30:00+00:00",
+              "ask_timestamp": "2030-01-02T20:30:00+00:00",
+              "last_timestamp": null,
+              "quote_timestamp": null,
+              "observation_timestamp": "2030-01-02T20:30:00+00:00",
+              "observed_at": null,
+              "archive_quality": "valid_contracts",
+              "quality_warnings": [
+                "Synthetic test observation"
+              ],
+              "missing_fields": null,
+              "snapshot_id": "fixture",
+              "freshness": {
+                "evaluated_at": "2030-01-02T20:33:00+00:00",
+                "max_age_seconds": 900,
+                "bid_age_seconds": 180.0,
+                "ask_age_seconds": 180.0
+              },
+              "entry_side": "ask",
+              "entry_price": 3.1
+            },
+            {
+              "type": "Call",
+              "strike": 505.0,
+              "expiration": "2030-01-18",
+              "qty": -1.0,
+              "quantity": 1.0,
+              "action": "Sell",
+              "contract": "QQQ300118C00505000",
+              "bid": 1.0,
+              "ask": 1.1,
+              "mid": null,
+              "delta": null,
+              "gamma": null,
+              "theta": null,
+              "vega": null,
+              "rho": null,
+              "iv": null,
+              "volume": null,
+              "open_interest": null,
+              "bid_timestamp": "2030-01-02T20:30:00+00:00",
+              "ask_timestamp": "2030-01-02T20:30:00+00:00",
+              "last_timestamp": null,
+              "quote_timestamp": null,
+              "observation_timestamp": "2030-01-02T20:30:00+00:00",
+              "observed_at": null,
+              "archive_quality": "valid_contracts",
+              "quality_warnings": [
+                "Synthetic test observation"
+              ],
+              "missing_fields": null,
+              "snapshot_id": "fixture",
+              "freshness": {
+                "evaluated_at": "2030-01-02T20:33:00+00:00",
+                "max_age_seconds": 900,
+                "bid_age_seconds": 180.0,
+                "ask_age_seconds": 180.0
+              },
+              "entry_side": "bid",
+              "entry_price": 1.0
+            }
+          ],
+          "credit": -2.1,
+          "fees": 1.25
+        },
+        "historical_economics": {
+          "version": "historical-economics-v1",
+          "structure_identity": {
+            "symbol": "QQQ",
+            "expiration": "2030-01-18",
+            "strategy_family": "call_debit_spread",
+            "legs": [
+              {
+                "type": "Call",
+                "strike": 500.0,
+                "expiration": "2030-01-18",
+                "qty": 1.0,
+                "quantity": 1.0,
+                "action": "Buy",
+                "contract": "QQQ300118C00500000",
+                "bid": 3.0,
+                "ask": 3.1,
+                "mid": null,
+                "delta": null,
+                "gamma": null,
+                "theta": null,
+                "vega": null,
+                "rho": null,
+                "iv": null,
+                "volume": null,
+                "open_interest": null,
+                "bid_timestamp": "2030-01-02T20:30:00+00:00",
+                "ask_timestamp": "2030-01-02T20:30:00+00:00",
+                "last_timestamp": null,
+                "quote_timestamp": null,
+                "observation_timestamp": "2030-01-02T20:30:00+00:00",
+                "observed_at": null,
+                "archive_quality": "valid_contracts",
+                "quality_warnings": [
+                  "Synthetic test observation"
+                ],
+                "missing_fields": null,
+                "snapshot_id": "fixture",
+                "freshness": {
+                  "evaluated_at": "2030-01-02T20:33:00+00:00",
+                  "max_age_seconds": 900,
+                  "bid_age_seconds": 180.0,
+                  "ask_age_seconds": 180.0
+                },
+                "entry_side": "ask",
+                "entry_price": 3.1
+              },
+              {
+                "type": "Call",
+                "strike": 505.0,
+                "expiration": "2030-01-18",
+                "qty": -1.0,
+                "quantity": 1.0,
+                "action": "Sell",
+                "contract": "QQQ300118C00505000",
+                "bid": 1.0,
+                "ask": 1.1,
+                "mid": null,
+                "delta": null,
+                "gamma": null,
+                "theta": null,
+                "vega": null,
+                "rho": null,
+                "iv": null,
+                "volume": null,
+                "open_interest": null,
+                "bid_timestamp": "2030-01-02T20:30:00+00:00",
+                "ask_timestamp": "2030-01-02T20:30:00+00:00",
+                "last_timestamp": null,
+                "quote_timestamp": null,
+                "observation_timestamp": "2030-01-02T20:30:00+00:00",
+                "observed_at": null,
+                "archive_quality": "valid_contracts",
+                "quality_warnings": [
+                  "Synthetic test observation"
+                ],
+                "missing_fields": null,
+                "snapshot_id": "fixture",
+                "freshness": {
+                  "evaluated_at": "2030-01-02T20:33:00+00:00",
+                  "max_age_seconds": 900,
+                  "bid_age_seconds": 180.0,
+                  "ask_age_seconds": 180.0
+                },
+                "entry_side": "bid",
+                "entry_price": 1.0
+              }
+            ],
+            "credit": -2.1,
+            "fees": 1.25,
+            "multiplier": 100
+          },
+          "holding_period": "swing",
+          "valuation": "expiration",
+          "deterministic_expiration": {
+            "max_profit": 288.75,
+            "max_profit_unlimited": false,
+            "max_loss": 211.25,
+            "breakevens": [
+              502.1125
+            ],
+            "required_moves": [
+              {
+                "dollars": 2.1125000000000114,
+                "fraction": 0.004224999999999923
+              }
+            ]
+          },
+          "capital_requirement": {
+            "expiration_max_loss": 211.25,
+            "broker_buying_power": null
+          },
+          "capital_eligibility": {
+            "status": "not_assessed",
+            "available_capital": null,
+            "basis": "expiration max loss, not broker buying power"
+          },
+          "assumptions": {
+            "multiplier": 100,
+            "premium": "signed package per-share cashflow",
+            "fees_dollars": 1.25,
+            "slippage_dollars": 0.0,
+            "cost_basis": "total package costs once, not per leg or per scenario period",
+            "weighting": "equal observations",
+            "quantiles": "linear interpolation",
+            "minimum_samples": 30
+          },
+          "historical_economics": {
+            "expected_value_dollars": null,
+            "ev_over_max_risk": null,
+            "positive_payoff_frequency": null,
+            "profit_factor": null,
+            "median_payoff": null,
+            "p10_payoff": null,
+            "p90_payoff": null,
+            "average_winning_payoff": null,
+            "average_losing_payoff": null
+          },
+          "sample_size": 0,
+          "scenario_payoffs": [],
+          "evidence": null,
+          "robustness": {
+            "status": "unavailable",
+            "reason": "Distinct validated analog subsets not supplied."
+          },
+          "touch_breach": {
+            "status": "unavailable",
+            "reason": "Terminal returns do not establish path behavior."
+          },
+          "execution_evidence": {
+            "status": "unavailable",
+            "reason": "Executable quotes/liquidity not validated by this evaluator."
+          },
+          "early_exit": {
+            "status": "unavailable",
+            "reason": "Historical option marks or validated repricing inputs required."
+          },
+          "eligibility": "ECONOMICS_INCOMPLETE",
+          "eligible_for_consideration": false,
+          "missing_evidence": [
+            "as_of_session_not_complete"
+          ],
+          "research_only_reasons": [
+            "No execution validation or independent robustness validation."
+          ],
+          "historical_evidence_status": "unavailable",
+          "economics_coverage": "deterministic_only",
+          "integration_version": "structure-historical-v1",
+          "temporal_basis": "Explicit as_of completed NYSE session; historical, not live",
+          "provenance": {
+            "verification": "unavailable",
+            "pricing": "caller-supplied scenario"
+          }
+        }
+      },
+      "provenance": {
+        "source": "Verified Supabase archive"
+      },
+      "caveats": []
+    }
+  },
+  "comparison": {
+    "schema_version": "alphaos-interface-v2",
+    "request": {
+      "structures": [
+        {
+          "symbol": "SPY",
+          "expiration": "2030-01-18",
+          "as_of": "2030-01-02",
+          "spot": 500.0,
+          "credit": -2.1,
+          "fees": 1.25,
+          "legs": [
+            {
+              "type": "Call",
+              "strike": 500.0,
+              "qty": 1,
+              "contract": "SPY300118C00500000"
+            },
+            {
+              "type": "Call",
+              "strike": 505.0,
+              "qty": -1,
+              "contract": "SPY300118C00505000"
+            }
+          ],
+          "market_data": {
+            "snapshot_id": "fixture",
+            "archive_sha256": "c90d159f3930c779b9b1b2edb3bd38195cb2fe63b3b87ef5538e54cc89d75403"
+          }
+        },
+        {
+          "symbol": "QQQ",
+          "expiration": "2030-01-18",
+          "as_of": "2030-01-02",
+          "spot": 500.0,
+          "credit": -3.1,
+          "fees": 1.25,
+          "legs": [
+            {
+              "type": "Call",
+              "strike": 500.0,
+              "qty": 1,
+              "contract": "QQQ300118C00500000"
+            }
+          ],
+          "market_data": {
+            "snapshot_id": "fixture",
+            "archive_sha256": "0a361d3cb97255d72e9cb123f32ecaa1da72092da988b7d0d01daa277558cf7f"
+          }
+        },
+        {
+          "symbol": "SPY",
+          "expiration": "2030-01-18",
+          "as_of": "2030-01-02",
+          "spot": 500.0,
+          "credit": -3.1,
+          "fees": 1.25,
+          "legs": [
+            {
+              "type": "Put",
+              "strike": 500.0,
+              "qty": 1
+            }
+          ]
+        }
+      ]
+    },
+    "read_only": true,
+    "research": {
+      "candidates": [
+        {
+          "version": "structure-research-v1",
+          "underlying": "SPY",
+          "strategy_family": "call_debit_spread",
+          "direction": "bullish",
+          "expiration": "2030-01-18",
+          "legs": [
+            {
+              "type": "Call",
+              "strike": 500.0,
+              "qty": 1.0,
+              "symbol": "SPY",
+              "expiration": "2030-01-18",
+              "contract": "SPY300118C00500000",
+              "bid": 3.0,
+              "ask": 3.1,
+              "bid_timestamp": "2030-01-02T20:30:00+00:00",
+              "ask_timestamp": "2030-01-02T20:30:00+00:00",
+              "observation_timestamp": "2030-01-02T20:30:00+00:00",
+              "archive_quality": "valid_contracts",
+              "quality_warnings": [
+                "Synthetic test observation"
+              ],
+              "entry_side": "ask",
+              "entry_price": 3.1,
+              "snapshot_id": "fixture",
+              "freshness": {
+                "evaluated_at": "2030-01-02T20:33:00+00:00",
+                "max_age_seconds": 900,
+                "bid_age_seconds": 180.0,
+                "ask_age_seconds": 180.0
+              }
+            },
+            {
+              "type": "Call",
+              "strike": 505.0,
+              "qty": -1.0,
+              "symbol": "SPY",
+              "expiration": "2030-01-18",
+              "contract": "SPY300118C00505000",
+              "bid": 1.0,
+              "ask": 1.1,
+              "bid_timestamp": "2030-01-02T20:30:00+00:00",
+              "ask_timestamp": "2030-01-02T20:30:00+00:00",
+              "observation_timestamp": "2030-01-02T20:30:00+00:00",
+              "archive_quality": "valid_contracts",
+              "quality_warnings": [
+                "Synthetic test observation"
+              ],
+              "entry_side": "bid",
+              "entry_price": 1.0,
+              "snapshot_id": "fixture",
+              "freshness": {
+                "evaluated_at": "2030-01-02T20:33:00+00:00",
+                "max_age_seconds": 900,
+                "bid_age_seconds": 180.0,
+                "ask_age_seconds": 180.0
+              }
+            }
+          ],
+          "trade": {
+            "symbol": "SPY",
+            "expiration": "2030-01-18",
+            "spot": 500.0,
+            "credit": -2.1,
+            "shares": 0.0,
+            "fees": 1.25,
+            "source": "Verified Supabase archive",
+            "legs": [
+              {
+                "type": "Call",
+                "strike": 500.0,
+                "qty": 1.0,
+                "symbol": "SPY",
+                "expiration": "2030-01-18",
+                "contract": "SPY300118C00500000",
+                "bid": 3.0,
+                "ask": 3.1,
+                "bid_timestamp": "2030-01-02T20:30:00+00:00",
+                "ask_timestamp": "2030-01-02T20:30:00+00:00",
+                "observation_timestamp": "2030-01-02T20:30:00+00:00",
+                "archive_quality": "valid_contracts",
+                "quality_warnings": [
+                  "Synthetic test observation"
+                ],
+                "entry_side": "ask",
+                "entry_price": 3.1,
+                "snapshot_id": "fixture",
+                "freshness": {
+                  "evaluated_at": "2030-01-02T20:33:00+00:00",
+                  "max_age_seconds": 900,
+                  "bid_age_seconds": 180.0,
+                  "ask_age_seconds": 180.0
+                }
+              },
+              {
+                "type": "Call",
+                "strike": 505.0,
+                "qty": -1.0,
+                "symbol": "SPY",
+                "expiration": "2030-01-18",
+                "contract": "SPY300118C00505000",
+                "bid": 1.0,
+                "ask": 1.1,
+                "bid_timestamp": "2030-01-02T20:30:00+00:00",
+                "ask_timestamp": "2030-01-02T20:30:00+00:00",
+                "observation_timestamp": "2030-01-02T20:30:00+00:00",
+                "archive_quality": "valid_contracts",
+                "quality_warnings": [
+                  "Synthetic test observation"
+                ],
+                "entry_side": "bid",
+                "entry_price": 1.0,
+                "snapshot_id": "fixture",
+                "freshness": {
+                  "evaluated_at": "2030-01-02T20:33:00+00:00",
+                  "max_age_seconds": 900,
+                  "bid_age_seconds": 180.0,
+                  "ask_age_seconds": 180.0
+                }
+              }
+            ],
+            "pricing_assumption": "Observed buy ask / sell bid; user-supplied fees; not an executable fill",
+            "stock_basis": 500.0,
+            "strategy": "call_debit_spread",
+            "strategy_family": "call_debit_spread"
+          },
+          "entry_debit": 2.1,
+          "entry_credit": 0,
+          "capital_at_risk": 211.25,
+          "max_loss": 211.25,
+          "max_profit": 288.75,
+          "breakeven": 502.1125,
+          "breakevens": [
+            502.1125
+          ],
+          "required_move": 2.1125000000000114,
+          "required_move_pct": 0.004225000000000023,
+          "breakeven_moves": [
+            {
+              "breakeven": 502.1125,
+              "move": 2.1125000000000114,
+              "move_pct": 0.004225000000000023
+            }
+          ],
+          "dte": 16,
+          "expected_move_context": null,
+          "payoff": {
+            "trade": {
+              "symbol": "SPY",
+              "expiration": "2030-01-18",
+              "spot": 500.0,
+              "credit": -2.1,
+              "shares": 0.0,
+              "fees": 1.25,
+              "source": "Verified Supabase archive",
+              "legs": [
+                {
+                  "type": "Call",
+                  "strike": 500.0,
+                  "qty": 1.0,
+                  "symbol": "SPY",
+                  "expiration": "2030-01-18",
+                  "contract": "SPY300118C00500000",
+                  "bid": 3.0,
+                  "ask": 3.1,
+                  "bid_timestamp": "2030-01-02T20:30:00+00:00",
+                  "ask_timestamp": "2030-01-02T20:30:00+00:00",
+                  "observation_timestamp": "2030-01-02T20:30:00+00:00",
+                  "archive_quality": "valid_contracts",
+                  "quality_warnings": [
+                    "Synthetic test observation"
+                  ],
+                  "entry_side": "ask",
+                  "entry_price": 3.1,
+                  "snapshot_id": "fixture",
+                  "freshness": {
+                    "evaluated_at": "2030-01-02T20:33:00+00:00",
+                    "max_age_seconds": 900,
+                    "bid_age_seconds": 180.0,
+                    "ask_age_seconds": 180.0
+                  }
+                },
+                {
+                  "type": "Call",
+                  "strike": 505.0,
+                  "qty": -1.0,
+                  "symbol": "SPY",
+                  "expiration": "2030-01-18",
+                  "contract": "SPY300118C00505000",
+                  "bid": 1.0,
+                  "ask": 1.1,
+                  "bid_timestamp": "2030-01-02T20:30:00+00:00",
+                  "ask_timestamp": "2030-01-02T20:30:00+00:00",
+                  "observation_timestamp": "2030-01-02T20:30:00+00:00",
+                  "archive_quality": "valid_contracts",
+                  "quality_warnings": [
+                    "Synthetic test observation"
+                  ],
+                  "entry_side": "bid",
+                  "entry_price": 1.0,
+                  "snapshot_id": "fixture",
+                  "freshness": {
+                    "evaluated_at": "2030-01-02T20:33:00+00:00",
+                    "max_age_seconds": 900,
+                    "bid_age_seconds": 180.0,
+                    "ask_age_seconds": 180.0
+                  }
+                }
+              ],
+              "pricing_assumption": "Observed buy ask / sell bid; user-supplied fees; not an executable fill",
+              "stock_basis": 500.0,
+              "strategy": "call_debit_spread",
+              "strategy_family": "call_debit_spread"
+            },
+            "units": 1,
+            "max_profit": 288.75,
+            "max_loss": 211.25,
+            "return_on_risk": 1.3668639053254439,
+            "option_premium": -210.0,
+            "fees": 1.25,
+            "net_cash": -211.25,
+            "breakevens": [
+              502.1125
+            ],
+            "strikes": [
+              500.0,
+              505.0
+            ],
+            "width": 5.0,
+            "credit_width": null,
+            "grid": [
+              {
+                "Terminal underlying ($)": 498.0,
+                "Move from spot (%)": -0.40000000000000036,
+                "Expiration P&L ($)": -211.25,
+                "Return on max risk (%)": -100.0,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 498.5,
+                "Move from spot (%)": -0.30000000000000027,
+                "Expiration P&L ($)": -211.25,
+                "Return on max risk (%)": -100.0,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 499.0,
+                "Move from spot (%)": -0.20000000000000018,
+                "Expiration P&L ($)": -211.25,
+                "Return on max risk (%)": -100.0,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 499.5,
+                "Move from spot (%)": -0.10000000000000009,
+                "Expiration P&L ($)": -211.25,
+                "Return on max risk (%)": -100.0,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 500.0,
+                "Move from spot (%)": 0.0,
+                "Expiration P&L ($)": -211.25,
+                "Return on max risk (%)": -100.0,
+                "Landmark": "Spot \u00b7 Strike"
+              },
+              {
+                "Terminal underlying ($)": 500.5,
+                "Move from spot (%)": 0.09999999999998899,
+                "Expiration P&L ($)": -161.25,
+                "Return on max risk (%)": -76.33136094674556,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 501.0,
+                "Move from spot (%)": 0.20000000000000018,
+                "Expiration P&L ($)": -111.25,
+                "Return on max risk (%)": -52.662721893491124,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 501.05625,
+                "Move from spot (%)": 0.21124999999999616,
+                "Expiration P&L ($)": -105.62500000000227,
+                "Return on max risk (%)": -50.00000000000108,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 501.5,
+                "Move from spot (%)": 0.29999999999998916,
+                "Expiration P&L ($)": -61.25,
+                "Return on max risk (%)": -28.994082840236686,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 502.0,
+                "Move from spot (%)": 0.40000000000000036,
+                "Expiration P&L ($)": -11.25,
+                "Return on max risk (%)": -5.325443786982249,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 502.1125,
+                "Move from spot (%)": 0.4224999999999923,
+                "Expiration P&L ($)": 1.1368683772161603e-12,
+                "Return on max risk (%)": 5.381625454277682e-13,
+                "Landmark": "Breakeven"
+              },
+              {
+                "Terminal underlying ($)": 502.5,
+                "Move from spot (%)": 0.49999999999998934,
+                "Expiration P&L ($)": 38.75,
+                "Return on max risk (%)": 18.34319526627219,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 503.0,
+                "Move from spot (%)": 0.6000000000000005,
+                "Expiration P&L ($)": 88.75,
+                "Return on max risk (%)": 42.01183431952663,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 503.5,
+                "Move from spot (%)": 0.6999999999999895,
+                "Expiration P&L ($)": 138.75,
+                "Return on max risk (%)": 65.68047337278107,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 503.55625,
+                "Move from spot (%)": 0.7112499999999855,
+                "Expiration P&L ($)": 144.37499999999773,
+                "Return on max risk (%)": 68.34319526627112,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 504.0,
+                "Move from spot (%)": 0.8000000000000007,
+                "Expiration P&L ($)": 188.75,
+                "Return on max risk (%)": 89.3491124260355,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 504.5,
+                "Move from spot (%)": 0.8999999999999897,
+                "Expiration P&L ($)": 238.75,
+                "Return on max risk (%)": 113.01775147928994,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 505.0,
+                "Move from spot (%)": 1.0000000000000009,
+                "Expiration P&L ($)": 288.75,
+                "Return on max risk (%)": 136.68639053254438,
+                "Landmark": "Strike"
+              },
+              {
+                "Terminal underlying ($)": 505.5,
+                "Move from spot (%)": 1.0999999999999899,
+                "Expiration P&L ($)": 288.75,
+                "Return on max risk (%)": 136.68639053254438,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 506.0,
+                "Move from spot (%)": 1.200000000000001,
+                "Expiration P&L ($)": 288.75,
+                "Return on max risk (%)": 136.68639053254438,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 506.5,
+                "Move from spot (%)": 1.29999999999999,
+                "Expiration P&L ($)": 288.75,
+                "Return on max risk (%)": 136.68639053254438,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 507.0,
+                "Move from spot (%)": 1.4000000000000012,
+                "Expiration P&L ($)": 288.75,
+                "Return on max risk (%)": 136.68639053254438,
+                "Landmark": ""
+              }
+            ],
+            "extremes": [
+              {
+                "Terminal underlying ($)": 250.0,
+                "Move from spot (%)": -50.0,
+                "Expiration P&L ($)": -211.25,
+                "Return on max risk (%)": -100.0,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 350.0,
+                "Move from spot (%)": -30.000000000000004,
+                "Expiration P&L ($)": -211.25,
+                "Return on max risk (%)": -100.0,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 400.0,
+                "Move from spot (%)": -19.999999999999996,
+                "Expiration P&L ($)": -211.25,
+                "Return on max risk (%)": -100.0,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 450.0,
+                "Move from spot (%)": -9.999999999999998,
+                "Expiration P&L ($)": -211.25,
+                "Return on max risk (%)": -100.0,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 475.0,
+                "Move from spot (%)": -5.000000000000004,
+                "Expiration P&L ($)": -211.25,
+                "Return on max risk (%)": -100.0,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 500.0,
+                "Move from spot (%)": 0.0,
+                "Expiration P&L ($)": -211.25,
+                "Return on max risk (%)": -100.0,
+                "Landmark": "Spot \u00b7 Strike"
+              },
+              {
+                "Terminal underlying ($)": 525.0,
+                "Move from spot (%)": 5.000000000000004,
+                "Expiration P&L ($)": 288.75,
+                "Return on max risk (%)": 136.68639053254438,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 550.0,
+                "Move from spot (%)": 10.000000000000009,
+                "Expiration P&L ($)": 288.75,
+                "Return on max risk (%)": 136.68639053254438,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 600.0,
+                "Move from spot (%)": 19.999999999999996,
+                "Expiration P&L ($)": 288.75,
+                "Return on max risk (%)": 136.68639053254438,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 650.0,
+                "Move from spot (%)": 30.000000000000004,
+                "Expiration P&L ($)": 288.75,
+                "Return on max risk (%)": 136.68639053254438,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 750.0,
+                "Move from spot (%)": 50.0,
+                "Expiration P&L ($)": 288.75,
+                "Return on max risk (%)": 136.68639053254438,
+                "Landmark": ""
+              }
+            ]
+          },
+          "evidence": {
+            "source": "Verified Supabase archive",
+            "option_legs": [
+              {
+                "type": "Call",
+                "strike": 500.0,
+                "expiration": "2030-01-18",
+                "qty": 1.0,
+                "quantity": 1.0,
+                "action": "Buy",
+                "contract": "SPY300118C00500000",
+                "bid": 3.0,
+                "ask": 3.1,
+                "mid": null,
+                "delta": null,
+                "gamma": null,
+                "theta": null,
+                "vega": null,
+                "rho": null,
+                "iv": null,
+                "volume": null,
+                "open_interest": null,
+                "bid_timestamp": "2030-01-02T20:30:00+00:00",
+                "ask_timestamp": "2030-01-02T20:30:00+00:00",
+                "last_timestamp": null,
+                "quote_timestamp": null,
+                "observation_timestamp": "2030-01-02T20:30:00+00:00",
+                "observed_at": null,
+                "archive_quality": "valid_contracts",
+                "quality_warnings": [
+                  "Synthetic test observation"
+                ],
+                "missing_fields": null,
+                "snapshot_id": "fixture",
+                "freshness": {
+                  "evaluated_at": "2030-01-02T20:33:00+00:00",
+                  "max_age_seconds": 900,
+                  "bid_age_seconds": 180.0,
+                  "ask_age_seconds": 180.0
+                },
+                "entry_side": "ask",
+                "entry_price": 3.1
+              },
+              {
+                "type": "Call",
+                "strike": 505.0,
+                "expiration": "2030-01-18",
+                "qty": -1.0,
+                "quantity": 1.0,
+                "action": "Sell",
+                "contract": "SPY300118C00505000",
+                "bid": 1.0,
+                "ask": 1.1,
+                "mid": null,
+                "delta": null,
+                "gamma": null,
+                "theta": null,
+                "vega": null,
+                "rho": null,
+                "iv": null,
+                "volume": null,
+                "open_interest": null,
+                "bid_timestamp": "2030-01-02T20:30:00+00:00",
+                "ask_timestamp": "2030-01-02T20:30:00+00:00",
+                "last_timestamp": null,
+                "quote_timestamp": null,
+                "observation_timestamp": "2030-01-02T20:30:00+00:00",
+                "observed_at": null,
+                "archive_quality": "valid_contracts",
+                "quality_warnings": [
+                  "Synthetic test observation"
+                ],
+                "missing_fields": null,
+                "snapshot_id": "fixture",
+                "freshness": {
+                  "evaluated_at": "2030-01-02T20:33:00+00:00",
+                  "max_age_seconds": 900,
+                  "bid_age_seconds": 180.0,
+                  "ask_age_seconds": 180.0
+                },
+                "entry_side": "bid",
+                "entry_price": 1.0
+              }
+            ],
+            "expected_move_status": "unknown",
+            "pricing_assumption": "Observed buy ask / sell bid; user-supplied fees; not an executable fill",
+            "market_data": {
+              "version": "structure-market-data-v1",
+              "kind": "verified_archive",
+              "verified": true,
+              "verified_for_trading": false,
+              "snapshot": {
+                "id": "fixture",
+                "provider": "Public",
+                "symbol": "SPY",
+                "observed_at": "2030-01-02T20:30:00+00:00",
+                "session_date": "2030-01-02",
+                "archive_path": "options/symbol=SPY/date=2030-01-02/fixture.json.gz",
+                "archive_sha256": "c90d159f3930c779b9b1b2edb3bd38195cb2fe63b3b87ef5538e54cc89d75403",
+                "quality_status": "complete",
+                "slot_time": "2030-01-02T20:25:00+00:00",
+                "created_at": "2030-01-02T20:32:30+00:00"
+              },
+              "archive_freshness": {
+                "as_of": "2030-01-02T20:33:00+00:00",
+                "age_seconds": 180.0,
+                "max_age_seconds": 300,
+                "basis": "collection_start"
+              },
+              "evaluated_at": "2030-01-02T20:33:00+00:00",
+              "underlying": {
+                "spot": 500.0,
+                "timestamp": "2030-01-02T20:30:00+00:00"
+              },
+              "pricing": "natural_bid_ask",
+              "signed_package_cashflow": -2.1,
+              "fees": 1.25,
+              "legs": [
+                {
+                  "type": "Call",
+                  "strike": 500.0,
+                  "qty": 1,
+                  "symbol": "SPY",
+                  "expiration": "2030-01-18",
+                  "contract": "SPY300118C00500000",
+                  "bid": 3.0,
+                  "ask": 3.1,
+                  "bid_timestamp": "2030-01-02T20:30:00+00:00",
+                  "ask_timestamp": "2030-01-02T20:30:00+00:00",
+                  "observation_timestamp": "2030-01-02T20:30:00+00:00",
+                  "archive_quality": "valid_contracts",
+                  "quality_warnings": [
+                    "Synthetic test observation"
+                  ],
+                  "entry_side": "ask",
+                  "entry_price": 3.1,
+                  "snapshot_id": "fixture",
+                  "freshness": {
+                    "evaluated_at": "2030-01-02T20:33:00+00:00",
+                    "max_age_seconds": 900,
+                    "bid_age_seconds": 180.0,
+                    "ask_age_seconds": 180.0
+                  }
+                },
+                {
+                  "type": "Call",
+                  "strike": 505.0,
+                  "qty": -1,
+                  "symbol": "SPY",
+                  "expiration": "2030-01-18",
+                  "contract": "SPY300118C00505000",
+                  "bid": 1.0,
+                  "ask": 1.1,
+                  "bid_timestamp": "2030-01-02T20:30:00+00:00",
+                  "ask_timestamp": "2030-01-02T20:30:00+00:00",
+                  "observation_timestamp": "2030-01-02T20:30:00+00:00",
+                  "archive_quality": "valid_contracts",
+                  "quality_warnings": [
+                    "Synthetic test observation"
+                  ],
+                  "entry_side": "bid",
+                  "entry_price": 1.0,
+                  "snapshot_id": "fixture",
+                  "freshness": {
+                    "evaluated_at": "2030-01-02T20:33:00+00:00",
+                    "max_age_seconds": 900,
+                    "bid_age_seconds": 180.0,
+                    "ask_age_seconds": 180.0
+                  }
+                }
+              ],
+              "caveats": [
+                "Archived observations are not executable fills.",
+                "Provider quote delay and broker margin are not certified.",
+                "Fees are user-supplied total package dollars."
+              ]
+            }
+          },
+          "candidate_order": "input/generator order; not a ranking",
+          "caveats": [
+            "Deterministic expiration payoff, not a forecast or probability of profit.",
+            "Standard 100-share multiplier; credit/debit are per-share package cashflows; payoff/risk and fees are dollars.",
+            "Signed moves are distances to expiration breakevens, not predicted moves. Multiple roots remain separate.",
+            "Direction describes structure bias, not inferred market evidence. No winner or recommendation.",
+            "Missing Greeks, IV, liquidity, timestamps and expected-move evidence remain unavailable."
+          ],
+          "position": {
+            "symbol": "SPY",
+            "expiration": "2030-01-18",
+            "strategy_family": "call_debit_spread",
+            "legs": [
+              {
+                "type": "Call",
+                "strike": 500.0,
+                "expiration": "2030-01-18",
+                "qty": 1.0,
+                "quantity": 1.0,
+                "action": "Buy",
+                "contract": "SPY300118C00500000",
+                "bid": 3.0,
+                "ask": 3.1,
+                "mid": null,
+                "delta": null,
+                "gamma": null,
+                "theta": null,
+                "vega": null,
+                "rho": null,
+                "iv": null,
+                "volume": null,
+                "open_interest": null,
+                "bid_timestamp": "2030-01-02T20:30:00+00:00",
+                "ask_timestamp": "2030-01-02T20:30:00+00:00",
+                "last_timestamp": null,
+                "quote_timestamp": null,
+                "observation_timestamp": "2030-01-02T20:30:00+00:00",
+                "observed_at": null,
+                "archive_quality": "valid_contracts",
+                "quality_warnings": [
+                  "Synthetic test observation"
+                ],
+                "missing_fields": null,
+                "snapshot_id": "fixture",
+                "freshness": {
+                  "evaluated_at": "2030-01-02T20:33:00+00:00",
+                  "max_age_seconds": 900,
+                  "bid_age_seconds": 180.0,
+                  "ask_age_seconds": 180.0
+                },
+                "entry_side": "ask",
+                "entry_price": 3.1
+              },
+              {
+                "type": "Call",
+                "strike": 505.0,
+                "expiration": "2030-01-18",
+                "qty": -1.0,
+                "quantity": 1.0,
+                "action": "Sell",
+                "contract": "SPY300118C00505000",
+                "bid": 1.0,
+                "ask": 1.1,
+                "mid": null,
+                "delta": null,
+                "gamma": null,
+                "theta": null,
+                "vega": null,
+                "rho": null,
+                "iv": null,
+                "volume": null,
+                "open_interest": null,
+                "bid_timestamp": "2030-01-02T20:30:00+00:00",
+                "ask_timestamp": "2030-01-02T20:30:00+00:00",
+                "last_timestamp": null,
+                "quote_timestamp": null,
+                "observation_timestamp": "2030-01-02T20:30:00+00:00",
+                "observed_at": null,
+                "archive_quality": "valid_contracts",
+                "quality_warnings": [
+                  "Synthetic test observation"
+                ],
+                "missing_fields": null,
+                "snapshot_id": "fixture",
+                "freshness": {
+                  "evaluated_at": "2030-01-02T20:33:00+00:00",
+                  "max_age_seconds": 900,
+                  "bid_age_seconds": 180.0,
+                  "ask_age_seconds": 180.0
+                },
+                "entry_side": "bid",
+                "entry_price": 1.0
+              }
+            ],
+            "credit": -2.1,
+            "fees": 1.25
+          },
+          "historical_economics": {
+            "version": "historical-economics-v1",
+            "structure_identity": {
+              "symbol": "SPY",
+              "expiration": "2030-01-18",
+              "strategy_family": "call_debit_spread",
+              "legs": [
+                {
+                  "type": "Call",
+                  "strike": 500.0,
+                  "expiration": "2030-01-18",
+                  "qty": 1.0,
+                  "quantity": 1.0,
+                  "action": "Buy",
+                  "contract": "SPY300118C00500000",
+                  "bid": 3.0,
+                  "ask": 3.1,
+                  "mid": null,
+                  "delta": null,
+                  "gamma": null,
+                  "theta": null,
+                  "vega": null,
+                  "rho": null,
+                  "iv": null,
+                  "volume": null,
+                  "open_interest": null,
+                  "bid_timestamp": "2030-01-02T20:30:00+00:00",
+                  "ask_timestamp": "2030-01-02T20:30:00+00:00",
+                  "last_timestamp": null,
+                  "quote_timestamp": null,
+                  "observation_timestamp": "2030-01-02T20:30:00+00:00",
+                  "observed_at": null,
+                  "archive_quality": "valid_contracts",
+                  "quality_warnings": [
+                    "Synthetic test observation"
+                  ],
+                  "missing_fields": null,
+                  "snapshot_id": "fixture",
+                  "freshness": {
+                    "evaluated_at": "2030-01-02T20:33:00+00:00",
+                    "max_age_seconds": 900,
+                    "bid_age_seconds": 180.0,
+                    "ask_age_seconds": 180.0
+                  },
+                  "entry_side": "ask",
+                  "entry_price": 3.1
+                },
+                {
+                  "type": "Call",
+                  "strike": 505.0,
+                  "expiration": "2030-01-18",
+                  "qty": -1.0,
+                  "quantity": 1.0,
+                  "action": "Sell",
+                  "contract": "SPY300118C00505000",
+                  "bid": 1.0,
+                  "ask": 1.1,
+                  "mid": null,
+                  "delta": null,
+                  "gamma": null,
+                  "theta": null,
+                  "vega": null,
+                  "rho": null,
+                  "iv": null,
+                  "volume": null,
+                  "open_interest": null,
+                  "bid_timestamp": "2030-01-02T20:30:00+00:00",
+                  "ask_timestamp": "2030-01-02T20:30:00+00:00",
+                  "last_timestamp": null,
+                  "quote_timestamp": null,
+                  "observation_timestamp": "2030-01-02T20:30:00+00:00",
+                  "observed_at": null,
+                  "archive_quality": "valid_contracts",
+                  "quality_warnings": [
+                    "Synthetic test observation"
+                  ],
+                  "missing_fields": null,
+                  "snapshot_id": "fixture",
+                  "freshness": {
+                    "evaluated_at": "2030-01-02T20:33:00+00:00",
+                    "max_age_seconds": 900,
+                    "bid_age_seconds": 180.0,
+                    "ask_age_seconds": 180.0
+                  },
+                  "entry_side": "bid",
+                  "entry_price": 1.0
+                }
+              ],
+              "credit": -2.1,
+              "fees": 1.25,
+              "multiplier": 100
+            },
+            "holding_period": "swing",
+            "valuation": "expiration",
+            "deterministic_expiration": {
+              "max_profit": 288.75,
+              "max_profit_unlimited": false,
+              "max_loss": 211.25,
+              "breakevens": [
+                502.1125
+              ],
+              "required_moves": [
+                {
+                  "dollars": 2.1125000000000114,
+                  "fraction": 0.004224999999999923
+                }
+              ]
+            },
+            "capital_requirement": {
+              "expiration_max_loss": 211.25,
+              "broker_buying_power": null
+            },
+            "capital_eligibility": {
+              "status": "not_assessed",
+              "available_capital": null,
+              "basis": "expiration max loss, not broker buying power"
+            },
+            "assumptions": {
+              "multiplier": 100,
+              "premium": "signed package per-share cashflow",
+              "fees_dollars": 1.25,
+              "slippage_dollars": 0.0,
+              "cost_basis": "total package costs once, not per leg or per scenario period",
+              "weighting": "equal observations",
+              "quantiles": "linear interpolation",
+              "minimum_samples": 30
+            },
+            "historical_economics": {
+              "expected_value_dollars": null,
+              "ev_over_max_risk": null,
+              "positive_payoff_frequency": null,
+              "profit_factor": null,
+              "median_payoff": null,
+              "p10_payoff": null,
+              "p90_payoff": null,
+              "average_winning_payoff": null,
+              "average_losing_payoff": null
+            },
+            "sample_size": 0,
+            "scenario_payoffs": [],
+            "evidence": null,
+            "robustness": {
+              "status": "unavailable",
+              "reason": "Distinct validated analog subsets not supplied."
+            },
+            "touch_breach": {
+              "status": "unavailable",
+              "reason": "Terminal returns do not establish path behavior."
+            },
+            "execution_evidence": {
+              "status": "unavailable",
+              "reason": "Executable quotes/liquidity not validated by this evaluator."
+            },
+            "early_exit": {
+              "status": "unavailable",
+              "reason": "Historical option marks or validated repricing inputs required."
+            },
+            "eligibility": "ECONOMICS_INCOMPLETE",
+            "eligible_for_consideration": false,
+            "missing_evidence": [
+              "as_of_session_not_complete"
+            ],
+            "research_only_reasons": [
+              "No execution validation or independent robustness validation."
+            ],
+            "historical_evidence_status": "unavailable",
+            "economics_coverage": "deterministic_only",
+            "integration_version": "structure-historical-v1",
+            "temporal_basis": "Explicit as_of completed NYSE session; historical, not live",
+            "provenance": {
+              "verification": "unavailable",
+              "pricing": "caller-supplied scenario"
+            }
+          }
+        },
+        {
+          "version": "long-option-v1",
+          "trade": {
+            "symbol": "QQQ",
+            "strategy": "Long call",
+            "strategy_family": "long_call",
+            "expiration": "2030-01-18",
+            "spot": 500.0,
+            "credit": -3.1,
+            "shares": 0,
+            "fees": 1.25,
+            "source": "Verified Supabase archive",
+            "legs": [
+              {
+                "type": "Call",
+                "strike": 500.0,
+                "qty": 1.0,
+                "symbol": "QQQ",
+                "expiration": "2030-01-18",
+                "contract": "QQQ300118C00500000",
+                "bid": 3.0,
+                "ask": 3.1,
+                "bid_timestamp": "2030-01-02T20:30:00+00:00",
+                "ask_timestamp": "2030-01-02T20:30:00+00:00",
+                "observation_timestamp": "2030-01-02T20:30:00+00:00",
+                "archive_quality": "valid_contracts",
+                "quality_warnings": [
+                  "Synthetic test observation"
+                ],
+                "entry_side": "ask",
+                "entry_price": 3.1,
+                "snapshot_id": "fixture",
+                "freshness": {
+                  "evaluated_at": "2030-01-02T20:33:00+00:00",
+                  "max_age_seconds": 900,
+                  "bid_age_seconds": 180.0,
+                  "ask_age_seconds": 180.0
+                }
+              }
+            ]
+          },
+          "option_type": "call",
+          "contracts": 1,
+          "premium_per_share": 3.1,
+          "capital_at_risk": 311.25,
+          "max_profit": "unlimited",
+          "breakeven": 503.1125,
+          "required_move": 3.1125000000000114,
+          "required_move_pct": 0.006225000000000023,
+          "distance_to_strike": 0.0,
+          "distance_to_strike_pct": 0.0,
+          "dte": 16,
+          "expected_move_context": null,
+          "structure_context": null,
+          "payoff": {
+            "trade": {
+              "symbol": "QQQ",
+              "strategy": "Long call",
+              "strategy_family": "long_call",
+              "expiration": "2030-01-18",
+              "spot": 500.0,
+              "credit": -3.1,
+              "shares": 0,
+              "fees": 1.25,
+              "source": "Verified Supabase archive",
+              "legs": [
+                {
+                  "type": "Call",
+                  "strike": 500.0,
+                  "qty": 1.0,
+                  "symbol": "QQQ",
+                  "expiration": "2030-01-18",
+                  "contract": "QQQ300118C00500000",
+                  "bid": 3.0,
+                  "ask": 3.1,
+                  "bid_timestamp": "2030-01-02T20:30:00+00:00",
+                  "ask_timestamp": "2030-01-02T20:30:00+00:00",
+                  "observation_timestamp": "2030-01-02T20:30:00+00:00",
+                  "archive_quality": "valid_contracts",
+                  "quality_warnings": [
+                    "Synthetic test observation"
+                  ],
+                  "entry_side": "ask",
+                  "entry_price": 3.1,
+                  "snapshot_id": "fixture",
+                  "freshness": {
+                    "evaluated_at": "2030-01-02T20:33:00+00:00",
+                    "max_age_seconds": 900,
+                    "bid_age_seconds": 180.0,
+                    "ask_age_seconds": 180.0
+                  }
+                }
+              ]
+            },
+            "units": 1,
+            "max_profit": "unlimited",
+            "max_loss": 311.25,
+            "return_on_risk": null,
+            "option_premium": -310.0,
+            "fees": 1.25,
+            "net_cash": -311.25,
+            "breakevens": [
+              503.1125
+            ],
+            "strikes": [
+              500.0
+            ],
+            "width": null,
+            "credit_width": null,
+            "grid": [
+              {
+                "Terminal underlying ($)": 498.0,
+                "Move from spot (%)": -0.40000000000000036,
+                "Expiration P&L ($)": -311.25,
+                "Return on max risk (%)": -100.0,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 498.4741666666667,
+                "Move from spot (%)": -0.3051666666666675,
+                "Expiration P&L ($)": -311.25,
+                "Return on max risk (%)": -100.0,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 498.9483333333333,
+                "Move from spot (%)": -0.2103333333333346,
+                "Expiration P&L ($)": -311.25,
+                "Return on max risk (%)": -100.0,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 499.4225,
+                "Move from spot (%)": -0.11550000000000171,
+                "Expiration P&L ($)": -311.25,
+                "Return on max risk (%)": -100.0,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 499.89666666666665,
+                "Move from spot (%)": -0.02066666666666883,
+                "Expiration P&L ($)": -311.25,
+                "Return on max risk (%)": -100.0,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 500.0,
+                "Move from spot (%)": 0.0,
+                "Expiration P&L ($)": -311.25,
+                "Return on max risk (%)": -100.0,
+                "Landmark": "Spot \u00b7 Strike"
+              },
+              {
+                "Terminal underlying ($)": 500.37083333333334,
+                "Move from spot (%)": 0.07416666666666405,
+                "Expiration P&L ($)": -274.1666666666663,
+                "Return on max risk (%)": -88.08567603748314,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 500.845,
+                "Move from spot (%)": 0.16899999999999693,
+                "Expiration P&L ($)": -226.74999999999727,
+                "Return on max risk (%)": -72.85140562248908,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 501.31916666666666,
+                "Move from spot (%)": 0.2638333333333298,
+                "Expiration P&L ($)": -179.33333333333394,
+                "Return on max risk (%)": -57.61713520749685,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 501.55625,
+                "Move from spot (%)": 0.31124999999998515,
+                "Expiration P&L ($)": -155.62500000000227,
+                "Return on max risk (%)": -50.00000000000073,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 501.79333333333335,
+                "Move from spot (%)": 0.3586666666666627,
+                "Expiration P&L ($)": -131.91666666666492,
+                "Return on max risk (%)": -42.38286479250279,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 502.2675,
+                "Move from spot (%)": 0.4534999999999956,
+                "Expiration P&L ($)": -84.50000000000159,
+                "Return on max risk (%)": -27.148594377510555,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 502.7416666666667,
+                "Move from spot (%)": 0.5483333333333285,
+                "Expiration P&L ($)": -37.083333333332575,
+                "Return on max risk (%)": -11.914323962516491,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 503.1125,
+                "Move from spot (%)": 0.6224999999999925,
+                "Expiration P&L ($)": 1.1368683772161603e-12,
+                "Return on max risk (%)": 3.652589163746699e-13,
+                "Landmark": "Breakeven"
+              },
+              {
+                "Terminal underlying ($)": 503.21583333333336,
+                "Move from spot (%)": 0.6431666666666835,
+                "Expiration P&L ($)": 10.33333333333644,
+                "Return on max risk (%)": 3.3199464524775713,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 503.69,
+                "Move from spot (%)": 0.7379999999999942,
+                "Expiration P&L ($)": 57.74999999999977,
+                "Return on max risk (%)": 18.554216867469805,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 504.1641666666667,
+                "Move from spot (%)": 0.8328333333333271,
+                "Expiration P&L ($)": 105.16666666666879,
+                "Return on max risk (%)": 33.78848728246387,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 504.6383333333333,
+                "Move from spot (%)": 0.92766666666666,
+                "Expiration P&L ($)": 152.58333333333212,
+                "Return on max risk (%)": 49.02275769745611,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 505.1125,
+                "Move from spot (%)": 1.0224999999999929,
+                "Expiration P&L ($)": 200.00000000000114,
+                "Return on max risk (%)": 64.25702811245017,
+                "Landmark": ""
+              }
+            ],
+            "extremes": [
+              {
+                "Terminal underlying ($)": 250.0,
+                "Move from spot (%)": -50.0,
+                "Expiration P&L ($)": -311.25,
+                "Return on max risk (%)": -100.0,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 350.0,
+                "Move from spot (%)": -30.000000000000004,
+                "Expiration P&L ($)": -311.25,
+                "Return on max risk (%)": -100.0,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 400.0,
+                "Move from spot (%)": -19.999999999999996,
+                "Expiration P&L ($)": -311.25,
+                "Return on max risk (%)": -100.0,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 450.0,
+                "Move from spot (%)": -9.999999999999998,
+                "Expiration P&L ($)": -311.25,
+                "Return on max risk (%)": -100.0,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 475.0,
+                "Move from spot (%)": -5.000000000000004,
+                "Expiration P&L ($)": -311.25,
+                "Return on max risk (%)": -100.0,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 500.0,
+                "Move from spot (%)": 0.0,
+                "Expiration P&L ($)": -311.25,
+                "Return on max risk (%)": -100.0,
+                "Landmark": "Spot \u00b7 Strike"
+              },
+              {
+                "Terminal underlying ($)": 525.0,
+                "Move from spot (%)": 5.000000000000004,
+                "Expiration P&L ($)": 2188.75,
+                "Return on max risk (%)": 703.2128514056226,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 550.0,
+                "Move from spot (%)": 10.000000000000009,
+                "Expiration P&L ($)": 4688.75,
+                "Return on max risk (%)": 1506.4257028112452,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 600.0,
+                "Move from spot (%)": 19.999999999999996,
+                "Expiration P&L ($)": 9688.75,
+                "Return on max risk (%)": 3112.8514056224903,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 650.0,
+                "Move from spot (%)": 30.000000000000004,
+                "Expiration P&L ($)": 14688.75,
+                "Return on max risk (%)": 4719.2771084337355,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 750.0,
+                "Move from spot (%)": 50.0,
+                "Expiration P&L ($)": 24688.75,
+                "Return on max risk (%)": 7932.128514056225,
+                "Landmark": ""
+              }
+            ]
+          },
+          "caveats": [
+            "Expiration payoff economics are deterministic; they are not a forecast.",
+            "Expected-move context does not imply probability of profit.",
+            "Greeks, implied volatility, liquidity, and executable quotes require contract-market data."
+          ],
+          "underlying": "QQQ",
+          "strategy_family": "long_call",
+          "direction": "bullish",
+          "max_loss": 311.25,
+          "evidence": {
+            "pricing_assumption": "Observed buy ask / sell bid; user-supplied fees; not an executable fill",
+            "option_legs": [
+              {
+                "type": "Call",
+                "strike": 500.0,
+                "expiration": "2030-01-18",
+                "qty": 1.0,
+                "quantity": 1.0,
+                "action": "Buy",
+                "contract": "QQQ300118C00500000",
+                "bid": 3.0,
+                "ask": 3.1,
+                "mid": null,
+                "delta": null,
+                "gamma": null,
+                "theta": null,
+                "vega": null,
+                "rho": null,
+                "iv": null,
+                "volume": null,
+                "open_interest": null,
+                "bid_timestamp": "2030-01-02T20:30:00+00:00",
+                "ask_timestamp": "2030-01-02T20:30:00+00:00",
+                "last_timestamp": null,
+                "quote_timestamp": null,
+                "observation_timestamp": "2030-01-02T20:30:00+00:00",
+                "observed_at": null,
+                "archive_quality": "valid_contracts",
+                "quality_warnings": [
+                  "Synthetic test observation"
+                ],
+                "missing_fields": null,
+                "snapshot_id": "fixture",
+                "freshness": {
+                  "evaluated_at": "2030-01-02T20:33:00+00:00",
+                  "max_age_seconds": 900,
+                  "bid_age_seconds": 180.0,
+                  "ask_age_seconds": 180.0
+                },
+                "entry_side": "ask",
+                "entry_price": 3.1
+              }
+            ],
+            "market_data": {
+              "version": "structure-market-data-v1",
+              "kind": "verified_archive",
+              "verified": true,
+              "verified_for_trading": false,
+              "snapshot": {
+                "id": "fixture",
+                "provider": "Public",
+                "symbol": "QQQ",
+                "observed_at": "2030-01-02T20:30:00+00:00",
+                "session_date": "2030-01-02",
+                "archive_path": "options/symbol=QQQ/date=2030-01-02/fixture.json.gz",
+                "archive_sha256": "0a361d3cb97255d72e9cb123f32ecaa1da72092da988b7d0d01daa277558cf7f",
+                "quality_status": "complete",
+                "slot_time": "2030-01-02T20:25:00+00:00",
+                "created_at": "2030-01-02T20:32:30+00:00"
+              },
+              "archive_freshness": {
+                "as_of": "2030-01-02T20:33:00+00:00",
+                "age_seconds": 180.0,
+                "max_age_seconds": 300,
+                "basis": "collection_start"
+              },
+              "evaluated_at": "2030-01-02T20:33:00+00:00",
+              "underlying": {
+                "spot": 500.0,
+                "timestamp": "2030-01-02T20:30:00+00:00"
+              },
+              "pricing": "natural_bid_ask",
+              "signed_package_cashflow": -3.1,
+              "fees": 1.25,
+              "legs": [
+                {
+                  "type": "Call",
+                  "strike": 500.0,
+                  "qty": 1,
+                  "symbol": "QQQ",
+                  "expiration": "2030-01-18",
+                  "contract": "QQQ300118C00500000",
+                  "bid": 3.0,
+                  "ask": 3.1,
+                  "bid_timestamp": "2030-01-02T20:30:00+00:00",
+                  "ask_timestamp": "2030-01-02T20:30:00+00:00",
+                  "observation_timestamp": "2030-01-02T20:30:00+00:00",
+                  "archive_quality": "valid_contracts",
+                  "quality_warnings": [
+                    "Synthetic test observation"
+                  ],
+                  "entry_side": "ask",
+                  "entry_price": 3.1,
+                  "snapshot_id": "fixture",
+                  "freshness": {
+                    "evaluated_at": "2030-01-02T20:33:00+00:00",
+                    "max_age_seconds": 900,
+                    "bid_age_seconds": 180.0,
+                    "ask_age_seconds": 180.0
+                  }
+                }
+              ],
+              "caveats": [
+                "Archived observations are not executable fills.",
+                "Provider quote delay and broker margin are not certified.",
+                "Fees are user-supplied total package dollars."
+              ]
+            }
+          },
+          "position": {
+            "symbol": "QQQ",
+            "expiration": "2030-01-18",
+            "strategy_family": "long_call",
+            "legs": [
+              {
+                "type": "Call",
+                "strike": 500.0,
+                "expiration": "2030-01-18",
+                "qty": 1.0,
+                "quantity": 1.0,
+                "action": "Buy",
+                "contract": "QQQ300118C00500000",
+                "bid": 3.0,
+                "ask": 3.1,
+                "mid": null,
+                "delta": null,
+                "gamma": null,
+                "theta": null,
+                "vega": null,
+                "rho": null,
+                "iv": null,
+                "volume": null,
+                "open_interest": null,
+                "bid_timestamp": "2030-01-02T20:30:00+00:00",
+                "ask_timestamp": "2030-01-02T20:30:00+00:00",
+                "last_timestamp": null,
+                "quote_timestamp": null,
+                "observation_timestamp": "2030-01-02T20:30:00+00:00",
+                "observed_at": null,
+                "archive_quality": "valid_contracts",
+                "quality_warnings": [
+                  "Synthetic test observation"
+                ],
+                "missing_fields": null,
+                "snapshot_id": "fixture",
+                "freshness": {
+                  "evaluated_at": "2030-01-02T20:33:00+00:00",
+                  "max_age_seconds": 900,
+                  "bid_age_seconds": 180.0,
+                  "ask_age_seconds": 180.0
+                },
+                "entry_side": "ask",
+                "entry_price": 3.1
+              }
+            ],
+            "credit": -3.1,
+            "fees": 1.25
+          },
+          "historical_economics": {
+            "version": "historical-economics-v1",
+            "structure_identity": {
+              "symbol": "QQQ",
+              "expiration": "2030-01-18",
+              "strategy_family": "long_call",
+              "legs": [
+                {
+                  "type": "Call",
+                  "strike": 500.0,
+                  "expiration": "2030-01-18",
+                  "qty": 1.0,
+                  "quantity": 1.0,
+                  "action": "Buy",
+                  "contract": "QQQ300118C00500000",
+                  "bid": 3.0,
+                  "ask": 3.1,
+                  "mid": null,
+                  "delta": null,
+                  "gamma": null,
+                  "theta": null,
+                  "vega": null,
+                  "rho": null,
+                  "iv": null,
+                  "volume": null,
+                  "open_interest": null,
+                  "bid_timestamp": "2030-01-02T20:30:00+00:00",
+                  "ask_timestamp": "2030-01-02T20:30:00+00:00",
+                  "last_timestamp": null,
+                  "quote_timestamp": null,
+                  "observation_timestamp": "2030-01-02T20:30:00+00:00",
+                  "observed_at": null,
+                  "archive_quality": "valid_contracts",
+                  "quality_warnings": [
+                    "Synthetic test observation"
+                  ],
+                  "missing_fields": null,
+                  "snapshot_id": "fixture",
+                  "freshness": {
+                    "evaluated_at": "2030-01-02T20:33:00+00:00",
+                    "max_age_seconds": 900,
+                    "bid_age_seconds": 180.0,
+                    "ask_age_seconds": 180.0
+                  },
+                  "entry_side": "ask",
+                  "entry_price": 3.1
+                }
+              ],
+              "credit": -3.1,
+              "fees": 1.25,
+              "multiplier": 100
+            },
+            "holding_period": "swing",
+            "valuation": "expiration",
+            "deterministic_expiration": {
+              "max_profit": null,
+              "max_profit_unlimited": true,
+              "max_loss": 311.25,
+              "breakevens": [
+                503.1125
+              ],
+              "required_moves": [
+                {
+                  "dollars": 3.1125000000000114,
+                  "fraction": 0.006224999999999925
+                }
+              ]
+            },
+            "capital_requirement": {
+              "expiration_max_loss": 311.25,
+              "broker_buying_power": null
+            },
+            "capital_eligibility": {
+              "status": "not_assessed",
+              "available_capital": null,
+              "basis": "expiration max loss, not broker buying power"
+            },
+            "assumptions": {
+              "multiplier": 100,
+              "premium": "signed package per-share cashflow",
+              "fees_dollars": 1.25,
+              "slippage_dollars": 0.0,
+              "cost_basis": "total package costs once, not per leg or per scenario period",
+              "weighting": "equal observations",
+              "quantiles": "linear interpolation",
+              "minimum_samples": 30
+            },
+            "historical_economics": {
+              "expected_value_dollars": null,
+              "ev_over_max_risk": null,
+              "positive_payoff_frequency": null,
+              "profit_factor": null,
+              "median_payoff": null,
+              "p10_payoff": null,
+              "p90_payoff": null,
+              "average_winning_payoff": null,
+              "average_losing_payoff": null
+            },
+            "sample_size": 0,
+            "scenario_payoffs": [],
+            "evidence": null,
+            "robustness": {
+              "status": "unavailable",
+              "reason": "Distinct validated analog subsets not supplied."
+            },
+            "touch_breach": {
+              "status": "unavailable",
+              "reason": "Terminal returns do not establish path behavior."
+            },
+            "execution_evidence": {
+              "status": "unavailable",
+              "reason": "Executable quotes/liquidity not validated by this evaluator."
+            },
+            "early_exit": {
+              "status": "unavailable",
+              "reason": "Historical option marks or validated repricing inputs required."
+            },
+            "eligibility": "ECONOMICS_INCOMPLETE",
+            "eligible_for_consideration": false,
+            "missing_evidence": [
+              "as_of_session_not_complete"
+            ],
+            "research_only_reasons": [
+              "No execution validation or independent robustness validation."
+            ],
+            "historical_evidence_status": "unavailable",
+            "economics_coverage": "deterministic_only",
+            "integration_version": "structure-historical-v1",
+            "temporal_basis": "Explicit as_of completed NYSE session; historical, not live",
+            "provenance": {
+              "verification": "unavailable",
+              "pricing": "caller-supplied scenario"
+            }
+          }
+        },
+        {
+          "version": "long-option-v1",
+          "trade": {
+            "symbol": "SPY",
+            "strategy": "Long put",
+            "strategy_family": "long_put",
+            "expiration": "2030-01-18",
+            "spot": 500.0,
+            "credit": -3.1,
+            "shares": 0,
+            "fees": 1.25,
+            "source": "Explicit user-supplied scenario",
+            "legs": [
+              {
+                "type": "Put",
+                "strike": 500.0,
+                "qty": 1.0
+              }
+            ]
+          },
+          "option_type": "put",
+          "contracts": 1,
+          "premium_per_share": 3.1,
+          "capital_at_risk": 311.25,
+          "max_profit": 49688.75,
+          "breakeven": 496.8875,
+          "required_move": -3.1125000000000114,
+          "required_move_pct": -0.006225000000000023,
+          "distance_to_strike": 0.0,
+          "distance_to_strike_pct": 0.0,
+          "dte": 16,
+          "expected_move_context": null,
+          "structure_context": null,
+          "payoff": {
+            "trade": {
+              "symbol": "SPY",
+              "strategy": "Long put",
+              "strategy_family": "long_put",
+              "expiration": "2030-01-18",
+              "spot": 500.0,
+              "credit": -3.1,
+              "shares": 0.0,
+              "fees": 1.25,
+              "source": "Explicit user-supplied scenario",
+              "legs": [
+                {
+                  "type": "Put",
+                  "strike": 500.0,
+                  "qty": 1.0
+                }
+              ],
+              "stock_basis": 500.0
+            },
+            "units": 1,
+            "max_profit": 49688.75,
+            "max_loss": 311.25,
+            "return_on_risk": 159.6425702811245,
+            "option_premium": -310.0,
+            "fees": 1.25,
+            "net_cash": -311.25,
+            "breakevens": [
+              496.8875
+            ],
+            "strikes": [
+              500.0
+            ],
+            "width": null,
+            "credit_width": null,
+            "grid": [
+              {
+                "Terminal underlying ($)": 494.8875,
+                "Move from spot (%)": -1.022500000000004,
+                "Expiration P&L ($)": 200.00000000000114,
+                "Return on max risk (%)": 64.25702811245017,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 495.3616666666667,
+                "Move from spot (%)": -0.92766666666666,
+                "Expiration P&L ($)": 152.58333333333212,
+                "Return on max risk (%)": 49.02275769745611,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 495.8358333333333,
+                "Move from spot (%)": -0.8328333333333382,
+                "Expiration P&L ($)": 105.16666666666879,
+                "Return on max risk (%)": 33.78848728246387,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 496.31,
+                "Move from spot (%)": -0.7379999999999942,
+                "Expiration P&L ($)": 57.74999999999977,
+                "Return on max risk (%)": 18.554216867469805,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 496.78416666666664,
+                "Move from spot (%)": -0.6431666666666724,
+                "Expiration P&L ($)": 10.33333333333644,
+                "Return on max risk (%)": 3.3199464524775713,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 496.8875,
+                "Move from spot (%)": -0.6225000000000036,
+                "Expiration P&L ($)": 1.1368683772161603e-12,
+                "Return on max risk (%)": 3.652589163746699e-13,
+                "Landmark": "Breakeven"
+              },
+              {
+                "Terminal underlying ($)": 497.2583333333333,
+                "Move from spot (%)": -0.5483333333333396,
+                "Expiration P&L ($)": -37.083333333332575,
+                "Return on max risk (%)": -11.914323962516491,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 497.7325,
+                "Move from spot (%)": -0.4534999999999956,
+                "Expiration P&L ($)": -84.50000000000159,
+                "Return on max risk (%)": -27.148594377510555,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 498.20666666666665,
+                "Move from spot (%)": -0.3586666666666738,
+                "Expiration P&L ($)": -131.91666666666492,
+                "Return on max risk (%)": -42.38286479250279,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 498.44375,
+                "Move from spot (%)": -0.31124999999999625,
+                "Expiration P&L ($)": -155.62500000000227,
+                "Return on max risk (%)": -50.00000000000073,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 498.68083333333334,
+                "Move from spot (%)": -0.2638333333333298,
+                "Expiration P&L ($)": -179.33333333333394,
+                "Return on max risk (%)": -57.61713520749685,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 499.155,
+                "Move from spot (%)": -0.16900000000000803,
+                "Expiration P&L ($)": -226.74999999999727,
+                "Return on max risk (%)": -72.85140562248908,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 499.62916666666666,
+                "Move from spot (%)": -0.07416666666666405,
+                "Expiration P&L ($)": -274.1666666666663,
+                "Return on max risk (%)": -88.08567603748314,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 500.0,
+                "Move from spot (%)": 0.0,
+                "Expiration P&L ($)": -311.25,
+                "Return on max risk (%)": -100.0,
+                "Landmark": "Spot \u00b7 Strike"
+              },
+              {
+                "Terminal underlying ($)": 500.10333333333335,
+                "Move from spot (%)": 0.02066666666666883,
+                "Expiration P&L ($)": -311.25,
+                "Return on max risk (%)": -100.0,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 500.5775,
+                "Move from spot (%)": 0.11550000000000171,
+                "Expiration P&L ($)": -311.25,
+                "Return on max risk (%)": -100.0,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 501.0516666666667,
+                "Move from spot (%)": 0.2103333333333346,
+                "Expiration P&L ($)": -311.25,
+                "Return on max risk (%)": -100.0,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 501.5258333333333,
+                "Move from spot (%)": 0.3051666666666675,
+                "Expiration P&L ($)": -311.25,
+                "Return on max risk (%)": -100.0,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 502.0,
+                "Move from spot (%)": 0.40000000000000036,
+                "Expiration P&L ($)": -311.25,
+                "Return on max risk (%)": -100.0,
+                "Landmark": ""
+              }
+            ],
+            "extremes": [
+              {
+                "Terminal underlying ($)": 250.0,
+                "Move from spot (%)": -50.0,
+                "Expiration P&L ($)": 24688.75,
+                "Return on max risk (%)": 7932.128514056225,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 350.0,
+                "Move from spot (%)": -30.000000000000004,
+                "Expiration P&L ($)": 14688.75,
+                "Return on max risk (%)": 4719.2771084337355,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 400.0,
+                "Move from spot (%)": -19.999999999999996,
+                "Expiration P&L ($)": 9688.75,
+                "Return on max risk (%)": 3112.8514056224903,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 450.0,
+                "Move from spot (%)": -9.999999999999998,
+                "Expiration P&L ($)": 4688.75,
+                "Return on max risk (%)": 1506.4257028112452,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 475.0,
+                "Move from spot (%)": -5.000000000000004,
+                "Expiration P&L ($)": 2188.75,
+                "Return on max risk (%)": 703.2128514056226,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 500.0,
+                "Move from spot (%)": 0.0,
+                "Expiration P&L ($)": -311.25,
+                "Return on max risk (%)": -100.0,
+                "Landmark": "Spot \u00b7 Strike"
+              },
+              {
+                "Terminal underlying ($)": 525.0,
+                "Move from spot (%)": 5.000000000000004,
+                "Expiration P&L ($)": -311.25,
+                "Return on max risk (%)": -100.0,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 550.0,
+                "Move from spot (%)": 10.000000000000009,
+                "Expiration P&L ($)": -311.25,
+                "Return on max risk (%)": -100.0,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 600.0,
+                "Move from spot (%)": 19.999999999999996,
+                "Expiration P&L ($)": -311.25,
+                "Return on max risk (%)": -100.0,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 650.0,
+                "Move from spot (%)": 30.000000000000004,
+                "Expiration P&L ($)": -311.25,
+                "Return on max risk (%)": -100.0,
+                "Landmark": ""
+              },
+              {
+                "Terminal underlying ($)": 750.0,
+                "Move from spot (%)": 50.0,
+                "Expiration P&L ($)": -311.25,
+                "Return on max risk (%)": -100.0,
+                "Landmark": ""
+              }
+            ]
+          },
+          "caveats": [
+            "Expiration payoff economics are deterministic; they are not a forecast.",
+            "Expected-move context does not imply probability of profit.",
+            "Greeks, implied volatility, liquidity, and executable quotes require contract-market data."
+          ],
+          "underlying": "SPY",
+          "strategy_family": "long_put",
+          "direction": "bearish",
+          "max_loss": 311.25,
+          "evidence": {
+            "pricing_assumption": "Supplied signed package cashflow; not a verified quote or fill",
+            "option_legs": [
+              {
+                "type": "Put",
+                "strike": 500.0,
+                "expiration": "2030-01-18",
+                "qty": 1.0,
+                "quantity": 1.0,
+                "action": "Buy",
+                "contract": null,
+                "bid": null,
+                "ask": null,
+                "mid": null,
+                "delta": null,
+                "gamma": null,
+                "theta": null,
+                "vega": null,
+                "rho": null,
+                "iv": null,
+                "volume": null,
+                "open_interest": null,
+                "bid_timestamp": null,
+                "ask_timestamp": null,
+                "last_timestamp": null,
+                "quote_timestamp": null,
+                "observation_timestamp": null,
+                "observed_at": null,
+                "archive_quality": null,
+                "quality_warnings": null,
+                "missing_fields": null
+              }
+            ],
+            "market_data": {
+              "version": "structure-market-data-v1",
+              "kind": "hypothetical",
+              "verified": false,
+              "verified_for_trading": false,
+              "reason": "user_supplied_cashflow",
+              "legs": []
+            }
+          },
+          "position": {
+            "symbol": "SPY",
+            "expiration": "2030-01-18",
+            "strategy_family": "long_put",
+            "legs": [
+              {
+                "type": "Put",
+                "strike": 500.0,
+                "expiration": "2030-01-18",
+                "qty": 1.0,
+                "quantity": 1.0,
+                "action": "Buy",
+                "contract": null,
+                "bid": null,
+                "ask": null,
+                "mid": null,
+                "delta": null,
+                "gamma": null,
+                "theta": null,
+                "vega": null,
+                "rho": null,
+                "iv": null,
+                "volume": null,
+                "open_interest": null,
+                "bid_timestamp": null,
+                "ask_timestamp": null,
+                "last_timestamp": null,
+                "quote_timestamp": null,
+                "observation_timestamp": null,
+                "observed_at": null,
+                "archive_quality": null,
+                "quality_warnings": null,
+                "missing_fields": null
+              }
+            ],
+            "credit": -3.1,
+            "fees": 1.25
+          },
+          "historical_economics": {
+            "version": "historical-economics-v1",
+            "structure_identity": {
+              "symbol": "SPY",
+              "expiration": "2030-01-18",
+              "strategy_family": "long_put",
+              "legs": [
+                {
+                  "type": "Put",
+                  "strike": 500.0,
+                  "expiration": "2030-01-18",
+                  "qty": 1.0,
+                  "quantity": 1.0,
+                  "action": "Buy",
+                  "contract": null,
+                  "bid": null,
+                  "ask": null,
+                  "mid": null,
+                  "delta": null,
+                  "gamma": null,
+                  "theta": null,
+                  "vega": null,
+                  "rho": null,
+                  "iv": null,
+                  "volume": null,
+                  "open_interest": null,
+                  "bid_timestamp": null,
+                  "ask_timestamp": null,
+                  "last_timestamp": null,
+                  "quote_timestamp": null,
+                  "observation_timestamp": null,
+                  "observed_at": null,
+                  "archive_quality": null,
+                  "quality_warnings": null,
+                  "missing_fields": null
+                }
+              ],
+              "credit": -3.1,
+              "fees": 1.25,
+              "multiplier": 100
+            },
+            "holding_period": "swing",
+            "valuation": "expiration",
+            "deterministic_expiration": {
+              "max_profit": 49688.75,
+              "max_profit_unlimited": false,
+              "max_loss": 311.25,
+              "breakevens": [
+                496.8875
+              ],
+              "required_moves": [
+                {
+                  "dollars": -3.1125000000000114,
+                  "fraction": -0.006225000000000036
+                }
+              ]
+            },
+            "capital_requirement": {
+              "expiration_max_loss": 311.25,
+              "broker_buying_power": null
+            },
+            "capital_eligibility": {
+              "status": "not_assessed",
+              "available_capital": null,
+              "basis": "expiration max loss, not broker buying power"
+            },
+            "assumptions": {
+              "multiplier": 100,
+              "premium": "signed package per-share cashflow",
+              "fees_dollars": 1.25,
+              "slippage_dollars": 0.0,
+              "cost_basis": "total package costs once, not per leg or per scenario period",
+              "weighting": "equal observations",
+              "quantiles": "linear interpolation",
+              "minimum_samples": 30
+            },
+            "historical_economics": {
+              "expected_value_dollars": null,
+              "ev_over_max_risk": null,
+              "positive_payoff_frequency": null,
+              "profit_factor": null,
+              "median_payoff": null,
+              "p10_payoff": null,
+              "p90_payoff": null,
+              "average_winning_payoff": null,
+              "average_losing_payoff": null
+            },
+            "sample_size": 0,
+            "scenario_payoffs": [],
+            "evidence": null,
+            "robustness": {
+              "status": "unavailable",
+              "reason": "Distinct validated analog subsets not supplied."
+            },
+            "touch_breach": {
+              "status": "unavailable",
+              "reason": "Terminal returns do not establish path behavior."
+            },
+            "execution_evidence": {
+              "status": "unavailable",
+              "reason": "Executable quotes/liquidity not validated by this evaluator."
+            },
+            "early_exit": {
+              "status": "unavailable",
+              "reason": "Historical option marks or validated repricing inputs required."
+            },
+            "eligibility": "ECONOMICS_INCOMPLETE",
+            "eligible_for_consideration": false,
+            "missing_evidence": [
+              "as_of_session_not_complete"
+            ],
+            "research_only_reasons": [
+              "No execution validation or independent robustness validation."
+            ],
+            "historical_evidence_status": "unavailable",
+            "economics_coverage": "deterministic_only",
+            "integration_version": "structure-historical-v1",
+            "temporal_basis": "Explicit as_of completed NYSE session; historical, not live",
+            "provenance": {
+              "verification": "unavailable",
+              "pricing": "caller-supplied scenario"
+            }
+          }
+        }
+      ],
+      "historical_comparison": {
+        "version": "shared-historical-comparison-v1",
+        "groups": [
+          {
+            "group_id": 0,
+            "context": {
+              "symbol": "SPY",
+              "as_of": "2030-01-02",
+              "expiration": "2030-01-18",
+              "spot": 500.0,
+              "research_cutoff": "2030-01-02T21:00:00+00:00",
+              "horizon_sessions": 12
+            },
+            "candidate_indices": [
+              0,
+              2
+            ],
+            "directly_comparable": false,
+            "evidence_fingerprints": [],
+            "evidence_available": false,
+            "missing_evidence": [
+              "as_of_session_not_complete"
+            ]
+          },
+          {
+            "group_id": 1,
+            "context": {
+              "symbol": "QQQ",
+              "as_of": "2030-01-02",
+              "expiration": "2030-01-18",
+              "spot": 500.0,
+              "research_cutoff": "2030-01-02T21:00:00+00:00",
+              "horizon_sessions": 12
+            },
+            "candidate_indices": [
+              1
+            ],
+            "directly_comparable": false,
+            "evidence_fingerprints": [],
+            "evidence_available": false,
+            "missing_evidence": [
+              "as_of_session_not_complete"
+            ]
+          }
+        ],
+        "candidate_group_ids": [
+          0,
+          1,
+          0
+        ],
+        "pairwise_comparability": [
+          {
+            "candidate_indices": [
+              0,
+              1
+            ],
+            "directly_comparable": false,
+            "missing_reason": "different_evidence_context"
+          },
+          {
+            "candidate_indices": [
+              0,
+              2
+            ],
+            "directly_comparable": false,
+            "missing_reason": "validated_historical_evidence_unavailable"
+          },
+          {
+            "candidate_indices": [
+              1,
+              2
+            ],
+            "directly_comparable": false,
+            "missing_reason": "different_evidence_context"
+          }
+        ],
+        "comparability_representation": "pairs_and_groups",
+        "candidate_order": "supplied input order; not a ranking",
+        "winner": null,
+        "recommendation": null,
+        "valuation": "expiration",
+        "caveats": [
+          "Same evidence does not establish executable prices or calibrated POP.",
+          "Intraday and early-exit economics remain unavailable."
+        ]
+      },
+      "comparison": {
+        "version": "cross-strategy-compare-v1",
+        "thesis": null,
+        "candidates": [
+          {
+            "input_index": 0,
+            "strategy_family": "call_debit_spread",
+            "direction": "bullish",
+            "expiration": "2030-01-18",
+            "dte": 16,
+            "capital_at_risk": 211.25,
+            "max_loss": 211.25,
+            "max_profit": 288.75,
+            "breakevens": [
+              502.1125
+            ],
+            "breakeven_moves": [
+              2.1125000000000114
+            ],
+            "breakeven_move_pcts": [
+              0.004225000000000023
+            ],
+            "expected_move": null,
+            "breakeven_distances_in_expected_moves": null,
+            "market_evidence_available": {
+              "bid": true,
+              "ask": true,
+              "delta": false,
+              "gamma": false,
+              "theta": false,
+              "vega": false,
+              "iv": false,
+              "volume": false,
+              "open_interest": false
+            },
+            "pricing_assumption": "Observed buy ask / sell bid; user-supplied fees; not an executable fill",
+            "caveats": [
+              "Deterministic expiration payoff, not a forecast or probability of profit.",
+              "Standard 100-share multiplier; credit/debit are per-share package cashflows; payoff/risk and fees are dollars.",
+              "Signed moves are distances to expiration breakevens, not predicted moves. Multiple roots remain separate.",
+              "Direction describes structure bias, not inferred market evidence. No winner or recommendation.",
+              "Missing Greeks, IV, liquidity, timestamps and expected-move evidence remain unavailable."
+            ],
+            "market_data": {
+              "version": "structure-market-data-v1",
+              "kind": "verified_archive",
+              "verified": true,
+              "verified_for_trading": false,
+              "snapshot": {
+                "id": "fixture",
+                "provider": "Public",
+                "symbol": "SPY",
+                "observed_at": "2030-01-02T20:30:00+00:00",
+                "session_date": "2030-01-02",
+                "archive_path": "options/symbol=SPY/date=2030-01-02/fixture.json.gz",
+                "archive_sha256": "c90d159f3930c779b9b1b2edb3bd38195cb2fe63b3b87ef5538e54cc89d75403",
+                "quality_status": "complete",
+                "slot_time": "2030-01-02T20:25:00+00:00",
+                "created_at": "2030-01-02T20:32:30+00:00"
+              },
+              "archive_freshness": {
+                "as_of": "2030-01-02T20:33:00+00:00",
+                "age_seconds": 180.0,
+                "max_age_seconds": 300,
+                "basis": "collection_start"
+              },
+              "evaluated_at": "2030-01-02T20:33:00+00:00",
+              "underlying": {
+                "spot": 500.0,
+                "timestamp": "2030-01-02T20:30:00+00:00"
+              },
+              "pricing": "natural_bid_ask",
+              "signed_package_cashflow": -2.1,
+              "fees": 1.25,
+              "legs": [
+                {
+                  "type": "Call",
+                  "strike": 500.0,
+                  "qty": 1,
+                  "symbol": "SPY",
+                  "expiration": "2030-01-18",
+                  "contract": "SPY300118C00500000",
+                  "bid": 3.0,
+                  "ask": 3.1,
+                  "bid_timestamp": "2030-01-02T20:30:00+00:00",
+                  "ask_timestamp": "2030-01-02T20:30:00+00:00",
+                  "observation_timestamp": "2030-01-02T20:30:00+00:00",
+                  "archive_quality": "valid_contracts",
+                  "quality_warnings": [
+                    "Synthetic test observation"
+                  ],
+                  "entry_side": "ask",
+                  "entry_price": 3.1,
+                  "snapshot_id": "fixture",
+                  "freshness": {
+                    "evaluated_at": "2030-01-02T20:33:00+00:00",
+                    "max_age_seconds": 900,
+                    "bid_age_seconds": 180.0,
+                    "ask_age_seconds": 180.0
+                  }
+                },
+                {
+                  "type": "Call",
+                  "strike": 505.0,
+                  "qty": -1,
+                  "symbol": "SPY",
+                  "expiration": "2030-01-18",
+                  "contract": "SPY300118C00505000",
+                  "bid": 1.0,
+                  "ask": 1.1,
+                  "bid_timestamp": "2030-01-02T20:30:00+00:00",
+                  "ask_timestamp": "2030-01-02T20:30:00+00:00",
+                  "observation_timestamp": "2030-01-02T20:30:00+00:00",
+                  "archive_quality": "valid_contracts",
+                  "quality_warnings": [
+                    "Synthetic test observation"
+                  ],
+                  "entry_side": "bid",
+                  "entry_price": 1.0,
+                  "snapshot_id": "fixture",
+                  "freshness": {
+                    "evaluated_at": "2030-01-02T20:33:00+00:00",
+                    "max_age_seconds": 900,
+                    "bid_age_seconds": 180.0,
+                    "ask_age_seconds": 180.0
+                  }
+                }
+              ],
+              "caveats": [
+                "Archived observations are not executable fills.",
+                "Provider quote delay and broker margin are not certified.",
+                "Fees are user-supplied total package dollars."
+              ]
+            }
+          },
+          {
+            "input_index": 1,
+            "strategy_family": "long_call",
+            "direction": "bullish",
+            "expiration": "2030-01-18",
+            "dte": 16,
+            "capital_at_risk": 311.25,
+            "max_loss": 311.25,
+            "max_profit": "unlimited",
+            "breakevens": [
+              503.1125
+            ],
+            "breakeven_moves": [
+              3.1125000000000114
+            ],
+            "breakeven_move_pcts": [
+              0.006225000000000023
+            ],
+            "expected_move": null,
+            "breakeven_distances_in_expected_moves": null,
+            "market_evidence_available": {
+              "bid": true,
+              "ask": true,
+              "delta": false,
+              "gamma": false,
+              "theta": false,
+              "vega": false,
+              "iv": false,
+              "volume": false,
+              "open_interest": false
+            },
+            "pricing_assumption": "Observed buy ask / sell bid; user-supplied fees; not an executable fill",
+            "caveats": [
+              "Expiration payoff economics are deterministic; they are not a forecast.",
+              "Expected-move context does not imply probability of profit.",
+              "Greeks, implied volatility, liquidity, and executable quotes require contract-market data."
+            ],
+            "market_data": {
+              "version": "structure-market-data-v1",
+              "kind": "verified_archive",
+              "verified": true,
+              "verified_for_trading": false,
+              "snapshot": {
+                "id": "fixture",
+                "provider": "Public",
+                "symbol": "QQQ",
+                "observed_at": "2030-01-02T20:30:00+00:00",
+                "session_date": "2030-01-02",
+                "archive_path": "options/symbol=QQQ/date=2030-01-02/fixture.json.gz",
+                "archive_sha256": "0a361d3cb97255d72e9cb123f32ecaa1da72092da988b7d0d01daa277558cf7f",
+                "quality_status": "complete",
+                "slot_time": "2030-01-02T20:25:00+00:00",
+                "created_at": "2030-01-02T20:32:30+00:00"
+              },
+              "archive_freshness": {
+                "as_of": "2030-01-02T20:33:00+00:00",
+                "age_seconds": 180.0,
+                "max_age_seconds": 300,
+                "basis": "collection_start"
+              },
+              "evaluated_at": "2030-01-02T20:33:00+00:00",
+              "underlying": {
+                "spot": 500.0,
+                "timestamp": "2030-01-02T20:30:00+00:00"
+              },
+              "pricing": "natural_bid_ask",
+              "signed_package_cashflow": -3.1,
+              "fees": 1.25,
+              "legs": [
+                {
+                  "type": "Call",
+                  "strike": 500.0,
+                  "qty": 1,
+                  "symbol": "QQQ",
+                  "expiration": "2030-01-18",
+                  "contract": "QQQ300118C00500000",
+                  "bid": 3.0,
+                  "ask": 3.1,
+                  "bid_timestamp": "2030-01-02T20:30:00+00:00",
+                  "ask_timestamp": "2030-01-02T20:30:00+00:00",
+                  "observation_timestamp": "2030-01-02T20:30:00+00:00",
+                  "archive_quality": "valid_contracts",
+                  "quality_warnings": [
+                    "Synthetic test observation"
+                  ],
+                  "entry_side": "ask",
+                  "entry_price": 3.1,
+                  "snapshot_id": "fixture",
+                  "freshness": {
+                    "evaluated_at": "2030-01-02T20:33:00+00:00",
+                    "max_age_seconds": 900,
+                    "bid_age_seconds": 180.0,
+                    "ask_age_seconds": 180.0
+                  }
+                }
+              ],
+              "caveats": [
+                "Archived observations are not executable fills.",
+                "Provider quote delay and broker margin are not certified.",
+                "Fees are user-supplied total package dollars."
+              ]
+            }
+          },
+          {
+            "input_index": 2,
+            "strategy_family": "long_put",
+            "direction": "bearish",
+            "expiration": "2030-01-18",
+            "dte": 16,
+            "capital_at_risk": 311.25,
+            "max_loss": 311.25,
+            "max_profit": 49688.75,
+            "breakevens": [
+              496.8875
+            ],
+            "breakeven_moves": [
+              -3.1125000000000114
+            ],
+            "breakeven_move_pcts": [
+              -0.006225000000000023
+            ],
+            "expected_move": null,
+            "breakeven_distances_in_expected_moves": null,
+            "market_evidence_available": {
+              "bid": false,
+              "ask": false,
+              "delta": false,
+              "gamma": false,
+              "theta": false,
+              "vega": false,
+              "iv": false,
+              "volume": false,
+              "open_interest": false
+            },
+            "pricing_assumption": "Supplied signed package cashflow; not a verified quote or fill",
+            "caveats": [
+              "Expiration payoff economics are deterministic; they are not a forecast.",
+              "Expected-move context does not imply probability of profit.",
+              "Greeks, implied volatility, liquidity, and executable quotes require contract-market data."
+            ],
+            "market_data": {
+              "version": "structure-market-data-v1",
+              "kind": "hypothetical",
+              "verified": false,
+              "verified_for_trading": false,
+              "reason": "user_supplied_cashflow",
+              "legs": []
+            }
+          }
+        ],
+        "excluded": [],
+        "no_candidate": false,
+        "comparison_fields": [
+          "capital_at_risk",
+          "max_loss",
+          "max_profit",
+          "breakevens",
+          "breakeven_moves",
+          "breakeven_move_pcts",
+          "dte",
+          "expected_move",
+          "breakeven_distances_in_expected_moves",
+          "market_evidence_available"
+        ],
+        "candidate_order": "supplied input order; not a ranking",
+        "winner": null,
+        "recommendation": null,
+        "caveats": [
+          "Comparison is descriptive research, not a score, ranking, or recommendation.",
+          "Missing evidence remains unavailable and is not imputed.",
+          "Unlimited profit potential is preserved rather than converted into a reward/risk score.",
+          "Expected-move context is descriptive and does not imply probability of profit."
+        ]
+      }
+    },
+    "provenance": {
+      "source": "Per-candidate verified archive or hypothetical provenance"
+    },
+    "caveats": [
+      "Input order is not preference. Different dates, symbols and spots remain explicit per candidate."
+    ]
+  }
+}

@@ -161,11 +161,11 @@ def build_mcp(app, sanitize):
         request=MarketRequest(symbol=symbol,expiration=expiration,research_mode=research_mode,available_capital=available_capital,objective=objective,width=width)
         return await invoke('/v1/research/market',body=request.model_dump(mode='json'))
 
-    @tool('Research an explicit long option, debit/credit spread, butterfly/BWB or iron condor using shared AlphaOS 2.0 economics. Requires symbol, expiration, as_of date, scenario spot, signed quantities and signed package credit (negative debit), fees in dollars. Supplied cashflow is not a verified fill. No provider calls, position writes, or recommendations.')
+    @tool('Research an existing supported option structure with shared economics. Without market_data this is a hypothetical user-supplied scenario. For verified archive observations supply market_data.snapshot_id and archive_sha256 plus contract on EVERY leg. Server re-reads the latest verified archive; exact spot, expiration, contract identities, fresh bid/ask timestamps and natural buy-ask/sell-bid package credit must match or fail closed. Rollover requires a new reference; never silently reprices. Fees are user inputs. Archive verification is not an executable fill, POP, ranking or broker buying power.')
     async def research_structure(structure: StructureRequest) -> CallToolResult:
         return await invoke('/v1/research/structure',body=structure.model_dump(mode='json'))
 
-    @tool('Research and compare explicit supported structures in supplied input order. Retains full economics plus descriptive cross-strategy comparison; no winner, ranking or recommendation. Different symbol/date/spot contexts remain explicit. No quote retrieval or journal writes.')
+    @tool('Compare existing structures in supplied order using the same StructureRequest validation as research_structure and REST. Optional market_data references pin latest verified archive observations and require contract IDs on every leg; otherwise scenarios are hypothetical. Preserves each candidate quote provenance, freshness and economics. Any invalid archive-backed input fails the request, never downgrades to hypothetical. No winner, ranking, recommendations, provider repricing or journal writes.')
     async def compare_structures(comparison: StructuresRequest) -> CallToolResult:
         return await invoke('/v1/research/structures/compare',body=comparison.model_dump(mode='json'))
 

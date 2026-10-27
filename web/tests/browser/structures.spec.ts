@@ -134,10 +134,12 @@ test("comparison uses saved scenarios in order and never shows a winner", async 
   await expect(page.getByText(/1\. QQQ 2030-01-02 · Call 500 Buy 1 · Call 505 Sell 1 · debit 1.2/)).toBeVisible();
 
   await page.locator("#structure-price").fill("2.20");
+  await page.getByRole('button',{name:'Remove leg',exact:true}).last().click();
+  await page.locator('#structure-fees').fill('1.3');
   await page.getByRole("button", { name: "Save for comparison" }).click();
   await expect(page.getByText("Compare saved structures (2)")).toBeVisible();
 
-  await page.locator("#structure-thesis").fill("debit versus long");
+  await page.locator("#structure-thesis").fill("Debit spread versus outright call");
   await page.getByRole("button", { name: "Compare saved structures (2)" }).click();
 
   await expect(page.getByText("Descriptive comparison")).toBeVisible();
@@ -153,7 +155,8 @@ test("comparison uses saved scenarios in order and never shows a winner", async 
   expect(sent).toHaveLength(1);
   const payload = sent[0] as { structures: Array<Record<string, unknown>>; thesis?: string };
   expect(payload.structures.map((item) => item.credit)).toEqual([-1.2, -2.2]);
-  expect(payload.thesis).toBe("debit versus long");
+  expect(payload.thesis).toBe("Debit spread versus outright call");
+  expect(payload).toEqual(compared.request);
 });
 
 test("invalid input, unsupported structures, timeouts and empty archive evidence invent nothing", async ({ page }) => {

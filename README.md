@@ -11,6 +11,10 @@ The deployed research API does not execute trades or write a personal journal.
 Capital eligibility, historical evidence and executable quote freshness remain
 separate; unknown evidence is never filled with synthetic observations.
 
+Structure research and comparison support optional server-verified contract and
+bid/ask provenance alongside explicitly hypothetical scenarios. See the
+[request contract, validation rules and release gates](docs/VERIFIED_STRUCTURE_PROVENANCE.md).
+
 ## Current architecture and local entrypoints
 
 - [Current status](docs/STATUS.md): dated record of merged work, reported
