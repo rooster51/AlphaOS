@@ -126,6 +126,7 @@ test("desktop navigation reaches every page, including a fail-closed market page
   const destinations = [
     ["Market Research", /\/market$/],
     ["Strategy Explorer", /\/strategies$/],
+    ["Structure Lab", /\/structures$/],
     ["Session Review", /\/session$/],
     ["Trade Journal", /\/journal$/],
     ["Portfolio Risk", /\/risk$/],
