@@ -167,7 +167,10 @@ def _validated_legs(evidence, trade, now, max_age, snapshot_id):
                 and abs(float(reported) - age) <= 1e-6, 'entry_quote_invalid')
             ages[name + '_age_seconds'] = age
         normalized.append(dict(index=index, type=leg_type, strike=strike, qty=qty,
-            contract=contract, entry_side=side, entry_price=price, bid=bid, ask=ask,
+            contract=contract, symbol=trade['symbol'], expiration=trade['expiration'],
+            snapshot_id=snapshot_id,
+            observation_timestamp=leg.get('observation_timestamp'),
+            entry_side=side, entry_price=price, bid=bid, ask=ask,
             bid_timestamp=leg['bid_timestamp'], ask_timestamp=leg['ask_timestamp'],
             archive_quality=leg['archive_quality'],
             quality_warnings=list(leg.get('quality_warnings') or []), **ages))

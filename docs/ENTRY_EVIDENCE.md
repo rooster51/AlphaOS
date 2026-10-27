@@ -62,8 +62,9 @@ Output: a JSON-safe record with
   times, archive path, SHA-256, quality status;
 - `verification` — evaluation instant, quote age ceiling, underlying age and,
   when the verifier supplied it, archive age;
-- `legs[]` — input order, with index, type, strike, quantity, contract, entry
-  side and price, bid, ask, both timestamps, archive quality, warnings and ages;
+- `legs[]` — input order, with index, type, strike, quantity, contract, symbol,
+  expiration, the snapshot it came from, observation timestamp, entry side and
+  price, bid, ask, both quote timestamps, archive quality, warnings and ages;
 - `research_only: true`, `verified_for_trading: false`, caveats;
 - `fingerprint` — SHA-256 over the canonical JSON of everything above.
 
