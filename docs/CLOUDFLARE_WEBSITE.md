@@ -134,3 +134,6 @@ provenance/freshness labels, safe errors, no credential in browser requests or
 assets, and the unchanged 12-second market timeout. An actual cold Render
 response can still time out and must fail closed. Only then approve a main
 deployment and any DNS cutover separately. Retain Render as rollback capacity.
+
+See the [October 27 SPY/QQQ validation report](SPY_QQQ_VALIDATION_2026-10-27.md)
+for actual preview/API results and the remaining production release gates.
