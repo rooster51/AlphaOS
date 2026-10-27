@@ -131,6 +131,9 @@ type BridgeTrace = {
   upstream_json?: boolean;
   backend_correlated?: boolean;
   upstream_code?: string;
+  outcome?: "backend_timeout" | "backend_unreachable" | "request_cancelled";
+  timeout_phase?: "response_headers" | "response_body" | "schema_validation";
+  fetch_wait_ms?: number;
 };
 const KNOWN_UPSTREAM_CODES = new Set([
   "archive_stale", "archive_missing", "archive_not_configured", "archive_unavailable",
@@ -156,8 +159,15 @@ export async function POST(request: Request) {
         elapsed_ms: Math.round(performance.now() - started)}));
       throw error;
     }
-    result = Response.json({status: "unavailable", code: clientCancelled ? "request_cancelled" : timeout ? "backend_timeout" : "backend_unreachable"},
+    trace.outcome = clientCancelled ? "request_cancelled" : timeout ? "backend_timeout" : "backend_unreachable";
+    result = Response.json({status: "unavailable", code: trace.outcome},
       {status: clientCancelled ? 499 : 502, headers: {"Cache-Control": "no-store"}});
+  }
+  if (trace.outcome === "backend_timeout") {
+    // A timeout before headers cannot establish whether the origin is asleep,
+    // authenticating, or computing. Correlate with Render logs; never guess.
+    trace.timeout_phase = trace.stage === "fetch" ? "response_headers"
+      : trace.stage === "schema_validation" ? "schema_validation" : "response_body";
   }
   result.headers.set("X-AlphaOS-Request-ID", trace.request_id);
   console.warn(JSON.stringify({event: "research_bridge", ...trace, status: result.status,
@@ -219,8 +229,10 @@ async function marketRequest(request: Request, trace: BridgeTrace, timeout: () =
   } catch (error) {
     const timedOut = error instanceof DOMException && error.name === "TimeoutError";
     if (!timedOut && !(error instanceof TypeError)) throw error;
+    trace.fetch_wait_ms = Math.round(performance.now() - fetchStarted);
+    trace.outcome = timedOut ? "backend_timeout" : "backend_unreachable";
     return Response.json(
-      { status: "unavailable", code: timedOut ? "backend_timeout" : "backend_unreachable" },
+      { status: "unavailable", code: trace.outcome },
       { status: 502, headers: { "Cache-Control": "no-store" } },
     );
   }

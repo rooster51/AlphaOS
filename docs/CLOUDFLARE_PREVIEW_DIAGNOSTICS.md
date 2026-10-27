@@ -1,5 +1,8 @@
 # PR #67: Preview research configuration
 
+Once bindings are ready, see the separate [Render timeout investigation](CLOUDFLARE_RENDER_TIMEOUT.md)
+for the confirmed Free-instance startup issue and live QQQ/SPY verification.
+
 ## Confirmed cause (October 27, 2026)
 
 Read-only Cloudflare deployment metadata for `alphaos-web`, Preview

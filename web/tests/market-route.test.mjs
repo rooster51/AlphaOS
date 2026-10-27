@@ -501,6 +501,8 @@ for(const status of [200,503]) {
    globalThis.fetch=async()=>({ok:status===200,status,headers:new Headers(),json:async()=>{throw new DOMException("DO_NOT_LOG","TimeoutError");}});
    const r=await POST(request({symbol:"SPY"}));assert.equal(r.status,502);assert.equal((await r.json()).code,"backend_timeout");
    assert.equal(logs[0].stage,"response_body");assert.equal(logs[0].upstream_status,status);
+   assert.equal(logs[0].outcome,"backend_timeout");
+   assert.equal(logs[0].timeout_phase,"response_body");
   }finally{console.warn=warn;}
  });
 }
@@ -535,7 +537,8 @@ test("current bridge rejects unknown backend research modes without breaking leg
  assert.equal((await POST(request({symbol:"QQQ"}))).status,200);
 });
 
-test("concurrent historical timeouts keep the 12000ms deadline, isolated correlation and sanitized diagnostics",async()=>{
+for (const mode of ["current", "historical"]) {
+test(`concurrent ${mode} cold-origin waits keep the 12000ms deadline and recover only on a new request`,async()=>{
  setBackendConfig();const originalTimeout=AbortSignal.timeout;const warn=console.warn;
  const logs=[];const sent=[];console.warn=value=>logs.push(JSON.parse(value));
  try {
@@ -552,18 +555,28 @@ test("concurrent historical timeouts keep the 12000ms deadline, isolated correla
     else options.signal.addEventListener("abort",()=>reject(options.signal.reason),{once:true});
    });
   };
-  const responses=await Promise.all(["SPY","QQQ"].map(symbol=>POST(request({symbol,research_mode:"historical"}))));
+  const responses=await Promise.all(["SPY","QQQ"].map(symbol=>POST(request({symbol,research_mode:mode}))));
   assert.equal(new Set(sent.map(item=>item.id)).size,2);
   for(let index=0;index<responses.length;index++) {
    const response=responses[index];assert.equal(response.status,502);
    assert.deepEqual(await response.json(),{status:"unavailable",code:"backend_timeout"});
    const id=response.headers.get("X-AlphaOS-Request-ID");
    const log=logs.find(row=>row.request_id===id);
-   assert.equal(log.symbol,index===0?"SPY":"QQQ");assert.equal(log.research_mode,"historical");
+   assert.equal(log.symbol,index===0?"SPY":"QQQ");assert.equal(log.research_mode,mode);
    assert.equal(log.stage,"fetch");assert.equal(log.timeout_ms,12000);
-   assert.equal(sent.find(item=>item.id===id).payload.research_mode,"historical");
+   assert.equal(log.outcome,"backend_timeout");assert.equal(log.timeout_phase,"response_headers");
+   assert.ok(log.fetch_wait_ms>=0);
+   assert.equal(log.upstream_status,undefined);assert.equal(log.backend_correlated,undefined);
+   assert.equal(sent.find(item=>item.id===id).payload.research_mode,mode);
   }
   assert.equal(logs.length,2);assert.ok(!JSON.stringify(logs).includes("DO_NOT_LOG"));
   assert.ok(!JSON.stringify(logs).includes("test-token"));
+  assert.equal(sent.length,2); // No hidden retries, preflight waits or budget extension.
+  AbortSignal.timeout=originalTimeout;
+  globalThis.fetch=async()=>Response.json(envelope());
+  const recovered=await POST(request({symbol:"QQQ"}));
+  assert.equal(recovered.status,200);
+  assert.notEqual(recovered.headers.get("X-AlphaOS-Request-ID"),responses[0].headers.get("X-AlphaOS-Request-ID"));
  }finally{AbortSignal.timeout=originalTimeout;console.warn=warn;}
 });
+}
