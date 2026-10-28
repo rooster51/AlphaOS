@@ -1,5 +1,12 @@
 # AlphaOS website on Cloudflare Workers
 
+**First production release: NO-GO until private access and production binding
+gates pass.** Follow the [first-deployment runbook](PR67_FIRST_PRODUCTION_PREPARATION.md)
+before the generic GitHub integration steps below. It targets only `alphaos-web`
+and supersedes any implication that the existing `alphaos` integration should
+be reused or modified. No merge, production upload/secret write/deployment or
+routing change is authorized by these instructions.
+
 Rebased onto main `0c2a4b3` (merged PR #70), preserving verified quote
 provenance, entry evidence and the pytest fixture correction. No production
 deployment is performed. Preview-only build settings were corrected and the
