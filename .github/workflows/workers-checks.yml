@@ -43,6 +43,8 @@ jobs:
       - run: npm run build:vinext
         env:
           ALPHAOS_API_TOKEN: alphaos-build-only-credential-canary
+          ALPHAOS_PASSWORD_HASH: alphaos-auth-build-only-canary
+          ALPHAOS_SESSION_KEY: alphaos-auth-build-only-canary
       - run: node scripts/check-worker-assets.mjs
       # Read-only validation for both output contexts; never call cf deploy here.
       - run: npm run check:workers

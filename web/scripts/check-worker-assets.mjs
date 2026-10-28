@@ -10,7 +10,7 @@ async function inspect(directory) {
     if (entry.isDirectory()) await inspect(path);
     else {
       const content = await readFile(path, "utf8");
-      if (["ALPHAOS_API_TOKEN", "alphaos-build-only-credential-canary"].some(value => content.includes(value))) {
+      if (["ALPHAOS_API_TOKEN", "alphaos-build-only-credential-canary", "ALPHAOS_PASSWORD_HASH", "ALPHAOS_SESSION_KEY", "alphaos-auth-build-only-canary"].some(value => content.includes(value))) {
         throw new Error(`Server credential reference found in public asset: ${path}`);
       }
       checked++;

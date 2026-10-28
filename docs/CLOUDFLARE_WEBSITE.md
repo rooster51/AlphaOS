@@ -1,5 +1,10 @@
 # AlphaOS website on Cloudflare Workers
 
+The Worker now includes [single-user password authentication](CLOUDFLARE_PASSWORD_LOGIN.md).
+That runbook supersedes earlier mandatory Cloudflare Access instructions and
+adds authentication runtime secrets, staged setup, rotation and release gates.
+No production secrets or deployment have been authorized or performed.
+
 **First production release: NO-GO until private access and production binding
 gates pass.** Follow the [first-deployment runbook](PR67_FIRST_PRODUCTION_PREPARATION.md)
 before the generic GitHub integration steps below. It targets only `alphaos-web`

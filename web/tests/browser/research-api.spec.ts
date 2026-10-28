@@ -14,7 +14,7 @@ for (const [path, data] of [
     expect(invalid.status()).toBe(400);
     const response = await request.post(`/api/research/${path}`, { data });
     expect(response.status()).toBe(503);
-    expect(response.headers()["cache-control"]).toBe("no-store");
+    expect(response.headers()["cache-control"]).toBe(process.env.ALPHAOS_TEST_WORKERS === "true" ? "private, no-store, max-age=0" : "no-store");
     expect(await response.json()).toMatchObject({ status: "unavailable", code: "backend_not_configured" });
   });
 }

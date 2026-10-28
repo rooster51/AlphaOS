@@ -1,5 +1,10 @@
 # PR #67: first production deployment preparation
 
+**Authentication update:** [Password-login runbook](CLOUDFLARE_PASSWORD_LOGIN.md)
+supersedes the historical Access requirement below. The guarded Worker version
+and its four runtime secrets must pass that runbook's release gates. Historical
+anonymous Preview results here describe the earlier unguarded code only.
+
 Status: **NO-GO for production**. Read-only inspection and local tests on
 2026-10-28. No production upload, secret write, deployment, routing, Access,
 GitHub integration, DNS, OAuth or Render change was performed. PR remains draft

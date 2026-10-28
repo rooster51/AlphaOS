@@ -3,6 +3,7 @@ import { test } from "node:test";
 import { readFileSync, readdirSync } from "node:fs";
 import { resolve, join } from "node:path";
 import { Miniflare, convertV4MiniflareOptions, Log, LogLevel } from "miniflare";
+import { authBindings, cookie } from '../auth-fixture.mjs';
 
 const fixture = name => JSON.parse(readFileSync(`tests/fixtures/${name}.json`, "utf8"));
 const markets = fixture("market-parity");
@@ -16,16 +17,23 @@ const modules = names.map(name => ({ type: "ESModule", path: join(root, name), c
 const runtimeBindings = { ALPHAOS_API_URL: "https://runtime-backend.example.test", ALPHAOS_API_TOKEN: "worker-runtime-only-secret", ALPHAOS_DEMO_MODE: "false" };
 
 async function worker(bindings = runtimeBindings, upstream = () => { throw new Error("Unexpected outbound request"); }) {
-  return new Miniflare(convertV4MiniflareOptions({
+  const mf = new Miniflare(convertV4MiniflareOptions({
     modules, modulesRoot: root,
     compatibilityDate: "2026-10-26",
     // Native bindings must work even when process.env population is disabled.
     compatibilityFlags: ["nodejs_compat", "nodejs_compat_do_not_populate_process_env"],
-    bindings,
+    bindings: { ...bindings, ...authBindings },
+    ratelimits: { ALPHAOS_LOGIN_LIMITER: { namespace_id: '852671', simple: { limit: 5, period: 60 } } },
     serviceBindings: { ASSETS: () => new Response(null, { status: 404 }) },
     outboundService: upstream,
     log: new Log(LogLevel.NONE),
   }));
+  return {
+    dispose: () => mf.dispose(),
+    dispatchFetch: (url, init={}) => mf.dispatchFetch(url, {
+      ...init, headers: { cookie: `__Host-alphaos_session=${cookie()}`, Origin: 'https://website.test', ...init.headers },
+    }),
+  };
 }
 const post = (mf, path, data) => mf.dispatchFetch(`https://website.test/api/research/${path}`, {
   method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data),
@@ -58,7 +66,7 @@ test("real Worker receives runtime-only bindings; QQQ/SPY and structure proxies 
       const response = await post(mf, path, data);
       const body = await response.text();
       assert.equal(response.status, 200, body);
-      assert.equal(response.headers.get("cache-control"), "no-store");
+      assert.equal(response.headers.get("cache-control"), "private, no-store, max-age=0");
       assert(!body.includes(runtimeBindings.ALPHAOS_API_TOKEN));
     }
     assert.equal(calls, 4);
@@ -84,7 +92,7 @@ test("compiled Worker preserves PR70 verified quote provenance for SPY, QQQ and 
       const body = await response.json();
       assert.deepEqual(body.research, envelope);
       assert.equal(body.verified_for_trading, false);
-      assert.equal(response.headers.get('cache-control'), 'no-store');
+      assert.equal(response.headers.get('cache-control'), 'private, no-store, max-age=0');
       assert(!JSON.stringify(body).includes(runtimeBindings.ALPHAOS_API_TOKEN));
     }
     assert.equal(calls, 3);
