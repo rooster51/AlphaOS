@@ -35,6 +35,10 @@ function failure(status: number, code: string | null): Outcome {
   if (status === 401) return { status: 502, code: "backend_authentication_required" };
   if (status === 403) return { status: 502, code: "backend_authentication_rejected" };
   if (code === "invalid_structure") return { status: 502, code: "invalid_structure" };
+  if (code && ["archive_snapshot_mismatch", "archive_expiration_unavailable", "archive_stale", "archive_missing",
+    "archive_unavailable", "market_data_integrity_error", "market_data_date_mismatch", "market_data_spot_mismatch",
+    "market_data_cashflow_mismatch", "market_contract_mismatch", "market_quote_invalid", "market_quote_stale",
+    "market_data_unavailable"].includes(code)) return {status:502, code};
   if (status === 422) return { status: 502, code: "backend_rejected_request" };
   if (code === "api_not_configured") return { status: 502, code: "backend_api_not_configured" };
   if (code === "internal_error") return { status: 502, code: "backend_internal_error" };

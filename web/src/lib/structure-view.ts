@@ -6,6 +6,8 @@
  * unavailable instead of filling it in.
  */
 import type { CompareRequestInput, StructureRequestInput } from "./structure-contract.ts";
+import { parseStructureRequest } from './structure-contract.ts';
+import { marketDataView, type MarketDataView } from './structure-provenance.ts';
 
 export type Scalar =
   | { kind: "value"; value: number }
@@ -39,6 +41,7 @@ export interface HistoricalView {
 }
 
 export interface StructureView {
+  marketData: MarketDataView;
   symbol: string;
   expiration: string;
   asOf: string;
@@ -67,6 +70,7 @@ export interface StructureView {
 }
 
 export interface CompareCandidateView {
+  marketData: MarketDataView;
   index: number;
   family: string;
   capital: Scalar;
@@ -234,6 +238,8 @@ export function structureView(value: unknown): StructureView | null {
   const request = object(envelope.request);
   const research = object(envelope.research);
   if (!request || !research) return null;
+  const parsedRequest = parseStructureRequest(request);
+  if (!parsedRequest) return null;
 
   const symbol = text(research.underlying);
   const trade = object(research.trade);
@@ -280,8 +286,11 @@ export function structureView(value: unknown): StructureView | null {
   }
 
   const payoff = object(research.payoff);
+  const marketData = marketDataView(research, parsedRequest);
+  if (!marketData) return null;
 
   return {
+    marketData,
     symbol,
     expiration,
     asOf,
@@ -322,6 +331,8 @@ function compareCandidate(
   if (index === null || family === null) return null;
   const historical = object(researched?.historical_economics);
   return {
+    marketData: {kind:'hypothetical', snapshotId:null, sha256:null, evaluatedAt:null,
+      provider:null, observedAt:null, archiveAge:null, legs:[]},
     index,
     family,
     capital: scalar(comparison?.capital_at_risk),
@@ -427,7 +438,7 @@ function echoesLegs(echoed: unknown, submitted: StructureRequestInput["legs"]): 
     return row !== null &&
       row.type === leg.type &&
       number(row.strike) === leg.strike &&
-      number(row.qty) === leg.qty;
+      number(row.qty) === leg.qty && (!leg.contract || row.contract === leg.contract);
   });
 }
 
@@ -436,6 +447,8 @@ function echoesStructure(echoed: unknown, submitted: StructureRequestInput): boo
   if (!echo) return false;
   const fees = echo.fees === undefined ? 0 : number(echo.fees);
   return echo.symbol === submitted.symbol &&
+    (object(echo.market_data)?.snapshot_id ?? null) === (submitted.market_data?.snapshot_id ?? null) &&
+    (object(echo.market_data)?.archive_sha256 ?? null) === (submitted.market_data?.archive_sha256 ?? null) &&
     echo.expiration === submitted.expiration &&
     echo.as_of === submitted.as_of &&
     number(echo.spot) === submitted.spot &&
@@ -471,7 +484,7 @@ export function structureViewFor(
   if (!envelope) return null;
   const view = structureView(envelope);
   if (!view || !echoesStructure(envelope.request, submitted)) return null;
-  return view;
+  return candidateMatches(envelope.research, submitted) ? view : null;
 }
 
 export function compareViewFor(
@@ -492,6 +505,16 @@ export function compareViewFor(
   }
   if (!submitted.structures.every((item, index) => candidateMatches(researched[index], item))) {
     return null;
+  }
+  const projected = list(object(object(envelope.research)?.comparison)?.candidates);
+  for (let i=0; i<submitted.structures.length; i++) {
+    const data = marketDataView(researched[i], submitted.structures[i]);
+    if (!data) return null;
+    const candidate = view.candidates.find(c=>c.index===i);
+    if (!candidate) return null;
+    candidate.marketData = data;
+    if (JSON.stringify(object(projected[i])?.market_data) !==
+        JSON.stringify(object(object(researched[i])?.evidence)?.market_data)) return null;
   }
   // The thesis is echoed context, not a filter; it must still be the one sent.
   return (typeof request?.thesis === "string" ? request.thesis : undefined) === submitted.thesis
@@ -527,6 +550,19 @@ export function observationSeed(value: unknown, symbol: "SPY" | "QQQ"): Observat
 }
 
 const MESSAGES: Record<string, string> = {
+  archive_snapshot_mismatch: 'The archive snapshot changed or its checksum does not match. Obtain a new reference and explicitly review its prices.',
+  archive_expiration_unavailable: 'The requested expiration is absent from this archive. No expiration was substituted.',
+  archive_stale: 'The archive is stale. No hypothetical scenario was substituted.',
+  archive_missing: 'No verified archive is available.',
+  archive_unavailable: 'The archive could not be verified. No substitute economics were displayed.',
+  market_data_integrity_error: 'Archive source integrity could not be verified.',
+  market_data_date_mismatch: 'Archive-backed research requires the current archive session date.',
+  market_data_spot_mismatch: 'Scenario spot does not match the referenced archive.',
+  market_data_cashflow_mismatch: 'Package cashflow does not match observed buy ask / sell bid prices.',
+  market_contract_mismatch: 'One or more contract identities do not match this strategy and archive.',
+  market_quote_invalid: 'A selected contract has invalid or missing bid/ask evidence.',
+  market_quote_stale: 'A selected quote or underlying timestamp is stale or invalid.',
+  market_data_unavailable: 'Verified market evidence is unavailable. No hypothetical scenario was substituted.',
   invalid_structure_request: "The structure request is incomplete or outside the backend's supported bounds.",
   invalid_structure: "The backend does not support this leg combination. Check strike ordering, leg signs, and cashflow direction.",
   backend_rejected_request: "The backend rejected this structure as invalid.",
