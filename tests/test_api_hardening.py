@@ -45,7 +45,7 @@ def env(monkeypatch):
     monkeypatch.setenv('PUBLIC_ACCOUNT_NUMBER','fake-account-number')
     provider=Mock();provider.quote.return_value=[dict(symbol='SPY',last=100.,updated_at='2026-09-24T15:00:00Z')]
     provider.expirations.return_value=['2026-09-25'];provider.chain.return_value=chain();provider.history.return_value=dataset()
-    clock=Clock();service=ResearchService(provider,clock);monkeypatch.setattr(api.app.state,'service',service)
+    clock=Clock();service=ResearchService(provider,clock);monkeypatch.setitem(api.app.state._state,'service',service)
     client=TestClient(api.app);client.headers['Authorization']='Bearer test-api-secret'
     return client,provider,service,clock
 
