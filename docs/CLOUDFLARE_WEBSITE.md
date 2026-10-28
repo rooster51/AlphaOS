@@ -1,6 +1,9 @@
 # AlphaOS website on Cloudflare Workers
 
-Prepared from main `77ef046` (PR #66). This change does not deploy anything.
+Rebased onto main `0c2a4b3` (merged PR #70), preserving verified quote
+provenance, entry evidence and the pytest fixture correction. This change does
+not deploy anything. See the [October 28 integration report](PR67_MAIN_INTEGRATION_2026-10-28.md)
+for current checks and confirmed external release blockers.
 The existing Render website, Python/FastAPI API, MCP OAuth origin, collectors,
 archive jobs, and data stores remain on Render/their existing infrastructure.
 

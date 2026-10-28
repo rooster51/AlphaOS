@@ -8,6 +8,7 @@ const fixture = name => JSON.parse(readFileSync(`tests/fixtures/${name}.json`, "
 const markets = fixture("market-parity");
 const single = fixture("structure-parity");
 const compared = fixture("structure-compare-parity");
+const provenance = fixture("structure-provenance-parity");
 const root = resolve(".cloudflare/output/v0/workers/default/bundle");
 const names = readdirSync(root, { recursive: true }).filter(name => name.endsWith(".js"));
 names.sort((a, b) => a === "index.js" ? -1 : b === "index.js" ? 1 : 0);
@@ -61,6 +62,64 @@ test("real Worker receives runtime-only bindings; QQQ/SPY and structure proxies 
       assert(!body.includes(runtimeBindings.ALPHAOS_API_TOKEN));
     }
     assert.equal(calls, 4);
+  } finally { await mf.dispose(); }
+});
+
+test("compiled Worker preserves PR70 verified quote provenance for SPY, QQQ and comparison", async () => {
+  let calls = 0;
+  const mf = await worker(runtimeBindings, async request => {
+    calls++;
+    assert.equal(request.headers.get('authorization'), `Bearer ${runtimeBindings.ALPHAOS_API_TOKEN}`);
+    const data = await request.json();
+    const envelope = new URL(request.url).pathname.endsWith('/compare')
+      ? provenance.comparison : provenance.single[data.symbol];
+    assert.deepEqual(data, envelope.request);
+    return Response.json(envelope);
+  });
+  try {
+    for (const [path, envelope] of [['structure', provenance.single.SPY],
+      ['structure', provenance.single.QQQ], ['structures/compare', provenance.comparison]]) {
+      const response = await post(mf, path, envelope.request);
+      assert.equal(response.status, 200, await response.clone().text());
+      const body = await response.json();
+      assert.deepEqual(body.research, envelope);
+      assert.equal(body.verified_for_trading, false);
+      assert.equal(response.headers.get('cache-control'), 'no-store');
+      assert(!JSON.stringify(body).includes(runtimeBindings.ALPHAOS_API_TOKEN));
+    }
+    assert.equal(calls, 3);
+  } finally { await mf.dispose(); }
+});
+
+test("compiled Worker rejects dropped, stale and inconsistent provenance without substitute prices", async () => {
+  let envelope;
+  const mf = await worker(runtimeBindings, () => Response.json(envelope));
+  try {
+    for (const defect of ['missing', 'snapshot', 'stale', 'projection']) {
+      envelope = structuredClone(defect === 'projection' ? provenance.comparison : provenance.single.SPY);
+      if (defect === 'missing') delete envelope.research.evidence.market_data;
+      if (defect === 'snapshot') envelope.research.evidence.market_data.snapshot.id = 'different-snapshot';
+      if (defect === 'stale') envelope.research.evidence.market_data.legs[0].bid_timestamp = '2020-01-01T00:00:00Z';
+      if (defect === 'projection') envelope.research.comparison.candidates[0].market_data.snapshot.id = 'different-snapshot';
+      const response = await post(mf, defect === 'projection' ? 'structures/compare' : 'structure', envelope.request);
+      assert.equal(response.status, 502);
+      assert.equal((await response.json()).code, 'response_schema_mismatch');
+    }
+  } finally { await mf.dispose(); }
+});
+
+test("compiled Worker preserves explicit archive failure codes on structure and comparison", async () => {
+  let code = 'archive_stale';
+  const mf = await worker(runtimeBindings, () => Response.json({error:{code}}, {status:422}));
+  try {
+    for (code of ['archive_stale','archive_snapshot_mismatch','market_quote_stale','market_contract_mismatch']) {
+      for (const [path, data] of [['structure', provenance.single.SPY.request],
+        ['structures/compare', provenance.comparison.request]]) {
+        const response = await post(mf, path, data);
+        assert.equal(response.status, 502);
+        assert.equal((await response.json()).code, code);
+      }
+    }
   } finally { await mf.dispose(); }
 });
 
