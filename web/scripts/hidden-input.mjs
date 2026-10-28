@@ -1,7 +1,12 @@
 import {emitKeypressEvents} from 'node:readline';
+import {createWindowsHiddenInput} from './windows-hidden-input.mjs';
+
+export function createHiddenInput(options={}) {
+  return process.platform==='win32' ? createWindowsHiddenInput(options) : createKeypressInput(options);
+}
 
 /** One terminal reader for the entire interaction. No echo, history or file I/O. */
-export function createHiddenInput({input=process.stdin,output=process.stderr}={}) {
+export function createKeypressInput({input=process.stdin,output=process.stderr}={}) {
   if(!input.isTTY || typeof input.setRawMode!=='function')
     throw Error('Use an interactive private terminal; password input is never accepted from arguments or environment');
   const wasRaw=Boolean(input.isRaw);

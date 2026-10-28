@@ -52,23 +52,46 @@ Windows PowerShell or Command Prompt, from the repository root (Node 24.20.0
 is supported for this offline setup tool):
 
 ```text
-node .\web\scripts\create-website-auth.mjs "%USERPROFILE%\alphaos-website-auth.json"
+node .\web\scripts\create-website-auth.mjs "%USERPROFILE%\alphaos-website-auth-native.json"
 ```
 
 The `%USERPROFILE%` form above is for **Command Prompt**. In **PowerShell** use:
 
 ```powershell
-node .\web\scripts\create-website-auth.mjs "$env:USERPROFILE\alphaos-website-auth.json"
+node .\web\scripts\create-website-auth.mjs "$env:USERPROFILE\alphaos-website-auth-native.json"
 ```
 
 Use a new private filename outside this checkout and outside synced folders;
 the tool intentionally refuses to overwrite an existing file. Enter/paste only
-the password, then press Enter for each prompt. Nothing is echoed. A buffered
-empty Enter/CRLF is ignored; Ctrl+C cancels and restores terminal mode. The same
-hidden key reader stays active through confirmation, so CRLF and pasted input
-cannot lose the confirmation when delivered in one Windows console chunk.
-Node's console key decoder handles backspace, Unicode and paste delimiters;
-there is no readline echo or password history. Piped input remains rejected.
+the password, then press Enter for each prompt. Windows now uses the built-in
+Windows PowerShell `Read-Host -AsSecureString`, regardless of whether the tool
+was launched from PowerShell or Command Prompt. Password characters are never
+shown; the native host can show masking asterisks. Node does not use raw mode or
+decode Windows keyboard events. There is no visible-input fallback. Buffered
+empty Enter/CRLF is ignored and re-prompts; Ctrl+C cancels. Piped input is rejected.
+
+After each input, the only diagnostic is a boolean and UTF-8 byte count, e.g.
+`{"inputReceived":true,"byteLength":32}`. No characters, key events, encoded
+password, hash or signing key are logged. `false`/`0` means no password was read
+and causes a re-prompt; a nonzero count outside 20–72 is rejected. Confirmation
+must match exactly, including spaces and Unicode. If troubleshooting is needed,
+share only those boolean/count diagnostics, never a password or the output file.
+
+The previous Node raw reader filtered text with Ctrl/Meta flags (including
+possible Windows modified-key/AltGr events) and depended on terminal escape
+decoding. A valid entered password could consequently be truncated. The prior
+tests did not prove every physical Windows keyboard/host configuration. The
+native secure prompt removes that path; Unix retains the keypress fallback.
+
+The Windows child command is fixed and contains no password. Its console input
+is inherited and its output is captured in private in-memory pipes. Base64 is
+used only as pipe framing, not encryption; pipe contents are never forwarded to
+the terminal, logs or files. Both processes briefly need password bytes in memory
+for hashing; the SecureString/BSTR/byte-buffer resources are disposed/cleared.
+No password is passed through command arguments, environment or clipboard reads.
+If native secure input fails, the tool stops rather than falling back to visible
+input. Built-in Windows PowerShell must be available at its system location;
+no PowerShell profile, script file, execution-policy or system setting is changed.
 
 The tool prompts twice without echo, rejects passwords outside 20–72 UTF-8
 bytes, creates a bcrypt cost-12 salted hash and independent random signing key,

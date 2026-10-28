@@ -24,10 +24,10 @@ jobs:
       # credentials, generated secrets or deployment commands.
       - name: Windows hidden input regression (PowerShell)
         shell: pwsh
-        run: node --test web/tests/hidden-input.test.mjs
+        run: node --test web/tests/hidden-input.test.mjs web/tests/windows-hidden-input.test.mjs
       - name: Windows hidden input regression (Command Prompt)
         shell: cmd
-        run: node --test web/tests/hidden-input.test.mjs
+        run: node --test web/tests/hidden-input.test.mjs web/tests/windows-hidden-input.test.mjs
 
   workers:
     strategy:

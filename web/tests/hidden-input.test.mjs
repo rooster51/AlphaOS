@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import {PassThrough,Writable} from 'node:stream';
-import {createHiddenInput} from '../scripts/hidden-input.mjs';
+import {createKeypressInput as createHiddenInput} from '../scripts/hidden-input.mjs';
 
 function fixture() {
   const input=new PassThrough();input.isTTY=true;input.isRaw=false;
