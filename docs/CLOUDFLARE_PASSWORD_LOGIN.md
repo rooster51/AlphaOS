@@ -48,6 +48,28 @@ Use a private terminal outside shared recording. From `web`, run:
 node scripts/create-website-auth.mjs <NEW_PRIVATE_FILE_OUTSIDE_REPOSITORY>
 ```
 
+Windows PowerShell or Command Prompt, from the repository root (Node 24.20.0
+is supported for this offline setup tool):
+
+```text
+node .\web\scripts\create-website-auth.mjs "%USERPROFILE%\alphaos-website-auth.json"
+```
+
+The `%USERPROFILE%` form above is for **Command Prompt**. In **PowerShell** use:
+
+```powershell
+node .\web\scripts\create-website-auth.mjs "$env:USERPROFILE\alphaos-website-auth.json"
+```
+
+Use a new private filename outside this checkout and outside synced folders;
+the tool intentionally refuses to overwrite an existing file. Enter/paste only
+the password, then press Enter for each prompt. Nothing is echoed. A buffered
+empty Enter/CRLF is ignored; Ctrl+C cancels and restores terminal mode. The same
+hidden key reader stays active through confirmation, so CRLF and pasted input
+cannot lose the confirmation when delivered in one Windows console chunk.
+Node's console key decoder handles backspace, Unicode and paste delimiters;
+there is no readline echo or password history. Piped input remains rejected.
+
 The tool prompts twice without echo, rejects passwords outside 20–72 UTF-8
 bytes, creates a bcrypt cost-12 salted hash and independent random signing key,
 and writes JSON with only their two binding names. It never prints the password,
