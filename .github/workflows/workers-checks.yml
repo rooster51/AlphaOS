@@ -15,9 +15,6 @@ jobs:
   windows-password-input:
     runs-on: windows-latest
     timeout-minutes: 5
-    strategy:
-      matrix:
-        shell: [pwsh, cmd]
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v4
@@ -25,8 +22,11 @@ jobs:
           node-version: '24.20.0'
       # Offline terminal-reader tests use only Node built-ins: no install,
       # credentials, generated secrets or deployment commands.
-      - name: Windows hidden input regression (${{ matrix.shell }})
-        shell: ${{ matrix.shell }}
+      - name: Windows hidden input regression (PowerShell)
+        shell: pwsh
+        run: node --test web/tests/hidden-input.test.mjs
+      - name: Windows hidden input regression (Command Prompt)
+        shell: cmd
         run: node --test web/tests/hidden-input.test.mjs
 
   workers:
