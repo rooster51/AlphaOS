@@ -1,9 +1,11 @@
 # AlphaOS website on Cloudflare Workers
 
 Rebased onto main `0c2a4b3` (merged PR #70), preserving verified quote
-provenance, entry evidence and the pytest fixture correction. This change does
-not deploy anything. See the [October 28 integration report](PR67_MAIN_INTEGRATION_2026-10-28.md)
-for current checks and confirmed external release blockers.
+provenance, entry evidence and the pytest fixture correction. No production
+deployment is performed. Preview-only build settings were corrected and the
+existing preview rebuilt during [release preparation](PR67_RELEASE_PREPARATION_2026-10-28.md).
+The earlier [integration report](PR67_MAIN_INTEGRATION_2026-10-28.md) records
+the state before that correction and the subsequent live validation.
 The existing Render website, Python/FastAPI API, MCP OAuth origin, collectors,
 archive jobs, and data stores remain on Render/their existing infrastructure.
 
@@ -62,7 +64,8 @@ automated tests, which deliberately run without credentials or live research.
 
 Do **not** connect/enable automatic builds until deployment is authorized:
 connecting a repository or triggering a build can immediately deploy it.
-No Cloudflare dashboard resources were changed by this branch.
+Production infrastructure/settings remain unchanged. The October 28 release
+preparation changed only Preview defaults and PR #67's existing Preview override.
 
 1. Create/select the intended Workers project named **alphaos-web**. Connect
    GitHub repository **rooster51/AlphaOS**, granting access to that repository.
@@ -74,11 +77,19 @@ No Cloudflare dashboard resources were changed by this branch.
    only for approved main production builds. `check:workers` validates artifacts
    locally and never invokes a deployment command in either output context.
 4. Enable **Worker Preview builds** for non-production branches/PRs and GitHub
-   PR comments. Preview command: `npm run preview:workers` (`cf previews deploy`).
+   PR comments. Where separate build/deploy fields are offered, use root **web**,
+   Preview build command `npm ci && npm run cf-typegen && npm run typecheck && npm test`,
+   and Preview deploy command `npm run preview:workers` (`cf previews deploy`).
    This command builds in Preview context itself; do not pass `--prebuilt` to
    reuse a production-context artifact. Configure runtime secrets separately
    for Previews; they do not inherit production settings. Do not leave the
    default Wrangler preview command with this cf configuration.
+   **Do not put `preview:workers` in the build field and `deploy:workers` in the
+   deploy field.** That successfully deploys a Preview, then fails the external
+   check by trying to deploy its Preview artifact as production. Use exactly one
+   Preview deploy phase; production's deploy command belongs only to production.
+   Existing Previews can have overrides: updating only the Preview defaults
+   does not correct a branch-specific override.
 5. Restrict preview branches to trusted contributors as appropriate. Preview
    URLs are public unless Cloudflare Access is configured. A server-side bearer
    token is hidden from browsers, but published research routes remain callable.

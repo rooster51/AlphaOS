@@ -1,5 +1,10 @@
 # PR #67 integration with production main — October 28, 2026
 
+This is the historical early-morning assessment. The later
+[release-preparation report](PR67_RELEASE_PREPARATION_2026-10-28.md) supersedes
+its Preview configuration and live-backend/freshness blockers. No Render change
+was made by this work; the later live backend exposed the required contract.
+
 PR #67's five commits were rebased onto merged PR #70,
 `0c2a4b38eb08129b42de27c2c6689991e606a1f2`. No textual conflicts occurred.
 This report records local checks and read-only infrastructure inspection; it is
