@@ -1,5 +1,8 @@
 # Single-user website login and release gates
 
+For the Wrangler/native-cf upload compatibility blocker and its offline-tested
+replacement procedure, see [native version upload](CLOUDFLARE_VERSION_UPLOAD.md).
+
 This supersedes the Access requirement in the earlier PR #67 preparation.
 The new Worker entrypoint enforces a single-user password session before
 vinext, including RSC requests, all pages, health, research and legacy API aliases.
@@ -157,7 +160,7 @@ these updated gates instead of the old mandatory Access prerequisite:
    version includes the login gate before any version URL could serve data:
 
    ```sh
-   npm exec -- cf workers versions create --prebuilt --worker alphaos-web --secrets-file <PRIVATE_FILE> --tag <APPROVED_SHA>
+   npm run upload:workers -- --secrets-file <PRIVATE_FILE> --tag <APPROVED_SHA>
    ```
 
 3. Inspect only safe binding metadata; confirm names/types, demo false, target,

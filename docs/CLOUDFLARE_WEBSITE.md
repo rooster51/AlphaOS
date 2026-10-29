@@ -1,5 +1,9 @@
 # AlphaOS website on Cloudflare Workers
 
+Use the [native version-upload procedure](CLOUDFLARE_VERSION_UPLOAD.md) for this
+project's cf Build Output. Wrangler deliberately rejects that format; do not
+bypass its guard. Offline upload preflight uses synthetic credentials only.
+
 The Worker now includes [single-user password authentication](CLOUDFLARE_PASSWORD_LOGIN.md).
 That runbook supersedes earlier mandatory Cloudflare Access instructions and
 adds authentication runtime secrets, staged setup, rotation and release gates.

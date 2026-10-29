@@ -126,7 +126,7 @@ URLs, so the authentication gate above must be satisfied first.
    conflicting secret. Use the installed pinned CLI:
 
    ```sh
-   npm exec -- cf workers versions create --prebuilt --worker alphaos-web --secrets-file <PRIVATE_FILE_PATH> --tag <APPROVED_SHA>
+   npm run upload:workers -- --secrets-file <PRIVATE_FILE_PATH> --tag <APPROVED_SHA>
    ```
 
    This uploads code and secrets together as an **undeployed** version, avoiding
