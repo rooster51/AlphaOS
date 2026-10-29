@@ -1,12 +1,42 @@
-import bcrypt from "bcryptjs";
-
 export const SESSION_COOKIE = "__Host-alphaos_session";
 export const SESSION_SECONDS = 30 * 24 * 60 * 60;
 export type AuthBindings = {
+  ALPHAOS_API_URL?: string;
+  ALPHAOS_API_TOKEN?: string;
   ALPHAOS_PASSWORD_HASH?: string;
   ALPHAOS_SESSION_KEY?: string;
   ALPHAOS_LOGIN_LIMITER?: { limit(input: { key: string }): Promise<{ success: boolean }> };
 };
+/** HTTPS only; never follow redirects carrying a password or service token. */
+async function verifyPassword(password: string, env: AuthBindings): Promise<boolean> {
+  const base = new URL(env.ALPHAOS_API_URL ?? "");
+  if (base.protocol !== "https:" || base.username || base.password || base.search || base.hash || !env.ALPHAOS_API_TOKEN) {
+    throw new Error("Authentication backend unavailable");
+  }
+  const response = await fetch(new URL("/v1/website-auth/verify", base), {
+    method: "POST", redirect: "manual", cache: "no-store", signal: AbortSignal.timeout(12000),
+    headers: { Authorization: `Bearer ${env.ALPHAOS_API_TOKEN}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ password, password_hash: env.ALPHAOS_PASSWORD_HASH }),
+  });
+  // Read only a bounded, strict acknowledgement. Never reflect upstream content.
+  if (response.status !== 200) { await response.body?.cancel(); throw new Error("Authentication backend unavailable"); }
+  const reader = response.body?.getReader();
+  if (!reader) throw new Error("Authentication backend unavailable");
+  const chunks: Uint8Array[] = []; let length = 0;
+  try {
+    for (;;) {
+      const { done, value } = await reader.read(); if (done) break;
+      length += value.length;
+      if (length > 128) { await reader.cancel(); throw new Error("Authentication backend unavailable"); }
+      chunks.push(value);
+    }
+  } finally { reader.releaseLock(); }
+  const bytes = new Uint8Array(length); let offset = 0;
+  for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.length; }
+  const result = JSON.parse(new TextDecoder().decode(bytes));
+  if (!result || Object.keys(result).length !== 1 || typeof result.verified !== "boolean") throw new Error("Authentication backend unavailable");
+  return result.verified;
+}
 const utf8 = new TextEncoder();
 const encode = (bytes: Uint8Array) => btoa(String.fromCharCode(...bytes)).replaceAll("+", "-").replaceAll("/", "_").replace(/=+$/, "");
 function decode(value: string) {
@@ -102,7 +132,11 @@ export async function protectWebsite(request: Request, env: AuthBindings, next: 
         }
       } catch { return loginPage("Sign in is temporarily unavailable.", 503); }
       const password = await readPassword(request);
-      if (!password || !await bcrypt.compare(password, env.ALPHAOS_PASSWORD_HASH!)) return loginPage("Incorrect password.", 401);
+      if (!password) return loginPage("Incorrect password.", 401);
+      let verified: boolean;
+      try { verified = await verifyPassword(password, env); }
+      catch { return loginPage("Sign in is temporarily unavailable.", 503); }
+      if (!verified) return loginPage("Incorrect password.", 401);
       return redirect("/market", sessionCookie(await issueSession(env, url.origin)));
     }
     if (path === "/auth/logout" && request.method === "POST") return redirect("/login", `${SESSION_COOKIE}=; Path=/; Secure; HttpOnly; SameSite=Strict; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT`);

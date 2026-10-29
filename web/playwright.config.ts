@@ -19,7 +19,7 @@ export default defineConfig({
   ],
   webServer: {
     command: process.env.ALPHAOS_TEST_WORKERS === "true"
-      ? "npm run start:vinext -- --host 127.0.0.1 --port 3000"
+      ? "node tests/worker-browser-server.mjs"
       : "npm run start -- --hostname 127.0.0.1",
     url: "http://127.0.0.1:3000",
     reuseExistingServer: false,
