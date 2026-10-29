@@ -134,6 +134,7 @@ test("both historical timeouts retain stale warnings, correlation, layout and re
     const card=page.getByRole("region",{name:`${symbol} evidence`});
     await expect(card).toContainText("Current market evidence is stale");
     await expect(card).toContainText("Historical context unavailable: The research backend request timed out.");
+    await expect(card).toContainText("Wait about a minute, then refresh.");
     await expect(card).toContainText("Historical request ID: "+(symbol==="SPY"?"a":"b").repeat(32));
     await expect(card.getByRole("button",{name:`Refresh ${symbol} evidence`})).toBeVisible();
     await expect(card.getByText("$500.00",{exact:true})).toHaveCount(0);
@@ -142,4 +143,22 @@ test("both historical timeouts retain stale warnings, correlation, layout and re
   expect(requests.filter(item=>item.research_mode==="historical")).toHaveLength(2);
   await page.getByRole("button",{name:"Refresh SPY evidence"}).click();
   await expect.poll(()=>requests.filter(item=>item.symbol==="SPY"&&item.research_mode==="historical").length).toBe(2);
+});
+
+test("cold-origin timeouts show explicit retry guidance without automatic retries or substitute evidence", async ({ page }) => {
+  const requests: string[] = [];
+  await page.route("**/api/research/market", async route => {
+    requests.push(route.request().postDataJSON().symbol);
+    await route.fulfill({ status: 502, json: { status: "unavailable", code: "backend_timeout" } });
+  });
+  await page.goto("/dashboard");
+  for (const symbol of ["QQQ", "SPY"]) {
+    const card = page.getByRole("region", { name: `${symbol} evidence` });
+    await expect(card).toContainText("The research backend request timed out.");
+    await expect(card).toContainText("The service may be starting up");
+    await expect(card).toContainText("No research data was substituted");
+    await expect(card.getByRole("button", { name: `Refresh ${symbol} evidence` })).toBeVisible();
+  }
+  expect(requests.sort()).toEqual(["QQQ", "SPY"]);
+  await expect(page.getByText("HISTORICAL — COMPLETED SESSION ARCHIVE", { exact: true })).toHaveCount(0);
 });

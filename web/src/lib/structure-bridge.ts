@@ -6,6 +6,7 @@
  * forwarded when they pass the same contract the renderer uses.
  */
 import { STRUCTURE_SOURCE } from "./structure-contract.ts";
+import { getServerConfig } from "./server-config.ts";
 
 export const SOURCE = STRUCTURE_SOURCE;
 export const STRUCTURE_PATH = "/v1/research/structure";
@@ -70,9 +71,10 @@ export async function postStructure(
     stage: "request_validation",
   };
 
-  const token = process.env.ALPHAOS_API_TOKEN;
-  const base = process.env.ALPHAOS_API_URL;
+  const { token, base, diagnostics } = getServerConfig();
+  trace.configuration = diagnostics;
   if (!token || !base) {
+    console.warn(JSON.stringify({ ...trace, outcome: "backend_not_configured" }));
     return json({ status: "unavailable", code: "backend_not_configured" }, 503, requestId);
   }
 

@@ -56,7 +56,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   response_schema_mismatch:
     "The backend response did not match the required alphaos-interface-v2 research schema.",
   backend_timeout:
-    "The backend research request timed out.",
+    "The backend research request timed out after 12 seconds. The service may be starting up. Wait about a minute, then retry. No research data was substituted.",
   backend_unreachable:
     "The website could not reach the research backend.",
 };

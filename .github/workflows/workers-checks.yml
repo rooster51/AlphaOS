@@ -1,0 +1,75 @@
+name: Workers checks
+
+on:
+  pull_request:
+    paths: ['web/**', '.github/workflows/workers-checks.yml']
+  push:
+    branches: [main, codex/cloudflare-workers]
+    paths: ['web/**', '.github/workflows/workers-checks.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-password-input:
+    runs-on: windows-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.20.0'
+      # Offline terminal-reader tests use only Node built-ins: no install,
+      # credentials, generated secrets or deployment commands.
+      - name: Windows hidden input regression (PowerShell)
+        shell: pwsh
+        run: node --test web/tests/hidden-input.test.mjs web/tests/windows-hidden-input.test.mjs
+      - name: Windows hidden input regression (Command Prompt)
+        shell: cmd
+        run: node --test web/tests/hidden-input.test.mjs web/tests/windows-hidden-input.test.mjs
+
+  workers:
+    strategy:
+      matrix:
+        preview: ['false', 'true']
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: web
+    env:
+      CI: 'true'
+      ALPHAOS_TEST_WORKERS: 'true'
+      ALPHAOS_DEMO_MODE: 'false'
+      ALPHAOS_API_TOKEN: ''
+      ALPHAOS_API_URL: ''
+      CLOUDFLARE_PREVIEW_BUILD: ${{ matrix.preview }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: web/.node-version
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+      - run: npm audit --audit-level=moderate
+      - run: npm run cf-typegen
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build:vinext
+        env:
+          ALPHAOS_API_TOKEN: alphaos-build-only-credential-canary
+          ALPHAOS_PASSWORD_HASH: alphaos-auth-build-only-canary
+          ALPHAOS_SESSION_KEY: alphaos-auth-build-only-canary
+      - run: node scripts/check-worker-assets.mjs
+      # Read-only validation for both output contexts; never call cf deploy here.
+      - run: npm run check:workers
+      - run: npm run test:workers
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: workers-test-results-preview-${{ matrix.preview }}
+          path: web/test-results

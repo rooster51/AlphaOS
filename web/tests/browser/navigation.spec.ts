@@ -71,6 +71,20 @@ test("known backend service errors display specific safe messages", async ({page
   await expect(page.getByText("The backend service is temporarily unavailable or starting up. Wait briefly and retry.")).toBeVisible();
 });
 
+test("market timeout explains the unchanged deadline and offers an explicit retry", async ({ page }) => {
+  let calls = 0;
+  await page.route("**/api/research/market", async route => {
+    calls++;
+    await route.fulfill({ status: 502, json: { status: "unavailable", code: "backend_timeout" } });
+  });
+  await page.goto("/market?symbol=QQQ");
+  await expect(page.getByText(/The backend research request timed out after 12 seconds/)).toBeVisible();
+  await expect(page.getByText(/Wait about a minute, then retry/)).toBeVisible();
+  expect(calls).toBe(1);
+  await page.getByRole("button", { name: "Run Research" }).click();
+  await expect.poll(() => calls).toBe(2);
+});
+
 function collectBrowserErrors(page: import("@playwright/test").Page) {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
@@ -149,6 +163,8 @@ test("mobile menu opens, closes with Escape, and closes after navigation", async
   const clientErrors = collectBrowserErrors(page);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/dashboard");
+  // As with the backdrop test, wait for streaming hydration before clicking.
+  await page.waitForLoadState("networkidle");
 
   const menuButton = page.locator('button[aria-controls="mobile-primary-navigation"]');
   await expect(menuButton).toBeVisible();
@@ -227,6 +243,8 @@ test("stale archive response gets a specific status instead of a generic unavail
 test("mobile backdrop closes the navigation menu", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/dashboard");
+  // Streaming SSR can expose the button before React attaches its handler.
+  await page.waitForLoadState("networkidle");
   await page.locator('button[aria-controls="mobile-primary-navigation"]').click();
   await page.getByRole("button", { name: "Close navigation menu" }).last().click({ position: { x: 330, y: 400 } });
   await expect(page.locator('button[aria-controls="mobile-primary-navigation"]')).toHaveAttribute("aria-expanded", "false");

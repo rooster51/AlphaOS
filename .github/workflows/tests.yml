@@ -43,43 +43,14 @@ jobs:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '22.23.0'
           cache: npm
           cache-dependency-path: web/package-lock.json
       - run: npm ci
       - name: Audit production dependencies
         run: npm audit --omit=dev --audit-level=moderate
-      # Temporary exception tracked in https://github.com/rooster51/AlphaOS/issues/41
-      # The full audit is always run. Only the two reviewed dev-tool advisories
-      # may be non-blocking; any additional advisory or audit error fails CI.
-      - name: Audit all dependencies (reviewed exception only)
-        shell: bash
-        run: |
-          npm audit --json --audit-level=moderate > audit-report.json || audit_status=$?
-          node <<'NODE'
-          const fs = require('node:fs');
-          const audit = JSON.parse(fs.readFileSync('audit-report.json', 'utf8'));
-          if (audit.error || !audit.vulnerabilities || !audit.metadata?.vulnerabilities) {
-            console.error('Full dependency audit failed or returned an unexpected report.');
-            process.exit(1);
-          }
-          const allowed = new Set([
-            'GHSA-vfj7-8cjw-p6xm',
-            'GHSA-rj75-hqrm-r3gf'
-          ]);
-          const advisories = Object.values(audit.vulnerabilities)
-            .flatMap(v => v.via)
-            .filter(v => typeof v === 'object');
-          const unexpected = advisories.filter(v => ![...allowed].some(id => v.url?.includes(id)));
-          const counts = audit.metadata.vulnerabilities;
-          const total = counts.total;
-          if (unexpected.length || total > 7 || !advisories.length) {
-            console.error('Unapproved audit findings or changed report:', JSON.stringify({unexpected, counts}));
-            process.exit(1);
-          }
-          console.log('Temporary exception: known Tailwind 3 dev-tool advisories only; see issue #41.');
-          console.log('Full audit counts:', JSON.stringify(counts));
-          NODE
+      - name: Audit all dependencies
+        run: npm audit --audit-level=moderate
       - run: npx playwright install --with-deps chromium
       - run: npm run typecheck
       - run: npm test

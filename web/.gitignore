@@ -20,3 +20,10 @@ yarn-error.log*
 # TypeScript
 *.tsbuildinfo
 next-env.d.ts
+/dist/
+.vinext/
+.cloudflare/
+.dev.vars
+.dev.vars.*
+*-local.log
+audit-local.json

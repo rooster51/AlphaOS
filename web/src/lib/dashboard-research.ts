@@ -24,7 +24,7 @@ const messages: Record<string, string> = {
   backend_authentication_required: "Backend authentication is required. Server credentials were not accepted.",
   backend_authentication_rejected: "Backend authentication was rejected.",
   backend_unreachable: "The research backend could not be reached.",
-  backend_timeout: "The research backend request timed out.",
+  backend_timeout: "The research backend request timed out. The service may be starting up. Wait about a minute, then refresh. No research data was substituted.",
   backend_service_unavailable: "The research backend service is unavailable.",
   backend_not_configured: "The website research backend is not configured.",
   invalid_backend_configuration: "The website research backend configuration is invalid.",
