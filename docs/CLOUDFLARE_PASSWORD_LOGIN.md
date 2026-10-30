@@ -6,7 +6,9 @@ replacement procedure, see [native version upload](CLOUDFLARE_VERSION_UPLOAD.md)
 This supersedes the Access requirement in the earlier PR #67 preparation.
 The new Worker entrypoint enforces a single-user password session before
 vinext, including RSC requests, all pages, health, research and legacy API aliases.
-The Render website/API and MCP authentication remain unchanged. Cloudflare
+The Render website and existing research/MCP authentication remain unchanged. A
+bearer-authenticated Render verification endpoint now performs website bcrypt
+work; see [the Workers Free replacement procedure](CLOUDFLARE_RENDER_AUTH.md). Cloudflare
 Access is optional defense in depth; no Access, OAuth or paid service is needed
 for this implementation. No remote configuration or secrets were changed.
 

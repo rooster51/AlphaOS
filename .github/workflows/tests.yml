@@ -23,6 +23,11 @@ jobs:
         with:
           python-version-file: '.python-version'
           cache: pip
+      # The authentication integration test runs the real Worker TypeScript
+      # exchange against the local Python API with synthetic credentials only.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.23.0'
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
