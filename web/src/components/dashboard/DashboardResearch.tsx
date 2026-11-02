@@ -56,7 +56,7 @@ export function DashboardResearch({symbol}: {symbol: "SPY" | "QQQ"}) {
       <p className="text-xs text-terminal-400">Live-only signals, probability estimates, expected value, and actionable trade recommendations are unavailable. No candidates are presented as trades.</p>
       <div className="flex gap-4 text-xs">
         <button className="text-accent underline" onClick={() => setAttempt(value => value + 1)}>Refresh {symbol} evidence</button>
-        <Link href={`/market?symbol=${symbol}`} className="text-accent underline">Open {symbol} market research</Link>
+        <Link prefetch={false} href={`/market?symbol=${symbol}`} className="text-accent underline">Open {symbol} market research</Link>
       </div>
     </section>
   );

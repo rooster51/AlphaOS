@@ -32,6 +32,7 @@ export function MarketUnavailable({ symbol, reason }: { symbol: string; reason: 
         <nav aria-label="Choose market symbol" className="flex gap-3">
           {["QQQ", "SPY"].map((item) => (
             <Link
+              prefetch={false}
               key={item}
               href={`/market?symbol=${item}`}
               aria-current={item === symbol ? "page" : undefined}
