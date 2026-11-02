@@ -325,6 +325,7 @@ export function MarketResearchPanel({
         >
           {(["QQQ", "SPY"] as const).map((item) => (
             <Link
+              prefetch={false}
               key={item}
               href={`/market?symbol=${item}`}
               aria-current={

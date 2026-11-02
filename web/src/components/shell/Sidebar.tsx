@@ -50,6 +50,7 @@ export function Sidebar({ cloudflareLogin = false }: { cloudflareLogin?: boolean
 
         return (
           <Link
+            prefetch={false}
             key={item.href}
             href={item.href}
             aria-current={isActive ? "page" : undefined}
