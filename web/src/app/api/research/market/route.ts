@@ -62,6 +62,28 @@ function object(value: unknown): Record<string, unknown> | null {
     : null;
 }
 
+// JSON.parse can produce Infinity from otherwise valid JSON such as 1e999.
+// Reject that input rather than letting raw forwarding change the old JSON
+// serializer's normalization. This visits parsed data without rebuilding it.
+function jsonNumberEncoding(value: unknown): "raw" | "normalize" | "invalid" {
+  const pending: unknown[] = [value];
+  let encoding: "raw" | "normalize" = "raw";
+  while (pending.length) {
+    const item = pending.pop();
+    if (typeof item === "number") {
+      if (!Number.isFinite(item)) return "invalid";
+      // JSON.stringify historically normalizes negative zero to zero. Keep
+      // that decoded response contract, including underflow such as -1e-999.
+      if (Object.is(item, -0)) encoding = "normalize";
+    }
+    if (item && typeof item === "object") {
+      const fields = item as Record<string, unknown>;
+      for (const key of Object.keys(fields)) pending.push(fields[key]);
+    }
+  }
+  return encoding;
+}
+
 function validResearchEnvelope(value: unknown, symbol: MarketPayload["symbol"], mode: MarketPayload["research_mode"], expiration?: string, width?: number | null): value is Record<string, unknown> {
   const envelope = object(value);
   const request = object(envelope?.request);
@@ -281,9 +303,11 @@ async function marketRequest(request: Request, trace: BridgeTrace, timeout: () =
   }
 
   let responsePayload: unknown;
+  let responseText: string;
   const bodyStarted = performance.now();
   try {
-    responsePayload = await response.json();
+    responseText = await response.text();
+    responsePayload = JSON.parse(responseText);
   } catch (error) {
     if (error instanceof SyntaxError || error instanceof TypeError) {
       return Response.json(
@@ -297,9 +321,10 @@ async function marketRequest(request: Request, trace: BridgeTrace, timeout: () =
   }
   trace.stage = "schema_validation";
   const validationStarted = performance.now();
-  const valid = payload.view === "observation"
+  const encoding = jsonNumberEncoding(responsePayload);
+  const valid = encoding !== "invalid" && (payload.view === "observation"
     ? validArchiveObservation(responsePayload,payload.symbol,payload.research_mode ?? "current",payload.expiration)
-    : validResearchEnvelope(responsePayload, payload.symbol, payload.research_mode, payload.expiration, payload.width);
+    : validResearchEnvelope(responsePayload, payload.symbol, payload.research_mode, payload.expiration, payload.width));
   trace.schema_validation_ms = Math.round(performance.now() - validationStarted);
   if (!valid) {
     return Response.json(
@@ -307,8 +332,16 @@ async function marketRequest(request: Request, trace: BridgeTrace, timeout: () =
       { status: 502, headers: { "Cache-Control": "no-store" } },
     );
   }
-  return Response.json(
-    { research: responsePayload, verified_for_trading: false, source: "alphaos_research_api" },
-    { headers: { "Cache-Control": "no-store" } }
+  if (encoding === "normalize") {
+    return Response.json(
+      { research: responsePayload, verified_for_trading: false, source: "alphaos_research_api" },
+      { headers: { "Cache-Control": "no-store" } }
+    );
+  }
+  // Only after the entire body parses and passes the existing schema checks.
+  // Preserve every research field without serializing a multi-MB tree again.
+  return new Response(
+    `{"research":${responseText},"verified_for_trading":false,"source":"alphaos_research_api"}`,
+    { headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } }
   );
 }
