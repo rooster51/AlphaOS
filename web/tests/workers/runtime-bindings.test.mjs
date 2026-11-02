@@ -73,6 +73,35 @@ test("real Worker receives runtime-only bindings; QQQ/SPY and structure proxies 
   } finally { await mf.dispose(); }
 });
 
+test("compiled Worker validates complete market JSON before forwarding and preserves decoded results", async () => {
+  let raw;
+  const mf = await worker(runtimeBindings, () => new Response(raw, { headers: { 'Content-Type': 'application/json' } }));
+  try {
+    for (const item of markets) {
+      const expected = structuredClone(item.response);
+      expected.caveats.push('Unicode α and escaped quotes " \\ </script>');
+      raw = ' \n' + JSON.stringify(expected) + '\n ';
+      const response = await post(mf, 'market', item.request);
+      assert.equal(response.status, 200);
+      assert.deepEqual(await response.json(), { research: expected, verified_for_trading: false, source: 'alphaos_research_api' });
+      assert.equal(response.headers.get('cache-control'), 'private, no-store, max-age=0');
+      for (const number of ['-0', '-1e-999', '1e999']) {
+        expected.caveats = ['number-placeholder'];
+        raw = JSON.stringify(expected).replace('"number-placeholder"', number);
+        const result = await post(mf, 'market', item.request);
+        assert.equal(result.status, number === '1e999' ? 502 : 200);
+        const body = await result.json();
+        if (result.status === 200) assert.deepEqual(body.research, JSON.parse(JSON.stringify(JSON.parse(raw))));
+        else assert.equal(body.code, 'response_schema_mismatch');
+      }
+      raw += ' INVALID_PRIVATE_TAIL';
+      const invalid = await post(mf, 'market', item.request);
+      assert.equal(invalid.status, 502);
+      assert.equal((await invalid.json()).code, 'response_schema_mismatch');
+    }
+  } finally { await mf.dispose(); }
+});
+
 test("compiled Worker preserves PR70 verified quote provenance for SPY, QQQ and comparison", async () => {
   let calls = 0;
   const mf = await worker(runtimeBindings, async request => {
