@@ -53,3 +53,31 @@ test('empty option archives pass only with zero verified contract counts',async(
   assert.equal((await POST(request({symbol:'QQQ',view:'observation'}))).status,502);
  }
 });
+
+test('bridge diagnostics identify safe failure categories without logging response data',async()=>{
+ setup();
+ const current=cases.find(c=>c.request.symbol==='QQQ'&&c.request.research_mode==='current').response;
+ const scenarios=[
+  {category:'invalid_json',fields:undefined,body:'{"private":"DO_NOT_LOG"'},
+  {category:'invalid_numeric_encoding',fields:['spot'],body:JSON.stringify(current).replace('"spot":500','"spot":1e999')},
+  {category:'observation_schema_mismatch',fields:['read_only'],data:{...structuredClone(current),read_only:false}},
+  {category:'timestamp_freshness_mismatch',fields:['archive.freshness.age_seconds'],data:(()=>{const v=structuredClone(current);v.archive.freshness.age_seconds=1;return v;})()},
+  {category:'archive_metadata_quality_mismatch',fields:['archive.observation.options_status'],data:(()=>{const v=structuredClone(current);v.archive.observation.options_status='partial';return v;})()},
+ ];
+ const logs=[],warn=console.warn;console.warn=value=>logs.push(JSON.parse(value));
+ try {
+  for(const scenario of scenarios) {
+   globalThis.fetch=async()=>scenario.body===undefined?Response.json(scenario.data):new Response(scenario.body,{headers:{'Content-Type':'application/json'}});
+   const response=await POST(request({symbol:'QQQ',view:'observation'}));
+   assert.equal(response.status,502);
+   assert.deepEqual(await response.json(),{status:'unavailable',code:'response_schema_mismatch'});
+  }
+ } finally {console.warn=warn;}
+ for(let index=0;index<scenarios.length;index++) {
+  const {category,fields}=scenarios[index],log=logs[index];
+  assert.equal(log.validation_category,category);
+  if(fields) assert.deepEqual(log.validation_fields,fields);
+  assert.ok(!JSON.stringify(log).includes('DO_NOT_LOG'));
+  assert.ok(!JSON.stringify(log).includes('test-token'));
+ }
+});

@@ -1,4 +1,4 @@
-import { validArchiveObservation } from "../../../../lib/archive-observation.ts";
+import { validateArchiveObservation } from "../../../../lib/archive-observation.ts";
 import { getServerConfig } from "../../../../lib/server-config.ts";
 
 type MarketPayload = {
@@ -65,23 +65,35 @@ function object(value: unknown): Record<string, unknown> | null {
 // JSON.parse can produce Infinity from otherwise valid JSON such as 1e999.
 // Reject that input rather than letting raw forwarding change the old JSON
 // serializer's normalization. This visits parsed data without rebuilding it.
-function jsonNumberEncoding(value: unknown): "raw" | "normalize" | "invalid" {
-  const pending: unknown[] = [value];
+const SAFE_NUMERIC_FIELDS = new Set([
+  "spot", "age_seconds", "max_age_seconds", "contract_count", "total_contract_count",
+  "valid_contracts", "questionable_contracts", "rejected_contracts",
+]);
+
+function jsonNumberEncoding(value: unknown): {encoding: "raw" | "normalize" | "invalid"; fields: string[]} {
+  const pending: {value: unknown; path: string[]}[] = [{value,path:[]}];
   let encoding: "raw" | "normalize" = "raw";
+  const fields = new Set<string>();
   while (pending.length) {
-    const item = pending.pop();
+    const {value:item,path} = pending.pop()!;
     if (typeof item === "number") {
-      if (!Number.isFinite(item)) return "invalid";
+      if (!Number.isFinite(item)) {
+        const known = path.filter(part=>SAFE_NUMERIC_FIELDS.has(part));
+        fields.add(known.length ? known.join(".") : "response.numeric_value");
+        continue;
+      }
       // JSON.stringify historically normalizes negative zero to zero. Keep
       // that decoded response contract, including underflow such as -1e-999.
       if (Object.is(item, -0)) encoding = "normalize";
     }
     if (item && typeof item === "object") {
-      const fields = item as Record<string, unknown>;
-      for (const key of Object.keys(fields)) pending.push(fields[key]);
+      const entries = Object.entries(item);
+      for (const [key,child] of entries) {
+        pending.push({value:child,path:Array.isArray(item) ? path : [...path,key]});
+      }
     }
   }
-  return encoding;
+  return {encoding:fields.size ? "invalid" : encoding,fields:[...fields].slice(0,8)};
 }
 
 function validResearchEnvelope(value: unknown, symbol: MarketPayload["symbol"], mode: MarketPayload["research_mode"], expiration?: string, width?: number | null): value is Record<string, unknown> {
@@ -149,6 +161,9 @@ type BridgeTrace = {
   fetch_headers_ms?: number;
   response_body_ms?: number;
   schema_validation_ms?: number;
+  validation_category?: string;
+  validation_categories?: string[];
+  validation_fields?: string[];
   upstream_status?: number;
   upstream_json?: boolean;
   backend_correlated?: boolean;
@@ -310,6 +325,7 @@ async function marketRequest(request: Request, trace: BridgeTrace, timeout: () =
     responsePayload = JSON.parse(responseText);
   } catch (error) {
     if (error instanceof SyntaxError || error instanceof TypeError) {
+      trace.validation_category = "invalid_json";
       return Response.json(
         { status: "unavailable", code: "response_schema_mismatch" },
         { status: 502, headers: { "Cache-Control": "no-store" } },
@@ -321,10 +337,24 @@ async function marketRequest(request: Request, trace: BridgeTrace, timeout: () =
   }
   trace.stage = "schema_validation";
   const validationStarted = performance.now();
-  const encoding = jsonNumberEncoding(responsePayload);
-  const valid = encoding !== "invalid" && (payload.view === "observation"
-    ? validArchiveObservation(responsePayload,payload.symbol,payload.research_mode ?? "current",payload.expiration)
-    : validResearchEnvelope(responsePayload, payload.symbol, payload.research_mode, payload.expiration, payload.width));
+  const numberEncoding = jsonNumberEncoding(responsePayload);
+  let valid = false;
+  if (numberEncoding.encoding === "invalid") {
+    trace.validation_category = "invalid_numeric_encoding";
+    trace.validation_fields = numberEncoding.fields;
+  } else if (payload.view === "observation") {
+    const validation = validateArchiveObservation(responsePayload,payload.symbol,payload.research_mode ?? "current",payload.expiration);
+    valid = validation.valid;
+    if (!valid) {
+      trace.validation_categories = validation.categories;
+      trace.validation_category = validation.categories.length === 1
+        ? validation.categories[0] : "multiple_validation_failures";
+      trace.validation_fields = validation.fields;
+    }
+  } else {
+    valid = validResearchEnvelope(responsePayload, payload.symbol, payload.research_mode, payload.expiration, payload.width);
+    if (!valid) trace.validation_category = "research_schema_mismatch";
+  }
   trace.schema_validation_ms = Math.round(performance.now() - validationStarted);
   if (!valid) {
     return Response.json(
@@ -332,7 +362,7 @@ async function marketRequest(request: Request, trace: BridgeTrace, timeout: () =
       { status: 502, headers: { "Cache-Control": "no-store" } },
     );
   }
-  if (encoding === "normalize") {
+  if (numberEncoding.encoding === "normalize") {
     return Response.json(
       { research: responsePayload, verified_for_trading: false, source: "alphaos_research_api" },
       { headers: { "Cache-Control": "no-store" } }
