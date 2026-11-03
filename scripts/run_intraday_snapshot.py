@@ -4,7 +4,7 @@ import traceback
 from datetime import datetime, timezone
 import time
 
-from modules.daily_public import DailyPublicProvider
+from modules.daily_public import DailyPublicProvider, intraday_provider_attempt
 from modules.intraday_archive import collect_symbol, load_config
 from modules.market_session_gate import regular_session_slot
 from modules.public_intraday import fetch_intraday_bars
@@ -75,7 +75,8 @@ def main(clock=lambda: datetime.now(timezone.utc), sleep=time.sleep):
                 stage = "public_quote_options"
                 if regular_session_slot(clock(), int(config["option_snapshot_minutes"])) != slot:
                     raise RuntimeError("Slot no longer active")
-                payload = collect_symbol(provider, symbol, config)
+                with intraday_provider_attempt(attempt):
+                    payload = collect_symbol(provider, symbol, config)
                 options = payload.get("options", {})
                 if options.get("status") in ("partial", "empty"):
                     # Counts only: never log provider errors, bodies or credentials.
