@@ -201,3 +201,23 @@ The November pilot remains three independent hypothetical $100 scenarios with
 overnight positions and no live trades. #75's $50 default is not adopted.
 No replay engine, portfolio ledger, orders, paper-pilot changes, schema changes,
 API exposure, merge, PR closure or deployment is included here.
+
+## Recorded validation
+
+Python 3.12.14, implementation commit `ef9f5c9`:
+
+- New reader tests: **54 passed** (synthetic fixtures and mocked real SDK).
+- Related reader/adapter/immutable-retry regression selection during development:
+  **113 passed**; the final full run includes the subsequently added reader tests.
+- Complete Python suite: **1,394 passed + 64 subtests passed**, 643.39 seconds.
+  Nine existing Starlette/Supabase deprecation warnings; no failures or skips.
+- Shared `assert_no_completed_pnl` fails against unsafe PR #35's `$198` completed
+  result and passes for the corrected window-reader regression.
+- Compile checks and `git diff --check` passed.
+
+The SDK's documented [select](https://supabase.com/docs/reference/python/select)
+and [private download](https://supabase.com/docs/reference/python/storage-from-download)
+interfaces were checked against the real installed SDK with mocked transport.
+No live archive bytes, provider requests, credentials or production writes were
+used for this implementation's validation. Live evidence compatibility remains
+an explicit release gate.
