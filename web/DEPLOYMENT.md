@@ -25,6 +25,79 @@ foundation. Do not configure them as a substitute for authenticated account
 integration. `/api/health` confirms only that the web process responds; it does
 not verify backend credentials, account access, or current market evidence.
 
+## Netlify Free compatibility
+
+The root `netlify.toml` targets only `web/` as the build base. Netlify therefore
+runs `npm ci` and `npm run build:netlify` from the Next.js project instead of
+detecting the repository-root `.python-version` and `requirements*.txt`. The
+Next.js OpenNext adapter is detected and managed by Netlify; do not install or
+pin `@netlify/plugin-nextjs`. The published Next output is `.next`, and the
+build uses Node.js 22.23.0.
+
+The Netlify build uses `tsconfig.netlify.json` to omit the Cloudflare Worker,
+Cloudflare runtime shim, and Vite/Worker config from Next's type-check. The
+application itself continues to use the Node runtime binding (`process.env`);
+the Cloudflare config and Worker entrypoint are retained for the existing
+Cloudflare branch. No Python, trading engine, archive, or Supabase code is
+included in the site build.
+
+The Netlify Edge Function `10-auth-gate` applies the existing
+`protectWebsite` checks to every request before assets, pages, and API routes
+are served. It reads secrets from Netlify's Functions environment and keeps
+the HTTPS redirect, signed `__Host-` session cookie, exact-origin CSRF checks,
+remote Render password verification, no-store headers, and protected research
+API. `00-login-rate-limit` runs first for `/auth/login` and applies a 5-request
+per-60-second limit per domain and client IP.
+
+**Rate-limit limitation:** Netlify's Free plan supports code-defined rate
+limits per domain and IP, not a shared per-domain limit across all clients.
+Enforcement may take up to 10 seconds to begin blocking. This is weaker than
+the existing Cloudflare shared bucket and can be bypassed by distributing
+attempts across source IPs. The Render verifier's bounded bcrypt concurrency
+remains in place, but this does not restore the shared login-attempt limit.
+Do not treat the migration as equivalent security until this tradeoff is
+accepted or a no-cost shared limiter is separately approved and provided.
+
+### Netlify setup (manual; no deploy is performed by this change)
+
+1. After reviewing the stacked UI and hosting changes, create a Netlify site
+   from `rooster51/AlphaOS` on the branch that contains this change. Use the
+   Free plan. The checked-in `netlify.toml` selects the `web` base directory,
+   build command, Node version, and publish output; do not override those
+   settings with repository-root build commands.
+2. In the site's environment-variable settings, add the existing server-side
+   values `ALPHAOS_API_URL`, `ALPHAOS_API_TOKEN`, `ALPHAOS_PASSWORD_HASH`,
+   `ALPHAOS_SESSION_KEY`, and `ALPHAOS_DEMO_MODE=false`. Give secret values
+   Functions scope where Netlify offers scopes. Reuse the approved values from
+   the current website/API configuration; do not commit them, put them in
+   `netlify.toml`, or expose them as `NEXT_PUBLIC_*`. The Edge Functions set
+   the explicit external-limiter option in the auth gate; no limiter-mode
+   environment variable should be added.
+3. Keep the site on HTTPS and confirm the Netlify deploy uses these runtime
+   variables. The login gate fails closed if auth secrets are missing, while
+   research API configuration failures remain unavailable rather than falling
+   back to synthetic or stale data.
+4. Before directing users to the site, separately approve the per-IP versus
+   shared rate-limit difference. Then verify anonymous pages and APIs redirect
+   or return 401, a valid login issues the hardened cookie, logout clears it,
+   authenticated research still calls the existing Render API, and stale or
+   missing archive evidence stays unavailable. Do not test real password
+   guesses against a production endpoint.
+
+Local checks from `web/`:
+
+```sh
+npm ci
+npm run build:netlify
+npm run typecheck
+npm test
+npm run test:e2e
+```
+
+The Edge Function rate policy is configured in source and available on all
+Netlify plans. Exceeding any Free-tier included usage limits can affect site
+availability; monitor usage and do not enable paid upgrades or paid add-ons.
+
 ## Release 1 candidate research parity
 
 `/market` and `/strategies` share the same research controls and candidate view.
