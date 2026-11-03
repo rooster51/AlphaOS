@@ -14,7 +14,9 @@ test("Netlify builds only the Next.js app with the pinned supported Node version
   assert.match(config, /publish\s*=\s*"\.next"/);
   assert.match(config, /NODE_VERSION\s*=\s*"22\.23\.0"/);
   assert.match(config, /ALPHAOS_NETLIFY_BUILD\s*=\s*"true"/);
+  assert.match(config, /\[\[plugins\]\]\s+package\s*=\s*"@netlify\/plugin-nextjs"/);
   assert.equal(packageJson.scripts["build:netlify"], "next build");
+  assert.ok(packageJson.devDependencies["@netlify/plugin-nextjs"]);
 });
 
 test("Netlify auth runs before Next assets and rate-limits login by client IP", () => {

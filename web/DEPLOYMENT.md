@@ -30,9 +30,14 @@ not verify backend credentials, account access, or current market evidence.
 The root `netlify.toml` targets only `web/` as the build base. Netlify therefore
 runs `npm ci` and `npm run build:netlify` from the Next.js project instead of
 detecting the repository-root `.python-version` and `requirements*.txt`. The
-Next.js OpenNext adapter is detected and managed by Netlify; do not install or
-pin `@netlify/plugin-nextjs`. The published Next output is `.next`, and the
-build uses Node.js 22.23.0.
+Next.js OpenNext adapter normally installs automatically. The live deploy did
+not include its server runtime (Netlify reported no functions deployed), so
+this repository explicitly installs the adapter as a build plugin to ensure
+SSR, route handlers, and App Router routes are packaged. The base and package
+directories are `web/`; the build command is `npm run build:netlify`, the Next
+build output is `.next`, and the build uses Node.js 22.23.0. Keep the adapter
+package version in `web/package.json` and the plugin declaration in the root
+`netlify.toml` in sync.
 
 The Netlify build uses `tsconfig.netlify.json` to omit the Cloudflare Worker,
 Cloudflare runtime shim, and Vite/Worker config from Next's type-check. The
@@ -79,10 +84,12 @@ existing bounded bcrypt concurrency remains independent protection.
    `SUPABASE_SERVICE_ROLE_KEY` environment values and deploy the API change
    through its separately approved release process. The rate-limit endpoint
    fails closed until those values and the RPC are available.
-3. Create a Netlify Free site from `rooster51/AlphaOS` on the release-candidate
-   branch. The checked-in `netlify.toml` selects the `web` base directory,
-   build command, Node version, and publish output; do not override those
-   settings with repository-root build commands.
+3. Configure the existing Netlify site from `rooster51/AlphaOS` on the
+   release-candidate branch. Set the base and package directories to `web/`;
+   use `npm run build:netlify` and publish `.next`. The checked-in
+   `netlify.toml` selects these settings and installs the Next.js runtime;
+   do not override them with repository-root build commands or disable the
+   adapter.
 4. In the site's environment-variable settings, add the existing server-side
    values `ALPHAOS_API_URL`, `ALPHAOS_API_TOKEN`, `ALPHAOS_PASSWORD_HASH`,
    `ALPHAOS_SESSION_KEY`, and `ALPHAOS_DEMO_MODE=false`. Give secret values
