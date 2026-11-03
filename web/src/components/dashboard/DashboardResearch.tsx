@@ -30,6 +30,16 @@ export function DashboardResearch({symbol}: {symbol: "SPY" | "QQQ"}) {
         {result?.currentFailure && <div className="text-warning text-sm">
           <p>{dashboardMessage(result.currentFailure.code)}</p>
           {result.currentFailure.requestId && <p className="text-xs">Current request ID: {result.currentFailure.requestId}</p>}
+          {result.currentFailure.diagnostic && <details className="rounded border border-terminal-700 p-3 text-xs">
+            <summary className="cursor-pointer font-mono">Preview validation diagnostics</summary>
+            <dl className="mt-2 space-y-2 font-mono">
+              <div><dt>Request ID</dt><dd>{result.currentFailure.diagnostic.requestId}</dd></div>
+              <div><dt>Upstream HTTP status</dt><dd>{result.currentFailure.diagnostic.upstreamStatus ?? "Unavailable"}</dd></div>
+              <div><dt>Validation categories</dt><dd>{result.currentFailure.diagnostic.categories.join(", ")}</dd></div>
+              <div><dt>Rejected field paths</dt><dd>{result.currentFailure.diagnostic.rejectedFields.length
+                ? result.currentFailure.diagnostic.rejectedFields.join(", ") : "No field-level rule recorded."}</dd></div>
+            </dl>
+          </details>}
         </div>}
         {data && <>
           <p className="font-mono font-bold text-warning border border-warning rounded p-3">

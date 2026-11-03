@@ -85,6 +85,24 @@ test("total failure, invalid JSON, unknown errors and unsafe correlation stay sa
   }
 });
 
+test("owner preview diagnostics accept only sanitized metadata on an error response", async () => {
+  const result = await loadDashboardResearch("QQQ", async () => Response.json({
+    code:"response_schema_mismatch",
+    diagnostic:{
+      request_id:id,
+      upstream_status:200,
+      validation_categories:["observation_schema_mismatch","secret-value"],
+      rejected_fields:["research_performed","private.account"],
+      response_body:"must-not-be-retained",
+    },
+  }, {status:502,headers:{"X-AlphaOS-Request-ID":id}}));
+  assert.deepEqual(result.currentFailure.diagnostic,{
+    requestId:id,upstreamStatus:200,
+    categories:["observation_schema_mismatch"],rejectedFields:["research_performed"],
+  });
+  assert.equal(JSON.stringify(result).includes("must-not-be-retained"),false);
+});
+
 test("malformed success or stale success cannot bypass validation or trigger fallback", async () => {
   for (const mutate of [
     b => {b.research.research.archive.storage.archive_sha256="bad";},

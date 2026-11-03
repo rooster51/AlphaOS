@@ -7,6 +7,7 @@ const read = (path) => readFileSync(new URL(path, root), "utf8");
 
 test("Netlify builds only the Next.js app with the pinned supported Node version", () => {
   const config = read("netlify.toml");
+  const nextConfig = read("web/next.config.mjs");
   const packageJson = JSON.parse(read("web/package.json"));
 
   assert.match(config, /base\s*=\s*"web"/);
@@ -14,6 +15,8 @@ test("Netlify builds only the Next.js app with the pinned supported Node version
   assert.match(config, /publish\s*=\s*"\.next"/);
   assert.match(config, /NODE_VERSION\s*=\s*"22\.23\.0"/);
   assert.match(config, /ALPHAOS_NETLIFY_BUILD\s*=\s*"true"/);
+  assert.match(config, /\[context\.deploy-preview\.environment\]\s+ALPHAOS_PREVIEW_DIAGNOSTICS\s*=\s*"true"/);
+  assert.match(nextConfig, /ALPHAOS_PREVIEW_DIAGNOSTICS:\s*process\.env\.ALPHAOS_PREVIEW_DIAGNOSTICS\s*===\s*"true"/);
   assert.match(config, /\[\[plugins\]\]\s+package\s*=\s*"@netlify\/plugin-nextjs"/);
   assert.equal(packageJson.scripts["build:netlify"], "next build");
   assert.ok(packageJson.devDependencies["@netlify/plugin-nextjs"]);

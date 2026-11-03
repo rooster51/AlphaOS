@@ -128,6 +128,28 @@ for (const [code,message] of [
   });
 }
 
+test("authenticated preview validation metadata is shown in an expandable diagnostic view",async({page})=>{
+ const requestId="a".repeat(32);
+ await page.route("**/api/research/market",async route=>{
+  await route.fulfill({status:502,json:{
+   status:"unavailable",code:"response_schema_mismatch",
+   diagnostic:{
+    request_id:requestId,upstream_status:200,
+    validation_categories:["observation_schema_mismatch"],
+    rejected_fields:["research_performed"],
+   },
+  },headers:{"X-AlphaOS-Request-ID":requestId}});
+ });
+ await page.goto("/dashboard");
+ const card=page.getByRole("region",{name:"QQQ evidence"});
+ const details=card.getByText("Preview validation diagnostics",{exact:true});
+ await expect(details).toBeVisible();
+ await details.click();
+ await expect(card).toContainText("Upstream HTTP status200");
+ await expect(card).toContainText("observation_schema_mismatch");
+ await expect(card).toContainText("research_performed");
+ await expect(card).toContainText(requestId);
+});
 test("same-session historical evidence is refused, and one failed symbol does not hide the other",async({page})=>{
   await page.clock.install({time:new Date("2026-10-20T14:00:00Z")});
   await page.route("**/api/research/market",async route=>{

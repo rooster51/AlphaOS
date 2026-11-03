@@ -1,5 +1,7 @@
 import { validateArchiveObservation } from "../../../../lib/archive-observation.ts";
 import { getServerConfig } from "../../../../lib/server-config.ts";
+import { readRuntimeBindings } from "#alphaos-runtime";
+import { validSessionCookie } from "../../../../lib/website-auth.ts";
 
 type MarketPayload = {
   view?: "observation";
@@ -177,6 +179,47 @@ const KNOWN_UPSTREAM_CODES = new Set([
   "archive_research_unavailable", "archive_expiration_unavailable", "api_not_configured",
   "internal_error", "authentication_required", "forbidden", "invalid_request",
 ]);
+const PREVIEW_DIAGNOSTIC_HOST = "deploy-preview-82--alphaostrading.netlify.app";
+const SAFE_VALIDATION_CATEGORIES = new Set([
+  "invalid_json", "invalid_numeric_encoding", "observation_schema_mismatch",
+  "timestamp_freshness_mismatch", "archive_metadata_quality_mismatch",
+  "multiple_validation_failures", "research_schema_mismatch",
+]);
+const SAFE_VALIDATION_FIELDS = new Set([
+  "response.numeric_value", "spot", "schema_version", "read_only", "verified_for_trading",
+  "research_performed", "evidence_scope", "research_session", "candidates", "symbol",
+  "research_mode", "expiration", "caveats", "as_of", "requested_as_of", "as_of_order",
+  "session.open", "session.close", "archive.observation.observed_at", "archive.storage.observed_at",
+  "archive.freshness.as_of", "archive.freshness.age_seconds", "archive.freshness.max_age_seconds",
+  "archive.session_date", "archive.storage.symbol", "archive.provider", "archive.storage.quality_status",
+  "archive.observation.options_status", "archive.storage.contract_count",
+  "archive.diagnostics.total_contract_count", "archive.diagnostics.bucket_counts.valid_contracts",
+  "archive.diagnostics.bucket_counts.questionable_contracts", "archive.diagnostics.bucket_counts.rejected_contracts",
+  "archive.storage.archive_sha256", "archive.storage.archive_path",
+]);
+
+async function previewDiagnostic(request: Request, trace: BridgeTrace) {
+  const {runtime, bindings} = readRuntimeBindings();
+  const sessionBindings = {
+    ALPHAOS_PASSWORD_HASH: bindings.ALPHAOS_PASSWORD_HASH,
+    ALPHAOS_SESSION_KEY: bindings.ALPHAOS_SESSION_KEY,
+  };
+  if (runtime !== "node" || process.env.ALPHAOS_PREVIEW_DIAGNOSTICS !== "true" ||
+      new URL(request.url).hostname.toLowerCase() !== PREVIEW_DIAGNOSTIC_HOST ||
+      !trace.validation_category || !await validSessionCookie(request, sessionBindings)) return null;
+  const categories = [...new Set(trace.validation_categories?.length
+    ? trace.validation_categories : [trace.validation_category])]
+    .filter((category): category is string => typeof category === "string" &&
+      SAFE_VALIDATION_CATEGORIES.has(category));
+  if (!categories.length) return null;
+  return {
+    request_id: trace.request_id,
+    upstream_status: trace.upstream_status ?? null,
+    validation_categories: categories,
+    rejected_fields: [...new Set((trace.validation_fields ?? [])
+      .filter(field => SAFE_VALIDATION_FIELDS.has(field)))].slice(0, 16),
+  };
+}
 
 // Headers, URLs, bodies, objective text and exception strings never enter diagnostics.
 export async function POST(request: Request) {
@@ -205,6 +248,15 @@ export async function POST(request: Request) {
     // authenticating, or computing. Correlate with Render logs; never guess.
     trace.timeout_phase = trace.stage === "fetch" ? "response_headers"
       : trace.stage === "schema_validation" ? "schema_validation" : "response_body";
+  }
+  if (result.status === 502) {
+    const diagnostic = await previewDiagnostic(request, trace);
+    if (diagnostic) {
+      result = Response.json(
+        {status: "unavailable", code: "response_schema_mismatch", diagnostic},
+        {status: 502, headers: result.headers},
+      );
+    }
   }
   result.headers.set("X-AlphaOS-Request-ID", trace.request_id);
   console.warn(JSON.stringify({event: "research_bridge", ...trace, status: result.status,

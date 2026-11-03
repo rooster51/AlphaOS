@@ -2,7 +2,13 @@
 import { validArchiveObservation } from "./archive-observation.ts";
 type Symbol = "SPY" | "QQQ";
 type Mode = "current" | "historical";
-type Failure = { code: string; requestId?: string };
+export type PreviewDiagnostic = {
+  requestId: string;
+  upstreamStatus: number | null;
+  categories: string[];
+  rejectedFields: string[];
+};
+type Failure = { code: string; requestId?: string; diagnostic?: PreviewDiagnostic };
 export type DashboardObservation = {
   mode: Mode; spot: number; observedAt: string; sessionDate: string;
   provider: string; optionsStatus: "complete" | "partial" | "empty";
@@ -49,6 +55,39 @@ function timestamp(value: unknown): number {
 }
 function correlation(value: string | null): string | undefined {
   return value && /^[a-f0-9]{32}$/.test(value) ? value : undefined;
+}
+const diagnosticCategories = new Set([
+  "invalid_json", "invalid_numeric_encoding", "observation_schema_mismatch",
+  "timestamp_freshness_mismatch", "archive_metadata_quality_mismatch",
+  "multiple_validation_failures", "research_schema_mismatch",
+]);
+const diagnosticFields = new Set([
+  "response.numeric_value", "spot", "schema_version", "read_only", "verified_for_trading",
+  "research_performed", "evidence_scope", "research_session", "candidates", "symbol",
+  "research_mode", "expiration", "caveats", "as_of", "requested_as_of", "as_of_order",
+  "session.open", "session.close", "archive.observation.observed_at", "archive.storage.observed_at",
+  "archive.freshness.as_of", "archive.freshness.age_seconds", "archive.freshness.max_age_seconds",
+  "archive.session_date", "archive.storage.symbol", "archive.provider", "archive.storage.quality_status",
+  "archive.observation.options_status", "archive.storage.contract_count",
+  "archive.diagnostics.total_contract_count", "archive.diagnostics.bucket_counts.valid_contracts",
+  "archive.diagnostics.bucket_counts.questionable_contracts", "archive.diagnostics.bucket_counts.rejected_contracts",
+  "archive.storage.archive_sha256", "archive.storage.archive_path",
+]);
+function previewDiagnostic(value: unknown): PreviewDiagnostic | undefined {
+  const diagnostic = record(record(value).diagnostic);
+  const requestId = correlation(typeof diagnostic.request_id === "string" ? diagnostic.request_id : null);
+  const categories = Array.isArray(diagnostic.validation_categories)
+    ? diagnostic.validation_categories.filter((item): item is string =>
+      typeof item === "string" && diagnosticCategories.has(item)) : [];
+  const rejectedFields = Array.isArray(diagnostic.rejected_fields)
+    ? diagnostic.rejected_fields.filter((item): item is string =>
+      typeof item === "string" && diagnosticFields.has(item)).slice(0, 16) : [];
+  const status = diagnostic.upstream_status;
+  if (!requestId || categories.length === 0 ||
+      !(status === null || (typeof status === "number" && Number.isInteger(status) && status >= 100 && status <= 599))) {
+    return undefined;
+  }
+  return {requestId, upstreamStatus: status, categories: [...new Set(categories)], rejectedFields: [...new Set(rejectedFields)]};
 }
 
 function observation(value: unknown, symbol: Symbol, mode: Mode, now: number): DashboardObservation | string {
@@ -131,7 +170,7 @@ export async function loadDashboardResearch(symbol: Symbol, request: typeof fetc
       if (!response.ok) {
         const code = record(body).code;
         return {failure:{code: typeof code === "string" && Object.hasOwn(messages, code)
-          ? code : "research_unavailable", requestId}};
+          ? code : "research_unavailable", requestId, diagnostic:previewDiagnostic(body)}};
       }
       const parsed = observation(body, symbol, mode, now());
       return typeof parsed === "string" ? {failure:{code:parsed, requestId}} : {data:parsed};

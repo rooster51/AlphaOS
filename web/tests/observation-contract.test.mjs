@@ -2,12 +2,18 @@ import assert from 'node:assert/strict';
 import {test,afterEach} from 'node:test';
 import {readFileSync} from 'node:fs';
 import {POST} from '../src/app/api/research/market/route.ts';
+import { issueSession, sessionCookie } from '../src/lib/website-auth.ts';
 const cases=JSON.parse(readFileSync(new URL('./fixtures/observation-parity.json',import.meta.url),'utf8'));
 const oldFetch=globalThis.fetch;
 const oldToken=process.env.ALPHAOS_API_TOKEN,oldUrl=process.env.ALPHAOS_API_URL;
+const oldPreviewDiagnostics=process.env.ALPHAOS_PREVIEW_DIAGNOSTICS;
+const oldPasswordHash=process.env.ALPHAOS_PASSWORD_HASH,oldSessionKey=process.env.ALPHAOS_SESSION_KEY;
 afterEach(()=>{globalThis.fetch=oldFetch;
  if(oldToken===undefined) delete process.env.ALPHAOS_API_TOKEN;else process.env.ALPHAOS_API_TOKEN=oldToken;
- if(oldUrl===undefined) delete process.env.ALPHAOS_API_URL;else process.env.ALPHAOS_API_URL=oldUrl;});
+ if(oldUrl===undefined) delete process.env.ALPHAOS_API_URL;else process.env.ALPHAOS_API_URL=oldUrl;
+ if(oldPreviewDiagnostics===undefined) delete process.env.ALPHAOS_PREVIEW_DIAGNOSTICS;else process.env.ALPHAOS_PREVIEW_DIAGNOSTICS=oldPreviewDiagnostics;
+ if(oldPasswordHash===undefined) delete process.env.ALPHAOS_PASSWORD_HASH;else process.env.ALPHAOS_PASSWORD_HASH=oldPasswordHash;
+ if(oldSessionKey===undefined) delete process.env.ALPHAOS_SESSION_KEY;else process.env.ALPHAOS_SESSION_KEY=oldSessionKey;});
 function request(data){return new Request('https://example.test/api/research/market',{method:'POST',body:JSON.stringify(data),headers:{'Content-Type':'application/json'}});}
 function setup(){process.env.ALPHAOS_API_TOKEN='test-token';process.env.ALPHAOS_API_URL='https://backend.test';}
 for(const c of cases) test(`real Python compact contract ${c.request.symbol} ${c.request.research_mode}`,async()=>{
@@ -80,4 +86,50 @@ test('bridge diagnostics identify safe failure categories without logging respon
   assert.ok(!JSON.stringify(log).includes('DO_NOT_LOG'));
   assert.ok(!JSON.stringify(log).includes('test-token'));
  }
+});
+
+test('owner diagnostics are restricted to the authenticated PR 82 deploy preview',async()=>{
+ setup();
+ process.env.ALPHAOS_PREVIEW_DIAGNOSTICS='true';
+ process.env.ALPHAOS_PASSWORD_HASH=`$2b$12$${'a'.repeat(53)}`;
+ process.env.ALPHAOS_SESSION_KEY='s'.repeat(43);
+ const env={ALPHAOS_PASSWORD_HASH:process.env.ALPHAOS_PASSWORD_HASH,ALPHAOS_SESSION_KEY:process.env.ALPHAOS_SESSION_KEY};
+ const preview='https://deploy-preview-82--alphaostrading.netlify.app';
+ const token=await issueSession(env,preview);
+ const malformed=structuredClone(cases.find(c=>c.request.symbol==='QQQ'&&c.request.research_mode==='current').response);
+ malformed.research_performed=true;
+ globalThis.fetch=async()=>Response.json(malformed);
+ const previewRequest=(origin,cookie)=>new Request(`${origin}/api/research/market`,{
+  method:'POST',body:JSON.stringify({symbol:'QQQ',view:'observation'}),
+  headers:{'Content-Type':'application/json',...(cookie?{Cookie:cookie}:{})},
+ });
+
+ const authorized=await POST(previewRequest(preview,sessionCookie(token).split(';')[0]));
+ assert.equal(authorized.status,502);
+ const authorizedBody=await authorized.json();
+ assert.equal(authorizedBody.code,'response_schema_mismatch');
+ assert.deepEqual(authorizedBody.diagnostic,{
+  request_id:authorized.headers.get('X-AlphaOS-Request-ID'),
+  upstream_status:200,
+  validation_categories:['observation_schema_mismatch'],
+  rejected_fields:['research_performed'],
+ });
+ assert.equal(JSON.stringify(authorizedBody).includes('test-token'),false);
+ assert.equal(JSON.stringify(authorizedBody).includes(JSON.stringify(malformed)),false);
+
+ process.env.ALPHAOS_PREVIEW_DIAGNOSTICS='false';
+ const contextDisabled=await POST(previewRequest(preview,sessionCookie(token).split(';')[0]));
+ assert.equal(contextDisabled.status,502);
+ assert.equal('diagnostic' in await contextDisabled.json(),false);
+ process.env.ALPHAOS_PREVIEW_DIAGNOSTICS='true';
+
+ const anonymous=await POST(previewRequest(preview));
+ assert.equal(anonymous.status,502);
+ assert.equal('diagnostic' in await anonymous.json(),false);
+
+ const production='https://alphaostrading.netlify.app';
+ const productionToken=await issueSession(env,production);
+ const productionResponse=await POST(previewRequest(production,sessionCookie(productionToken).split(';')[0]));
+ assert.equal(productionResponse.status,502);
+ assert.equal('diagnostic' in await productionResponse.json(),false);
 });

@@ -66,7 +66,12 @@ export async function issueSession(env: AuthBindings, origin: string, now = Date
   return `${payload}.${encode(new Uint8Array(await crypto.subtle.sign("HMAC", await key(env), utf8.encode(payload))))}`;
 }
 export async function validSession(request: Request, env: AuthBindings, now = Date.now(), options: AuthOptions = {}) {
-  if (!authConfigured(env, options)) return false;
+  return authConfigured(env, options) && validSessionCookie(request, env, now);
+}
+/** Verify an existing signed session without requiring a login limiter binding. */
+export async function validSessionCookie(request: Request, env: AuthBindings, now = Date.now()) {
+  if (!/^\$2[aby]\$12\$[./A-Za-z0-9]{53}$/.test(env.ALPHAOS_PASSWORD_HASH ?? "") ||
+      !/^[A-Za-z0-9_-]{43}$/.test(env.ALPHAOS_SESSION_KEY ?? "")) return false;
   try {
     const matches = (request.headers.get("cookie") ?? "").split(";").map(c => c.trim()).filter(c => c.startsWith(`${SESSION_COOKIE}=`));
     if (matches.length !== 1) return false;

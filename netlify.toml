@@ -7,5 +7,8 @@
   NODE_VERSION = "22.23.0"
   ALPHAOS_NETLIFY_BUILD = "true"
 
+[context.deploy-preview.environment]
+  ALPHAOS_PREVIEW_DIAGNOSTICS = "true"
+
 [[plugins]]
   package = "@netlify/plugin-nextjs"
