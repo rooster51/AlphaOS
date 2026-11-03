@@ -47,6 +47,8 @@ router=APIRouter(prefix='/v1',dependencies=[Depends(authenticate)],responses={
 # or new backend secret store. Bcrypt runs off the ASGI event loop.
 from .website_auth import verify_website_password
 router.add_api_route('/website-auth/verify', verify_website_password, methods=['POST'], include_in_schema=False)
+from .website_rate_limit import consume_website_login_attempt
+router.add_api_route('/website-auth/rate-limit', consume_website_login_attempt, methods=['POST'], include_in_schema=False)
 
 
 def sanitized(value, *, _state=None, _release=False):

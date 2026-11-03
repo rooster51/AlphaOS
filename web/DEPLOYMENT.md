@@ -49,40 +49,52 @@ remote Render password verification, no-store headers, and protected research
 API. `00-login-rate-limit` runs first for `/auth/login` and applies a 5-request
 per-60-second limit per domain and client IP.
 
-**Rate-limit limitation:** Netlify's Free plan supports code-defined rate
-limits per domain and IP, not a shared per-domain limit across all clients.
-Enforcement may take up to 10 seconds to begin blocking. This is weaker than
-the existing Cloudflare shared bucket and can be bypassed by distributing
-attempts across source IPs. The Render verifier's bounded bcrypt concurrency
-remains in place, but this does not restore the shared login-attempt limit.
-Do not treat the migration as equivalent security until this tradeoff is
-accepted or a no-cost shared limiter is separately approved and provided.
+After the per-IP rule, the gate calls the authenticated Render
+`/v1/website-auth/rate-limit` endpoint. Render invokes the
+`consume_website_login_attempt` Supabase RPC with its existing service-role
+secret. The RPC serializes login attempts under a database row lock and
+enforces a shared rolling 5-attempt/60-second window across client IPs.
+Expired attempts are removed during each call. The SQL migration enables RLS,
+denies direct table access, and grants RPC execution only to `service_role`.
+The shared limiter fails closed on missing configuration, transport failures,
+unexpected status, or invalid responses. No client IP or authentication
+credential is stored in the attempt table.
+
+The [migration](../supabase/migrations/20261103000000_website_login_shared_rate_limit.sql)
+is reviewed source only and is **not applied to production** by this change.
+Do not enable the Netlify site until the migration is applied to the intended
+Supabase project and its role grants are verified. The backend uses the
+existing Render `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` environment
+variables; do not copy either secret into Netlify or source control. Render's
+existing bounded bcrypt concurrency remains independent protection.
 
 ### Netlify setup (manual; no deploy is performed by this change)
 
-1. After reviewing the stacked UI and hosting changes, create a Netlify site
-   from `rooster51/AlphaOS` on the branch that contains this change. Use the
-   Free plan. The checked-in `netlify.toml` selects the `web` base directory,
+1. Review and approve the SQL migration, then apply it to the intended Supabase
+   project under its normal migration procedure. Verify the `service_role`
+   can execute the RPC and cannot directly read the limiter tables. Do not
+   grant the function to `anon` or `authenticated`. This change does not run
+   migrations or modify production data.
+2. Verify the existing Render API has its current `SUPABASE_URL` and
+   `SUPABASE_SERVICE_ROLE_KEY` environment values and deploy the API change
+   through its separately approved release process. The rate-limit endpoint
+   fails closed until those values and the RPC are available.
+3. Create a Netlify Free site from `rooster51/AlphaOS` on the release-candidate
+   branch. The checked-in `netlify.toml` selects the `web` base directory,
    build command, Node version, and publish output; do not override those
    settings with repository-root build commands.
-2. In the site's environment-variable settings, add the existing server-side
+4. In the site's environment-variable settings, add the existing server-side
    values `ALPHAOS_API_URL`, `ALPHAOS_API_TOKEN`, `ALPHAOS_PASSWORD_HASH`,
    `ALPHAOS_SESSION_KEY`, and `ALPHAOS_DEMO_MODE=false`. Give secret values
    Functions scope where Netlify offers scopes. Reuse the approved values from
    the current website/API configuration; do not commit them, put them in
-   `netlify.toml`, or expose them as `NEXT_PUBLIC_*`. The Edge Functions set
-   the explicit external-limiter option in the auth gate; no limiter-mode
+   `netlify.toml`, or expose them as `NEXT_PUBLIC_*`. No limiter-mode
    environment variable should be added.
-3. Keep the site on HTTPS and confirm the Netlify deploy uses these runtime
-   variables. The login gate fails closed if auth secrets are missing, while
-   research API configuration failures remain unavailable rather than falling
-   back to synthetic or stale data.
-4. Before directing users to the site, separately approve the per-IP versus
-   shared rate-limit difference. Then verify anonymous pages and APIs redirect
-   or return 401, a valid login issues the hardened cookie, logout clears it,
-   authenticated research still calls the existing Render API, and stale or
-   missing archive evidence stays unavailable. Do not test real password
-   guesses against a production endpoint.
+5. Once explicitly authorized, create a Netlify deploy preview and verify its
+   runtime environment, anonymous denial, login/logout, CSRF rejection, Render
+   connectivity, and shared limit across separate client IPs. Confirm missing
+   or stale research evidence remains unavailable before any production
+   decision. Do not test real password guesses against production.
 
 Local checks from `web/`:
 

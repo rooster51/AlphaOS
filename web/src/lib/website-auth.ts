@@ -7,7 +7,11 @@ export type AuthBindings = {
   ALPHAOS_SESSION_KEY?: string;
   ALPHAOS_LOGIN_LIMITER?: { limit(input: { key: string }): Promise<{ success: boolean }> };
 };
-export type AuthOptions = { loginRateLimitHandledExternally?: boolean };
+export type AuthOptions = {
+  externalLoginRateLimiter?: {
+    limit(): Promise<{ allowed: boolean; retryAfterSeconds: number }>;
+  };
+};
 /** HTTPS only; never follow redirects carrying a password or service token. */
 async function verifyPassword(password: string, env: AuthBindings): Promise<boolean> {
   const base = new URL(env.ALPHAOS_API_URL ?? "");
@@ -48,7 +52,7 @@ export function authConfigured(env: AuthBindings, options: AuthOptions = {}) {
   return /^\$2[aby]\$12\$[./A-Za-z0-9]{53}$/.test(env.ALPHAOS_PASSWORD_HASH ?? "")
     && /^[A-Za-z0-9_-]{43}$/.test(env.ALPHAOS_SESSION_KEY ?? "")
     && (typeof env.ALPHAOS_LOGIN_LIMITER?.limit === "function"
-      || options.loginRateLimitHandledExternally === true);
+      || typeof options.externalLoginRateLimiter?.limit === "function");
 }
 async function key(env: AuthBindings) {
   // Changing either secret invalidates existing sessions.
@@ -133,7 +137,14 @@ export async function protectWebsite(request: Request, env: AuthBindings, next: 
           if (!(await env.ALPHAOS_LOGIN_LIMITER.limit({ key: `alphaos-single-user-login-v1:${url.origin}` })).success) {
             const response = loginPage("Too many attempts. Try again later.", 429); response.headers.set("Retry-After", "60"); return response;
           }
-        } else if (options.loginRateLimitHandledExternally !== true) {
+        } else if (typeof options.externalLoginRateLimiter?.limit === "function") {
+          const result = await options.externalLoginRateLimiter.limit();
+          if (!result.allowed) {
+            const response = loginPage("Too many attempts. Try again later.", 429);
+            response.headers.set("Retry-After", String(result.retryAfterSeconds));
+            return response;
+          }
+        } else {
           return loginPage("Sign in is not configured.", 503);
         }
       } catch { return loginPage("Sign in is temporarily unavailable.", 503); }

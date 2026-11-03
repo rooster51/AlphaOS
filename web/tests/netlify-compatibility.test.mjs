@@ -28,7 +28,8 @@ test("Netlify auth runs before Next assets and rate-limits login by client IP", 
   assert.match(limiter, /windowSize:\s*60/);
   assert.match(limiter, /aggregateBy:\s*\["ip",\s*"domain"\]/);
   assert.match(gate, /path:\s*"\/\*"/);
-  assert.match(gate, /loginRateLimitHandledExternally:\s*true/);
+  assert.match(gate, /externalLoginRateLimiter:\s*\{\s*limit:/);
+  assert.match(gate, /website-auth\/rate-limit/);
   assert.match(gate, /protectWebsite\(request,\s*bindings/);
   assert.match(nextConfig, /tsconfigPath:\s*process\.env\.ALPHAOS_NETLIFY_BUILD/);
   assert(tsconfig.exclude.includes("src/worker.ts"));

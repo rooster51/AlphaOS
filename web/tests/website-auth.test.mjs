@@ -101,10 +101,10 @@ test('Cloudflare login requires its configured limiter',async()=>{
   const token=accepted.headers.get('set-cookie').split(';')[0];
   assert(await validSession(request('/api/research/market',{headers:{cookie:token}}),netlify));
 });
-test('Netlify uses an explicit external limiter option without allowing environment bypass',async()=>{
+test('Netlify shared limiter is required and an environment variable cannot bypass it',async()=>{
   const netlify={...authBindings,...serviceEnv};
   const spoofed={...netlify,ALPHAOS_LOGIN_LIMITER_MODE:'netlify-edge'};
-  const externalLimiter={loginRateLimitHandledExternally:true};
+  const externalLimiter={externalLoginRateLimiter:{limit:async()=>({allowed:true,retryAfterSeconds:0})}};
   assert.equal((await protectWebsite(post('/auth/login'),netlify,downstream)).status,503);
   assert.equal((await protectWebsite(post('/auth/login'),spoofed,downstream)).status,503);
   const denied=await protectWebsite(post('/auth/login','password=wrong'),netlify,downstream,externalLimiter);
@@ -115,6 +115,25 @@ test('Netlify uses an explicit external limiter option without allowing environm
   assert.equal(accepted.headers.get('location'),'/market');
   const token=accepted.headers.get('set-cookie').split(';')[0];
   assert(await validSession(request('/api/research/market',{headers:{cookie:token}}),netlify,Date.now(),externalLimiter));
+});
+test('Netlify global rate limit rejects and fails closed before password verification',async()=>{
+  const netlify={...authBindings,...serviceEnv};
+  for(const [limit,status,retry] of [
+    [async()=>({allowed:false,retryAfterSeconds:23}),429,'23'],
+    [async()=>{throw Error('private shared limiter credential');},503,null],
+  ]) {
+    let verified=false;
+    const original=globalThis.fetch;
+    globalThis.fetch=async()=>{verified=true;throw Error('Password verifier must not be called');};
+    try {
+      const response=await protectWebsite(post('/auth/login'),netlify,downstream,{
+        externalLoginRateLimiter:{limit},
+      });
+      assert.equal(response.status,status);
+      assert.equal(response.headers.get('retry-after'),retry);
+      assert.equal(verified,false);
+    } finally { globalThis.fetch=original; }
+  }
 });
 test('password truncation, oversized streamed bodies and duplicate fields are rejected; noindex is not auth',async()=>{
   for(const body of ['password='+password+'&password='+password,'password='+'x'.repeat(73),'password='+'x'.repeat(3000)])
