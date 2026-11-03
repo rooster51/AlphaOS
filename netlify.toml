@@ -1,0 +1,8 @@
+[build]
+  base = "web"
+  command = "npm run build:netlify"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "22.23.0"
+  ALPHAOS_NETLIFY_BUILD = "true"

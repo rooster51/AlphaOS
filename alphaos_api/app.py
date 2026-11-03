@@ -43,6 +43,11 @@ def authenticate(credentials:HTTPAuthorizationCredentials|None=Depends(security)
 router=APIRouter(prefix='/v1',dependencies=[Depends(authenticate)],responses={
     status:{'model':ErrorResponse} for status in (400,401,403,404,409,410,422,429,500,503)})
 
+# Uses the existing server-to-server bearer boundary; no browser-accessible login
+# or new backend secret store. Bcrypt runs off the ASGI event loop.
+from .website_auth import verify_website_password
+router.add_api_route('/website-auth/verify', verify_website_password, methods=['POST'], include_in_schema=False)
+
 
 def sanitized(value, *, _state=None, _release=False):
     secrets_to_redact = tuple(secret_value for key in ('PUBLIC_API_SECRET','PUBLIC_ACCOUNT_NUMBER','ALPHAOS_API_TOKEN','SUPABASE_SERVICE_ROLE_KEY','SUPABASE_URL') if (secret_value := os.environ.get(key)))
