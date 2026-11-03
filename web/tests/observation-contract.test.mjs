@@ -60,6 +60,35 @@ test('empty option archives pass only with zero verified contract counts',async(
  }
 });
 
+test('current observations accept the 600-second policy boundary and reject larger limits',async()=>{
+ setup();
+ const snapshot=structuredClone(cases.find(c=>c.request.symbol==='QQQ'&&c.request.research_mode==='current').response);
+ const atBoundary=structuredClone(snapshot);
+ atBoundary.requested_as_of='2026-10-16T19:40:00+00:00';
+ atBoundary.archive.freshness.as_of=atBoundary.requested_as_of;
+ atBoundary.archive.freshness.age_seconds=600;
+ atBoundary.archive.freshness.max_age_seconds=600;
+ globalThis.fetch=async()=>Response.json(atBoundary);
+ assert.equal((await POST(request({symbol:'QQQ',view:'observation'}))).status,200);
+
+ const overLimit=structuredClone(snapshot);
+ overLimit.archive.freshness.max_age_seconds=601;
+ globalThis.fetch=async()=>Response.json(overLimit);
+ const rejected=await POST(request({symbol:'QQQ',view:'observation'}));
+ assert.equal(rejected.status,502);
+ assert.equal((await rejected.json()).code,'response_schema_mismatch');
+
+ const stale=structuredClone(snapshot);
+ stale.requested_as_of='2026-10-16T19:40:01+00:00';
+ stale.archive.freshness.as_of=stale.requested_as_of;
+ stale.archive.freshness.age_seconds=601;
+ stale.archive.freshness.max_age_seconds=600;
+ globalThis.fetch=async()=>Response.json(stale);
+ const staleResponse=await POST(request({symbol:'QQQ',view:'observation'}));
+ assert.equal(staleResponse.status,502);
+ assert.equal((await staleResponse.json()).code,'response_schema_mismatch');
+});
+
 test('bridge diagnostics identify safe failure categories without logging response data',async()=>{
  setup();
  const current=cases.find(c=>c.request.symbol==='QQQ'&&c.request.research_mode==='current').response;

@@ -1,5 +1,5 @@
 /** Dashboard presentation policy; research and archive verification stay in the backend. */
-import { validArchiveObservation } from "./archive-observation.ts";
+import { MAX_CURRENT_ARCHIVE_AGE_SECONDS, validArchiveObservation } from "./archive-observation.ts";
 type Symbol = "SPY" | "QQQ";
 type Mode = "current" | "historical";
 export type PreviewDiagnostic = {
@@ -145,7 +145,8 @@ function observation(value: unknown, symbol: Symbol, mode: Mode, now: number): D
     if (close > now || close > requested) return "historical_session_incomplete";
   } else {
     const limit = freshness.max_age_seconds;
-    if (typeof limit !== "number" || !Number.isFinite(limit) || limit < 0 || limit > 600 ||
+    if (typeof limit !== "number" || !Number.isFinite(limit) || limit < 0 ||
+        limit > MAX_CURRENT_ARCHIVE_AGE_SECONDS ||
         age > limit || (now - at) / 1000 > limit) return "response_schema_mismatch";
     validUntil = Math.min(at + limit * 1000, requested + (limit - age) * 1000);
     if (validUntil < now) return "response_schema_mismatch";

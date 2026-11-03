@@ -1,6 +1,7 @@
 /** Explicit observation-only contract. Never reinterpret it as candidate research. */
 const record = (v: unknown): Record<string, unknown> => v !== null && typeof v === "object" && !Array.isArray(v) ? v as Record<string, unknown> : {};
 const time = (v: unknown) => typeof v === "string" && /^\d{4}-\d{2}-\d{2}T.*(?:Z|[+-]\d{2}:\d{2})$/.test(v) ? Date.parse(v) : NaN;
+export const MAX_CURRENT_ARCHIVE_AGE_SECONDS = 600;
 
 export type ObservationValidationCategory =
   | "observation_schema_mismatch"
@@ -55,7 +56,8 @@ export function validateArchiveObservation(value: unknown, symbol: string, mode 
     age >= 0 && Math.abs(age-(asked-at)/1000) < .001);
   check(freshness,"archive.freshness.max_age_seconds",mode === "historical"
     ? maximum === null
-    : typeof maximum === "number" && Number.isFinite(maximum) && maximum >= 0 && maximum <= 600 &&
+    : typeof maximum === "number" && Number.isFinite(maximum) && maximum >= 0 &&
+      maximum <= MAX_CURRENT_ARCHIVE_AGE_SECONDS &&
       typeof age === "number" && Number.isFinite(age) && age <= maximum);
 
   const metadata = "archive_metadata_quality_mismatch";
