@@ -306,7 +306,7 @@ test("buying power reruns use new backend eligibility and archive expiration on 
     const body={source:"alphaos_research_api",verified_for_trading:false,research:fixture.response};
     await route.fulfill({status:200,json:body});
   });
-  await page.goto("/strategies?symbol=SPY");
+  await page.goto("/market?symbol=SPY");
   await expect(page.getByText("Capital-ineligible",{exact:true}).first()).toBeVisible();
   await page.getByLabel("Available Buying Power ($)").fill("500");
   await page.getByLabel("Expiration",{exact:true}).selectOption("2030-01-02");
