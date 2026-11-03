@@ -21,6 +21,31 @@ for(const mode of ['current','historical']) test(`compact ${mode} contract keeps
  }
  expect(requests.every(r=>r.view==='observation')).toBe(true);
 });
+
+test("empty verified option archive is disclosed without promoting contracts or affecting SPY",async({page})=>{
+ await page.clock.install({time:new Date('2026-10-16T19:33:00Z')});
+ await page.route('**/api/research/market',async route=>{
+  const request=route.request().postDataJSON();
+  const data=structuredClone(observations.find((c:{request:{symbol:string;research_mode:string}})=>c.request.symbol===request.symbol&&c.request.research_mode==='current').response);
+  if(request.symbol==='QQQ') {
+   data.archive.storage.quality_status='empty';
+   data.archive.storage.contract_count=0;
+   data.archive.observation.options_status='empty';
+   data.archive.diagnostics.total_contract_count=0;
+   for(const key of Object.keys(data.archive.diagnostics.bucket_counts)) data.archive.diagnostics.bucket_counts[key]=0;
+  }
+  await route.fulfill({json:{source:'alphaos_research_api',verified_for_trading:false,research:data}});
+ });
+ await page.goto('/dashboard');
+ const spy=page.getByRole('region',{name:'SPY evidence'});
+ const qqq=page.getByRole('region',{name:'QQQ evidence'});
+ await expect(spy).toContainText('Options archive statuscomplete');
+ await expect(qqq).toContainText('Options archive statusempty');
+ await expect(qqq).toContainText('No option contracts were archived; options research is unavailable for this snapshot.');
+ await expect(qqq).toContainText('$500.00');
+ await expect(page.getByText('Research evidence failed dashboard validation.')).toHaveCount(0);
+});
+
 function historical(symbol: string) {
   const data = JSON.parse(JSON.stringify(fixture).replaceAll("QQQ", symbol));
   data.request.research_mode = "historical";

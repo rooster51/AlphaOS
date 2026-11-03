@@ -32,3 +32,24 @@ test('observation projection cannot silently accept research knobs or replace fu
  globalThis.fetch=async()=>Response.json(cases[0].response);
  assert.equal((await POST(request({symbol:'SPY'}))).status,502);
 });
+
+test('empty option archives pass only with zero verified contract counts',async()=>{
+ setup();
+ const empty=structuredClone(cases.find(c=>c.request.symbol==='QQQ'&&c.request.research_mode==='current').response);
+ empty.archive.storage.quality_status='empty';
+ empty.archive.storage.contract_count=0;
+ empty.archive.observation.options_status='empty';
+ empty.archive.diagnostics.total_contract_count=0;
+ for(const key of Object.keys(empty.archive.diagnostics.bucket_counts)) empty.archive.diagnostics.bucket_counts[key]=0;
+ globalThis.fetch=async()=>Response.json(empty);
+ assert.equal((await POST(request({symbol:'QQQ',view:'observation'}))).status,200);
+
+ for(const mutate of [
+  value=>value.archive.storage.contract_count=1,
+  value=>value.archive.diagnostics.total_contract_count=1,
+  value=>value.archive.diagnostics.bucket_counts.valid_contracts=1,
+ ]) {
+  const inconsistent=structuredClone(empty);mutate(inconsistent);globalThis.fetch=async()=>Response.json(inconsistent);
+  assert.equal((await POST(request({symbol:'QQQ',view:'observation'}))).status,502);
+ }
+});

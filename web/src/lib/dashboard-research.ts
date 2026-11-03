@@ -5,7 +5,8 @@ type Mode = "current" | "historical";
 type Failure = { code: string; requestId?: string };
 export type DashboardObservation = {
   mode: Mode; spot: number; observedAt: string; sessionDate: string;
-  provider: string; ageSeconds: number; expiration: string; validUntil: number | null;
+  provider: string; optionsStatus: "complete" | "partial" | "empty";
+  ageSeconds: number; expiration: string; validUntil: number | null;
 };
 export type DashboardResult = {
   observation: DashboardObservation | null;
@@ -61,8 +62,10 @@ function observation(value: unknown, symbol: Symbol, mode: Mode, now: number): D
     if (mode === "historical" && (close > now || close > asked)) return "historical_session_incomplete";
     const validUntil=mode === "current" ? at+(fresh.max_age_seconds as number)*1000 : null;
     if (validUntil !== null && validUntil < now) return "response_schema_mismatch";
+    const observation=record(archive.observation);
     return {mode,spot:envelope.spot as number,observedAt:envelope.as_of as string,sessionDate:archive.session_date as string,
-      provider:archive.provider as string,ageSeconds:fresh.age_seconds as number,expiration:envelope.expiration as string,validUntil};
+      provider:archive.provider as string,optionsStatus:observation.options_status as DashboardObservation["optionsStatus"],
+      ageSeconds:fresh.age_seconds as number,expiration:envelope.expiration as string,validUntil};
   }
   const research = record(envelope.research), archive = record(research.archive);
   const storage = record(archive.storage), observed = record(archive.observation), freshness = record(archive.freshness);
@@ -109,7 +112,8 @@ function observation(value: unknown, symbol: Symbol, mode: Mode, now: number): D
     if (validUntil < now) return "response_schema_mismatch";
   }
   return {mode, spot, observedAt: observed.observed_at as string, sessionDate: date,
-    provider: archive.provider, ageSeconds: age, expiration: research.expiration, validUntil};
+    provider: archive.provider, optionsStatus: observed.options_status as DashboardObservation["optionsStatus"],
+    ageSeconds: age, expiration: research.expiration, validUntil};
 }
 
 /** Only explicit stale-current failures may initiate a separately labeled historical request. */

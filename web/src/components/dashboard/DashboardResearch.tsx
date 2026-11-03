@@ -43,9 +43,13 @@ export function DashboardResearch({symbol}: {symbol: "SPY" | "QQQ"}) {
             <div><dt>Source</dt><dd>{data.provider} · verified Supabase archive</dd></div>
             <div><dt>Source timestamp</dt><dd>{data.observedAt}</dd></div>
             <div><dt>Session date (New York)</dt><dd>{data.sessionDate}</dd></div>
+            <div><dt>Options archive status</dt><dd>{data.optionsStatus}</dd></div>
             <div><dt>Archive age at request</dt><dd>{data.ageSeconds} seconds</dd></div>
             <div><dt>Archived expiration</dt><dd>{data.expiration}</dd></div>
           </dl>
+          {data.optionsStatus === "empty" && <p className="text-warning text-sm">
+            No option contracts were archived; options research is unavailable for this snapshot.
+          </p>}
         </>}
         {result?.historicalFailure && <div className="text-warning text-sm">
           <p>Historical context unavailable: {dashboardMessage(result.historicalFailure.code)}</p>

@@ -164,3 +164,14 @@ for(const symbol of ['SPY','QQQ']) for(const mode of ['current','historical']) {
   assert.equal('candidates' in result.observation,false);
  });
 }
+
+test("empty verified option archives are labeled unavailable for options research",async()=>{
+ const data=compactBody("QQQ","current");
+ data.research.archive.storage.quality_status="empty";
+ data.research.archive.storage.contract_count=0;
+ data.research.archive.observation.options_status="empty";
+ data.research.archive.diagnostics.total_contract_count=0;
+ for(const key of Object.keys(data.research.archive.diagnostics.bucket_counts)) data.research.archive.diagnostics.bucket_counts[key]=0;
+ const result=await loadDashboardResearch("QQQ",async()=>response(data),()=>freshNow);
+ assert.equal(result.observation.optionsStatus,"empty");
+});
