@@ -104,3 +104,19 @@ checksum, current/historical freshness and fail-closed behavior.
 
 Validation results are recorded in the PR. No deployment, merge, collector
 workflow dispatch, live provider request, live archive write or trade was made.
+
+Local validation on Python 3.12.14, commit `a5883da` (documentation-only result
+recording follows):
+
+- Focused collector/reader/provider/coverage/adapter selection: **110 passed**.
+- Full suite: **1,338 passed + 64 subtests passed**, two failures because the local
+  environment lacked the real Supabase SDK (`ImportError: create_client`).
+- Installed the already-declared `supabase==2.32.0` in an isolated test environment;
+  reran both affected test modules together with the focused selection:
+  **143 passed** in 24.29 seconds. This includes both previously failing tests.
+  The entire full suite was not repeated after installing that dependency.
+- Earlier setup attempts exposed Windows pytest-temp permissions and child-process
+  dependency-path problems; the isolated environment and a dedicated writable
+  basetemp resolved those without repository changes.
+- Compile checks and `git diff --check` passed. Only existing Starlette/Supabase
+  deprecation warnings remain in the final selected run.
