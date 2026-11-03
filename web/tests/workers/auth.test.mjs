@@ -25,7 +25,7 @@ function worker(overrides={},verifier) {
   return {dispose:()=>mf.dispose(),dispatchFetch:(url,init={})=>mf.dispatchFetch(url,{redirect:'manual',...init})};
 }
 const origin='https://website.test';
-const login=(mf,p=password,headers={})=>mf.dispatchFetch(origin+'/auth/login',{method:'POST',headers:{Origin:origin,'Content-Type':'application/x-www-form-urlencoded',...headers},body:new URLSearchParams({password:p}).toString()});
+const login=(mf,p=password,headers={},targetOrigin=origin)=>mf.dispatchFetch(targetOrigin+'/auth/login',{method:'POST',headers:{Origin:targetOrigin,'Content-Type':'application/x-www-form-urlencoded',...headers},body:new URLSearchParams({password:p}).toString()});
 test('workerd: anonymous data/pages are denied before backend access, across aliases and RSC',async()=>{
   const mf=worker();try{
     for(const path of ['/api/health','/api/market?symbol=SPY','/api/strategies','/api/research/market','/api/research/structure','/api/research/structures/compare']) {
@@ -52,6 +52,14 @@ test('workerd: verifier outage, redirect and invalid acknowledgement fail closed
 });
 test('workerd: remote bcrypt login, forged/expired sessions, CSRF, logout and rate limit',async()=>{
   const mf=worker();try{
+    const limiterOrigin=`https://rate-limit-${crypto.randomUUID()}.test`;
+    const millisToNextWindow=60000-Date.now()%60000;
+    if(millisToNextWindow<5000) await new Promise(resolve=>setTimeout(resolve,millisToNextWindow+100));
+    // Miniflare aligns rate-limit periods to wall-clock boundaries.
+    for(let i=0;i<5;i++)assert.equal((await login(mf,'',{},limiterOrigin)).status,401);
+    const limited=await login(mf,password,{},limiterOrigin);
+    assert.equal(limited.status,429);assert.equal(limited.headers.get('retry-after'),'60');
+
     assert.equal((await login(mf,'incorrect')).status,401);
     assert.equal((await login(mf,password,{Origin:'https://evil.test'})).status,403);
     const good=await login(mf);assert.equal(good.status,303);
@@ -63,8 +71,6 @@ test('workerd: remote bcrypt login, forged/expired sessions, CSRF, logout and ra
     assert.equal((await mf.dispatchFetch(origin+'/api/research/market',{method:'POST',headers:{cookie:headers.cookie},body:'{}'})).status,403);
     const logout=await mf.dispatchFetch(origin+'/auth/logout',{method:'POST',headers});assert.equal(logout.status,303);assert(logout.headers.get('set-cookie').includes('Max-Age=0'));
     assert.equal((await mf.dispatchFetch(origin+'/api/health')).status,401);
-    for(let i=0;i<3;i++)assert.equal((await login(mf,'incorrect')).status,401);
-    const limited=await login(mf);assert.equal(limited.status,429);assert.equal(limited.headers.get('retry-after'),'60');
   }finally{await mf.dispose();}
 });
 test('workerd: runtime configuration is required, not process.env or build-time secrets',async()=>{
