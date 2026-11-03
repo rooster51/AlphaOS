@@ -7,6 +7,7 @@ export type AuthBindings = {
   ALPHAOS_SESSION_KEY?: string;
   ALPHAOS_LOGIN_LIMITER?: { limit(input: { key: string }): Promise<{ success: boolean }> };
 };
+export type AuthOptions = { loginRateLimitHandledExternally?: boolean };
 /** HTTPS only; never follow redirects carrying a password or service token. */
 async function verifyPassword(password: string, env: AuthBindings): Promise<boolean> {
   const base = new URL(env.ALPHAOS_API_URL ?? "");
@@ -43,10 +44,11 @@ function decode(value: string) {
   if (!/^[A-Za-z0-9_-]+$/.test(value)) throw new Error("Invalid encoding");
   return Uint8Array.from(atob(value.replaceAll("-", "+").replaceAll("_", "/")), c => c.charCodeAt(0));
 }
-export function authConfigured(env: AuthBindings) {
+export function authConfigured(env: AuthBindings, options: AuthOptions = {}) {
   return /^\$2[aby]\$12\$[./A-Za-z0-9]{53}$/.test(env.ALPHAOS_PASSWORD_HASH ?? "")
     && /^[A-Za-z0-9_-]{43}$/.test(env.ALPHAOS_SESSION_KEY ?? "")
-    && typeof env.ALPHAOS_LOGIN_LIMITER?.limit === "function";
+    && (typeof env.ALPHAOS_LOGIN_LIMITER?.limit === "function"
+      || options.loginRateLimitHandledExternally === true);
 }
 async function key(env: AuthBindings) {
   // Changing either secret invalidates existing sessions.
@@ -59,8 +61,8 @@ export async function issueSession(env: AuthBindings, origin: string, now = Date
     aud: origin, nonce: encode(crypto.getRandomValues(new Uint8Array(32))) })));
   return `${payload}.${encode(new Uint8Array(await crypto.subtle.sign("HMAC", await key(env), utf8.encode(payload))))}`;
 }
-export async function validSession(request: Request, env: AuthBindings, now = Date.now()) {
-  if (!authConfigured(env)) return false;
+export async function validSession(request: Request, env: AuthBindings, now = Date.now(), options: AuthOptions = {}) {
+  if (!authConfigured(env, options)) return false;
   try {
     const matches = (request.headers.get("cookie") ?? "").split(";").map(c => c.trim()).filter(c => c.startsWith(`${SESSION_COOKIE}=`));
     if (matches.length !== 1) return false;
@@ -107,7 +109,7 @@ async function readPassword(request: Request) {
   } finally { reader.releaseLock(); }
 }
 /** Gate runs before vinext, independent of Next.js rewrites, routing and process.env. */
-export async function protectWebsite(request: Request, env: AuthBindings, next: () => Promise<Response>) {
+export async function protectWebsite(request: Request, env: AuthBindings, next: () => Promise<Response>, options: AuthOptions = {}) {
   const run = async () => {
     const url = new URL(request.url), path = url.pathname;
     if (url.protocol !== "https:" && !["localhost", "127.0.0.1", "[::1]"].includes(url.hostname)) {
@@ -116,19 +118,23 @@ export async function protectWebsite(request: Request, env: AuthBindings, next: 
     }
     if (path === "/robots.txt" && ["GET", "HEAD"].includes(request.method)) return new Response("User-agent: *\nDisallow: /\n", { headers: { "Content-Type": "text/plain" } });
     const unsafe = !["GET", "HEAD", "OPTIONS"].includes(request.method);
-    if (path === "/login" && ["GET", "HEAD"].includes(request.method)) return await validSession(request, env) ? redirect("/market") : loginPage();
+    if (path === "/login" && ["GET", "HEAD"].includes(request.method)) return await validSession(request, env, Date.now(), options) ? redirect("/market") : loginPage();
     const login = path === "/auth/login" && request.method === "POST";
     // APIs return 401 before CSRF validation when no valid session exists.
-    const session = await validSession(request, env);
+    const session = await validSession(request, env, Date.now(), options);
     if (!login && !session) return path.startsWith("/api/") ? failure("authentication_required", 401) : redirect("/login");
     // Required on login too: prevents login CSRF. No forwarded-host trust.
     if (unsafe && (request.headers.get("origin") !== url.origin || request.headers.get("sec-fetch-site") === "cross-site")) return failure("csrf_rejected", 403);
     if (login) {
-      if (!authConfigured(env)) return loginPage("Sign in is not configured.", 503);
+      if (!authConfigured(env, options)) return loginPage("Sign in is not configured.", 503);
       try {
-        // Single-user bucket also limits IP-rotating attempts per Cloudflare location.
-        if (!(await env.ALPHAOS_LOGIN_LIMITER!.limit({ key: `alphaos-single-user-login-v1:${url.origin}` })).success) {
-          const response = loginPage("Too many attempts. Try again later.", 429); response.headers.set("Retry-After", "60"); return response;
+        if (typeof env.ALPHAOS_LOGIN_LIMITER?.limit === "function") {
+          // Cloudflare uses one shared bucket, including across source IPs.
+          if (!(await env.ALPHAOS_LOGIN_LIMITER.limit({ key: `alphaos-single-user-login-v1:${url.origin}` })).success) {
+            const response = loginPage("Too many attempts. Try again later.", 429); response.headers.set("Retry-After", "60"); return response;
+          }
+        } else if (options.loginRateLimitHandledExternally !== true) {
+          return loginPage("Sign in is not configured.", 503);
         }
       } catch { return loginPage("Sign in is temporarily unavailable.", 503); }
       const password = await readPassword(request);

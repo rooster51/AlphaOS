@@ -88,6 +88,34 @@ test('rate limiting and limiter outages fail closed before password validation',
     assert.equal(r.status,status);
   }
 });
+test('Cloudflare login requires its configured limiter',async()=>{
+  const netlify={...authBindings,...serviceEnv,ALPHAOS_LOGIN_LIMITER_MODE:'netlify-edge',ALPHAOS_LOGIN_LIMITER:{limit:async()=>({success:true})}};
+  const withoutMode={...netlify,ALPHAOS_LOGIN_LIMITER_MODE:undefined,ALPHAOS_LOGIN_LIMITER:undefined};
+  assert.equal((await protectWebsite(post('/auth/login'),withoutMode,downstream)).status,503);
+  const denied=await protectWebsite(post('/auth/login','password=incorrect'),netlify,downstream);
+  assert.equal(denied.status,401);
+  assert(!denied.headers.has('set-cookie'));
+  const accepted=await protectWebsite(post('/auth/login'),netlify,downstream);
+  assert.equal(accepted.status,303);
+  assert.equal(accepted.headers.get('location'),'/market');
+  const token=accepted.headers.get('set-cookie').split(';')[0];
+  assert(await validSession(request('/api/research/market',{headers:{cookie:token}}),netlify));
+});
+test('Netlify uses an explicit external limiter option without allowing environment bypass',async()=>{
+  const netlify={...authBindings,...serviceEnv};
+  const spoofed={...netlify,ALPHAOS_LOGIN_LIMITER_MODE:'netlify-edge'};
+  const externalLimiter={loginRateLimitHandledExternally:true};
+  assert.equal((await protectWebsite(post('/auth/login'),netlify,downstream)).status,503);
+  assert.equal((await protectWebsite(post('/auth/login'),spoofed,downstream)).status,503);
+  const denied=await protectWebsite(post('/auth/login','password=wrong'),netlify,downstream,externalLimiter);
+  assert.equal(denied.status,401);
+  assert(!denied.headers.has('set-cookie'));
+  const accepted=await protectWebsite(post('/auth/login'),netlify,downstream,externalLimiter);
+  assert.equal(accepted.status,303);
+  assert.equal(accepted.headers.get('location'),'/market');
+  const token=accepted.headers.get('set-cookie').split(';')[0];
+  assert(await validSession(request('/api/research/market',{headers:{cookie:token}}),netlify,Date.now(),externalLimiter));
+});
 test('password truncation, oversized streamed bodies and duplicate fields are rejected; noindex is not auth',async()=>{
   for(const body of ['password='+password+'&password='+password,'password='+'x'.repeat(73),'password='+'x'.repeat(3000)])
     assert.equal((await protectWebsite(post('/auth/login',body),env,downstream)).status,401);

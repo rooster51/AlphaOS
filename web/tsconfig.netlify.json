@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.json",
+  "exclude": [
+    "node_modules",
+    "src/worker.ts",
+    "src/lib/runtime-cloudflare.ts",
+    "cloudflare.config.ts",
+    "vite.config.ts"
+  ]
+}
