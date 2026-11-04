@@ -208,7 +208,8 @@ def option_chain(symbol:str,expiration:date,explicit:bool=False,refresh:bool=Fal
         try:
             quote=service.quote(symbol,refresh or bool(buy))
             result['underlying']=quote
-            if buy and not underlying_eligible(quote,service.clock()):
+            result['underlying_eligible']=underlying_eligible(quote,service.clock())
+            if buy and not result['underlying_eligible']:
                 result['underlying_error']='underlying_quote_ineligible'
         except APIError as error:
             result['underlying_error']=error.code

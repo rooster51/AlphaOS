@@ -16,7 +16,8 @@ type Scenario = {
 type Chain = {
   source: string; retrieved_at: string; max_quote_age_seconds: number;
   chain: { calls: Leg[]; puts: Leg[] };
-  underlying?: { quote: { last: number; updated_at: string }; freshness: { data_status: string } };
+  underlying?: { quote: { last: number; updated_at: string } };
+  underlying_eligible?: boolean;
   scenario?: Scenario;
 };
 
@@ -119,7 +120,7 @@ export function OptionsChain() {
     {data && <>
       <section className="space-y-1 text-terminal-300" aria-label="Quote provenance">
         <p>{symbol} · {date} · {data.source} · Retrieved {data.retrieved_at}</p>
-        <p>Underlying {spot === undefined ? "unavailable" : `${dollars(spot)} · ${label(data.underlying!.freshness.data_status)} · ${data.underlying!.quote.updated_at ?? "timestamp unavailable"}`}</p>
+        <p>Underlying {spot === undefined ? "unavailable" : `${dollars(spot)} · ${data.underlying_eligible ? "fresh at retrieval" : "context only"} · ${data.underlying!.quote.updated_at ?? "timestamp unavailable"}`}</p>
         <p>Freshness labels reflect retrieval or evaluation time. Both provider bid and ask must be within {data.max_quote_age_seconds}s at evaluation.</p>
         {(!data.chain.calls.length || !data.chain.puts.length) && <p>Partial chain · Public returned no {data.chain.calls.length ? "puts" : "calls"}.</p>}
       </section>
