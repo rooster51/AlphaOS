@@ -2,6 +2,8 @@
 export const dynamic = "force-dynamic";
 
 import Link from "next/link";
+import { Suspense } from "react";
+import { CurrentMarketQuotes } from "@/components/dashboard/CurrentMarketQuotes";
 import { Header } from "@/components/shell/Header";
 import { DashboardResearch } from "@/components/dashboard/DashboardResearch";
 
@@ -25,6 +27,11 @@ export default function DashboardPage() {
           predictions are represented as current.
         </p>
 
+        <Suspense fallback={<p>Checking current Public quotes…</p>}>
+          <CurrentMarketQuotes />
+        </Suspense>
+
+        <h2 className="text-lg font-semibold">Archived Research Evidence</h2>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
           <DashboardResearch symbol="QQQ" />
           <DashboardResearch symbol="SPY" />

@@ -183,8 +183,8 @@ def forward_distribution(symbol:str,horizon:int=3,spot:float|None=Query(None,gt=
 
 
 @router.get('/quote/{symbol}',response_model=ResearchResponse,operation_id='get_live_quote')
-def live_quote(symbol:str):
-    service=app.state.service;symbol=symbol_value(symbol);q=service.quote(symbol)
+def live_quote(symbol:str,refresh:bool=False):
+    service=app.state.service;symbol=symbol_value(symbol);q=service.quote(symbol,refresh=refresh)
     return respond(service.envelope(dict(**q,timing=service.timing(q['quote'])),symbol=symbol,quote=q['quote']))
 
 

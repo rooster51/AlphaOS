@@ -89,6 +89,10 @@ def get_public_quotes(symbols: tuple[str, ...], _context=None) -> list[dict]:
     retrieved_at=datetime.now(timezone.utc).isoformat()
     return [{'symbol': quote.instrument.symbol, 'last': _as_float(quote.last), 'bid': _as_float(quote.bid), 'ask': _as_float(quote.ask), 'previous_close': _as_float(quote.previous_close), 'change': _as_float(quote.one_day_change.change if quote.one_day_change else None), 'change_pct': _as_float(quote.one_day_change.percent_change if quote.one_day_change else None), 'volume': quote.volume,
         'updated_at': normalize_timestamp(quote.last_timestamp), 'retrieved_at': retrieved_at,
+        'bid_timestamp': normalize_timestamp(getattr(quote, 'bid_timestamp', None)),
+        'ask_timestamp': normalize_timestamp(getattr(quote, 'ask_timestamp', None)),
+        'provider_outcome': getattr(getattr(quote, 'outcome', None), 'value', None),
+        'provider_retrieved_at': retrieved_at,
         'provider_timestamp_field':'lastTimestamp',
         'provider_timestamp':str(quote.last_timestamp) if quote.last_timestamp is not None else None,
         'provider_timestamp_representation':'Public SDK datetime; original HTTP spelling not retained',

@@ -22,7 +22,7 @@ from modules.quote_freshness import freshness, normalize_timestamp
 
 NY=ZoneInfo('America/New_York')
 HORIZONS=(1,2,3,5,10)
-QUOTE_FIELDS=('symbol','last','bid','ask','previous_close','change','change_pct','volume','updated_at','provider_timestamp_field','provider_timestamp','provider_timestamp_representation')
+QUOTE_FIELDS=('symbol','last','bid','ask','previous_close','change','change_pct','volume','updated_at','provider_timestamp_field','provider_timestamp','provider_timestamp_representation','bid_timestamp','ask_timestamp','provider_outcome','provider_retrieved_at')
 LEG_FIELDS=('contract','type','strike','bid','ask','mid','bid_timestamp','ask_timestamp','iv','delta','gamma','theta','vega','rho','volume','open_interest')
 
 
