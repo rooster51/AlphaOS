@@ -1,4 +1,8 @@
-export type ResearchEnvelope = { meta: Record<string, unknown>; evidence: Record<string, unknown> };
+export type ResearchEnvelope = {
+  meta: Record<string, unknown>;
+  evidence: Record<string, unknown>;
+  caveats: unknown[];
+};
 
 const RESEARCH_SCHEMA = "alphaos-research-v1";
 
