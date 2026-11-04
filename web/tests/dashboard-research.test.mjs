@@ -85,6 +85,24 @@ test("total failure, invalid JSON, unknown errors and unsafe correlation stay sa
   }
 });
 
+test("owner preview diagnostics accept only sanitized metadata on an error response", async () => {
+  const result = await loadDashboardResearch("QQQ", async () => Response.json({
+    code:"response_schema_mismatch",
+    diagnostic:{
+      request_id:id,
+      upstream_status:200,
+      validation_categories:["observation_schema_mismatch","secret-value"],
+      rejected_fields:["research_performed","private.account"],
+      response_body:"must-not-be-retained",
+    },
+  }, {status:502,headers:{"X-AlphaOS-Request-ID":id}}));
+  assert.deepEqual(result.currentFailure.diagnostic,{
+    requestId:id,upstreamStatus:200,
+    categories:["observation_schema_mismatch"],rejectedFields:["research_performed"],
+  });
+  assert.equal(JSON.stringify(result).includes("must-not-be-retained"),false);
+});
+
 test("malformed success or stale success cannot bypass validation or trigger fallback", async () => {
   for (const mutate of [
     b => {b.research.research.archive.storage.archive_sha256="bad";},
@@ -164,3 +182,14 @@ for(const symbol of ['SPY','QQQ']) for(const mode of ['current','historical']) {
   assert.equal('candidates' in result.observation,false);
  });
 }
+
+test("empty verified option archives are labeled unavailable for options research",async()=>{
+ const data=compactBody("QQQ","current");
+ data.research.archive.storage.quality_status="empty";
+ data.research.archive.storage.contract_count=0;
+ data.research.archive.observation.options_status="empty";
+ data.research.archive.diagnostics.total_contract_count=0;
+ for(const key of Object.keys(data.research.archive.diagnostics.bucket_counts)) data.research.archive.diagnostics.bucket_counts[key]=0;
+ const result=await loadDashboardResearch("QQQ",async()=>response(data),()=>freshNow);
+ assert.equal(result.observation.optionsStatus,"empty");
+});

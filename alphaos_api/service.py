@@ -19,10 +19,11 @@ from modules.option_quote_quality import option_quality
 from .cache import TTLStore
 from .provider import MarketProvider
 from modules.quote_freshness import freshness, normalize_timestamp
+from modules.research_timing import stage
 
 NY=ZoneInfo('America/New_York')
 HORIZONS=(1,2,3,5,10)
-QUOTE_FIELDS=('symbol','last','bid','ask','previous_close','change','change_pct','volume','updated_at','provider_timestamp_field','provider_timestamp','provider_timestamp_representation')
+QUOTE_FIELDS=('symbol','last','bid','ask','previous_close','change','change_pct','volume','updated_at','provider_timestamp_field','provider_timestamp','provider_timestamp_representation','bid_timestamp','ask_timestamp','provider_outcome','provider_retrieved_at')
 LEG_FIELDS=('contract','type','strike','bid','ask','mid','bid_timestamp','ask_timestamp','iv','delta','gamma','theta','vega','rho','volume','open_interest')
 
 
@@ -88,7 +89,7 @@ class ResearchService:
             q['retrieved_at']=self.clock().isoformat()
             return dict(quote=q,retrieved_at=q['retrieved_at'])
         key=('quote',symbol)
-        with self.data.lock:
+        with self.data.lock, stage('quote_cache_lock_held'):
             cached=None if refresh else self.data.get(key)
             result=cached if cached is not None else self.data.put(key,load(),30)
         return {**result,'cache':dict(hit=cached is not None,key=list(key),ttl_seconds=30,cached_at=result['retrieved_at']),

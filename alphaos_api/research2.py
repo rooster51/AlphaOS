@@ -21,6 +21,7 @@ from modules.research_timing import execution, stage as timing_stage
 from modules.structure_provenance import resolve_structure, hypothetical_evidence, ProvenanceError
 
 VERSION = 'alphaos-interface-v2'
+MAX_CURRENT_ARCHIVE_AGE_SECONDS = 600
 
 
 class Request(BaseModel):
@@ -127,9 +128,12 @@ class ArchiveResearchService:
         # Lazy trusted server wiring. No connection or secret loading on import.
         # Reader implements ALL selection, checksum, identity and freshness rules.
         try:
-            age = float(os.environ.get('ALPHAOS_ARCHIVE_MAX_AGE_SECONDS', '600'))
-            if not isfinite(age) or age < 0:
+            configured_age = float(os.environ.get('ALPHAOS_ARCHIVE_MAX_AGE_SECONDS', '600'))
+            if not isfinite(configured_age) or configured_age < 0:
                 raise ValueError()
+            # The deployment setting may lower the window, but never relax the
+            # shared 10-minute maximum accepted by the website contract.
+            age = min(configured_age, MAX_CURRENT_ARCHIVE_AGE_SECONDS)
             with timing_stage('archive_client'):
                 client = archive_client()
             return read_latest_option_snapshot(client, symbol, as_of,

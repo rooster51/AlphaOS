@@ -79,6 +79,18 @@ def test_stale_snapshot_not_silently_used():
         read_latest_option_snapshot(ReadOnlyClient(), 'QQQ', AS_OF, max_age_seconds=60)
     assert error.value.code == 'archive_stale'
 
+def test_current_archive_freshness_boundary_is_inclusive_and_then_fails_closed():
+    client = ReadOnlyClient()
+    at_limit = read_latest_option_snapshot(
+        client, 'QQQ', '2030-01-02T20:40:00+00:00', max_age_seconds=600)
+    assert at_limit['freshness']['age_seconds'] == 600
+    assert at_limit['freshness']['max_age_seconds'] == 600
+
+    with pytest.raises(ArchiveUnavailable) as error:
+        read_latest_option_snapshot(
+            client, 'QQQ', '2030-01-02T20:40:01+00:00', max_age_seconds=600)
+    assert error.value.code == 'archive_stale'
+
 
 def test_closed_market_can_use_recent_verified_archive_without_live_quote_gate():
     client = ReadOnlyClient()

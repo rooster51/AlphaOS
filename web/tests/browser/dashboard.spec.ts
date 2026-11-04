@@ -21,6 +21,31 @@ for(const mode of ['current','historical']) test(`compact ${mode} contract keeps
  }
  expect(requests.every(r=>r.view==='observation')).toBe(true);
 });
+
+test("empty verified option archive is disclosed without promoting contracts or affecting SPY",async({page})=>{
+ await page.clock.install({time:new Date('2026-10-16T19:33:00Z')});
+ await page.route('**/api/research/market',async route=>{
+  const request=route.request().postDataJSON();
+  const data=structuredClone(observations.find((c:{request:{symbol:string;research_mode:string}})=>c.request.symbol===request.symbol&&c.request.research_mode==='current').response);
+  if(request.symbol==='QQQ') {
+   data.archive.storage.quality_status='empty';
+   data.archive.storage.contract_count=0;
+   data.archive.observation.options_status='empty';
+   data.archive.diagnostics.total_contract_count=0;
+   for(const key of Object.keys(data.archive.diagnostics.bucket_counts)) data.archive.diagnostics.bucket_counts[key]=0;
+  }
+  await route.fulfill({json:{source:'alphaos_research_api',verified_for_trading:false,research:data}});
+ });
+ await page.goto('/dashboard');
+ const spy=page.getByRole('region',{name:'SPY evidence'});
+ const qqq=page.getByRole('region',{name:'QQQ evidence'});
+ await expect(spy).toContainText('Options archive statuscomplete');
+ await expect(qqq).toContainText('Options archive statusempty');
+ await expect(qqq).toContainText('No option contracts were archived; options research is unavailable for this snapshot.');
+ await expect(qqq).toContainText('$500.00');
+ await expect(page.getByText('Research evidence failed dashboard validation.')).toHaveCount(0);
+});
+
 function historical(symbol: string) {
   const data = JSON.parse(JSON.stringify(fixture).replaceAll("QQQ", symbol));
   data.request.research_mode = "historical";
@@ -103,6 +128,28 @@ for (const [code,message] of [
   });
 }
 
+test("authenticated preview validation metadata is shown in an expandable diagnostic view",async({page})=>{
+ const requestId="a".repeat(32);
+ await page.route("**/api/research/market",async route=>{
+  await route.fulfill({status:502,json:{
+   status:"unavailable",code:"response_schema_mismatch",
+   diagnostic:{
+    request_id:requestId,upstream_status:200,
+    validation_categories:["observation_schema_mismatch"],
+    rejected_fields:["research_performed"],
+   },
+  },headers:{"X-AlphaOS-Request-ID":requestId}});
+ });
+ await page.goto("/dashboard");
+ const card=page.getByRole("region",{name:"QQQ evidence"});
+ const details=card.getByText("Preview validation diagnostics",{exact:true});
+ await expect(details).toBeVisible();
+ await details.click();
+ await expect(card).toContainText("Upstream HTTP status200");
+ await expect(card).toContainText("observation_schema_mismatch");
+ await expect(card).toContainText("research_performed");
+ await expect(card).toContainText(requestId);
+});
 test("same-session historical evidence is refused, and one failed symbol does not hide the other",async({page})=>{
   await page.clock.install({time:new Date("2026-10-20T14:00:00Z")});
   await page.route("**/api/research/market",async route=>{
@@ -134,6 +181,7 @@ test("both historical timeouts retain stale warnings, correlation, layout and re
     const card=page.getByRole("region",{name:`${symbol} evidence`});
     await expect(card).toContainText("Current market evidence is stale");
     await expect(card).toContainText("Historical context unavailable: The research backend request timed out.");
+    await expect(card).toContainText("Wait about a minute, then refresh.");
     await expect(card).toContainText("Historical request ID: "+(symbol==="SPY"?"a":"b").repeat(32));
     await expect(card.getByRole("button",{name:`Refresh ${symbol} evidence`})).toBeVisible();
     await expect(card.getByText("$500.00",{exact:true})).toHaveCount(0);
@@ -142,4 +190,83 @@ test("both historical timeouts retain stale warnings, correlation, layout and re
   expect(requests.filter(item=>item.research_mode==="historical")).toHaveLength(2);
   await page.getByRole("button",{name:"Refresh SPY evidence"}).click();
   await expect.poll(()=>requests.filter(item=>item.symbol==="SPY"&&item.research_mode==="historical").length).toBe(2);
+});
+
+test("cold-origin timeouts show explicit retry guidance without automatic retries or substitute evidence", async ({ page }) => {
+  const requests: string[] = [];
+  await page.route("**/api/research/market", async route => {
+    requests.push(route.request().postDataJSON().symbol);
+    await route.fulfill({ status: 502, json: { status: "unavailable", code: "backend_timeout" } });
+  });
+  await page.goto("/dashboard");
+  for (const symbol of ["QQQ", "SPY"]) {
+    const card = page.getByRole("region", { name: `${symbol} evidence` });
+    await expect(card).toContainText("The research backend request timed out.");
+    await expect(card).toContainText("The service may be starting up");
+    await expect(card).toContainText("No research data was substituted");
+    await expect(card.getByRole("button", { name: `Refresh ${symbol} evidence` })).toBeVisible();
+  }
+  expect(requests.sort()).toEqual(["QQQ", "SPY"]);
+  await expect(page.getByText("HISTORICAL — COMPLETED SESSION ARCHIVE", { exact: true })).toHaveCount(0);
+});
+
+test("current quotes refresh independently and retain expired verified observations", async ({ page }) => {
+  const now = new Date("2026-11-04T15:00:05Z");
+  const observed = "2026-11-04T15:00:00.000Z";
+  await page.clock.install({ time: now });
+  let spyRequests = 0;
+  let qqqRequests = 0;
+  await page.route("**/api/current-quote?symbol=*", async route => {
+    const symbol = new URL(route.request().url()).searchParams.get("symbol");
+    if (symbol === "SPY") {
+      spyRequests++;
+      if (spyRequests > 1) return route.fulfill({ json: {
+        status: "unavailable", code: "request_timeout", reason: "Quote backend request timed out.",
+      } });
+    } else qqqRequests++;
+    await route.fulfill({ json: {
+      status: "fresh", symbol, last: 600, bid: 599, ask: 601,
+      lastAt: observed, bidAt: observed, askAt: observed, retrievedAt: observed,
+      ageSeconds: 5, expiresAt: Date.parse(observed) + 15_000,
+    } });
+  });
+  await page.goto("/dashboard");
+  const spy = page.getByRole("region", { name: "SPY current quote" });
+  const qqq = page.getByRole("region", { name: "QQQ current quote" });
+  await expect(spy.getByRole("button", { name: "Refresh SPY quote" })).toBeVisible();
+  expect(spyRequests).toBe(0);
+  expect(qqqRequests).toBe(0);
+  await spy.getByRole("button", { name: "Refresh SPY quote" }).click();
+  await expect(spy).toContainText("Current Public quote");
+  expect(qqqRequests).toBe(0);
+  await qqq.getByRole("button", { name: "Refresh QQQ quote" }).click();
+  await expect(qqq).toContainText("Current Public quote");
+  await spy.getByRole("button", { name: "Refresh SPY quote" }).click();
+  await expect(spy).toContainText("request_timeout");
+  expect(qqqRequests).toBe(1);
+  await expect(spy).toContainText("$600.00");
+  await page.clock.fastForward(15_000);
+  await expect(spy).toContainText("STALE · Last verified observation");
+  await expect(qqq).toContainText("STALE · Last verified observation");
+});
+
+test("dashboard navigation does not wait for an in-flight quote", async ({ page }) => {
+  let releaseQuote!: () => void;
+  const pending = new Promise<void>(resolve => { releaseQuote = resolve; });
+  await page.route("**/api/current-quote?symbol=SPY", async route => {
+    await pending;
+    await route.fulfill({ json: { status: "unavailable", code: "provider_unavailable", reason: "Fixture" } });
+  });
+  try {
+    await page.goto("/dashboard");
+    const requested = page.waitForRequest("**/api/current-quote?symbol=SPY");
+    await page.getByRole("button", { name: "Refresh SPY quote" }).click();
+    await requested;
+    await page.getByRole("navigation", { name: "Primary navigation" })
+      .getByRole("link", { name: "Structure Lab" }).click();
+    await expect(page).toHaveURL(/\/structures$/);
+    await expect(page.getByRole("heading", { name: "Structure Lab", exact: true })).toBeVisible();
+  } finally {
+    releaseQuote();
+  }
 });
