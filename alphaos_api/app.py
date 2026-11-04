@@ -19,6 +19,7 @@ from modules.price_structure import nearest_levels
 from modules.forward_distribution import summarize_forward_distribution
 from .contracts import APIError,TradeRequest,CompareRequest,ResearchResponse,ErrorResponse,SCHEMA_VERSION,friction
 from .service import ResearchService,symbol_value,horizon_value
+from .live_options import assess_contracts, scenario, underlying_eligible
 from .config import load_secret_files
 from modules.research_control import checkpoint
 from .json_encoding import encode_json
@@ -197,9 +198,30 @@ def option_expirations(symbol:str):
 
 
 @router.get('/options/{symbol}/chain/{expiration}',response_model=ResearchResponse,operation_id='get_option_chain')
-def option_chain(symbol:str,expiration:date):
+def option_chain(symbol:str,expiration:date,explicit:bool=False,refresh:bool=False,
+        buy:str|None=Query(None,min_length=1,max_length=32),sell:str|None=Query(None,min_length=1,max_length=32)):
     service=app.state.service;symbol=symbol_value(symbol)
-    return respond(service.envelope(service.chain(symbol,expiration),symbol=symbol))
+    if (sell and not buy) or (buy and not explicit):
+        raise APIError('invalid_option_selection')
+    result=service.chain(symbol,expiration,refresh,explicit=explicit)
+    if explicit:
+        try:
+            quote=service.quote(symbol,refresh or bool(buy))
+            result['underlying']=quote
+            if buy and not underlying_eligible(quote,service.clock()):
+                result['underlying_error']='underlying_quote_ineligible'
+        except APIError as error:
+            result['underlying_error']=error.code
+        if buy:
+            if 'underlying_error' in result:
+                result['scenario']=dict(status='unavailable',reason='Fresh underlying quote unavailable.')
+            else:
+                chain=result['chain']
+                evaluated_at=service.clock()
+                assess_contracts(chain['calls']+chain['puts'],symbol,expiration.isoformat(),evaluated_at,result['retrieved_at'])
+                result['scenario']={**scenario(chain,buy,sell,quote['quote']['last']),
+                    'evaluated_at':evaluated_at.isoformat()}
+    return respond(service.envelope(result,symbol=symbol))
 
 
 @router.get('/options/{symbol}/vertical',response_model=ResearchResponse,operation_id='research_trade')

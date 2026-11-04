@@ -17,6 +17,7 @@ from modules.symbol_registry import SYMBOLS, instrument, metadata as instrument_
 from .contracts import APIError,SCHEMA_VERSION,CAVEATS,friction
 from modules.option_quote_quality import option_quality
 from .cache import TTLStore
+from .live_options import assess_contracts, contract_identity, scenario, MAX_AGE_SECONDS
 from .provider import MarketProvider
 from modules.quote_freshness import freshness, normalize_timestamp
 from modules.research_timing import stage
@@ -24,7 +25,7 @@ from modules.research_timing import stage
 NY=ZoneInfo('America/New_York')
 HORIZONS=(1,2,3,5,10)
 QUOTE_FIELDS=('symbol','last','bid','ask','previous_close','change','change_pct','volume','updated_at','provider_timestamp_field','provider_timestamp','provider_timestamp_representation','bid_timestamp','ask_timestamp','provider_outcome','provider_retrieved_at')
-LEG_FIELDS=('contract','type','strike','bid','ask','mid','bid_timestamp','ask_timestamp','iv','delta','gamma','theta','vega','rho','volume','open_interest')
+LEG_FIELDS=('contract','type','strike','bid','ask','mid','bid_timestamp','ask_timestamp','iv','delta','gamma','theta','vega','rho','volume','open_interest','last','last_timestamp','bid_size','ask_size','outcome')
 
 
 def symbol_value(value):
@@ -62,6 +63,7 @@ class ResearchService:
     def __init__(self,provider=None,clock=None):
         self.provider=provider or MarketProvider()
         self.clock=clock or (lambda:datetime.now(timezone.utc))
+        self.options=TTLStore(self.clock,32)
         self.data=TTLStore(self.clock,96);self.snapshots=TTLStore(self.clock,64);self.scans=TTLStore(self.clock,32)
 
     def today(self):return self.clock().astimezone(NY).date()
@@ -112,32 +114,52 @@ class ResearchService:
     def expirations(self,symbol):
         symbol=symbol_value(symbol)
         def load():
-            values=self.provider_call(self.provider.expirations,symbol)
+            with stage('public_option_expirations_request'):
+                values=self.provider_call(self.provider.expirations,symbol)
             try:values=[date.fromisoformat(x).isoformat() for x in values]
             except (ValueError,TypeError):raise APIError('provider_schema_error',503) from None
             return dict(expirations=sorted(set(values)),retrieved_at=self.clock().isoformat())
-        return self.data.load(('expirations',symbol),300,load)
+        key=('expirations',symbol)
+        cached=self.options.get(key)
+        return cached if cached is not None else self.options.put(key,load(),300)
 
-    def chain(self,symbol,expiration,refresh=False):
+    def chain(self,symbol,expiration,refresh=False,*,explicit=False):
         symbol=symbol_value(symbol);expiration=self.expiration(expiration)
-        if expiration not in self.expirations(symbol)['expirations']:raise APIError('expiration_unavailable',404)
+        if explicit and symbol not in ('SPY','QQQ'):raise APIError('unsupported_symbol',400)
+        if not explicit and expiration not in self.expirations(symbol)['expirations']:
+            raise APIError('expiration_unavailable',404)
         def load():
-            raw=self.provider_call(self.provider.chain,symbol,expiration)
-            if raw.get('symbol')!=symbol or raw.get('expiration')!=expiration or not all(isinstance(raw.get(k),list) for k in ('puts','calls')):
+            with stage('public_option_chain_request'):
+                raw=self.provider_call(self.provider.chain,symbol,expiration)
+            if not isinstance(raw,dict) or raw.get('symbol')!=symbol or raw.get('expiration')!=expiration or not all(isinstance(raw.get(k),list) for k in ('puts','calls')):
                 raise APIError('incomplete_chain',503)
             clean=dict(symbol=symbol,expiration=expiration)
             for side in ('calls','puts'):
                 if any(not isinstance(row,dict) for row in raw[side]):raise APIError('incomplete_chain',503)
                 clean[side]=[{k:row.get(k) for k in LEG_FIELDS} for row in raw[side]]
                 for leg in clean[side]:
-                    for k in ('bid_timestamp','ask_timestamp'):leg[k]=stamp(leg[k])
+                    for k in ('bid_timestamp','ask_timestamp','last_timestamp'):
+                        leg[k]=stamp(leg[k])
+                    if explicit:
+                        leg['type']='Call' if side=='calls' else 'Put'
+                        if not isinstance(leg['contract'],str):
+                            leg['contract']=None
+                        for k in LEG_FIELDS:
+                            if k not in ('contract','type','bid_timestamp','ask_timestamp','last_timestamp','outcome') and not finite(leg[k]):
+                                leg[k]=None
             legs=clean['puts']+clean['calls']
+            if explicit and not any(contract_identity(leg,symbol,expiration) for leg in legs):
+                raise APIError('unverified_option_chain',503)
             return dict(chain=clean,retrieved_at=self.clock().isoformat(),quality=dict(empty=not bool(legs),
                 incomplete_quote_count=sum(not all(finite(l.get(k)) for k in ('bid','ask','strike')) for l in legs),
                 timing=self.timing(None,legs)))
-        key=('chain',symbol,expiration)
-        result=self.data.put(key,load(),30) if refresh else self.data.load(key,30,load)
+        key=('explicit_chain' if explicit else 'chain',symbol,expiration)
+        cached=None if refresh else self.options.get(key)
+        result=cached if cached is not None else self.options.put(key,load(),30)
         legs=result['chain']['puts']+result['chain']['calls']
+        if explicit:
+            assess_contracts(legs,symbol,expiration,self.clock(),result['retrieved_at'])
+            result.update(source='Public', max_quote_age_seconds=MAX_AGE_SECONDS)
         return {**result,'quality':{**result['quality'],**option_quality(legs,self.clock(),result['retrieved_at'],'entire_chain'),
             'timing':self.timing(None,legs)}}
 

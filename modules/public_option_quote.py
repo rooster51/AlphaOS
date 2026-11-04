@@ -17,7 +17,7 @@ def option_quote_row(quote: Any, option_type: str, *, as_float) -> dict | None:
     mid = as_float(details.mid_price)
     if mid is None and bid is not None and ask is not None:
         mid = (bid + ask) / 2
-    return {
+    row = {
         "contract": quote.instrument.symbol,
         "type": option_type,
         "strike": as_float(details.strike_price),
@@ -35,3 +35,10 @@ def option_quote_row(quote: Any, option_type: str, *, as_float) -> dict | None:
         "volume": quote.volume,
         "open_interest": getattr(quote, "open_interest", None),
     }
+
+    # Preserve the legacy row shape when older SDKs omit these observations.
+    for key in ("last", "last_timestamp", "bid_size", "ask_size", "outcome"):
+        value = getattr(quote, key, None)
+        if value is not None:
+            row[key] = as_float(value) if key == "last" else getattr(value, "value", value)
+    return row
