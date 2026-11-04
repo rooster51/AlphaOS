@@ -2,6 +2,7 @@
 from datetime import datetime,timezone,date
 from zoneinfo import ZoneInfo
 from math import isfinite
+from threading import Lock
 import re
 import pandas as pd
 from modules.daily_archive import digest
@@ -64,6 +65,8 @@ class ResearchService:
         self.provider=provider or MarketProvider()
         self.clock=clock or (lambda:datetime.now(timezone.utc))
         self.options=TTLStore(self.clock,32)
+        self.quotes=TTLStore(self.clock,len(SYMBOLS))
+        self.quote_locks={symbol:Lock() for symbol in SYMBOLS}
         self.data=TTLStore(self.clock,96);self.snapshots=TTLStore(self.clock,64);self.scans=TTLStore(self.clock,32)
 
     def today(self):return self.clock().astimezone(NY).date()
@@ -91,9 +94,9 @@ class ResearchService:
             q['retrieved_at']=self.clock().isoformat()
             return dict(quote=q,retrieved_at=q['retrieved_at'])
         key=('quote',symbol)
-        with self.data.lock, stage('quote_cache_lock_held'):
-            cached=None if refresh else self.data.get(key)
-            result=cached if cached is not None else self.data.put(key,load(),30)
+        with self.quote_locks[symbol], stage('quote_cache_lock_held'):
+            cached=None if refresh else self.quotes.get(key)
+            result=cached if cached is not None else self.quotes.put(key,load(),30)
         return {**result,'cache':dict(hit=cached is not None,key=list(key),ttl_seconds=30,cached_at=result['retrieved_at']),
             'freshness':freshness(result['quote'],self.clock(),result['retrieved_at'])}
 

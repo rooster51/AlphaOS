@@ -130,6 +130,29 @@ def test_slow_spy_request_does_not_hold_qqq_cache(provider):
         spy.join()
 
 
+def test_slow_spy_underlying_does_not_block_qqq(provider):
+    started, release = Event(), Event()
+    underlying = provider.quote.side_effect
+
+    def load(symbol):
+        if symbol == "SPY":
+            started.set()
+            release.wait(3)
+        return underlying(symbol)
+
+    provider.quote.side_effect = load
+    service = ResearchService(provider, lambda: NOW)
+    spy = Thread(target=service.quote, args=("SPY", True))
+    spy.start()
+    try:
+        assert started.wait(1)
+        assert service.quote("QQQ", True)["quote"]["symbol"] == "QQQ"
+        assert spy.is_alive()
+    finally:
+        release.set()
+        spy.join()
+
+
 def test_timeout_has_no_cached_price_fallback(provider):
     service = ResearchService(provider, lambda: NOW)
     service.chain("SPY", EXPIRATION, explicit=True)
