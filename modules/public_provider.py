@@ -83,9 +83,11 @@ def _order_instrument(order_instrument: Any, instrument_type: Any, symbol: str) 
 
 def get_public_quotes(symbols: tuple[str, ...], _context=None) -> list[dict]:
     from public_api_sdk import InstrumentType, OrderInstrument
-    client, account_id = (_context or _public_context)()
+    with stage("quote_provider_context"):
+        client, account_id = (_context or _public_context)()
     instruments = [_order_instrument(OrderInstrument, InstrumentType, symbol) for symbol in symbols]
-    quotes = client.get_quotes(instruments, account_id=account_id)
+    with stage("quote_sdk_request_including_auth_refresh"):
+        quotes = client.get_quotes(instruments, account_id=account_id)
     retrieved_at=datetime.now(timezone.utc).isoformat()
     return [{'symbol': quote.instrument.symbol, 'last': _as_float(quote.last), 'bid': _as_float(quote.bid), 'ask': _as_float(quote.ask), 'previous_close': _as_float(quote.previous_close), 'change': _as_float(quote.one_day_change.change if quote.one_day_change else None), 'change_pct': _as_float(quote.one_day_change.percent_change if quote.one_day_change else None), 'volume': quote.volume,
         'updated_at': normalize_timestamp(quote.last_timestamp), 'retrieved_at': retrieved_at,

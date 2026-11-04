@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { currentQuote, quoteAgeLimit, quoteHttpFailure } from "../src/lib/current-quotes.ts";
+import { currentQuote, quoteAgeLimit, quoteHttpFailure, retainVerifiedQuote } from "../src/lib/current-quotes.ts";
 
 const now = Date.parse("2026-11-04T15:00:15Z");
 const quote = {
@@ -49,4 +49,13 @@ test("configuration can tighten the conservative default", () => {
   assert.equal(quoteAgeLimit(), 15);
   assert.equal(quoteAgeLimit("10"), 10);
   assert.equal(quoteAgeLimit("60"), 15);
+});
+
+test("quote refresh keeps last verified prices on authentication or stale failure", () => {
+  const previous = currentQuote(envelope(quote), "SPY", now, 15);
+  const stale = currentQuote(envelope(quote), "SPY", now + 4000, 15);
+  assert.equal(stale.code, "stale_quote");
+  assert.equal(retainVerifiedQuote(previous, stale), previous);
+  assert.equal(retainVerifiedQuote(previous, quoteHttpFailure(401, {})), previous);
+  assert.equal(retainVerifiedQuote(null, stale), null);
 });

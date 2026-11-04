@@ -209,3 +209,37 @@ test("cold-origin timeouts show explicit retry guidance without automatic retrie
   expect(requests.sort()).toEqual(["QQQ", "SPY"]);
   await expect(page.getByText("HISTORICAL — COMPLETED SESSION ARCHIVE", { exact: true })).toHaveCount(0);
 });
+
+test("current quotes refresh independently and retain expired verified observations", async ({ page }) => {
+  const now = new Date("2026-11-04T15:00:05Z");
+  const observed = "2026-11-04T15:00:00.000Z";
+  await page.clock.install({ time: now });
+  let spyRequests = 0;
+  let qqqRequests = 0;
+  await page.route("**/api/current-quote?symbol=*", async route => {
+    const symbol = new URL(route.request().url()).searchParams.get("symbol");
+    if (symbol === "SPY") {
+      spyRequests++;
+      if (spyRequests > 1) return route.fulfill({ json: {
+        status: "unavailable", code: "request_timeout", reason: "Quote backend request timed out.",
+      } });
+    } else qqqRequests++;
+    await route.fulfill({ json: {
+      status: "fresh", symbol, last: 600, bid: 599, ask: 601,
+      lastAt: observed, bidAt: observed, askAt: observed, retrievedAt: observed,
+      ageSeconds: 5, expiresAt: Date.parse(observed) + 15_000,
+    } });
+  });
+  await page.goto("/dashboard");
+  const spy = page.getByRole("region", { name: "SPY current quote" });
+  const qqq = page.getByRole("region", { name: "QQQ current quote" });
+  await expect(spy).toContainText("Current Public quote");
+  await expect(qqq).toContainText("Current Public quote");
+  await spy.getByRole("button", { name: "Refresh SPY quote" }).click();
+  await expect(spy).toContainText("request_timeout");
+  expect(qqqRequests).toBe(1);
+  await expect(spy).toContainText("$600.00");
+  await page.clock.fastForward(15_000);
+  await expect(spy).toContainText("STALE · Last verified observation");
+  await expect(qqq).toContainText("STALE · Last verified observation");
+});
