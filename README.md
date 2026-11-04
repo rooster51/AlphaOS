@@ -26,6 +26,9 @@ bid/ask provenance alongside explicitly hypothetical scenarios. See the
 - [Website setup](web/DEPLOYMENT.md), [MCP setup](docs/MCP.md),
   [archive modes](docs/RELEASE1_AFTER_HOURS_RESEARCH.md) and
   [candidate diagnostics](docs/RELEASE1_CANDIDATE_GENERATION_DIAGNOSTICS.md).
+- [Charting & AI](docs/CHARTING_AI.md): standalone `/charts` TradingView widget,
+  evidence-grounded research assistant, guardrails, candle archive integrity
+  audit and its unconfigured/unverified limits.
 - [Auto/Manual Width research](docs/MILESTONE2B_WIDTH_SELECTION.md): observed-strike
   discovery, capital checks, compatibility changes and bounded-search limitations.
 - [Research performance audit](docs/ISSUE60_RESEARCH_PERFORMANCE.md): correlated

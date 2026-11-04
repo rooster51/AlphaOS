@@ -18,12 +18,29 @@ Set these server-side environment variables in the hosting provider:
 | `ALPHAOS_API_URL` | HTTPS base URL of the AlphaOS API. |
 | `ALPHAOS_API_TOKEN` | Required secret bearer token; never expose it as `NEXT_PUBLIC_*`. |
 | `ALPHAOS_DEMO_MODE` | Optional; set to `true` only when intentionally showing labeled synthetic fixtures. Leave unset or `false` for normal read-only use. |
+| `ALPHAOS_CHAT_API_KEY` | Required secret for the `/charts` assistant. Server-side only; never `NEXT_PUBLIC_*`. |
+| `ALPHAOS_CHAT_MODEL` | Required model name for the `/charts` assistant. |
+| `ALPHAOS_CHAT_API_URL` | Optional HTTPS OpenAI-compatible chat-completions URL. |
 
 `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` are present in
 `.env.example` for a future integration but are not used by the current web
 foundation. Do not configure them as a substitute for authenticated account
 integration. `/api/health` confirms only that the web process responds; it does
 not verify backend credentials, account access, or current market evidence.
+
+## Charting & AI (`/charts`)
+
+The page embeds the official TradingView Advanced Chart widget and an
+AlphaOS assistant grounded only in independently retrieved research evidence.
+See [the Charting & AI record](../docs/CHARTING_AI.md) for data flow,
+guardrails, the `market_candles` integrity audit and known limitations.
+
+`/api/charts/evidence` and `/api/charts/chat` keep all credentials server-side
+and fail closed with an explicit code when the research backend or assistant is
+not configured. Without `ALPHAOS_CHAT_API_KEY` and `ALPHAOS_CHAT_MODEL` the page
+shows a documented unavailable state; that is expected until an operator sets
+them. No new backend deployment, collector, migration or paid market-data
+service is required.
 
 ## Release 1 candidate research parity
 
