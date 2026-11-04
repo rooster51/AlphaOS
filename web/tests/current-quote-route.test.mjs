@@ -17,13 +17,15 @@ test("quote bridge authenticates, classifies slow requests and keeps symbols sep
     assert.equal(ms, 5000);
     return timeout.signal;
   });
-  let signal;
+  let markSpyStarted;
+  const spyStarted = new Promise(resolve => { markSpyStarted = resolve; });
   const upstream = t.mock.method(globalThis, "fetch", async (url, options) => {
     assert.equal(options.cache, "no-store");
     assert.equal(url.searchParams.get("refresh"), "true");
     assert.match(options.headers["X-AlphaOS-Request-ID"], /^[a-f0-9]{32}$/);
     if (url.pathname.endsWith("/SPY")) {
-      signal = options.signal;
+      const signal = options.signal;
+      markSpyStarted();
       return new Promise((resolve, reject) => signal.addEventListener("abort", () => reject(signal.reason), { once: true }));
     }
     const stamp = new Date(Date.now() - 1000).toISOString();
@@ -35,10 +37,10 @@ test("quote bridge authenticates, classifies slow requests and keeps symbols sep
   assert.equal((await GET(request("QQQ", false))).status, 401);
   assert.equal(upstream.mock.callCount(), 0);
   const spy = GET(request("SPY"));
+  await spyStarted;
   const qqq = await GET(request("QQQ"));
   assert.equal((await qqq.json()).status, "fresh");
   assert.equal(qqq.headers.get("Cache-Control"), "private, no-store");
-  assert.ok(signal);
   timeout.abort(new DOMException("private text", "TimeoutError"));
   const failed = await (await spy).json();
   assert.equal(failed.code, "request_timeout");

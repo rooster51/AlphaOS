@@ -233,7 +233,13 @@ test("current quotes refresh independently and retain expired verified observati
   await page.goto("/dashboard");
   const spy = page.getByRole("region", { name: "SPY current quote" });
   const qqq = page.getByRole("region", { name: "QQQ current quote" });
+  await expect(spy.getByRole("button", { name: "Refresh SPY quote" })).toBeVisible();
+  expect(spyRequests).toBe(0);
+  expect(qqqRequests).toBe(0);
+  await spy.getByRole("button", { name: "Refresh SPY quote" }).click();
   await expect(spy).toContainText("Current Public quote");
+  expect(qqqRequests).toBe(0);
+  await qqq.getByRole("button", { name: "Refresh QQQ quote" }).click();
   await expect(qqq).toContainText("Current Public quote");
   await spy.getByRole("button", { name: "Refresh SPY quote" }).click();
   await expect(spy).toContainText("request_timeout");
@@ -242,4 +248,25 @@ test("current quotes refresh independently and retain expired verified observati
   await page.clock.fastForward(15_000);
   await expect(spy).toContainText("STALE · Last verified observation");
   await expect(qqq).toContainText("STALE · Last verified observation");
+});
+
+test("dashboard navigation does not wait for an in-flight quote", async ({ page }) => {
+  let releaseQuote!: () => void;
+  const pending = new Promise<void>(resolve => { releaseQuote = resolve; });
+  await page.route("**/api/current-quote?symbol=SPY", async route => {
+    await pending;
+    await route.fulfill({ json: { status: "unavailable", code: "provider_unavailable", reason: "Fixture" } });
+  });
+  try {
+    await page.goto("/dashboard");
+    const requested = page.waitForRequest("**/api/current-quote?symbol=SPY");
+    await page.getByRole("button", { name: "Refresh SPY quote" }).click();
+    await requested;
+    await page.getByRole("navigation", { name: "Primary navigation" })
+      .getByRole("link", { name: "Structure Lab" }).click();
+    await expect(page).toHaveURL(/\/structures$/);
+    await expect(page.getByRole("heading", { name: "Structure Lab", exact: true })).toBeVisible();
+  } finally {
+    releaseQuote();
+  }
 });

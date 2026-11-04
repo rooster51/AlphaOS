@@ -39,14 +39,13 @@ function QuoteCard({ symbol, limit }: { symbol: "SPY" | "QQQ"; limit: number }) 
   }, [symbol]);
 
   useEffect(() => {
-    void refresh();
     const timer = window.setInterval(() => setNow(Date.now()), 250);
     return () => {
       active.current?.abort();
       active.current = null;
       window.clearInterval(timer);
     };
-  }, [refresh]);
+  }, []);
 
   const q = verified?.status === "fresh" ? verified : null;
   const age = q && now !== null ? (now - q.expiresAt + limit * 1000) / 1000 : null;
@@ -73,7 +72,7 @@ function QuoteCard({ symbol, limit }: { symbol: "SPY" | "QQQ"; limit: number }) 
           <div><dt>Observation outcome</dt><dd>SUCCESS</dd></div>
         </dl>
       </> : q ? <p className="text-xs font-mono">Unavailable · Browser time precedes provider retrieval.</p>
-        : latest === null ? <p className="text-xs font-mono">Checking Public quote…</p> : null}
+        : latest === null ? <p className="text-xs font-mono">Refresh this symbol to request a current Public quote.</p> : null}
       <button className="text-accent underline text-sm" disabled={pending} onClick={() => void refresh()}>
         {pending ? `Refreshing ${symbol}…` : `Refresh ${symbol} quote`}
       </button>
