@@ -4,7 +4,7 @@ import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { CurrentQuote } from "@/lib/current-quotes";
 
-export function CurrentQuoteCards({ quotes, limit }: { quotes: (CurrentQuote | null)[]; limit: number }) {
+export function CurrentQuoteCards({ quotes, limit }: { quotes: CurrentQuote[]; limit: number }) {
   const router = useRouter();
   const [now, setNow] = useState<number | null>(null);
   const [pending, startTransition] = useTransition();
@@ -22,7 +22,7 @@ export function CurrentQuoteCards({ quotes, limit }: { quotes: (CurrentQuote | n
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {(["SPY", "QQQ"] as const).map((symbol, index) => {
           const q = quotes[index];
-          const live = q && now !== null && now < q.expiresAt && now >= Date.parse(q.retrievedAt);
+          const live = q.status === "fresh" && now !== null && now < q.expiresAt && now >= Date.parse(q.retrievedAt);
           return (
             <section key={symbol} aria-label={`${symbol} current quote`} className="bg-terminal-900 border border-terminal-800 rounded p-5">
               <h3 className="font-semibold">{symbol}</h3>
@@ -33,7 +33,11 @@ export function CurrentQuoteCards({ quotes, limit }: { quotes: (CurrentQuote | n
                 <div><dt>Retrieved</dt><dd>{q.retrievedAt}</dd></div>
                 <div><dt>Oldest quote age</dt><dd>{((now - q.expiresAt + limit * 1000) / 1000).toFixed(1)} seconds</dd></div>
                 <div><dt>Provider outcome</dt><dd>SUCCESS</dd></div>
-              </dl> : <p className="text-xs font-mono">Current Public quote unavailable.</p>}
+              </dl> : <p className="text-xs font-mono">{q.status === "unavailable"
+                ? <>Unavailable. {q.reason}{q.ageSeconds !== undefined && ` Oldest age ${q.ageSeconds.toFixed(1)} seconds.`}</>
+                : now === null ? "Checking quote freshness…"
+                  : now >= q.expiresAt ? "Unavailable. Quote expired since refresh."
+                    : "Unavailable. Browser time precedes provider retrieval."}</p>}
             </section>
           );
         })}
