@@ -18,12 +18,38 @@ Set these server-side environment variables in the hosting provider:
 | `ALPHAOS_API_URL` | HTTPS base URL of the AlphaOS API. |
 | `ALPHAOS_API_TOKEN` | Required secret bearer token; never expose it as `NEXT_PUBLIC_*`. |
 | `ALPHAOS_DEMO_MODE` | Optional; set to `true` only when intentionally showing labeled synthetic fixtures. Leave unset or `false` for normal read-only use. |
+| `ALPHAOS_CHAT_API_KEY` | Optional secret for the `/charts` assistant. Server-side only; never `NEXT_PUBLIC_*`. Unset keeps the documented assistant-unavailable state. |
+| `ALPHAOS_CHAT_MODEL` | Optional model name for the `/charts` assistant; required together with the key. |
+| `ALPHAOS_CHAT_API_URL` | Optional HTTPS OpenAI-compatible chat-completions URL. |
 
 `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` are present in
 `.env.example` for a future integration but are not used by the current web
 foundation. Do not configure them as a substitute for authenticated account
 integration. `/api/health` confirms only that the web process responds; it does
 not verify backend credentials, account access, or current market evidence.
+
+## Charting & AI (`/charts`)
+
+`/charts` embeds the official TradingView Advanced Chart widget and pairs it
+with an assistant that is grounded only in independently retrieved AlphaOS
+evidence. Both `web/src/app/api/charts/evidence` and
+`web/src/app/api/charts/chat` are ordinary Next.js route handlers, so they run
+as Netlify Functions under the same runtime as the existing research bridges,
+and they sit behind the `10-auth-gate` Edge Function like every other `/api`
+path. Credentials (`ALPHAOS_API_TOKEN`, `ALPHAOS_CHAT_API_KEY`) stay server-side
+and are read from the deployment's runtime bindings, never from a hardcoded
+host or a client bundle.
+
+Evidence is one verified market/structure pair from the existing authenticated
+`/v1/market/{symbol}` and `/v1/structure/{symbol}` endpoints sharing one
+`snapshot_id`; the page reports the backend timestamp and labels stale evidence
+`point_in_time` instead of presenting it as current. The assistant receives the
+symbol and that evidence record only, and a fail-closed guard replaces any reply
+that claims TradingView chart, candle, indicator or drawing access. AlphaOS does
+not read, scrape or mirror the widget. Missing configuration yields an explicit
+`chat_not_configured` / `market_evidence_not_configured` response rather than a
+substituted price, level or answer. This remains read-only research: no
+recommendation, sizing, order or execution path exists.
 
 ## Netlify Free compatibility
 
@@ -92,7 +118,9 @@ existing bounded bcrypt concurrency remains independent protection.
    adapter.
 4. In the site's environment-variable settings, add the existing server-side
    values `ALPHAOS_API_URL`, `ALPHAOS_API_TOKEN`, `ALPHAOS_PASSWORD_HASH`,
-   `ALPHAOS_SESSION_KEY`, and `ALPHAOS_DEMO_MODE=false`. Give secret values
+   `ALPHAOS_SESSION_KEY`, and `ALPHAOS_DEMO_MODE=false`. Add
+   `ALPHAOS_CHAT_API_KEY`, `ALPHAOS_CHAT_MODEL` and, if the provider is not
+   OpenAI, `ALPHAOS_CHAT_API_URL` to enable the `/charts` assistant. Give secret values
    Functions scope where Netlify offers scopes. Reuse the approved values from
    the current website/API configuration; do not commit them, put them in
    `netlify.toml`, or expose them as `NEXT_PUBLIC_*`. No limiter-mode
