@@ -649,3 +649,53 @@ test(`concurrent ${mode} cold-origin waits keep the 12000ms deadline and recover
  }finally{AbortSignal.timeout=originalTimeout;console.warn=warn;}
 });
 }
+
+test('current QQQ 150 auto-width waits for complete evidence and rejects truncated slow bodies',async()=>{
+ setBackendConfig();
+ const payload={symbol:'QQQ',research_mode:'current',available_capital:150};
+ const data=envelope('QQQ');data.request=payload;data.research.research_mode='current';
+ const full=JSON.stringify(data);const middle=Math.floor(full.length/2);
+ for(const complete of [true,false]){
+  let release;const ready=new Promise(resolve=>{release=resolve;});
+  let headersSeen;const headers=new Promise(resolve=>{headersSeen=resolve;});
+  globalThis.fetch=async(_,options)=>{
+   assert.deepEqual(JSON.parse(options.body),payload);
+   assert.equal(options.signal.aborted,false);
+   return new Response(new ReadableStream({async start(controller){
+    controller.enqueue(new TextEncoder().encode(full.slice(0,middle)));headersSeen();
+    await ready;
+    if(complete)controller.enqueue(new TextEncoder().encode(full.slice(middle)));
+    controller.close();
+   }}),{headers:{'Content-Type':'application/json','X-AlphaOS-Request-ID':options.headers['X-AlphaOS-Request-ID']}});
+  };
+  let finished=false;const pending=POST(request(payload)).then(response=>{finished=true;return response;});
+  await headers;await new Promise(resolve=>setTimeout(resolve,5));
+  assert.equal(finished,false,'No partial evidence may escape while the response is incomplete');
+  release();const response=await pending;
+  assert.equal(response.status,complete?200:502);
+  const body=await response.json();
+  if(complete)assert.deepEqual(body.research,data);
+  else {assert.equal(body.code,'response_schema_mismatch');assert.equal(body.research,undefined);}
+ }
+});
+
+test('cancelling current QQQ 150 during a slow body preserves the independent SPY request',async()=>{
+ setBackendConfig();const cancel=new AbortController();
+ const payload={symbol:'QQQ',research_mode:'current',available_capital:150};
+ let started;const bodyStarted=new Promise(resolve=>{started=resolve;});
+ globalThis.fetch=async(_,options)=>{
+  const sent=JSON.parse(options.body);
+  if(sent.symbol==='SPY')return Response.json(envelope('SPY'));
+  assert.deepEqual(sent,payload);
+  return new Response(new ReadableStream({start(controller){
+   controller.enqueue(new TextEncoder().encode('{"schema_version":'));
+   options.signal.addEventListener('abort',()=>controller.error(options.signal.reason),{once:true});started();
+  }}),{headers:{'Content-Type':'application/json'}});
+ };
+ const input=new Request('http://localhost/api/research/market',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),signal:cancel.signal});
+ const qqq=POST(input);await bodyStarted;
+ const spy=await POST(request({symbol:'SPY'}));assert.equal(spy.status,200);
+ cancel.abort(new DOMException('private','AbortError'));
+ const response=await qqq;assert.equal(response.status,499);
+ assert.deepEqual(await response.json(),{status:'unavailable',code:'request_cancelled'});
+});
