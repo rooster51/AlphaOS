@@ -52,8 +52,44 @@ The 12-second bridge deadline and cancellation behavior remain in place. No quot
 
 ## Validation status
 
-The targeted Python suite initially passed 82 tests and 7 subtests. The website unit suite passed 233 tests, including the new slow-body and cancellation cases. Full regression and post-change hosted measurements are recorded in the PR as they complete.
+The full Python suite passed 1,420 tests plus 64 subtests, with one skip. The website unit suite passed 233 tests, including the new slow-body and cancellation cases, and TypeScript checking passed. The integrated multi-strategy/timeout focused suite passed 80 tests. GitHub Actions for PR #88 passed Python, website, PostgreSQL integration and Workers checks.
 
-The staging service already carries the multi-strategy branch. Hosted verification of this timeout fix should use an integration commit retaining that branch's changes. Staging deployment requires approval beyond the workspace's confirmed read-only diagnostic access.
+## Approved staging deployment and observed limits
+
+The owner approved deploying integration commit `6bfc2d1ee16d1763ad17a698519a9a08c159f863`, retaining PR #87's multi-strategy changes alongside this separate fix. Render staging deployment `dep-dbmb7km417fc73bsjeng` became live at 2026-11-05 16:52:53 UTC. Auto-deploy remains off. No production deployment or merge was performed. Runtime preparation completed before port readiness in 25,195 ms; this is startup time, not request time.
+
+All following bridge measurements execute the actual website route locally against the deployed staging API. They are not measurements from a deployed website browser session. All requests used current strict freshness, $150 capital, omitted width and omitted expiration.
+
+| Case | Request ID | HTTP result | Bridge / caller elapsed |
+| --- | --- | --- | --- |
+| First post-deploy SPY, simultaneous pair | `5b1e2193cd184fc9963644fd85c2f56a` | 502, body deadline | 12,014 / 12,055 ms |
+| First post-deploy QQQ, simultaneous pair | `bdb092ca0bfe40b0b2692f63c7e536e2` | 502, body deadline | 12,018 / 12,019 ms |
+| Isolated QQQ at 17:12:15 UTC | `ad68442897e547f5b70accb67623abfa` | 200 | 5,989 / 6,044 ms |
+| Isolated SPY at 17:12:25 UTC | `50af71a90e314e2a9c89935771d7a91d` | 200 | 6,586 / 6,666 ms |
+| Later simultaneous QQQ at 17:12:46 UTC | `9ea1bd4ec1cd43a8b8bf988f5ba1f008` | 200 | 5,285 / 5,321 ms |
+| Later simultaneous SPY at 17:12:46 UTC | `a8b2e748d02145e4a52355e83038b8f0` | 200 | 7,684 / 7,745 ms |
+
+The first post-deploy backend traces completed in 9,508 ms for QQQ and 10,014 ms for SPY, but the bridge deadline expired while reading the bodies. Serialization took 1,302 and 3,800 ms respectively. Preloading eliminated request-time archive transport construction and dependency imports, but did not guarantee the full cold concurrent response fits inside 12 seconds.
+
+| Isolated post-change stage | QQQ | SPY |
+| --- | --- | --- |
+| Archive retrieval and validation | 1,410 ms | 955 ms |
+| Completed history retrieval and validation | 1,638 ms | 1,383 ms |
+| Market classification | 0 ms | 0 ms |
+| Width enumeration | 8 ms | 94 ms |
+| Candidate payoff processing | 897 ms | 798 ms |
+| Response serialization | 1,004 ms | 1,195 ms |
+| Complete backend request | 5,452 ms | 5,735 ms |
+| Bridge headers / body / schema | 5,747 / 171 / 60 ms | 6,177 / 347 / 53 ms |
+
+The successful isolated responses selected 2026-11-05 expiration from the archive, passed its unchanged 600-second maximum age (actual ages 66.9 and 82.2 seconds), and returned complete sessions. The later successful pair had archive ages 97.7 and 102.8 seconds. Candidate populations vary with newly archived quotes, so hosted before/after results are operational observations, not a controlled fixed-input benchmark. The fixed-input local replay above supplies that comparison.
+
+Connection and transfer variability remain separate limitations. A direct negotiated-gzip diagnostic measured DNS/TCP/TLS completion at 3,153/3,205/3,264 ms for SPY and 3,122/3,412/3,460 ms for QQQ, with full responses taking 16,494 and 22,378 ms. Another warm bridge pair produced SPY 200 in 11,259 ms and a QQQ header timeout. The QQQ backend execution began at 17:04:29.284 UTC, about nine seconds after the local probe began, and was cancelled after 3,853 ms of execution. The available traces do not isolate that pre-admission delay to DNS, transport, proxy queuing or server scheduling. It must not be attributed entirely to candidate calculation.
+
+Render reports a 0.15-CPU limit and 512-MiB memory limit for this free staging service. Observed memory remained below 190 MB. Minute-resolution CPU metrics do not prove request-level throttling; no OOM evidence was found.
+
+The separately hosted staging website could not provide a valid end-to-end confirmation: QQQ request `69f9716f2bee4f908783c4976acece73` returned 502 `backend_rate_limited` in 547 ms. An earlier hosted request `2239b971a0ae45e9a0a0ad9789f753a2` logged an upstream non-JSON 429 with `backend_correlated=false`. Its configured upstream was not established by these observations. This result is distinct from the correlated staging API tests and must not be counted as a successful hosted website test.
+
+**Release assessment:** the measured copying and cold initialization costs are improved, and both symbols pass realistic warm staging requests. Cold concurrent completion and the hosted website upstream remain unresolved. This is not evidence of a complete timeout cure or production readiness. Keep the PR in draft and retain the 12-second deadline, fail-closed behavior and all evidence/risk gates. No request ID for the original production failure was supplied, so an exact production-to-Render correlation is still unverified.
 
 [Render deployment readiness](https://render.com/docs/health-checks)
