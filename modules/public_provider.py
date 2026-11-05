@@ -6,6 +6,7 @@ from functools import lru_cache
 from threading import RLock
 import os
 import pandas as pd
+from requests.exceptions import Timeout
 from datetime import datetime, timezone
 from modules.quote_freshness import normalize_timestamp
 from modules.public_session import _select_account
@@ -23,6 +24,7 @@ class PublicProviderError(RuntimeError):
 
 def provider_error(exc):
     if isinstance(exc,PublicProviderError): return exc
+    if isinstance(exc,(Timeout,TimeoutError)): return PublicProviderError('provider_timeout')
     status=getattr(exc,'status_code',None)
     if status is None: status=getattr(getattr(exc,'response',None),'status_code',None)
     if status is None: status=getattr(exc,'diagnostics',{}).get('http_status')
@@ -113,7 +115,9 @@ def get_public_option_expirations(symbol: str, _context=None) -> list[str]:
     normalized=_normalize_public_symbol(symbol)
     if normalized in REGISTRY and instrument(normalized).asset_type=='index' and response.base_symbol!=instrument(normalized).provider_response_symbol:
         raise PublicProviderError('provider_symbol_mismatch')
-    return sorted((str(expiration)[:10] for expiration in response.expirations))
+    if normalized in ('SPY','QQQ') and getattr(response,'base_symbol',None)!=normalized:
+        raise PublicProviderError('provider_symbol_mismatch')
+    return sorted(str(expiration) for expiration in response.expirations)
 
 def _option_quote_row(quote: Any, option_type: str) -> dict | None:
     """Compatibility wrapper; retain this provider's numeric conversion hook."""
@@ -128,7 +132,7 @@ def get_public_option_chain(symbol: str, expiration: str, _context=None) -> dict
     normalized=_normalize_public_symbol(symbol)
     if normalized in REGISTRY and instrument(normalized).asset_type=='index' and response.base_symbol!=instrument(normalized).provider_response_symbol:
         raise PublicProviderError('provider_symbol_mismatch')
-    return {'symbol': normalized if normalized in REGISTRY and instrument(normalized).asset_type=='index' else getattr(response,'base_symbol',normalized), 'expiration': expiration, 'calls': calls, 'puts': puts}
+    return {'symbol': normalized if normalized in REGISTRY and instrument(normalized).asset_type=='index' else getattr(response,'base_symbol',None), 'expiration': expiration, 'calls': calls, 'puts': puts}
 
 def get_public_research_bars(symbol: str, period: str='FIVE_YEARS', option: bool=False, _context=None) -> pd.DataFrame:
     """Observed Public daily OHLC, with explicit long-history mapping and audit."""
