@@ -1,0 +1,1268 @@
+[
+  {
+    "symbol": "SPY",
+    "expiration": "2026-11-06",
+    "evaluated_at": "2026-11-05T16:06:56.699814+00:00",
+    "source": "Public via authenticated staging API",
+    "execution_scope": "Local new research code consuming authenticated staging API observations. Hosted new-route acceptance pending staging deployment.",
+    "chain_latency_ms": 2656,
+    "underlying_latency_ms": 860,
+    "underlying_eligible": true,
+    "calls": 171,
+    "puts": 171,
+    "fresh": 286,
+    "results": [
+      {
+        "strategy": "long_call",
+        "status": "available",
+        "reason": null,
+        "max_profit": null,
+        "profit_unbounded": true,
+        "max_loss": 693.65,
+        "entry_fees": 0.65,
+        "net_cash": -693.65,
+        "breakevens": [
+          746.9365
+        ],
+        "oldest_quote_age_seconds": 2.699814,
+        "legs": [
+          {
+            "contract": "SPY261106C00740000",
+            "type": "Call",
+            "strike": 740.0,
+            "qty": 1,
+            "price": 6.93,
+            "bid": 6.91,
+            "ask": 6.93,
+            "bid_timestamp": "2026-11-05T16:06:54+00:00",
+            "ask_timestamp": "2026-11-05T16:06:54+00:00",
+            "volume": 2665,
+            "open_interest": 314,
+            "bid_size": 8,
+            "ask_size": 15
+          }
+        ]
+      },
+      {
+        "strategy": "long_put",
+        "status": "available",
+        "reason": null,
+        "max_profit": 73314.35,
+        "profit_unbounded": false,
+        "max_loss": 685.65,
+        "entry_fees": 0.65,
+        "net_cash": -685.65,
+        "breakevens": [
+          733.1435000000001
+        ],
+        "oldest_quote_age_seconds": 4.699814,
+        "legs": [
+          {
+            "contract": "SPY261106P00740000",
+            "type": "Put",
+            "strike": 740.0,
+            "qty": 1,
+            "price": 6.85,
+            "bid": 6.8,
+            "ask": 6.85,
+            "bid_timestamp": "2026-11-05T16:06:52+00:00",
+            "ask_timestamp": "2026-11-05T16:06:52+00:00",
+            "volume": 39468,
+            "open_interest": 21704,
+            "bid_size": 14,
+            "ask_size": 60
+          }
+        ]
+      },
+      {
+        "strategy": "call_debit_spread",
+        "status": "available",
+        "reason": null,
+        "max_profit": 43.699999999999996,
+        "profit_unbounded": false,
+        "max_loss": 56.300000000000004,
+        "entry_fees": 1.3,
+        "net_cash": -56.300000000000004,
+        "breakevens": [
+          740.563
+        ],
+        "oldest_quote_age_seconds": 2.699814,
+        "legs": [
+          {
+            "contract": "SPY261106C00740000",
+            "type": "Call",
+            "strike": 740.0,
+            "qty": 1,
+            "price": 6.93,
+            "bid": 6.91,
+            "ask": 6.93,
+            "bid_timestamp": "2026-11-05T16:06:54+00:00",
+            "ask_timestamp": "2026-11-05T16:06:54+00:00",
+            "volume": 2665,
+            "open_interest": 314,
+            "bid_size": 8,
+            "ask_size": 15
+          },
+          {
+            "contract": "SPY261106C00741000",
+            "type": "Call",
+            "strike": 741.0,
+            "qty": -1,
+            "price": 6.38,
+            "bid": 6.38,
+            "ask": 6.41,
+            "bid_timestamp": "2026-11-05T16:06:54+00:00",
+            "ask_timestamp": "2026-11-05T16:06:54+00:00",
+            "volume": 2257,
+            "open_interest": 123,
+            "bid_size": 1,
+            "ask_size": 14
+          }
+        ]
+      },
+      {
+        "strategy": "put_debit_spread",
+        "status": "available",
+        "reason": null,
+        "max_profit": 53.7,
+        "profit_unbounded": false,
+        "max_loss": 46.3,
+        "entry_fees": 1.3,
+        "net_cash": -46.3,
+        "breakevens": [
+          739.537
+        ],
+        "oldest_quote_age_seconds": 4.699814,
+        "legs": [
+          {
+            "contract": "SPY261106P00740000",
+            "type": "Put",
+            "strike": 740.0,
+            "qty": 1,
+            "price": 6.85,
+            "bid": 6.8,
+            "ask": 6.85,
+            "bid_timestamp": "2026-11-05T16:06:52+00:00",
+            "ask_timestamp": "2026-11-05T16:06:52+00:00",
+            "volume": 39468,
+            "open_interest": 21704,
+            "bid_size": 14,
+            "ask_size": 60
+          },
+          {
+            "contract": "SPY261106P00739000",
+            "type": "Put",
+            "strike": 739.0,
+            "qty": -1,
+            "price": 6.4,
+            "bid": 6.4,
+            "ask": 6.41,
+            "bid_timestamp": "2026-11-05T16:06:52+00:00",
+            "ask_timestamp": "2026-11-05T16:06:52+00:00",
+            "volume": 10971,
+            "open_interest": 2524,
+            "bid_size": 10,
+            "ask_size": 32
+          }
+        ]
+      },
+      {
+        "strategy": "put_credit_spread",
+        "status": "available",
+        "reason": null,
+        "max_profit": 40.7,
+        "profit_unbounded": false,
+        "max_loss": 59.3,
+        "entry_fees": 1.3,
+        "net_cash": 40.7,
+        "breakevens": [
+          738.593
+        ],
+        "oldest_quote_age_seconds": 4.699814,
+        "legs": [
+          {
+            "contract": "SPY261106P00738000",
+            "type": "Put",
+            "strike": 738.0,
+            "qty": 1,
+            "price": 5.98,
+            "bid": 5.97,
+            "ask": 5.98,
+            "bid_timestamp": "2026-11-05T16:06:52+00:00",
+            "ask_timestamp": "2026-11-05T16:06:52+00:00",
+            "volume": 9828,
+            "open_interest": 2709,
+            "bid_size": 5,
+            "ask_size": 34
+          },
+          {
+            "contract": "SPY261106P00739000",
+            "type": "Put",
+            "strike": 739.0,
+            "qty": -1,
+            "price": 6.4,
+            "bid": 6.4,
+            "ask": 6.41,
+            "bid_timestamp": "2026-11-05T16:06:52+00:00",
+            "ask_timestamp": "2026-11-05T16:06:52+00:00",
+            "volume": 10971,
+            "open_interest": 2524,
+            "bid_size": 10,
+            "ask_size": 32
+          }
+        ]
+      },
+      {
+        "strategy": "call_credit_spread",
+        "status": "available",
+        "reason": null,
+        "max_profit": 46.7,
+        "profit_unbounded": false,
+        "max_loss": 53.3,
+        "entry_fees": 1.3,
+        "net_cash": 46.7,
+        "breakevens": [
+          741.467
+        ],
+        "oldest_quote_age_seconds": 2.699814,
+        "legs": [
+          {
+            "contract": "SPY261106C00742000",
+            "type": "Call",
+            "strike": 742.0,
+            "qty": 1,
+            "price": 5.9,
+            "bid": 5.87,
+            "ask": 5.9,
+            "bid_timestamp": "2026-11-05T16:06:54+00:00",
+            "ask_timestamp": "2026-11-05T16:06:54+00:00",
+            "volume": 3587,
+            "open_interest": 84,
+            "bid_size": 24,
+            "ask_size": 5
+          },
+          {
+            "contract": "SPY261106C00741000",
+            "type": "Call",
+            "strike": 741.0,
+            "qty": -1,
+            "price": 6.38,
+            "bid": 6.38,
+            "ask": 6.41,
+            "bid_timestamp": "2026-11-05T16:06:54+00:00",
+            "ask_timestamp": "2026-11-05T16:06:54+00:00",
+            "volume": 2257,
+            "open_interest": 123,
+            "bid_size": 1,
+            "ask_size": 14
+          }
+        ]
+      },
+      {
+        "strategy": "iron_condor",
+        "status": "available",
+        "reason": null,
+        "max_profit": 87.4,
+        "profit_unbounded": false,
+        "max_loss": 12.599999999999994,
+        "entry_fees": 2.6,
+        "net_cash": 87.4,
+        "breakevens": [
+          738.126,
+          741.874
+        ],
+        "oldest_quote_age_seconds": 4.699814,
+        "legs": [
+          {
+            "contract": "SPY261106P00738000",
+            "type": "Put",
+            "strike": 738.0,
+            "qty": 1,
+            "price": 5.98,
+            "bid": 5.97,
+            "ask": 5.98,
+            "bid_timestamp": "2026-11-05T16:06:52+00:00",
+            "ask_timestamp": "2026-11-05T16:06:52+00:00",
+            "volume": 9828,
+            "open_interest": 2709,
+            "bid_size": 5,
+            "ask_size": 34
+          },
+          {
+            "contract": "SPY261106P00739000",
+            "type": "Put",
+            "strike": 739.0,
+            "qty": -1,
+            "price": 6.4,
+            "bid": 6.4,
+            "ask": 6.41,
+            "bid_timestamp": "2026-11-05T16:06:52+00:00",
+            "ask_timestamp": "2026-11-05T16:06:52+00:00",
+            "volume": 10971,
+            "open_interest": 2524,
+            "bid_size": 10,
+            "ask_size": 32
+          },
+          {
+            "contract": "SPY261106C00741000",
+            "type": "Call",
+            "strike": 741.0,
+            "qty": -1,
+            "price": 6.38,
+            "bid": 6.38,
+            "ask": 6.41,
+            "bid_timestamp": "2026-11-05T16:06:54+00:00",
+            "ask_timestamp": "2026-11-05T16:06:54+00:00",
+            "volume": 2257,
+            "open_interest": 123,
+            "bid_size": 1,
+            "ask_size": 14
+          },
+          {
+            "contract": "SPY261106C00742000",
+            "type": "Call",
+            "strike": 742.0,
+            "qty": 1,
+            "price": 5.9,
+            "bid": 5.87,
+            "ask": 5.9,
+            "bid_timestamp": "2026-11-05T16:06:54+00:00",
+            "ask_timestamp": "2026-11-05T16:06:54+00:00",
+            "volume": 3587,
+            "open_interest": 84,
+            "bid_size": 24,
+            "ask_size": 5
+          }
+        ]
+      },
+      {
+        "strategy": "iron_butterfly",
+        "status": "available",
+        "reason": null,
+        "max_profit": 86.4,
+        "profit_unbounded": false,
+        "max_loss": 13.599999999999994,
+        "entry_fees": 2.6,
+        "net_cash": 86.4,
+        "breakevens": [
+          739.136,
+          740.864
+        ],
+        "oldest_quote_age_seconds": 4.699814,
+        "legs": [
+          {
+            "contract": "SPY261106P00739000",
+            "type": "Put",
+            "strike": 739.0,
+            "qty": 1,
+            "price": 6.41,
+            "bid": 6.4,
+            "ask": 6.41,
+            "bid_timestamp": "2026-11-05T16:06:52+00:00",
+            "ask_timestamp": "2026-11-05T16:06:52+00:00",
+            "volume": 10971,
+            "open_interest": 2524,
+            "bid_size": 10,
+            "ask_size": 32
+          },
+          {
+            "contract": "SPY261106P00740000",
+            "type": "Put",
+            "strike": 740.0,
+            "qty": -1,
+            "price": 6.8,
+            "bid": 6.8,
+            "ask": 6.85,
+            "bid_timestamp": "2026-11-05T16:06:52+00:00",
+            "ask_timestamp": "2026-11-05T16:06:52+00:00",
+            "volume": 39468,
+            "open_interest": 21704,
+            "bid_size": 14,
+            "ask_size": 60
+          },
+          {
+            "contract": "SPY261106C00740000",
+            "type": "Call",
+            "strike": 740.0,
+            "qty": -1,
+            "price": 6.91,
+            "bid": 6.91,
+            "ask": 6.93,
+            "bid_timestamp": "2026-11-05T16:06:54+00:00",
+            "ask_timestamp": "2026-11-05T16:06:54+00:00",
+            "volume": 2665,
+            "open_interest": 314,
+            "bid_size": 8,
+            "ask_size": 15
+          },
+          {
+            "contract": "SPY261106C00741000",
+            "type": "Call",
+            "strike": 741.0,
+            "qty": 1,
+            "price": 6.41,
+            "bid": 6.38,
+            "ask": 6.41,
+            "bid_timestamp": "2026-11-05T16:06:54+00:00",
+            "ask_timestamp": "2026-11-05T16:06:54+00:00",
+            "volume": 2257,
+            "open_interest": 123,
+            "bid_size": 1,
+            "ask_size": 14
+          }
+        ]
+      },
+      {
+        "strategy": "long_call_butterfly",
+        "status": "available",
+        "reason": null,
+        "max_profit": 88.4,
+        "profit_unbounded": false,
+        "max_loss": 11.6,
+        "entry_fees": 2.6,
+        "net_cash": -11.6,
+        "breakevens": [
+          739.116,
+          740.884
+        ],
+        "oldest_quote_age_seconds": 2.699814,
+        "legs": [
+          {
+            "contract": "SPY261106C00739000",
+            "type": "Call",
+            "strike": 739.0,
+            "qty": 1,
+            "price": 7.5,
+            "bid": 7.47,
+            "ask": 7.5,
+            "bid_timestamp": "2026-11-05T16:06:54+00:00",
+            "ask_timestamp": "2026-11-05T16:06:54+00:00",
+            "volume": 2012,
+            "open_interest": 303,
+            "bid_size": 1,
+            "ask_size": 19
+          },
+          {
+            "contract": "SPY261106C00740000",
+            "type": "Call",
+            "strike": 740.0,
+            "qty": -2,
+            "price": 6.91,
+            "bid": 6.91,
+            "ask": 6.93,
+            "bid_timestamp": "2026-11-05T16:06:54+00:00",
+            "ask_timestamp": "2026-11-05T16:06:54+00:00",
+            "volume": 2665,
+            "open_interest": 314,
+            "bid_size": 8,
+            "ask_size": 15
+          },
+          {
+            "contract": "SPY261106C00741000",
+            "type": "Call",
+            "strike": 741.0,
+            "qty": 1,
+            "price": 6.41,
+            "bid": 6.38,
+            "ask": 6.41,
+            "bid_timestamp": "2026-11-05T16:06:54+00:00",
+            "ask_timestamp": "2026-11-05T16:06:54+00:00",
+            "volume": 2257,
+            "open_interest": 123,
+            "bid_size": 1,
+            "ask_size": 14
+          }
+        ]
+      },
+      {
+        "strategy": "long_put_butterfly",
+        "status": "available",
+        "reason": null,
+        "max_profit": 84.4,
+        "profit_unbounded": false,
+        "max_loss": 15.6,
+        "entry_fees": 2.6,
+        "net_cash": -15.6,
+        "breakevens": [
+          739.156,
+          740.844
+        ],
+        "oldest_quote_age_seconds": 4.699814,
+        "legs": [
+          {
+            "contract": "SPY261106P00739000",
+            "type": "Put",
+            "strike": 739.0,
+            "qty": 1,
+            "price": 6.41,
+            "bid": 6.4,
+            "ask": 6.41,
+            "bid_timestamp": "2026-11-05T16:06:52+00:00",
+            "ask_timestamp": "2026-11-05T16:06:52+00:00",
+            "volume": 10971,
+            "open_interest": 2524,
+            "bid_size": 10,
+            "ask_size": 32
+          },
+          {
+            "contract": "SPY261106P00740000",
+            "type": "Put",
+            "strike": 740.0,
+            "qty": -2,
+            "price": 6.8,
+            "bid": 6.8,
+            "ask": 6.85,
+            "bid_timestamp": "2026-11-05T16:06:52+00:00",
+            "ask_timestamp": "2026-11-05T16:06:52+00:00",
+            "volume": 39468,
+            "open_interest": 21704,
+            "bid_size": 14,
+            "ask_size": 60
+          },
+          {
+            "contract": "SPY261106P00741000",
+            "type": "Put",
+            "strike": 741.0,
+            "qty": 1,
+            "price": 7.32,
+            "bid": 7.27,
+            "ask": 7.32,
+            "bid_timestamp": "2026-11-05T16:06:52+00:00",
+            "ask_timestamp": "2026-11-05T16:06:52+00:00",
+            "volume": 17107,
+            "open_interest": 4188,
+            "bid_size": 17,
+            "ask_size": 17
+          }
+        ]
+      },
+      {
+        "strategy": "long_straddle",
+        "status": "available",
+        "reason": null,
+        "max_profit": null,
+        "profit_unbounded": true,
+        "max_loss": 1379.3,
+        "entry_fees": 1.3,
+        "net_cash": -1379.3,
+        "breakevens": [
+          726.207,
+          753.793
+        ],
+        "oldest_quote_age_seconds": 4.699814,
+        "legs": [
+          {
+            "contract": "SPY261106C00740000",
+            "type": "Call",
+            "strike": 740.0,
+            "qty": 1,
+            "price": 6.93,
+            "bid": 6.91,
+            "ask": 6.93,
+            "bid_timestamp": "2026-11-05T16:06:54+00:00",
+            "ask_timestamp": "2026-11-05T16:06:54+00:00",
+            "volume": 2665,
+            "open_interest": 314,
+            "bid_size": 8,
+            "ask_size": 15
+          },
+          {
+            "contract": "SPY261106P00740000",
+            "type": "Put",
+            "strike": 740.0,
+            "qty": 1,
+            "price": 6.85,
+            "bid": 6.8,
+            "ask": 6.85,
+            "bid_timestamp": "2026-11-05T16:06:52+00:00",
+            "ask_timestamp": "2026-11-05T16:06:52+00:00",
+            "volume": 39468,
+            "open_interest": 21704,
+            "bid_size": 14,
+            "ask_size": 60
+          }
+        ]
+      },
+      {
+        "strategy": "long_strangle",
+        "status": "available",
+        "reason": null,
+        "max_profit": null,
+        "profit_unbounded": true,
+        "max_loss": 1283.3,
+        "entry_fees": 1.3,
+        "net_cash": -1283.3,
+        "breakevens": [
+          726.1669999999999,
+          753.833
+        ],
+        "oldest_quote_age_seconds": 4.699814,
+        "legs": [
+          {
+            "contract": "SPY261106C00741000",
+            "type": "Call",
+            "strike": 741.0,
+            "qty": 1,
+            "price": 6.41,
+            "bid": 6.38,
+            "ask": 6.41,
+            "bid_timestamp": "2026-11-05T16:06:54+00:00",
+            "ask_timestamp": "2026-11-05T16:06:54+00:00",
+            "volume": 2257,
+            "open_interest": 123,
+            "bid_size": 1,
+            "ask_size": 14
+          },
+          {
+            "contract": "SPY261106P00739000",
+            "type": "Put",
+            "strike": 739.0,
+            "qty": 1,
+            "price": 6.41,
+            "bid": 6.4,
+            "ask": 6.41,
+            "bid_timestamp": "2026-11-05T16:06:52+00:00",
+            "ask_timestamp": "2026-11-05T16:06:52+00:00",
+            "volume": 10971,
+            "open_interest": 2524,
+            "bid_size": 10,
+            "ask_size": 32
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "symbol": "QQQ",
+    "expiration": "2026-11-06",
+    "evaluated_at": "2026-11-05T16:06:56.955190+00:00",
+    "source": "Public via authenticated staging API",
+    "execution_scope": "Local new research code consuming authenticated staging API observations. Hosted new-route acceptance pending staging deployment.",
+    "chain_latency_ms": 2906,
+    "underlying_latency_ms": 875,
+    "underlying_eligible": true,
+    "calls": 186,
+    "puts": 186,
+    "fresh": 347,
+    "results": [
+      {
+        "strategy": "long_call",
+        "status": "available",
+        "reason": null,
+        "max_profit": null,
+        "profit_unbounded": true,
+        "max_loss": 947.6500000000001,
+        "entry_fees": 0.65,
+        "net_cash": -947.6500000000001,
+        "breakevens": [
+          661.4765
+        ],
+        "oldest_quote_age_seconds": 3.95519,
+        "legs": [
+          {
+            "contract": "QQQ261106C00652000",
+            "type": "Call",
+            "strike": 652.0,
+            "qty": 1,
+            "price": 9.47,
+            "bid": 9.38,
+            "ask": 9.47,
+            "bid_timestamp": "2026-11-05T16:06:53+00:00",
+            "ask_timestamp": "2026-11-05T16:06:53+00:00",
+            "volume": 1348,
+            "open_interest": 6,
+            "bid_size": 2,
+            "ask_size": 2
+          }
+        ]
+      },
+      {
+        "strategy": "long_put",
+        "status": "available",
+        "reason": null,
+        "max_profit": 64191.35,
+        "profit_unbounded": false,
+        "max_loss": 1008.65,
+        "entry_fees": 0.65,
+        "net_cash": -1008.65,
+        "breakevens": [
+          641.9134999999999
+        ],
+        "oldest_quote_age_seconds": 2.95519,
+        "legs": [
+          {
+            "contract": "QQQ261106P00652000",
+            "type": "Put",
+            "strike": 652.0,
+            "qty": 1,
+            "price": 10.08,
+            "bid": 10.0,
+            "ask": 10.08,
+            "bid_timestamp": "2026-11-05T16:06:54+00:00",
+            "ask_timestamp": "2026-11-05T16:06:54+00:00",
+            "volume": 5563,
+            "open_interest": 426,
+            "bid_size": 6,
+            "ask_size": 15
+          }
+        ]
+      },
+      {
+        "strategy": "call_debit_spread",
+        "status": "available",
+        "reason": null,
+        "max_profit": 38.7,
+        "profit_unbounded": false,
+        "max_loss": 61.3,
+        "entry_fees": 1.3,
+        "net_cash": -61.3,
+        "breakevens": [
+          652.613
+        ],
+        "oldest_quote_age_seconds": 3.95519,
+        "legs": [
+          {
+            "contract": "QQQ261106C00652000",
+            "type": "Call",
+            "strike": 652.0,
+            "qty": 1,
+            "price": 9.47,
+            "bid": 9.38,
+            "ask": 9.47,
+            "bid_timestamp": "2026-11-05T16:06:53+00:00",
+            "ask_timestamp": "2026-11-05T16:06:53+00:00",
+            "volume": 1348,
+            "open_interest": 6,
+            "bid_size": 2,
+            "ask_size": 2
+          },
+          {
+            "contract": "QQQ261106C00653000",
+            "type": "Call",
+            "strike": 653.0,
+            "qty": -1,
+            "price": 8.87,
+            "bid": 8.87,
+            "ask": 8.96,
+            "bid_timestamp": "2026-11-05T16:06:53+00:00",
+            "ask_timestamp": "2026-11-05T16:06:53+00:00",
+            "volume": 2699,
+            "open_interest": 0,
+            "bid_size": 2,
+            "ask_size": 15
+          }
+        ]
+      },
+      {
+        "strategy": "put_debit_spread",
+        "status": "available",
+        "reason": null,
+        "max_profit": 43.699999999999996,
+        "profit_unbounded": false,
+        "max_loss": 56.300000000000004,
+        "entry_fees": 1.3,
+        "net_cash": -56.300000000000004,
+        "breakevens": [
+          651.437
+        ],
+        "oldest_quote_age_seconds": 2.95519,
+        "legs": [
+          {
+            "contract": "QQQ261106P00652000",
+            "type": "Put",
+            "strike": 652.0,
+            "qty": 1,
+            "price": 10.08,
+            "bid": 10.0,
+            "ask": 10.08,
+            "bid_timestamp": "2026-11-05T16:06:54+00:00",
+            "ask_timestamp": "2026-11-05T16:06:54+00:00",
+            "volume": 5563,
+            "open_interest": 426,
+            "bid_size": 6,
+            "ask_size": 15
+          },
+          {
+            "contract": "QQQ261106P00651000",
+            "type": "Put",
+            "strike": 651.0,
+            "qty": -1,
+            "price": 9.53,
+            "bid": 9.53,
+            "ask": 9.6,
+            "bid_timestamp": "2026-11-05T16:06:54+00:00",
+            "ask_timestamp": "2026-11-05T16:06:54+00:00",
+            "volume": 7439,
+            "open_interest": 825,
+            "bid_size": 29,
+            "ask_size": 5
+          }
+        ]
+      },
+      {
+        "strategy": "put_credit_spread",
+        "status": "available",
+        "reason": null,
+        "max_profit": 37.7,
+        "profit_unbounded": false,
+        "max_loss": 62.3,
+        "entry_fees": 1.3,
+        "net_cash": 37.7,
+        "breakevens": [
+          650.623
+        ],
+        "oldest_quote_age_seconds": 2.95519,
+        "legs": [
+          {
+            "contract": "QQQ261106P00650000",
+            "type": "Put",
+            "strike": 650.0,
+            "qty": 1,
+            "price": 9.14,
+            "bid": 9.07,
+            "ask": 9.14,
+            "bid_timestamp": "2026-11-05T16:06:54+00:00",
+            "ask_timestamp": "2026-11-05T16:06:54+00:00",
+            "volume": 36603,
+            "open_interest": 10845,
+            "bid_size": 2,
+            "ask_size": 33
+          },
+          {
+            "contract": "QQQ261106P00651000",
+            "type": "Put",
+            "strike": 651.0,
+            "qty": -1,
+            "price": 9.53,
+            "bid": 9.53,
+            "ask": 9.6,
+            "bid_timestamp": "2026-11-05T16:06:54+00:00",
+            "ask_timestamp": "2026-11-05T16:06:54+00:00",
+            "volume": 7439,
+            "open_interest": 825,
+            "bid_size": 29,
+            "ask_size": 5
+          }
+        ]
+      },
+      {
+        "strategy": "call_credit_spread",
+        "status": "available",
+        "reason": null,
+        "max_profit": 38.7,
+        "profit_unbounded": false,
+        "max_loss": 61.3,
+        "entry_fees": 1.3,
+        "net_cash": 38.7,
+        "breakevens": [
+          653.387
+        ],
+        "oldest_quote_age_seconds": 3.95519,
+        "legs": [
+          {
+            "contract": "QQQ261106C00654000",
+            "type": "Call",
+            "strike": 654.0,
+            "qty": 1,
+            "price": 8.47,
+            "bid": 8.39,
+            "ask": 8.47,
+            "bid_timestamp": "2026-11-05T16:06:53+00:00",
+            "ask_timestamp": "2026-11-05T16:06:53+00:00",
+            "volume": 1702,
+            "open_interest": 11,
+            "bid_size": 2,
+            "ask_size": 17
+          },
+          {
+            "contract": "QQQ261106C00653000",
+            "type": "Call",
+            "strike": 653.0,
+            "qty": -1,
+            "price": 8.87,
+            "bid": 8.87,
+            "ask": 8.96,
+            "bid_timestamp": "2026-11-05T16:06:53+00:00",
+            "ask_timestamp": "2026-11-05T16:06:53+00:00",
+            "volume": 2699,
+            "open_interest": 0,
+            "bid_size": 2,
+            "ask_size": 15
+          }
+        ]
+      },
+      {
+        "strategy": "iron_condor",
+        "status": "available",
+        "reason": null,
+        "max_profit": 76.4,
+        "profit_unbounded": false,
+        "max_loss": 23.599999999999994,
+        "entry_fees": 2.6,
+        "net_cash": 76.4,
+        "breakevens": [
+          650.236,
+          653.764
+        ],
+        "oldest_quote_age_seconds": 3.95519,
+        "legs": [
+          {
+            "contract": "QQQ261106P00650000",
+            "type": "Put",
+            "strike": 650.0,
+            "qty": 1,
+            "price": 9.14,
+            "bid": 9.07,
+            "ask": 9.14,
+            "bid_timestamp": "2026-11-05T16:06:54+00:00",
+            "ask_timestamp": "2026-11-05T16:06:54+00:00",
+            "volume": 36603,
+            "open_interest": 10845,
+            "bid_size": 2,
+            "ask_size": 33
+          },
+          {
+            "contract": "QQQ261106P00651000",
+            "type": "Put",
+            "strike": 651.0,
+            "qty": -1,
+            "price": 9.53,
+            "bid": 9.53,
+            "ask": 9.6,
+            "bid_timestamp": "2026-11-05T16:06:54+00:00",
+            "ask_timestamp": "2026-11-05T16:06:54+00:00",
+            "volume": 7439,
+            "open_interest": 825,
+            "bid_size": 29,
+            "ask_size": 5
+          },
+          {
+            "contract": "QQQ261106C00653000",
+            "type": "Call",
+            "strike": 653.0,
+            "qty": -1,
+            "price": 8.87,
+            "bid": 8.87,
+            "ask": 8.96,
+            "bid_timestamp": "2026-11-05T16:06:53+00:00",
+            "ask_timestamp": "2026-11-05T16:06:53+00:00",
+            "volume": 2699,
+            "open_interest": 0,
+            "bid_size": 2,
+            "ask_size": 15
+          },
+          {
+            "contract": "QQQ261106C00654000",
+            "type": "Call",
+            "strike": 654.0,
+            "qty": 1,
+            "price": 8.47,
+            "bid": 8.39,
+            "ask": 8.47,
+            "bid_timestamp": "2026-11-05T16:06:53+00:00",
+            "ask_timestamp": "2026-11-05T16:06:53+00:00",
+            "volume": 1702,
+            "open_interest": 11,
+            "bid_size": 2,
+            "ask_size": 17
+          }
+        ]
+      },
+      {
+        "strategy": "iron_butterfly",
+        "status": "available",
+        "reason": null,
+        "max_profit": 79.4,
+        "profit_unbounded": false,
+        "max_loss": 20.599999999999994,
+        "entry_fees": 2.6,
+        "net_cash": 79.4,
+        "breakevens": [
+          651.206,
+          652.794
+        ],
+        "oldest_quote_age_seconds": 3.95519,
+        "legs": [
+          {
+            "contract": "QQQ261106P00651000",
+            "type": "Put",
+            "strike": 651.0,
+            "qty": 1,
+            "price": 9.6,
+            "bid": 9.53,
+            "ask": 9.6,
+            "bid_timestamp": "2026-11-05T16:06:54+00:00",
+            "ask_timestamp": "2026-11-05T16:06:54+00:00",
+            "volume": 7439,
+            "open_interest": 825,
+            "bid_size": 29,
+            "ask_size": 5
+          },
+          {
+            "contract": "QQQ261106P00652000",
+            "type": "Put",
+            "strike": 652.0,
+            "qty": -1,
+            "price": 10.0,
+            "bid": 10.0,
+            "ask": 10.08,
+            "bid_timestamp": "2026-11-05T16:06:54+00:00",
+            "ask_timestamp": "2026-11-05T16:06:54+00:00",
+            "volume": 5563,
+            "open_interest": 426,
+            "bid_size": 6,
+            "ask_size": 15
+          },
+          {
+            "contract": "QQQ261106C00652000",
+            "type": "Call",
+            "strike": 652.0,
+            "qty": -1,
+            "price": 9.38,
+            "bid": 9.38,
+            "ask": 9.47,
+            "bid_timestamp": "2026-11-05T16:06:53+00:00",
+            "ask_timestamp": "2026-11-05T16:06:53+00:00",
+            "volume": 1348,
+            "open_interest": 6,
+            "bid_size": 2,
+            "ask_size": 2
+          },
+          {
+            "contract": "QQQ261106C00653000",
+            "type": "Call",
+            "strike": 653.0,
+            "qty": 1,
+            "price": 8.96,
+            "bid": 8.87,
+            "ask": 8.96,
+            "bid_timestamp": "2026-11-05T16:06:53+00:00",
+            "ask_timestamp": "2026-11-05T16:06:53+00:00",
+            "volume": 2699,
+            "open_interest": 0,
+            "bid_size": 2,
+            "ask_size": 15
+          }
+        ]
+      },
+      {
+        "strategy": "long_call_butterfly",
+        "status": "available",
+        "reason": null,
+        "max_profit": 77.4,
+        "profit_unbounded": false,
+        "max_loss": 22.6,
+        "entry_fees": 2.6,
+        "net_cash": -22.6,
+        "breakevens": [
+          651.226,
+          652.774
+        ],
+        "oldest_quote_age_seconds": 3.95519,
+        "legs": [
+          {
+            "contract": "QQQ261106C00651000",
+            "type": "Call",
+            "strike": 651.0,
+            "qty": 1,
+            "price": 10.0,
+            "bid": 9.9,
+            "ask": 10.0,
+            "bid_timestamp": "2026-11-05T16:06:53+00:00",
+            "ask_timestamp": "2026-11-05T16:06:53+00:00",
+            "volume": 1293,
+            "open_interest": 0,
+            "bid_size": 2,
+            "ask_size": 17
+          },
+          {
+            "contract": "QQQ261106C00652000",
+            "type": "Call",
+            "strike": 652.0,
+            "qty": -2,
+            "price": 9.38,
+            "bid": 9.38,
+            "ask": 9.47,
+            "bid_timestamp": "2026-11-05T16:06:53+00:00",
+            "ask_timestamp": "2026-11-05T16:06:53+00:00",
+            "volume": 1348,
+            "open_interest": 6,
+            "bid_size": 2,
+            "ask_size": 2
+          },
+          {
+            "contract": "QQQ261106C00653000",
+            "type": "Call",
+            "strike": 653.0,
+            "qty": 1,
+            "price": 8.96,
+            "bid": 8.87,
+            "ask": 8.96,
+            "bid_timestamp": "2026-11-05T16:06:53+00:00",
+            "ask_timestamp": "2026-11-05T16:06:53+00:00",
+            "volume": 2699,
+            "open_interest": 0,
+            "bid_size": 2,
+            "ask_size": 15
+          }
+        ]
+      },
+      {
+        "strategy": "long_put_butterfly",
+        "status": "available",
+        "reason": null,
+        "max_profit": 80.4,
+        "profit_unbounded": false,
+        "max_loss": 19.6,
+        "entry_fees": 2.6,
+        "net_cash": -19.6,
+        "breakevens": [
+          651.196,
+          652.804
+        ],
+        "oldest_quote_age_seconds": 2.95519,
+        "legs": [
+          {
+            "contract": "QQQ261106P00651000",
+            "type": "Put",
+            "strike": 651.0,
+            "qty": 1,
+            "price": 9.6,
+            "bid": 9.53,
+            "ask": 9.6,
+            "bid_timestamp": "2026-11-05T16:06:54+00:00",
+            "ask_timestamp": "2026-11-05T16:06:54+00:00",
+            "volume": 7439,
+            "open_interest": 825,
+            "bid_size": 29,
+            "ask_size": 5
+          },
+          {
+            "contract": "QQQ261106P00652000",
+            "type": "Put",
+            "strike": 652.0,
+            "qty": -2,
+            "price": 10.0,
+            "bid": 10.0,
+            "ask": 10.08,
+            "bid_timestamp": "2026-11-05T16:06:54+00:00",
+            "ask_timestamp": "2026-11-05T16:06:54+00:00",
+            "volume": 5563,
+            "open_interest": 426,
+            "bid_size": 6,
+            "ask_size": 15
+          },
+          {
+            "contract": "QQQ261106P00653000",
+            "type": "Put",
+            "strike": 653.0,
+            "qty": 1,
+            "price": 10.57,
+            "bid": 10.49,
+            "ask": 10.57,
+            "bid_timestamp": "2026-11-05T16:06:54+00:00",
+            "ask_timestamp": "2026-11-05T16:06:54+00:00",
+            "volume": 9766,
+            "open_interest": 262,
+            "bid_size": 5,
+            "ask_size": 3
+          }
+        ]
+      },
+      {
+        "strategy": "long_straddle",
+        "status": "available",
+        "reason": null,
+        "max_profit": null,
+        "profit_unbounded": true,
+        "max_loss": 1956.3,
+        "entry_fees": 1.3,
+        "net_cash": -1956.3,
+        "breakevens": [
+          632.437,
+          671.563
+        ],
+        "oldest_quote_age_seconds": 3.95519,
+        "legs": [
+          {
+            "contract": "QQQ261106C00652000",
+            "type": "Call",
+            "strike": 652.0,
+            "qty": 1,
+            "price": 9.47,
+            "bid": 9.38,
+            "ask": 9.47,
+            "bid_timestamp": "2026-11-05T16:06:53+00:00",
+            "ask_timestamp": "2026-11-05T16:06:53+00:00",
+            "volume": 1348,
+            "open_interest": 6,
+            "bid_size": 2,
+            "ask_size": 2
+          },
+          {
+            "contract": "QQQ261106P00652000",
+            "type": "Put",
+            "strike": 652.0,
+            "qty": 1,
+            "price": 10.08,
+            "bid": 10.0,
+            "ask": 10.08,
+            "bid_timestamp": "2026-11-05T16:06:54+00:00",
+            "ask_timestamp": "2026-11-05T16:06:54+00:00",
+            "volume": 5563,
+            "open_interest": 426,
+            "bid_size": 6,
+            "ask_size": 15
+          }
+        ]
+      },
+      {
+        "strategy": "long_strangle",
+        "status": "available",
+        "reason": null,
+        "max_profit": null,
+        "profit_unbounded": true,
+        "max_loss": 1857.2999999999997,
+        "entry_fees": 1.3,
+        "net_cash": -1857.2999999999997,
+        "breakevens": [
+          632.4269999999999,
+          671.573
+        ],
+        "oldest_quote_age_seconds": 3.95519,
+        "legs": [
+          {
+            "contract": "QQQ261106C00653000",
+            "type": "Call",
+            "strike": 653.0,
+            "qty": 1,
+            "price": 8.96,
+            "bid": 8.87,
+            "ask": 8.96,
+            "bid_timestamp": "2026-11-05T16:06:53+00:00",
+            "ask_timestamp": "2026-11-05T16:06:53+00:00",
+            "volume": 2699,
+            "open_interest": 0,
+            "bid_size": 2,
+            "ask_size": 15
+          },
+          {
+            "contract": "QQQ261106P00651000",
+            "type": "Put",
+            "strike": 651.0,
+            "qty": 1,
+            "price": 9.6,
+            "bid": 9.53,
+            "ask": 9.6,
+            "bid_timestamp": "2026-11-05T16:06:54+00:00",
+            "ask_timestamp": "2026-11-05T16:06:54+00:00",
+            "volume": 7439,
+            "open_interest": 825,
+            "bid_size": 29,
+            "ask_size": 5
+          }
+        ]
+      }
+    ]
+  }
+]

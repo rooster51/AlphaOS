@@ -43,3 +43,18 @@ Comparisons in this release share one symbol and expiration. Event calendars, vo
 7. Check desktop/mobile contract selection, sorting, payoff tables, manual refresh, symbol independence, session/CSRF denial, and the absence of automatic provider fetching during navigation.
 
 Deterministic fixtures establish mathematical and interface behavior. Actual provider outcomes and hosted authentication checks are recorded in the PR; they establish only the scope actually exercised.
+
+## Observed staging data on November 5, 2026
+
+Authenticated staging discovery succeeded for both symbols, including November 6, 2026. Initial requests timed out while the retained staging service warmed up. A later health request completed in 660 ms. The snapshot below was evaluated at approximately 11:06:57 a.m. New York time. Latency measures the complete staging HTTP request, including transport and backend processing.
+
+| Symbol | Expiration | Calls / puts | Fresh contracts / total | Chain latency | Underlying latency | Supported families evaluated |
+| --- | --- | --- | --- | --- | --- | --- |
+| SPY | 2026-11-06 | 171 / 171 | 286 / 342 | 2,656 ms | 860 ms | 12 / 12 available |
+| QQQ | 2026-11-06 | 186 / 186 | 347 / 372 | 2,906 ms | 875 ms | 12 / 12 available |
+
+Both underlying quotes passed the 15-second eligibility check. All selected contracts passed the 30-second option gate. An earlier full-chain observation at 11:04:57 a.m. had bid/ask timestamps and delta for every returned contract (342 SPY and 372 QQQ), while some quotes exceeded the freshness cap. Available status describes the stated evidence and configured research limits.
+
+These observations exercise the new local research code against actual authenticated staging market responses. Acceptance of the new hosted POST route and authenticated comparison workbench remains pending staging deployment. The retained staging service supplied the contract data. The evidence file contains identifiers, observed prices, provider timestamps, liquidity fields, fees, and calculated economics for each of the 24 evaluated scenarios.
+
+[Sanitized staging research observations](evidence/multi-strategy-staging-2026-11-05.json)
