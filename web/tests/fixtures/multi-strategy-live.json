@@ -1,0 +1,7664 @@
+[
+  {
+    "request": {
+      "strategy": "long_call",
+      "legs": [
+        {
+          "contract": "SPY261106C00100000",
+          "qty": 1
+        }
+      ]
+    },
+    "result": {
+      "strategy": "long_call",
+      "geometry": "long_call",
+      "direction": "bullish",
+      "status": "available",
+      "eligible_for_analysis": true,
+      "reason": null,
+      "limit_breaches": [],
+      "symbol": "SPY",
+      "expiration": "2026-11-06",
+      "dte": 1,
+      "legs": [
+        {
+          "contract": "SPY261106C00100000",
+          "type": "Call",
+          "strike": 100,
+          "bid": 2.99,
+          "ask": 3,
+          "bid_timestamp": "2026-11-05T15:00:00+00:00",
+          "ask_timestamp": "2026-11-05T15:00:00+00:00",
+          "volume": 10,
+          "open_interest": 20,
+          "bid_size": 10,
+          "ask_size": 10,
+          "status": "fresh",
+          "quote_age_seconds": 0.0,
+          "qty": 1,
+          "price": 3,
+          "expiration": "2026-11-06"
+        }
+      ],
+      "contract_multiplier": 100,
+      "total_contracts": 1,
+      "evaluated_at": "2026-11-05T15:00:00+00:00",
+      "retrieved_at": "2026-11-05T15:00:00+00:00",
+      "oldest_quote_age_seconds": 0.0,
+      "entry_premium": -300.0,
+      "entry_fees": 0.65,
+      "net_cash": -300.65,
+      "entry_debit": 300.65,
+      "entry_credit": 0,
+      "max_profit": null,
+      "profit_unbounded": true,
+      "max_loss": 300.65,
+      "loss_unbounded": false,
+      "capital_at_risk": 300.65,
+      "return_on_max_risk": null,
+      "breakevens": [
+        103.0065
+      ],
+      "payoff": [
+        {
+          "terminal_price": 99.549025,
+          "pnl": -300.65
+        },
+        {
+          "terminal_price": 99.64673625,
+          "pnl": -300.65
+        },
+        {
+          "terminal_price": 99.7444475,
+          "pnl": -300.65
+        },
+        {
+          "terminal_price": 99.84215875,
+          "pnl": -300.65
+        },
+        {
+          "terminal_price": 99.93987,
+          "pnl": -300.65
+        },
+        {
+          "terminal_price": 100.0,
+          "pnl": -300.65
+        },
+        {
+          "terminal_price": 100.03758125,
+          "pnl": -296.89187499999974
+        },
+        {
+          "terminal_price": 100.1352925,
+          "pnl": -287.1207499999994
+        },
+        {
+          "terminal_price": 100.23300375,
+          "pnl": -277.3496250000005
+        },
+        {
+          "terminal_price": 100.330715,
+          "pnl": -267.5785000000002
+        },
+        {
+          "terminal_price": 100.42842625,
+          "pnl": -257.80737499999987
+        },
+        {
+          "terminal_price": 100.5261375,
+          "pnl": -248.03624999999954
+        },
+        {
+          "terminal_price": 100.62384875000001,
+          "pnl": -238.26512499999922
+        },
+        {
+          "terminal_price": 100.72156,
+          "pnl": -228.4940000000003
+        },
+        {
+          "terminal_price": 100.81927125,
+          "pnl": -218.722875
+        },
+        {
+          "terminal_price": 100.9169825,
+          "pnl": -208.95174999999966
+        },
+        {
+          "terminal_price": 101.01469375,
+          "pnl": -199.18062499999934
+        },
+        {
+          "terminal_price": 101.112405,
+          "pnl": -189.40950000000043
+        },
+        {
+          "terminal_price": 101.21011625,
+          "pnl": -179.6383750000001
+        },
+        {
+          "terminal_price": 101.3078275,
+          "pnl": -169.86724999999979
+        },
+        {
+          "terminal_price": 101.40553875,
+          "pnl": -160.09612499999946
+        },
+        {
+          "terminal_price": 101.50325000000001,
+          "pnl": -150.32499999999914
+        },
+        {
+          "terminal_price": 101.60096125,
+          "pnl": -140.55387500000023
+        },
+        {
+          "terminal_price": 101.6986725,
+          "pnl": -130.7827499999999
+        },
+        {
+          "terminal_price": 101.79638375,
+          "pnl": -121.01162499999958
+        },
+        {
+          "terminal_price": 101.89409500000001,
+          "pnl": -111.24049999999926
+        },
+        {
+          "terminal_price": 101.99180625,
+          "pnl": -101.46937500000035
+        },
+        {
+          "terminal_price": 102.0895175,
+          "pnl": -91.69825000000003
+        },
+        {
+          "terminal_price": 102.18722875,
+          "pnl": -81.9271249999997
+        },
+        {
+          "terminal_price": 102.28494,
+          "pnl": -72.15599999999938
+        },
+        {
+          "terminal_price": 102.38265125,
+          "pnl": -62.38487500000048
+        },
+        {
+          "terminal_price": 102.4803625,
+          "pnl": -52.61375000000015
+        },
+        {
+          "terminal_price": 102.57807375,
+          "pnl": -42.84262499999983
+        },
+        {
+          "terminal_price": 102.675785,
+          "pnl": -33.0714999999995
+        },
+        {
+          "terminal_price": 102.77349625000001,
+          "pnl": -23.30037499999918
+        },
+        {
+          "terminal_price": 102.8712075,
+          "pnl": -13.529250000000275
+        },
+        {
+          "terminal_price": 102.96891875,
+          "pnl": -3.75812499999995
+        },
+        {
+          "terminal_price": 103.0065,
+          "pnl": 2.8421709430404007e-13
+        },
+        {
+          "terminal_price": 103.06663,
+          "pnl": 6.013000000000375
+        },
+        {
+          "terminal_price": 103.16434125,
+          "pnl": 15.7841250000007
+        },
+        {
+          "terminal_price": 103.2620525,
+          "pnl": 25.555249999999603
+        },
+        {
+          "terminal_price": 103.35976375,
+          "pnl": 35.32637499999993
+        },
+        {
+          "terminal_price": 103.457475,
+          "pnl": 45.09750000000025
+        }
+      ],
+      "liquidity_warnings": [],
+      "greek_exposure": {
+        "delta": null,
+        "gamma": null,
+        "theta": null,
+        "vega": null,
+        "rho": null
+      },
+      "capital_treatment": "fully_paid_long_options",
+      "assumptions": [
+        "Buy at ask and sell at bid; displayed quotes do not guarantee fills.",
+        "Entry fees charged once per absolute contract; exit fees and exercise/assignment charges excluded.",
+        "Same-expiration standard 100-share contracts; payoff assumes all legs held through expiration.",
+        "Theoretical capital at risk does not establish brokerage buying power.",
+        "Greeks are provider observations; future volatility and expiration sensitivity may change.",
+        "Event risk evidence unavailable. Payoff validity does not establish a trading edge."
+      ]
+    },
+    "chain": {
+      "symbol": "SPY",
+      "expiration": "2026-11-06",
+      "calls": [
+        {
+          "contract": "SPY261106C00100000",
+          "type": "Call",
+          "strike": 100,
+          "bid": 2.99,
+          "ask": 3,
+          "bid_timestamp": "2026-11-05T15:00:00+00:00",
+          "ask_timestamp": "2026-11-05T15:00:00+00:00",
+          "volume": 10,
+          "open_interest": 20,
+          "bid_size": 10,
+          "ask_size": 10,
+          "status": "fresh",
+          "quote_age_seconds": 0.0
+        }
+      ],
+      "puts": []
+    }
+  },
+  {
+    "request": {
+      "strategy": "long_put",
+      "legs": [
+        {
+          "contract": "SPY261106P00100000",
+          "qty": 1
+        }
+      ]
+    },
+    "result": {
+      "strategy": "long_put",
+      "geometry": "long_put",
+      "direction": "bearish",
+      "status": "available",
+      "eligible_for_analysis": true,
+      "reason": null,
+      "limit_breaches": [],
+      "symbol": "SPY",
+      "expiration": "2026-11-06",
+      "dte": 1,
+      "legs": [
+        {
+          "contract": "SPY261106P00100000",
+          "type": "Put",
+          "strike": 100,
+          "bid": 2.99,
+          "ask": 3,
+          "bid_timestamp": "2026-11-05T15:00:00+00:00",
+          "ask_timestamp": "2026-11-05T15:00:00+00:00",
+          "volume": 10,
+          "open_interest": 20,
+          "bid_size": 10,
+          "ask_size": 10,
+          "status": "fresh",
+          "quote_age_seconds": 0.0,
+          "qty": 1,
+          "price": 3,
+          "expiration": "2026-11-06"
+        }
+      ],
+      "contract_multiplier": 100,
+      "total_contracts": 1,
+      "evaluated_at": "2026-11-05T15:00:00+00:00",
+      "retrieved_at": "2026-11-05T15:00:00+00:00",
+      "oldest_quote_age_seconds": 0.0,
+      "entry_premium": -300.0,
+      "entry_fees": 0.65,
+      "net_cash": -300.65,
+      "entry_debit": 300.65,
+      "entry_credit": 0,
+      "max_profit": 9699.35,
+      "profit_unbounded": false,
+      "max_loss": 300.65,
+      "loss_unbounded": false,
+      "capital_at_risk": 300.65,
+      "return_on_max_risk": 32.261267254282394,
+      "breakevens": [
+        96.9935
+      ],
+      "payoff": [
+        {
+          "terminal_price": 96.542525,
+          "pnl": 45.09750000000025
+        },
+        {
+          "terminal_price": 96.64023625,
+          "pnl": 35.32637499999993
+        },
+        {
+          "terminal_price": 96.7379475,
+          "pnl": 25.555249999999603
+        },
+        {
+          "terminal_price": 96.83565875,
+          "pnl": 15.7841250000007
+        },
+        {
+          "terminal_price": 96.93337,
+          "pnl": 6.013000000000375
+        },
+        {
+          "terminal_price": 96.9935,
+          "pnl": 2.8421709430404007e-13
+        },
+        {
+          "terminal_price": 97.03108125,
+          "pnl": -3.75812499999995
+        },
+        {
+          "terminal_price": 97.1287925,
+          "pnl": -13.529250000000275
+        },
+        {
+          "terminal_price": 97.22650374999999,
+          "pnl": -23.30037499999918
+        },
+        {
+          "terminal_price": 97.324215,
+          "pnl": -33.0714999999995
+        },
+        {
+          "terminal_price": 97.42192625,
+          "pnl": -42.84262499999983
+        },
+        {
+          "terminal_price": 97.5196375,
+          "pnl": -52.61375000000015
+        },
+        {
+          "terminal_price": 97.61734875,
+          "pnl": -62.38487500000048
+        },
+        {
+          "terminal_price": 97.71506,
+          "pnl": -72.15599999999938
+        },
+        {
+          "terminal_price": 97.81277125,
+          "pnl": -81.9271249999997
+        },
+        {
+          "terminal_price": 97.9104825,
+          "pnl": -91.69825000000003
+        },
+        {
+          "terminal_price": 98.00819375,
+          "pnl": -101.46937500000035
+        },
+        {
+          "terminal_price": 98.10590499999999,
+          "pnl": -111.24049999999926
+        },
+        {
+          "terminal_price": 98.20361625,
+          "pnl": -121.01162499999958
+        },
+        {
+          "terminal_price": 98.3013275,
+          "pnl": -130.7827499999999
+        },
+        {
+          "terminal_price": 98.39903875,
+          "pnl": -140.55387500000023
+        },
+        {
+          "terminal_price": 98.49674999999999,
+          "pnl": -150.32499999999914
+        },
+        {
+          "terminal_price": 98.59446125,
+          "pnl": -160.09612499999946
+        },
+        {
+          "terminal_price": 98.6921725,
+          "pnl": -169.86724999999979
+        },
+        {
+          "terminal_price": 98.78988375,
+          "pnl": -179.6383750000001
+        },
+        {
+          "terminal_price": 98.887595,
+          "pnl": -189.40950000000043
+        },
+        {
+          "terminal_price": 98.98530625,
+          "pnl": -199.18062499999934
+        },
+        {
+          "terminal_price": 99.0830175,
+          "pnl": -208.95174999999966
+        },
+        {
+          "terminal_price": 99.18072875,
+          "pnl": -218.722875
+        },
+        {
+          "terminal_price": 99.27844,
+          "pnl": -228.4940000000003
+        },
+        {
+          "terminal_price": 99.37615124999999,
+          "pnl": -238.26512499999922
+        },
+        {
+          "terminal_price": 99.4738625,
+          "pnl": -248.03624999999954
+        },
+        {
+          "terminal_price": 99.57157375,
+          "pnl": -257.80737499999987
+        },
+        {
+          "terminal_price": 99.669285,
+          "pnl": -267.5785000000002
+        },
+        {
+          "terminal_price": 99.76699625,
+          "pnl": -277.3496250000005
+        },
+        {
+          "terminal_price": 99.8647075,
+          "pnl": -287.1207499999994
+        },
+        {
+          "terminal_price": 99.96241875,
+          "pnl": -296.89187499999974
+        },
+        {
+          "terminal_price": 100.0,
+          "pnl": -300.65
+        },
+        {
+          "terminal_price": 100.06013,
+          "pnl": -300.65
+        },
+        {
+          "terminal_price": 100.15784125,
+          "pnl": -300.65
+        },
+        {
+          "terminal_price": 100.2555525,
+          "pnl": -300.65
+        },
+        {
+          "terminal_price": 100.35326375,
+          "pnl": -300.65
+        },
+        {
+          "terminal_price": 100.450975,
+          "pnl": -300.65
+        }
+      ],
+      "liquidity_warnings": [],
+      "greek_exposure": {
+        "delta": null,
+        "gamma": null,
+        "theta": null,
+        "vega": null,
+        "rho": null
+      },
+      "capital_treatment": "fully_paid_long_options",
+      "assumptions": [
+        "Buy at ask and sell at bid; displayed quotes do not guarantee fills.",
+        "Entry fees charged once per absolute contract; exit fees and exercise/assignment charges excluded.",
+        "Same-expiration standard 100-share contracts; payoff assumes all legs held through expiration.",
+        "Theoretical capital at risk does not establish brokerage buying power.",
+        "Greeks are provider observations; future volatility and expiration sensitivity may change.",
+        "Event risk evidence unavailable. Payoff validity does not establish a trading edge."
+      ]
+    },
+    "chain": {
+      "symbol": "SPY",
+      "expiration": "2026-11-06",
+      "calls": [],
+      "puts": [
+        {
+          "contract": "SPY261106P00100000",
+          "type": "Put",
+          "strike": 100,
+          "bid": 2.99,
+          "ask": 3,
+          "bid_timestamp": "2026-11-05T15:00:00+00:00",
+          "ask_timestamp": "2026-11-05T15:00:00+00:00",
+          "volume": 10,
+          "open_interest": 20,
+          "bid_size": 10,
+          "ask_size": 10,
+          "status": "fresh",
+          "quote_age_seconds": 0.0
+        }
+      ]
+    }
+  },
+  {
+    "request": {
+      "strategy": "call_debit_spread",
+      "legs": [
+        {
+          "contract": "SPY261106C00100000",
+          "qty": 1
+        },
+        {
+          "contract": "SPY261106C00105000",
+          "qty": -1
+        }
+      ]
+    },
+    "result": {
+      "strategy": "call_debit_spread",
+      "geometry": "call_debit_spread",
+      "direction": "bullish",
+      "status": "available",
+      "eligible_for_analysis": true,
+      "reason": null,
+      "limit_breaches": [],
+      "symbol": "SPY",
+      "expiration": "2026-11-06",
+      "dte": 1,
+      "legs": [
+        {
+          "contract": "SPY261106C00100000",
+          "type": "Call",
+          "strike": 100,
+          "bid": 2.99,
+          "ask": 3,
+          "bid_timestamp": "2026-11-05T15:00:00+00:00",
+          "ask_timestamp": "2026-11-05T15:00:00+00:00",
+          "volume": 10,
+          "open_interest": 20,
+          "bid_size": 10,
+          "ask_size": 10,
+          "status": "fresh",
+          "quote_age_seconds": 0.0,
+          "qty": 1,
+          "price": 3,
+          "expiration": "2026-11-06"
+        },
+        {
+          "contract": "SPY261106C00105000",
+          "type": "Call",
+          "strike": 105,
+          "bid": 1,
+          "ask": 1.01,
+          "bid_timestamp": "2026-11-05T15:00:00+00:00",
+          "ask_timestamp": "2026-11-05T15:00:00+00:00",
+          "volume": 10,
+          "open_interest": 20,
+          "bid_size": 10,
+          "ask_size": 10,
+          "status": "fresh",
+          "quote_age_seconds": 0.0,
+          "qty": -1,
+          "price": 1,
+          "expiration": "2026-11-06"
+        }
+      ],
+      "contract_multiplier": 100,
+      "total_contracts": 2,
+      "evaluated_at": "2026-11-05T15:00:00+00:00",
+      "retrieved_at": "2026-11-05T15:00:00+00:00",
+      "oldest_quote_age_seconds": 0.0,
+      "entry_premium": -200.0,
+      "entry_fees": 1.3,
+      "net_cash": -201.3,
+      "entry_debit": 201.3,
+      "entry_credit": 0,
+      "max_profit": 298.7,
+      "profit_unbounded": false,
+      "max_loss": 201.3,
+      "loss_unbounded": false,
+      "capital_at_risk": 201.3,
+      "return_on_max_risk": 1.4838549428713361,
+      "breakevens": [
+        102.013
+      ],
+      "payoff": [
+        {
+          "terminal_price": 99.25,
+          "pnl": -201.3
+        },
+        {
+          "terminal_price": 99.35,
+          "pnl": -201.3
+        },
+        {
+          "terminal_price": 99.45,
+          "pnl": -201.3
+        },
+        {
+          "terminal_price": 99.55,
+          "pnl": -201.3
+        },
+        {
+          "terminal_price": 99.65,
+          "pnl": -201.3
+        },
+        {
+          "terminal_price": 99.75,
+          "pnl": -201.3
+        },
+        {
+          "terminal_price": 99.85,
+          "pnl": -201.3
+        },
+        {
+          "terminal_price": 99.95,
+          "pnl": -201.3
+        },
+        {
+          "terminal_price": 100.0,
+          "pnl": -201.3
+        },
+        {
+          "terminal_price": 100.05,
+          "pnl": -196.3000000000003
+        },
+        {
+          "terminal_price": 100.15,
+          "pnl": -186.29999999999944
+        },
+        {
+          "terminal_price": 100.25,
+          "pnl": -176.3
+        },
+        {
+          "terminal_price": 100.35,
+          "pnl": -166.30000000000058
+        },
+        {
+          "terminal_price": 100.45,
+          "pnl": -156.29999999999973
+        },
+        {
+          "terminal_price": 100.55,
+          "pnl": -146.3000000000003
+        },
+        {
+          "terminal_price": 100.65,
+          "pnl": -136.29999999999944
+        },
+        {
+          "terminal_price": 100.75,
+          "pnl": -126.30000000000001
+        },
+        {
+          "terminal_price": 100.85,
+          "pnl": -116.30000000000058
+        },
+        {
+          "terminal_price": 100.95,
+          "pnl": -106.29999999999973
+        },
+        {
+          "terminal_price": 101.0065,
+          "pnl": -100.64999999999975
+        },
+        {
+          "terminal_price": 101.05,
+          "pnl": -96.3000000000003
+        },
+        {
+          "terminal_price": 101.15,
+          "pnl": -86.29999999999944
+        },
+        {
+          "terminal_price": 101.25,
+          "pnl": -76.30000000000001
+        },
+        {
+          "terminal_price": 101.35,
+          "pnl": -66.30000000000058
+        },
+        {
+          "terminal_price": 101.45,
+          "pnl": -56.29999999999973
+        },
+        {
+          "terminal_price": 101.55,
+          "pnl": -46.300000000000296
+        },
+        {
+          "terminal_price": 101.65,
+          "pnl": -36.29999999999944
+        },
+        {
+          "terminal_price": 101.75,
+          "pnl": -26.30000000000001
+        },
+        {
+          "terminal_price": 101.85,
+          "pnl": -16.30000000000058
+        },
+        {
+          "terminal_price": 101.95,
+          "pnl": -6.299999999999727
+        },
+        {
+          "terminal_price": 102.013,
+          "pnl": 5.115907697472721e-13
+        },
+        {
+          "terminal_price": 102.05,
+          "pnl": 3.6999999999997044
+        },
+        {
+          "terminal_price": 102.15,
+          "pnl": 13.700000000000557
+        },
+        {
+          "terminal_price": 102.25,
+          "pnl": 23.69999999999999
+        },
+        {
+          "terminal_price": 102.35,
+          "pnl": 33.69999999999942
+        },
+        {
+          "terminal_price": 102.45,
+          "pnl": 43.70000000000027
+        },
+        {
+          "terminal_price": 102.55,
+          "pnl": 53.699999999999704
+        },
+        {
+          "terminal_price": 102.65,
+          "pnl": 63.70000000000056
+        },
+        {
+          "terminal_price": 102.75,
+          "pnl": 73.69999999999999
+        },
+        {
+          "terminal_price": 102.85,
+          "pnl": 83.69999999999942
+        },
+        {
+          "terminal_price": 102.95,
+          "pnl": 93.70000000000027
+        },
+        {
+          "terminal_price": 103.05,
+          "pnl": 103.6999999999997
+        },
+        {
+          "terminal_price": 103.15,
+          "pnl": 113.70000000000056
+        },
+        {
+          "terminal_price": 103.25,
+          "pnl": 123.69999999999999
+        },
+        {
+          "terminal_price": 103.35,
+          "pnl": 133.69999999999942
+        },
+        {
+          "terminal_price": 103.45,
+          "pnl": 143.70000000000027
+        },
+        {
+          "terminal_price": 103.5065,
+          "pnl": 149.35000000000025
+        },
+        {
+          "terminal_price": 103.55,
+          "pnl": 153.6999999999997
+        },
+        {
+          "terminal_price": 103.65,
+          "pnl": 163.70000000000056
+        },
+        {
+          "terminal_price": 103.75,
+          "pnl": 173.7
+        },
+        {
+          "terminal_price": 103.85,
+          "pnl": 183.69999999999942
+        },
+        {
+          "terminal_price": 103.95,
+          "pnl": 193.70000000000027
+        },
+        {
+          "terminal_price": 104.05,
+          "pnl": 203.6999999999997
+        },
+        {
+          "terminal_price": 104.15,
+          "pnl": 213.70000000000056
+        },
+        {
+          "terminal_price": 104.25,
+          "pnl": 223.7
+        },
+        {
+          "terminal_price": 104.35,
+          "pnl": 233.69999999999942
+        },
+        {
+          "terminal_price": 104.45,
+          "pnl": 243.70000000000027
+        },
+        {
+          "terminal_price": 104.55,
+          "pnl": 253.6999999999997
+        },
+        {
+          "terminal_price": 104.65,
+          "pnl": 263.70000000000056
+        },
+        {
+          "terminal_price": 104.75,
+          "pnl": 273.7
+        },
+        {
+          "terminal_price": 104.85,
+          "pnl": 283.6999999999994
+        },
+        {
+          "terminal_price": 104.95,
+          "pnl": 293.7000000000003
+        },
+        {
+          "terminal_price": 105.0,
+          "pnl": 298.7
+        },
+        {
+          "terminal_price": 105.05,
+          "pnl": 298.7
+        },
+        {
+          "terminal_price": 105.15,
+          "pnl": 298.7
+        },
+        {
+          "terminal_price": 105.25,
+          "pnl": 298.7
+        },
+        {
+          "terminal_price": 105.35,
+          "pnl": 298.7
+        },
+        {
+          "terminal_price": 105.45,
+          "pnl": 298.69999999999993
+        },
+        {
+          "terminal_price": 105.55,
+          "pnl": 298.70000000000005
+        },
+        {
+          "terminal_price": 105.65,
+          "pnl": 298.7
+        },
+        {
+          "terminal_price": 105.75,
+          "pnl": 298.7
+        }
+      ],
+      "liquidity_warnings": [],
+      "greek_exposure": {
+        "delta": null,
+        "gamma": null,
+        "theta": null,
+        "vega": null,
+        "rho": null
+      },
+      "capital_treatment": "defined_risk_with_assignment",
+      "assumptions": [
+        "Buy at ask and sell at bid; displayed quotes do not guarantee fills.",
+        "Entry fees charged once per absolute contract; exit fees and exercise/assignment charges excluded.",
+        "Same-expiration standard 100-share contracts; payoff assumes all legs held through expiration.",
+        "Theoretical capital at risk does not establish brokerage buying power.",
+        "Greeks are provider observations; future volatility and expiration sensitivity may change.",
+        "Event risk evidence unavailable. Payoff validity does not establish a trading edge."
+      ]
+    },
+    "chain": {
+      "symbol": "SPY",
+      "expiration": "2026-11-06",
+      "calls": [
+        {
+          "contract": "SPY261106C00100000",
+          "type": "Call",
+          "strike": 100,
+          "bid": 2.99,
+          "ask": 3,
+          "bid_timestamp": "2026-11-05T15:00:00+00:00",
+          "ask_timestamp": "2026-11-05T15:00:00+00:00",
+          "volume": 10,
+          "open_interest": 20,
+          "bid_size": 10,
+          "ask_size": 10,
+          "status": "fresh",
+          "quote_age_seconds": 0.0
+        },
+        {
+          "contract": "SPY261106C00105000",
+          "type": "Call",
+          "strike": 105,
+          "bid": 1,
+          "ask": 1.01,
+          "bid_timestamp": "2026-11-05T15:00:00+00:00",
+          "ask_timestamp": "2026-11-05T15:00:00+00:00",
+          "volume": 10,
+          "open_interest": 20,
+          "bid_size": 10,
+          "ask_size": 10,
+          "status": "fresh",
+          "quote_age_seconds": 0.0
+        }
+      ],
+      "puts": []
+    }
+  },
+  {
+    "request": {
+      "strategy": "put_debit_spread",
+      "legs": [
+        {
+          "contract": "SPY261106P00105000",
+          "qty": 1
+        },
+        {
+          "contract": "SPY261106P00100000",
+          "qty": -1
+        }
+      ]
+    },
+    "result": {
+      "strategy": "put_debit_spread",
+      "geometry": "put_debit_spread",
+      "direction": "bearish",
+      "status": "available",
+      "eligible_for_analysis": true,
+      "reason": null,
+      "limit_breaches": [],
+      "symbol": "SPY",
+      "expiration": "2026-11-06",
+      "dte": 1,
+      "legs": [
+        {
+          "contract": "SPY261106P00105000",
+          "type": "Put",
+          "strike": 105,
+          "bid": 2.99,
+          "ask": 3,
+          "bid_timestamp": "2026-11-05T15:00:00+00:00",
+          "ask_timestamp": "2026-11-05T15:00:00+00:00",
+          "volume": 10,
+          "open_interest": 20,
+          "bid_size": 10,
+          "ask_size": 10,
+          "status": "fresh",
+          "quote_age_seconds": 0.0,
+          "qty": 1,
+          "price": 3,
+          "expiration": "2026-11-06"
+        },
+        {
+          "contract": "SPY261106P00100000",
+          "type": "Put",
+          "strike": 100,
+          "bid": 1,
+          "ask": 1.01,
+          "bid_timestamp": "2026-11-05T15:00:00+00:00",
+          "ask_timestamp": "2026-11-05T15:00:00+00:00",
+          "volume": 10,
+          "open_interest": 20,
+          "bid_size": 10,
+          "ask_size": 10,
+          "status": "fresh",
+          "quote_age_seconds": 0.0,
+          "qty": -1,
+          "price": 1,
+          "expiration": "2026-11-06"
+        }
+      ],
+      "contract_multiplier": 100,
+      "total_contracts": 2,
+      "evaluated_at": "2026-11-05T15:00:00+00:00",
+      "retrieved_at": "2026-11-05T15:00:00+00:00",
+      "oldest_quote_age_seconds": 0.0,
+      "entry_premium": -200.0,
+      "entry_fees": 1.3,
+      "net_cash": -201.3,
+      "entry_debit": 201.3,
+      "entry_credit": 0,
+      "max_profit": 298.7,
+      "profit_unbounded": false,
+      "max_loss": 201.3,
+      "loss_unbounded": false,
+      "capital_at_risk": 201.3,
+      "return_on_max_risk": 1.4838549428713361,
+      "breakevens": [
+        102.987
+      ],
+      "payoff": [
+        {
+          "terminal_price": 99.25,
+          "pnl": 298.7
+        },
+        {
+          "terminal_price": 99.35,
+          "pnl": 298.7
+        },
+        {
+          "terminal_price": 99.45,
+          "pnl": 298.70000000000005
+        },
+        {
+          "terminal_price": 99.55,
+          "pnl": 298.69999999999993
+        },
+        {
+          "terminal_price": 99.65,
+          "pnl": 298.7
+        },
+        {
+          "terminal_price": 99.75,
+          "pnl": 298.7
+        },
+        {
+          "terminal_price": 99.85,
+          "pnl": 298.7
+        },
+        {
+          "terminal_price": 99.95,
+          "pnl": 298.7
+        },
+        {
+          "terminal_price": 100.0,
+          "pnl": 298.7
+        },
+        {
+          "terminal_price": 100.05,
+          "pnl": 293.7000000000003
+        },
+        {
+          "terminal_price": 100.15,
+          "pnl": 283.6999999999994
+        },
+        {
+          "terminal_price": 100.25,
+          "pnl": 273.7
+        },
+        {
+          "terminal_price": 100.35,
+          "pnl": 263.70000000000056
+        },
+        {
+          "terminal_price": 100.45,
+          "pnl": 253.6999999999997
+        },
+        {
+          "terminal_price": 100.55,
+          "pnl": 243.70000000000027
+        },
+        {
+          "terminal_price": 100.65,
+          "pnl": 233.69999999999942
+        },
+        {
+          "terminal_price": 100.75,
+          "pnl": 223.7
+        },
+        {
+          "terminal_price": 100.85,
+          "pnl": 213.70000000000056
+        },
+        {
+          "terminal_price": 100.95,
+          "pnl": 203.6999999999997
+        },
+        {
+          "terminal_price": 101.05,
+          "pnl": 193.70000000000027
+        },
+        {
+          "terminal_price": 101.15,
+          "pnl": 183.69999999999942
+        },
+        {
+          "terminal_price": 101.25,
+          "pnl": 173.7
+        },
+        {
+          "terminal_price": 101.35,
+          "pnl": 163.70000000000056
+        },
+        {
+          "terminal_price": 101.45,
+          "pnl": 153.6999999999997
+        },
+        {
+          "terminal_price": 101.4935,
+          "pnl": 149.35000000000025
+        },
+        {
+          "terminal_price": 101.55,
+          "pnl": 143.70000000000027
+        },
+        {
+          "terminal_price": 101.65,
+          "pnl": 133.69999999999942
+        },
+        {
+          "terminal_price": 101.75,
+          "pnl": 123.69999999999999
+        },
+        {
+          "terminal_price": 101.85,
+          "pnl": 113.70000000000056
+        },
+        {
+          "terminal_price": 101.95,
+          "pnl": 103.6999999999997
+        },
+        {
+          "terminal_price": 102.05,
+          "pnl": 93.70000000000027
+        },
+        {
+          "terminal_price": 102.15,
+          "pnl": 83.69999999999942
+        },
+        {
+          "terminal_price": 102.25,
+          "pnl": 73.69999999999999
+        },
+        {
+          "terminal_price": 102.35,
+          "pnl": 63.70000000000056
+        },
+        {
+          "terminal_price": 102.45,
+          "pnl": 53.699999999999704
+        },
+        {
+          "terminal_price": 102.55,
+          "pnl": 43.70000000000027
+        },
+        {
+          "terminal_price": 102.65,
+          "pnl": 33.69999999999942
+        },
+        {
+          "terminal_price": 102.75,
+          "pnl": 23.69999999999999
+        },
+        {
+          "terminal_price": 102.85,
+          "pnl": 13.700000000000557
+        },
+        {
+          "terminal_price": 102.95,
+          "pnl": 3.6999999999997044
+        },
+        {
+          "terminal_price": 102.987,
+          "pnl": 5.115907697472721e-13
+        },
+        {
+          "terminal_price": 103.05,
+          "pnl": -6.299999999999727
+        },
+        {
+          "terminal_price": 103.15,
+          "pnl": -16.30000000000058
+        },
+        {
+          "terminal_price": 103.25,
+          "pnl": -26.30000000000001
+        },
+        {
+          "terminal_price": 103.35,
+          "pnl": -36.29999999999944
+        },
+        {
+          "terminal_price": 103.45,
+          "pnl": -46.300000000000296
+        },
+        {
+          "terminal_price": 103.55,
+          "pnl": -56.29999999999973
+        },
+        {
+          "terminal_price": 103.65,
+          "pnl": -66.30000000000058
+        },
+        {
+          "terminal_price": 103.75,
+          "pnl": -76.30000000000001
+        },
+        {
+          "terminal_price": 103.85,
+          "pnl": -86.29999999999944
+        },
+        {
+          "terminal_price": 103.95,
+          "pnl": -96.3000000000003
+        },
+        {
+          "terminal_price": 103.9935,
+          "pnl": -100.64999999999975
+        },
+        {
+          "terminal_price": 104.05,
+          "pnl": -106.29999999999973
+        },
+        {
+          "terminal_price": 104.15,
+          "pnl": -116.30000000000058
+        },
+        {
+          "terminal_price": 104.25,
+          "pnl": -126.30000000000001
+        },
+        {
+          "terminal_price": 104.35,
+          "pnl": -136.29999999999944
+        },
+        {
+          "terminal_price": 104.45,
+          "pnl": -146.3000000000003
+        },
+        {
+          "terminal_price": 104.55,
+          "pnl": -156.29999999999973
+        },
+        {
+          "terminal_price": 104.65,
+          "pnl": -166.30000000000058
+        },
+        {
+          "terminal_price": 104.75,
+          "pnl": -176.3
+        },
+        {
+          "terminal_price": 104.85,
+          "pnl": -186.29999999999944
+        },
+        {
+          "terminal_price": 104.95,
+          "pnl": -196.3000000000003
+        },
+        {
+          "terminal_price": 105.0,
+          "pnl": -201.3
+        },
+        {
+          "terminal_price": 105.05,
+          "pnl": -201.3
+        },
+        {
+          "terminal_price": 105.15,
+          "pnl": -201.3
+        },
+        {
+          "terminal_price": 105.25,
+          "pnl": -201.3
+        },
+        {
+          "terminal_price": 105.35,
+          "pnl": -201.3
+        },
+        {
+          "terminal_price": 105.45,
+          "pnl": -201.3
+        },
+        {
+          "terminal_price": 105.55,
+          "pnl": -201.3
+        },
+        {
+          "terminal_price": 105.65,
+          "pnl": -201.3
+        },
+        {
+          "terminal_price": 105.75,
+          "pnl": -201.3
+        }
+      ],
+      "liquidity_warnings": [],
+      "greek_exposure": {
+        "delta": null,
+        "gamma": null,
+        "theta": null,
+        "vega": null,
+        "rho": null
+      },
+      "capital_treatment": "defined_risk_with_assignment",
+      "assumptions": [
+        "Buy at ask and sell at bid; displayed quotes do not guarantee fills.",
+        "Entry fees charged once per absolute contract; exit fees and exercise/assignment charges excluded.",
+        "Same-expiration standard 100-share contracts; payoff assumes all legs held through expiration.",
+        "Theoretical capital at risk does not establish brokerage buying power.",
+        "Greeks are provider observations; future volatility and expiration sensitivity may change.",
+        "Event risk evidence unavailable. Payoff validity does not establish a trading edge."
+      ]
+    },
+    "chain": {
+      "symbol": "SPY",
+      "expiration": "2026-11-06",
+      "calls": [],
+      "puts": [
+        {
+          "contract": "SPY261106P00105000",
+          "type": "Put",
+          "strike": 105,
+          "bid": 2.99,
+          "ask": 3,
+          "bid_timestamp": "2026-11-05T15:00:00+00:00",
+          "ask_timestamp": "2026-11-05T15:00:00+00:00",
+          "volume": 10,
+          "open_interest": 20,
+          "bid_size": 10,
+          "ask_size": 10,
+          "status": "fresh",
+          "quote_age_seconds": 0.0
+        },
+        {
+          "contract": "SPY261106P00100000",
+          "type": "Put",
+          "strike": 100,
+          "bid": 1,
+          "ask": 1.01,
+          "bid_timestamp": "2026-11-05T15:00:00+00:00",
+          "ask_timestamp": "2026-11-05T15:00:00+00:00",
+          "volume": 10,
+          "open_interest": 20,
+          "bid_size": 10,
+          "ask_size": 10,
+          "status": "fresh",
+          "quote_age_seconds": 0.0
+        }
+      ]
+    }
+  },
+  {
+    "request": {
+      "strategy": "put_credit_spread",
+      "legs": [
+        {
+          "contract": "SPY261106P00095000",
+          "qty": 1
+        },
+        {
+          "contract": "SPY261106P00100000",
+          "qty": -1
+        }
+      ]
+    },
+    "result": {
+      "strategy": "put_credit_spread",
+      "geometry": "put_credit_spread",
+      "direction": "bullish",
+      "status": "available",
+      "eligible_for_analysis": true,
+      "reason": null,
+      "limit_breaches": [],
+      "symbol": "SPY",
+      "expiration": "2026-11-06",
+      "dte": 1,
+      "legs": [
+        {
+          "contract": "SPY261106P00095000",
+          "type": "Put",
+          "strike": 95,
+          "bid": 0.99,
+          "ask": 1,
+          "bid_timestamp": "2026-11-05T15:00:00+00:00",
+          "ask_timestamp": "2026-11-05T15:00:00+00:00",
+          "volume": 10,
+          "open_interest": 20,
+          "bid_size": 10,
+          "ask_size": 10,
+          "status": "fresh",
+          "quote_age_seconds": 0.0,
+          "qty": 1,
+          "price": 1,
+          "expiration": "2026-11-06"
+        },
+        {
+          "contract": "SPY261106P00100000",
+          "type": "Put",
+          "strike": 100,
+          "bid": 3,
+          "ask": 3.01,
+          "bid_timestamp": "2026-11-05T15:00:00+00:00",
+          "ask_timestamp": "2026-11-05T15:00:00+00:00",
+          "volume": 10,
+          "open_interest": 20,
+          "bid_size": 10,
+          "ask_size": 10,
+          "status": "fresh",
+          "quote_age_seconds": 0.0,
+          "qty": -1,
+          "price": 3,
+          "expiration": "2026-11-06"
+        }
+      ],
+      "contract_multiplier": 100,
+      "total_contracts": 2,
+      "evaluated_at": "2026-11-05T15:00:00+00:00",
+      "retrieved_at": "2026-11-05T15:00:00+00:00",
+      "oldest_quote_age_seconds": 0.0,
+      "entry_premium": 200.0,
+      "entry_fees": 1.3,
+      "net_cash": 198.7,
+      "entry_debit": 0,
+      "entry_credit": 198.7,
+      "max_profit": 198.7,
+      "profit_unbounded": false,
+      "max_loss": 301.3,
+      "loss_unbounded": false,
+      "capital_at_risk": 301.3,
+      "return_on_max_risk": 0.659475605708596,
+      "breakevens": [
+        98.013
+      ],
+      "payoff": [
+        {
+          "terminal_price": 94.25,
+          "pnl": -301.3
+        },
+        {
+          "terminal_price": 94.35,
+          "pnl": -301.3
+        },
+        {
+          "terminal_price": 94.45,
+          "pnl": -301.30000000000007
+        },
+        {
+          "terminal_price": 94.55,
+          "pnl": -301.29999999999995
+        },
+        {
+          "terminal_price": 94.65,
+          "pnl": -301.3
+        },
+        {
+          "terminal_price": 94.75,
+          "pnl": -301.3
+        },
+        {
+          "terminal_price": 94.85,
+          "pnl": -301.3
+        },
+        {
+          "terminal_price": 94.95,
+          "pnl": -301.3
+        },
+        {
+          "terminal_price": 95.0,
+          "pnl": -301.3
+        },
+        {
+          "terminal_price": 95.05,
+          "pnl": -296.3000000000003
+        },
+        {
+          "terminal_price": 95.15,
+          "pnl": -286.29999999999944
+        },
+        {
+          "terminal_price": 95.25,
+          "pnl": -276.3
+        },
+        {
+          "terminal_price": 95.35,
+          "pnl": -266.3000000000006
+        },
+        {
+          "terminal_price": 95.45,
+          "pnl": -256.2999999999997
+        },
+        {
+          "terminal_price": 95.55,
+          "pnl": -246.3000000000003
+        },
+        {
+          "terminal_price": 95.65,
+          "pnl": -236.29999999999944
+        },
+        {
+          "terminal_price": 95.75,
+          "pnl": -226.3
+        },
+        {
+          "terminal_price": 95.85,
+          "pnl": -216.30000000000058
+        },
+        {
+          "terminal_price": 95.95,
+          "pnl": -206.29999999999973
+        },
+        {
+          "terminal_price": 96.05,
+          "pnl": -196.3000000000003
+        },
+        {
+          "terminal_price": 96.15,
+          "pnl": -186.29999999999944
+        },
+        {
+          "terminal_price": 96.25,
+          "pnl": -176.3
+        },
+        {
+          "terminal_price": 96.35,
+          "pnl": -166.30000000000058
+        },
+        {
+          "terminal_price": 96.45,
+          "pnl": -156.29999999999973
+        },
+        {
+          "terminal_price": 96.5065,
+          "pnl": -150.64999999999975
+        },
+        {
+          "terminal_price": 96.55,
+          "pnl": -146.3000000000003
+        },
+        {
+          "terminal_price": 96.65,
+          "pnl": -136.29999999999944
+        },
+        {
+          "terminal_price": 96.75,
+          "pnl": -126.30000000000001
+        },
+        {
+          "terminal_price": 96.85,
+          "pnl": -116.30000000000058
+        },
+        {
+          "terminal_price": 96.95,
+          "pnl": -106.29999999999973
+        },
+        {
+          "terminal_price": 97.05,
+          "pnl": -96.3000000000003
+        },
+        {
+          "terminal_price": 97.15,
+          "pnl": -86.29999999999944
+        },
+        {
+          "terminal_price": 97.25,
+          "pnl": -76.30000000000001
+        },
+        {
+          "terminal_price": 97.35,
+          "pnl": -66.30000000000058
+        },
+        {
+          "terminal_price": 97.45,
+          "pnl": -56.29999999999973
+        },
+        {
+          "terminal_price": 97.55,
+          "pnl": -46.300000000000296
+        },
+        {
+          "terminal_price": 97.65,
+          "pnl": -36.29999999999944
+        },
+        {
+          "terminal_price": 97.75,
+          "pnl": -26.30000000000001
+        },
+        {
+          "terminal_price": 97.85,
+          "pnl": -16.30000000000058
+        },
+        {
+          "terminal_price": 97.95,
+          "pnl": -6.299999999999727
+        },
+        {
+          "terminal_price": 98.013,
+          "pnl": 5.115907697472721e-13
+        },
+        {
+          "terminal_price": 98.05,
+          "pnl": 3.6999999999997044
+        },
+        {
+          "terminal_price": 98.15,
+          "pnl": 13.700000000000557
+        },
+        {
+          "terminal_price": 98.25,
+          "pnl": 23.69999999999999
+        },
+        {
+          "terminal_price": 98.35,
+          "pnl": 33.69999999999942
+        },
+        {
+          "terminal_price": 98.45,
+          "pnl": 43.70000000000027
+        },
+        {
+          "terminal_price": 98.55,
+          "pnl": 53.699999999999704
+        },
+        {
+          "terminal_price": 98.65,
+          "pnl": 63.70000000000056
+        },
+        {
+          "terminal_price": 98.75,
+          "pnl": 73.69999999999999
+        },
+        {
+          "terminal_price": 98.85,
+          "pnl": 83.69999999999942
+        },
+        {
+          "terminal_price": 98.95,
+          "pnl": 93.70000000000027
+        },
+        {
+          "terminal_price": 99.0065,
+          "pnl": 99.35000000000025
+        },
+        {
+          "terminal_price": 99.05,
+          "pnl": 103.6999999999997
+        },
+        {
+          "terminal_price": 99.15,
+          "pnl": 113.70000000000056
+        },
+        {
+          "terminal_price": 99.25,
+          "pnl": 123.69999999999999
+        },
+        {
+          "terminal_price": 99.35,
+          "pnl": 133.69999999999942
+        },
+        {
+          "terminal_price": 99.45,
+          "pnl": 143.70000000000027
+        },
+        {
+          "terminal_price": 99.55,
+          "pnl": 153.6999999999997
+        },
+        {
+          "terminal_price": 99.65,
+          "pnl": 163.70000000000056
+        },
+        {
+          "terminal_price": 99.75,
+          "pnl": 173.7
+        },
+        {
+          "terminal_price": 99.85,
+          "pnl": 183.69999999999942
+        },
+        {
+          "terminal_price": 99.95,
+          "pnl": 193.70000000000027
+        },
+        {
+          "terminal_price": 100.0,
+          "pnl": 198.7
+        },
+        {
+          "terminal_price": 100.05,
+          "pnl": 198.7
+        },
+        {
+          "terminal_price": 100.15,
+          "pnl": 198.7
+        },
+        {
+          "terminal_price": 100.25,
+          "pnl": 198.7
+        },
+        {
+          "terminal_price": 100.35,
+          "pnl": 198.7
+        },
+        {
+          "terminal_price": 100.45,
+          "pnl": 198.7
+        },
+        {
+          "terminal_price": 100.55,
+          "pnl": 198.7
+        },
+        {
+          "terminal_price": 100.65,
+          "pnl": 198.7
+        },
+        {
+          "terminal_price": 100.75,
+          "pnl": 198.7
+        }
+      ],
+      "liquidity_warnings": [],
+      "greek_exposure": {
+        "delta": null,
+        "gamma": null,
+        "theta": null,
+        "vega": null,
+        "rho": null
+      },
+      "capital_treatment": "defined_risk_with_assignment",
+      "assumptions": [
+        "Buy at ask and sell at bid; displayed quotes do not guarantee fills.",
+        "Entry fees charged once per absolute contract; exit fees and exercise/assignment charges excluded.",
+        "Same-expiration standard 100-share contracts; payoff assumes all legs held through expiration.",
+        "Theoretical capital at risk does not establish brokerage buying power.",
+        "Greeks are provider observations; future volatility and expiration sensitivity may change.",
+        "Event risk evidence unavailable. Payoff validity does not establish a trading edge."
+      ]
+    },
+    "chain": {
+      "symbol": "SPY",
+      "expiration": "2026-11-06",
+      "calls": [],
+      "puts": [
+        {
+          "contract": "SPY261106P00095000",
+          "type": "Put",
+          "strike": 95,
+          "bid": 0.99,
+          "ask": 1,
+          "bid_timestamp": "2026-11-05T15:00:00+00:00",
+          "ask_timestamp": "2026-11-05T15:00:00+00:00",
+          "volume": 10,
+          "open_interest": 20,
+          "bid_size": 10,
+          "ask_size": 10,
+          "status": "fresh",
+          "quote_age_seconds": 0.0
+        },
+        {
+          "contract": "SPY261106P00100000",
+          "type": "Put",
+          "strike": 100,
+          "bid": 3,
+          "ask": 3.01,
+          "bid_timestamp": "2026-11-05T15:00:00+00:00",
+          "ask_timestamp": "2026-11-05T15:00:00+00:00",
+          "volume": 10,
+          "open_interest": 20,
+          "bid_size": 10,
+          "ask_size": 10,
+          "status": "fresh",
+          "quote_age_seconds": 0.0
+        }
+      ]
+    }
+  },
+  {
+    "request": {
+      "strategy": "call_credit_spread",
+      "legs": [
+        {
+          "contract": "SPY261106C00105000",
+          "qty": 1
+        },
+        {
+          "contract": "SPY261106C00100000",
+          "qty": -1
+        }
+      ]
+    },
+    "result": {
+      "strategy": "call_credit_spread",
+      "geometry": "call_credit_spread",
+      "direction": "bearish",
+      "status": "available",
+      "eligible_for_analysis": true,
+      "reason": null,
+      "limit_breaches": [],
+      "symbol": "SPY",
+      "expiration": "2026-11-06",
+      "dte": 1,
+      "legs": [
+        {
+          "contract": "SPY261106C00105000",
+          "type": "Call",
+          "strike": 105,
+          "bid": 0.99,
+          "ask": 1,
+          "bid_timestamp": "2026-11-05T15:00:00+00:00",
+          "ask_timestamp": "2026-11-05T15:00:00+00:00",
+          "volume": 10,
+          "open_interest": 20,
+          "bid_size": 10,
+          "ask_size": 10,
+          "status": "fresh",
+          "quote_age_seconds": 0.0,
+          "qty": 1,
+          "price": 1,
+          "expiration": "2026-11-06"
+        },
+        {
+          "contract": "SPY261106C00100000",
+          "type": "Call",
+          "strike": 100,
+          "bid": 3,
+          "ask": 3.01,
+          "bid_timestamp": "2026-11-05T15:00:00+00:00",
+          "ask_timestamp": "2026-11-05T15:00:00+00:00",
+          "volume": 10,
+          "open_interest": 20,
+          "bid_size": 10,
+          "ask_size": 10,
+          "status": "fresh",
+          "quote_age_seconds": 0.0,
+          "qty": -1,
+          "price": 3,
+          "expiration": "2026-11-06"
+        }
+      ],
+      "contract_multiplier": 100,
+      "total_contracts": 2,
+      "evaluated_at": "2026-11-05T15:00:00+00:00",
+      "retrieved_at": "2026-11-05T15:00:00+00:00",
+      "oldest_quote_age_seconds": 0.0,
+      "entry_premium": 200.0,
+      "entry_fees": 1.3,
+      "net_cash": 198.7,
+      "entry_debit": 0,
+      "entry_credit": 198.7,
+      "max_profit": 198.7,
+      "profit_unbounded": false,
+      "max_loss": 301.3,
+      "loss_unbounded": false,
+      "capital_at_risk": 301.3,
+      "return_on_max_risk": 0.659475605708596,
+      "breakevens": [
+        101.987
+      ],
+      "payoff": [
+        {
+          "terminal_price": 99.25,
+          "pnl": 198.7
+        },
+        {
+          "terminal_price": 99.35,
+          "pnl": 198.7
+        },
+        {
+          "terminal_price": 99.45,
+          "pnl": 198.7
+        },
+        {
+          "terminal_price": 99.55,
+          "pnl": 198.7
+        },
+        {
+          "terminal_price": 99.65,
+          "pnl": 198.7
+        },
+        {
+          "terminal_price": 99.75,
+          "pnl": 198.7
+        },
+        {
+          "terminal_price": 99.85,
+          "pnl": 198.7
+        },
+        {
+          "terminal_price": 99.95,
+          "pnl": 198.7
+        },
+        {
+          "terminal_price": 100.0,
+          "pnl": 198.7
+        },
+        {
+          "terminal_price": 100.05,
+          "pnl": 193.70000000000027
+        },
+        {
+          "terminal_price": 100.15,
+          "pnl": 183.69999999999942
+        },
+        {
+          "terminal_price": 100.25,
+          "pnl": 173.7
+        },
+        {
+          "terminal_price": 100.35,
+          "pnl": 163.70000000000056
+        },
+        {
+          "terminal_price": 100.45,
+          "pnl": 153.6999999999997
+        },
+        {
+          "terminal_price": 100.55,
+          "pnl": 143.70000000000027
+        },
+        {
+          "terminal_price": 100.65,
+          "pnl": 133.69999999999942
+        },
+        {
+          "terminal_price": 100.75,
+          "pnl": 123.69999999999999
+        },
+        {
+          "terminal_price": 100.85,
+          "pnl": 113.70000000000056
+        },
+        {
+          "terminal_price": 100.95,
+          "pnl": 103.6999999999997
+        },
+        {
+          "terminal_price": 100.9935,
+          "pnl": 99.35000000000025
+        },
+        {
+          "terminal_price": 101.05,
+          "pnl": 93.70000000000027
+        },
+        {
+          "terminal_price": 101.15,
+          "pnl": 83.69999999999942
+        },
+        {
+          "terminal_price": 101.25,
+          "pnl": 73.69999999999999
+        },
+        {
+          "terminal_price": 101.35,
+          "pnl": 63.70000000000056
+        },
+        {
+          "terminal_price": 101.45,
+          "pnl": 53.699999999999704
+        },
+        {
+          "terminal_price": 101.55,
+          "pnl": 43.70000000000027
+        },
+        {
+          "terminal_price": 101.65,
+          "pnl": 33.69999999999942
+        },
+        {
+          "terminal_price": 101.75,
+          "pnl": 23.69999999999999
+        },
+        {
+          "terminal_price": 101.85,
+          "pnl": 13.700000000000557
+        },
+        {
+          "terminal_price": 101.95,
+          "pnl": 3.6999999999997044
+        },
+        {
+          "terminal_price": 101.987,
+          "pnl": 5.115907697472721e-13
+        },
+        {
+          "terminal_price": 102.05,
+          "pnl": -6.299999999999727
+        },
+        {
+          "terminal_price": 102.15,
+          "pnl": -16.30000000000058
+        },
+        {
+          "terminal_price": 102.25,
+          "pnl": -26.30000000000001
+        },
+        {
+          "terminal_price": 102.35,
+          "pnl": -36.29999999999944
+        },
+        {
+          "terminal_price": 102.45,
+          "pnl": -46.300000000000296
+        },
+        {
+          "terminal_price": 102.55,
+          "pnl": -56.29999999999973
+        },
+        {
+          "terminal_price": 102.65,
+          "pnl": -66.30000000000058
+        },
+        {
+          "terminal_price": 102.75,
+          "pnl": -76.30000000000001
+        },
+        {
+          "terminal_price": 102.85,
+          "pnl": -86.29999999999944
+        },
+        {
+          "terminal_price": 102.95,
+          "pnl": -96.3000000000003
+        },
+        {
+          "terminal_price": 103.05,
+          "pnl": -106.29999999999973
+        },
+        {
+          "terminal_price": 103.15,
+          "pnl": -116.30000000000058
+        },
+        {
+          "terminal_price": 103.25,
+          "pnl": -126.30000000000001
+        },
+        {
+          "terminal_price": 103.35,
+          "pnl": -136.29999999999944
+        },
+        {
+          "terminal_price": 103.45,
+          "pnl": -146.3000000000003
+        },
+        {
+          "terminal_price": 103.4935,
+          "pnl": -150.64999999999975
+        },
+        {
+          "terminal_price": 103.55,
+          "pnl": -156.29999999999973
+        },
+        {
+          "terminal_price": 103.65,
+          "pnl": -166.30000000000058
+        },
+        {
+          "terminal_price": 103.75,
+          "pnl": -176.3
+        },
+        {
+          "terminal_price": 103.85,
+          "pnl": -186.29999999999944
+        },
+        {
+          "terminal_price": 103.95,
+          "pnl": -196.3000000000003
+        },
+        {
+          "terminal_price": 104.05,
+          "pnl": -206.29999999999973
+        },
+        {
+          "terminal_price": 104.15,
+          "pnl": -216.30000000000058
+        },
+        {
+          "terminal_price": 104.25,
+          "pnl": -226.3
+        },
+        {
+          "terminal_price": 104.35,
+          "pnl": -236.29999999999944
+        },
+        {
+          "terminal_price": 104.45,
+          "pnl": -246.3000000000003
+        },
+        {
+          "terminal_price": 104.55,
+          "pnl": -256.2999999999997
+        },
+        {
+          "terminal_price": 104.65,
+          "pnl": -266.3000000000006
+        },
+        {
+          "terminal_price": 104.75,
+          "pnl": -276.3
+        },
+        {
+          "terminal_price": 104.85,
+          "pnl": -286.29999999999944
+        },
+        {
+          "terminal_price": 104.95,
+          "pnl": -296.3000000000003
+        },
+        {
+          "terminal_price": 105.0,
+          "pnl": -301.3
+        },
+        {
+          "terminal_price": 105.05,
+          "pnl": -301.3
+        },
+        {
+          "terminal_price": 105.15,
+          "pnl": -301.3
+        },
+        {
+          "terminal_price": 105.25,
+          "pnl": -301.3
+        },
+        {
+          "terminal_price": 105.35,
+          "pnl": -301.3
+        },
+        {
+          "terminal_price": 105.45,
+          "pnl": -301.29999999999995
+        },
+        {
+          "terminal_price": 105.55,
+          "pnl": -301.30000000000007
+        },
+        {
+          "terminal_price": 105.65,
+          "pnl": -301.3
+        },
+        {
+          "terminal_price": 105.75,
+          "pnl": -301.3
+        }
+      ],
+      "liquidity_warnings": [],
+      "greek_exposure": {
+        "delta": null,
+        "gamma": null,
+        "theta": null,
+        "vega": null,
+        "rho": null
+      },
+      "capital_treatment": "defined_risk_with_assignment",
+      "assumptions": [
+        "Buy at ask and sell at bid; displayed quotes do not guarantee fills.",
+        "Entry fees charged once per absolute contract; exit fees and exercise/assignment charges excluded.",
+        "Same-expiration standard 100-share contracts; payoff assumes all legs held through expiration.",
+        "Theoretical capital at risk does not establish brokerage buying power.",
+        "Greeks are provider observations; future volatility and expiration sensitivity may change.",
+        "Event risk evidence unavailable. Payoff validity does not establish a trading edge."
+      ]
+    },
+    "chain": {
+      "symbol": "SPY",
+      "expiration": "2026-11-06",
+      "calls": [
+        {
+          "contract": "SPY261106C00105000",
+          "type": "Call",
+          "strike": 105,
+          "bid": 0.99,
+          "ask": 1,
+          "bid_timestamp": "2026-11-05T15:00:00+00:00",
+          "ask_timestamp": "2026-11-05T15:00:00+00:00",
+          "volume": 10,
+          "open_interest": 20,
+          "bid_size": 10,
+          "ask_size": 10,
+          "status": "fresh",
+          "quote_age_seconds": 0.0
+        },
+        {
+          "contract": "SPY261106C00100000",
+          "type": "Call",
+          "strike": 100,
+          "bid": 3,
+          "ask": 3.01,
+          "bid_timestamp": "2026-11-05T15:00:00+00:00",
+          "ask_timestamp": "2026-11-05T15:00:00+00:00",
+          "volume": 10,
+          "open_interest": 20,
+          "bid_size": 10,
+          "ask_size": 10,
+          "status": "fresh",
+          "quote_age_seconds": 0.0
+        }
+      ],
+      "puts": []
+    }
+  },
+  {
+    "request": {
+      "strategy": "iron_condor",
+      "legs": [
+        {
+          "contract": "SPY261106P00090000",
+          "qty": 1
+        },
+        {
+          "contract": "SPY261106P00095000",
+          "qty": -1
+        },
+        {
+          "contract": "SPY261106C00105000",
+          "qty": -1
+        },
+        {
+          "contract": "SPY261106C00110000",
+          "qty": 1
+        }
+      ]
+    },
+    "result": {
+      "strategy": "iron_condor",
+      "geometry": "iron_condor",
+      "direction": "neutral",
+      "status": "available",
+      "eligible_for_analysis": true,
+      "reason": null,
+      "limit_breaches": [],
+      "symbol": "SPY",
+      "expiration": "2026-11-06",
+      "dte": 1,
+      "legs": [
+        {
+          "contract": "SPY261106P00090000",
+          "type": "Put",
+          "strike": 90,
+          "bid": 0.49,
+          "ask": 0.5,
+          "bid_timestamp": "2026-11-05T15:00:00+00:00",
+          "ask_timestamp": "2026-11-05T15:00:00+00:00",
+          "volume": 10,
+          "open_interest": 20,
+          "bid_size": 10,
+          "ask_size": 10,
+          "status": "fresh",
+          "quote_age_seconds": 0.0,
+          "qty": 1,
+          "price": 0.5,
+          "expiration": "2026-11-06"
+        },
+        {
+          "contract": "SPY261106P00095000",
+          "type": "Put",
+          "strike": 95,
+          "bid": 1.5,
+          "ask": 1.51,
+          "bid_timestamp": "2026-11-05T15:00:00+00:00",
+          "ask_timestamp": "2026-11-05T15:00:00+00:00",
+          "volume": 10,
+          "open_interest": 20,
+          "bid_size": 10,
+          "ask_size": 10,
+          "status": "fresh",
+          "quote_age_seconds": 0.0,
+          "qty": -1,
+          "price": 1.5,
+          "expiration": "2026-11-06"
+        },
+        {
+          "contract": "SPY261106C00105000",
+          "type": "Call",
+          "strike": 105,
+          "bid": 1.5,
+          "ask": 1.51,
+          "bid_timestamp": "2026-11-05T15:00:00+00:00",
+          "ask_timestamp": "2026-11-05T15:00:00+00:00",
+          "volume": 10,
+          "open_interest": 20,
+          "bid_size": 10,
+          "ask_size": 10,
+          "status": "fresh",
+          "quote_age_seconds": 0.0,
+          "qty": -1,
+          "price": 1.5,
+          "expiration": "2026-11-06"
+        },
+        {
+          "contract": "SPY261106C00110000",
+          "type": "Call",
+          "strike": 110,
+          "bid": 0.49,
+          "ask": 0.5,
+          "bid_timestamp": "2026-11-05T15:00:00+00:00",
+          "ask_timestamp": "2026-11-05T15:00:00+00:00",
+          "volume": 10,
+          "open_interest": 20,
+          "bid_size": 10,
+          "ask_size": 10,
+          "status": "fresh",
+          "quote_age_seconds": 0.0,
+          "qty": 1,
+          "price": 0.5,
+          "expiration": "2026-11-06"
+        }
+      ],
+      "contract_multiplier": 100,
+      "total_contracts": 4,
+      "evaluated_at": "2026-11-05T15:00:00+00:00",
+      "retrieved_at": "2026-11-05T15:00:00+00:00",
+      "oldest_quote_age_seconds": 0.0,
+      "entry_premium": 200.0,
+      "entry_fees": 2.6,
+      "net_cash": 197.4,
+      "entry_debit": 0,
+      "entry_credit": 197.4,
+      "max_profit": 197.4,
+      "profit_unbounded": false,
+      "max_loss": 302.6,
+      "loss_unbounded": false,
+      "capital_at_risk": 302.6,
+      "return_on_max_risk": 0.6523463317911434,
+      "breakevens": [
+        93.026,
+        106.974
+      ],
+      "payoff": [
+        {
+          "terminal_price": 87.0,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 87.1,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 87.2,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 87.3,
+          "pnl": -302.5999999999999
+        },
+        {
+          "terminal_price": 87.4,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 87.5,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 87.6,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 87.7,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 87.8,
+          "pnl": -302.5999999999999
+        },
+        {
+          "terminal_price": 87.9,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 88.0,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 88.1,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 88.2,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 88.3,
+          "pnl": -302.5999999999999
+        },
+        {
+          "terminal_price": 88.4,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 88.5,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 88.6,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 88.7,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 88.8,
+          "pnl": -302.5999999999999
+        },
+        {
+          "terminal_price": 88.9,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 89.0,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 89.1,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 89.2,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 89.3,
+          "pnl": -302.5999999999999
+        },
+        {
+          "terminal_price": 89.4,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 89.5,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 89.6,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 89.7,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 89.8,
+          "pnl": -302.5999999999999
+        },
+        {
+          "terminal_price": 89.9,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 90.0,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 90.1,
+          "pnl": -292.6000000000006
+        },
+        {
+          "terminal_price": 90.2,
+          "pnl": -282.5999999999997
+        },
+        {
+          "terminal_price": 90.3,
+          "pnl": -272.60000000000025
+        },
+        {
+          "terminal_price": 90.4,
+          "pnl": -262.59999999999945
+        },
+        {
+          "terminal_price": 90.5,
+          "pnl": -252.6
+        },
+        {
+          "terminal_price": 90.6,
+          "pnl": -242.60000000000056
+        },
+        {
+          "terminal_price": 90.7,
+          "pnl": -232.5999999999997
+        },
+        {
+          "terminal_price": 90.8,
+          "pnl": -222.60000000000028
+        },
+        {
+          "terminal_price": 90.9,
+          "pnl": -212.59999999999943
+        },
+        {
+          "terminal_price": 91.0,
+          "pnl": -202.6
+        },
+        {
+          "terminal_price": 91.1,
+          "pnl": -192.60000000000056
+        },
+        {
+          "terminal_price": 91.2,
+          "pnl": -182.5999999999997
+        },
+        {
+          "terminal_price": 91.3,
+          "pnl": -172.60000000000028
+        },
+        {
+          "terminal_price": 91.4,
+          "pnl": -162.59999999999943
+        },
+        {
+          "terminal_price": 91.5,
+          "pnl": -152.6
+        },
+        {
+          "terminal_price": 91.513,
+          "pnl": -151.29999999999947
+        },
+        {
+          "terminal_price": 91.6,
+          "pnl": -142.60000000000056
+        },
+        {
+          "terminal_price": 91.7,
+          "pnl": -132.5999999999997
+        },
+        {
+          "terminal_price": 91.8,
+          "pnl": -122.60000000000028
+        },
+        {
+          "terminal_price": 91.9,
+          "pnl": -112.59999999999943
+        },
+        {
+          "terminal_price": 92.0,
+          "pnl": -102.6
+        },
+        {
+          "terminal_price": 92.1,
+          "pnl": -92.60000000000056
+        },
+        {
+          "terminal_price": 92.2,
+          "pnl": -82.59999999999971
+        },
+        {
+          "terminal_price": 92.3,
+          "pnl": -72.60000000000028
+        },
+        {
+          "terminal_price": 92.4,
+          "pnl": -62.599999999999426
+        },
+        {
+          "terminal_price": 92.5,
+          "pnl": -52.599999999999994
+        },
+        {
+          "terminal_price": 92.6,
+          "pnl": -42.60000000000056
+        },
+        {
+          "terminal_price": 92.7,
+          "pnl": -32.59999999999971
+        },
+        {
+          "terminal_price": 92.8,
+          "pnl": -22.60000000000028
+        },
+        {
+          "terminal_price": 92.9,
+          "pnl": -12.599999999999426
+        },
+        {
+          "terminal_price": 93.0,
+          "pnl": -2.5999999999999943
+        },
+        {
+          "terminal_price": 93.026,
+          "pnl": -3.694822225952521e-13
+        },
+        {
+          "terminal_price": 93.1,
+          "pnl": 7.399999999999437
+        },
+        {
+          "terminal_price": 93.2,
+          "pnl": 17.40000000000029
+        },
+        {
+          "terminal_price": 93.3,
+          "pnl": 27.39999999999972
+        },
+        {
+          "terminal_price": 93.4,
+          "pnl": 37.400000000000574
+        },
+        {
+          "terminal_price": 93.5,
+          "pnl": 47.400000000000006
+        },
+        {
+          "terminal_price": 93.6,
+          "pnl": 57.39999999999944
+        },
+        {
+          "terminal_price": 93.7,
+          "pnl": 67.40000000000029
+        },
+        {
+          "terminal_price": 93.8,
+          "pnl": 77.39999999999972
+        },
+        {
+          "terminal_price": 93.9,
+          "pnl": 87.40000000000057
+        },
+        {
+          "terminal_price": 94.0,
+          "pnl": 97.4
+        },
+        {
+          "terminal_price": 94.013,
+          "pnl": 98.70000000000053
+        },
+        {
+          "terminal_price": 94.1,
+          "pnl": 107.39999999999944
+        },
+        {
+          "terminal_price": 94.2,
+          "pnl": 117.40000000000029
+        },
+        {
+          "terminal_price": 94.3,
+          "pnl": 127.39999999999972
+        },
+        {
+          "terminal_price": 94.4,
+          "pnl": 137.40000000000057
+        },
+        {
+          "terminal_price": 94.5,
+          "pnl": 147.4
+        },
+        {
+          "terminal_price": 94.6,
+          "pnl": 157.39999999999944
+        },
+        {
+          "terminal_price": 94.7,
+          "pnl": 167.4000000000003
+        },
+        {
+          "terminal_price": 94.8,
+          "pnl": 177.39999999999972
+        },
+        {
+          "terminal_price": 94.9,
+          "pnl": 187.40000000000057
+        },
+        {
+          "terminal_price": 95.0,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 95.1,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 95.2,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 95.3,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 95.4,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 95.5,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 95.6,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 95.7,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 95.8,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 95.9,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 96.0,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 96.1,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 96.2,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 96.3,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 96.4,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 96.5,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 96.6,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 96.7,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 96.8,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 96.9,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 97.0,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 97.1,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 97.2,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 97.3,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 97.4,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 97.5,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 97.6,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 97.7,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 97.8,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 97.9,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 98.0,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 98.1,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 98.2,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 98.3,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 98.4,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 98.5,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 98.6,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 98.7,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 98.8,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 98.9,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 99.0,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 99.1,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 99.2,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 99.3,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 99.4,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 99.5,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 99.6,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 99.7,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 99.8,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 99.9,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 100.0,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 100.1,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 100.2,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 100.3,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 100.4,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 100.5,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 100.6,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 100.7,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 100.8,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 100.9,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 101.0,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 101.1,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 101.2,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 101.3,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 101.4,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 101.5,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 101.6,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 101.7,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 101.8,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 101.9,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 102.0,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 102.1,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 102.2,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 102.3,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 102.4,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 102.5,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 102.6,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 102.7,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 102.8,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 102.9,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 103.0,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 103.1,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 103.2,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 103.3,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 103.4,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 103.5,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 103.6,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 103.7,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 103.8,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 103.9,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 104.0,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 104.1,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 104.2,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 104.3,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 104.4,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 104.5,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 104.6,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 104.7,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 104.8,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 104.9,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 105.0,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 105.1,
+          "pnl": 187.40000000000057
+        },
+        {
+          "terminal_price": 105.2,
+          "pnl": 177.39999999999972
+        },
+        {
+          "terminal_price": 105.3,
+          "pnl": 167.4000000000003
+        },
+        {
+          "terminal_price": 105.4,
+          "pnl": 157.39999999999944
+        },
+        {
+          "terminal_price": 105.5,
+          "pnl": 147.4
+        },
+        {
+          "terminal_price": 105.6,
+          "pnl": 137.40000000000057
+        },
+        {
+          "terminal_price": 105.7,
+          "pnl": 127.39999999999972
+        },
+        {
+          "terminal_price": 105.8,
+          "pnl": 117.40000000000029
+        },
+        {
+          "terminal_price": 105.9,
+          "pnl": 107.39999999999944
+        },
+        {
+          "terminal_price": 105.987,
+          "pnl": 98.70000000000053
+        },
+        {
+          "terminal_price": 106.0,
+          "pnl": 97.4
+        },
+        {
+          "terminal_price": 106.1,
+          "pnl": 87.40000000000057
+        },
+        {
+          "terminal_price": 106.2,
+          "pnl": 77.39999999999972
+        },
+        {
+          "terminal_price": 106.3,
+          "pnl": 67.40000000000029
+        },
+        {
+          "terminal_price": 106.4,
+          "pnl": 57.39999999999944
+        },
+        {
+          "terminal_price": 106.5,
+          "pnl": 47.400000000000006
+        },
+        {
+          "terminal_price": 106.6,
+          "pnl": 37.400000000000574
+        },
+        {
+          "terminal_price": 106.7,
+          "pnl": 27.39999999999972
+        },
+        {
+          "terminal_price": 106.8,
+          "pnl": 17.40000000000029
+        },
+        {
+          "terminal_price": 106.9,
+          "pnl": 7.399999999999437
+        },
+        {
+          "terminal_price": 106.974,
+          "pnl": -3.694822225952521e-13
+        },
+        {
+          "terminal_price": 107.0,
+          "pnl": -2.5999999999999943
+        },
+        {
+          "terminal_price": 107.1,
+          "pnl": -12.599999999999426
+        },
+        {
+          "terminal_price": 107.2,
+          "pnl": -22.60000000000028
+        },
+        {
+          "terminal_price": 107.3,
+          "pnl": -32.59999999999971
+        },
+        {
+          "terminal_price": 107.4,
+          "pnl": -42.60000000000056
+        },
+        {
+          "terminal_price": 107.5,
+          "pnl": -52.599999999999994
+        },
+        {
+          "terminal_price": 107.6,
+          "pnl": -62.599999999999426
+        },
+        {
+          "terminal_price": 107.7,
+          "pnl": -72.60000000000028
+        },
+        {
+          "terminal_price": 107.8,
+          "pnl": -82.59999999999971
+        },
+        {
+          "terminal_price": 107.9,
+          "pnl": -92.60000000000056
+        },
+        {
+          "terminal_price": 108.0,
+          "pnl": -102.6
+        },
+        {
+          "terminal_price": 108.1,
+          "pnl": -112.59999999999943
+        },
+        {
+          "terminal_price": 108.2,
+          "pnl": -122.60000000000028
+        },
+        {
+          "terminal_price": 108.3,
+          "pnl": -132.5999999999997
+        },
+        {
+          "terminal_price": 108.4,
+          "pnl": -142.60000000000056
+        },
+        {
+          "terminal_price": 108.487,
+          "pnl": -151.29999999999947
+        },
+        {
+          "terminal_price": 108.5,
+          "pnl": -152.6
+        },
+        {
+          "terminal_price": 108.6,
+          "pnl": -162.59999999999943
+        },
+        {
+          "terminal_price": 108.7,
+          "pnl": -172.60000000000028
+        },
+        {
+          "terminal_price": 108.8,
+          "pnl": -182.5999999999997
+        },
+        {
+          "terminal_price": 108.9,
+          "pnl": -192.60000000000056
+        },
+        {
+          "terminal_price": 109.0,
+          "pnl": -202.6
+        },
+        {
+          "terminal_price": 109.1,
+          "pnl": -212.59999999999943
+        },
+        {
+          "terminal_price": 109.2,
+          "pnl": -222.60000000000028
+        },
+        {
+          "terminal_price": 109.3,
+          "pnl": -232.5999999999997
+        },
+        {
+          "terminal_price": 109.4,
+          "pnl": -242.60000000000056
+        },
+        {
+          "terminal_price": 109.5,
+          "pnl": -252.6
+        },
+        {
+          "terminal_price": 109.6,
+          "pnl": -262.59999999999945
+        },
+        {
+          "terminal_price": 109.7,
+          "pnl": -272.60000000000025
+        },
+        {
+          "terminal_price": 109.8,
+          "pnl": -282.5999999999997
+        },
+        {
+          "terminal_price": 109.9,
+          "pnl": -292.6000000000006
+        },
+        {
+          "terminal_price": 110.0,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 110.1,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 110.2,
+          "pnl": -302.5999999999999
+        },
+        {
+          "terminal_price": 110.3,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 110.4,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 110.5,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 110.6,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 110.7,
+          "pnl": -302.5999999999999
+        },
+        {
+          "terminal_price": 110.8,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 110.9,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 111.0,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 111.1,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 111.2,
+          "pnl": -302.5999999999999
+        },
+        {
+          "terminal_price": 111.3,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 111.4,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 111.5,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 111.6,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 111.7,
+          "pnl": -302.5999999999999
+        },
+        {
+          "terminal_price": 111.8,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 111.9,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 112.0,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 112.1,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 112.2,
+          "pnl": -302.5999999999999
+        },
+        {
+          "terminal_price": 112.3,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 112.4,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 112.5,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 112.6,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 112.7,
+          "pnl": -302.5999999999999
+        },
+        {
+          "terminal_price": 112.8,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 112.9,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 113.0,
+          "pnl": -302.6
+        }
+      ],
+      "liquidity_warnings": [],
+      "greek_exposure": {
+        "delta": null,
+        "gamma": null,
+        "theta": null,
+        "vega": null,
+        "rho": null
+      },
+      "capital_treatment": "defined_risk_with_assignment",
+      "assumptions": [
+        "Buy at ask and sell at bid; displayed quotes do not guarantee fills.",
+        "Entry fees charged once per absolute contract; exit fees and exercise/assignment charges excluded.",
+        "Same-expiration standard 100-share contracts; payoff assumes all legs held through expiration.",
+        "Theoretical capital at risk does not establish brokerage buying power.",
+        "Greeks are provider observations; future volatility and expiration sensitivity may change.",
+        "Event risk evidence unavailable. Payoff validity does not establish a trading edge."
+      ]
+    },
+    "chain": {
+      "symbol": "SPY",
+      "expiration": "2026-11-06",
+      "calls": [
+        {
+          "contract": "SPY261106C00105000",
+          "type": "Call",
+          "strike": 105,
+          "bid": 1.5,
+          "ask": 1.51,
+          "bid_timestamp": "2026-11-05T15:00:00+00:00",
+          "ask_timestamp": "2026-11-05T15:00:00+00:00",
+          "volume": 10,
+          "open_interest": 20,
+          "bid_size": 10,
+          "ask_size": 10,
+          "status": "fresh",
+          "quote_age_seconds": 0.0
+        },
+        {
+          "contract": "SPY261106C00110000",
+          "type": "Call",
+          "strike": 110,
+          "bid": 0.49,
+          "ask": 0.5,
+          "bid_timestamp": "2026-11-05T15:00:00+00:00",
+          "ask_timestamp": "2026-11-05T15:00:00+00:00",
+          "volume": 10,
+          "open_interest": 20,
+          "bid_size": 10,
+          "ask_size": 10,
+          "status": "fresh",
+          "quote_age_seconds": 0.0
+        }
+      ],
+      "puts": [
+        {
+          "contract": "SPY261106P00090000",
+          "type": "Put",
+          "strike": 90,
+          "bid": 0.49,
+          "ask": 0.5,
+          "bid_timestamp": "2026-11-05T15:00:00+00:00",
+          "ask_timestamp": "2026-11-05T15:00:00+00:00",
+          "volume": 10,
+          "open_interest": 20,
+          "bid_size": 10,
+          "ask_size": 10,
+          "status": "fresh",
+          "quote_age_seconds": 0.0
+        },
+        {
+          "contract": "SPY261106P00095000",
+          "type": "Put",
+          "strike": 95,
+          "bid": 1.5,
+          "ask": 1.51,
+          "bid_timestamp": "2026-11-05T15:00:00+00:00",
+          "ask_timestamp": "2026-11-05T15:00:00+00:00",
+          "volume": 10,
+          "open_interest": 20,
+          "bid_size": 10,
+          "ask_size": 10,
+          "status": "fresh",
+          "quote_age_seconds": 0.0
+        }
+      ]
+    }
+  },
+  {
+    "request": {
+      "strategy": "iron_butterfly",
+      "legs": [
+        {
+          "contract": "SPY261106P00095000",
+          "qty": 1
+        },
+        {
+          "contract": "SPY261106P00100000",
+          "qty": -1
+        },
+        {
+          "contract": "SPY261106C00100000",
+          "qty": -1
+        },
+        {
+          "contract": "SPY261106C00105000",
+          "qty": 1
+        }
+      ]
+    },
+    "result": {
+      "strategy": "iron_butterfly",
+      "geometry": "iron_butterfly",
+      "direction": "neutral",
+      "status": "available",
+      "eligible_for_analysis": true,
+      "reason": null,
+      "limit_breaches": [],
+      "symbol": "SPY",
+      "expiration": "2026-11-06",
+      "dte": 1,
+      "legs": [
+        {
+          "contract": "SPY261106P00095000",
+          "type": "Put",
+          "strike": 95,
+          "bid": 0.49,
+          "ask": 0.5,
+          "bid_timestamp": "2026-11-05T15:00:00+00:00",
+          "ask_timestamp": "2026-11-05T15:00:00+00:00",
+          "volume": 10,
+          "open_interest": 20,
+          "bid_size": 10,
+          "ask_size": 10,
+          "status": "fresh",
+          "quote_age_seconds": 0.0,
+          "qty": 1,
+          "price": 0.5,
+          "expiration": "2026-11-06"
+        },
+        {
+          "contract": "SPY261106P00100000",
+          "type": "Put",
+          "strike": 100,
+          "bid": 1.5,
+          "ask": 1.51,
+          "bid_timestamp": "2026-11-05T15:00:00+00:00",
+          "ask_timestamp": "2026-11-05T15:00:00+00:00",
+          "volume": 10,
+          "open_interest": 20,
+          "bid_size": 10,
+          "ask_size": 10,
+          "status": "fresh",
+          "quote_age_seconds": 0.0,
+          "qty": -1,
+          "price": 1.5,
+          "expiration": "2026-11-06"
+        },
+        {
+          "contract": "SPY261106C00100000",
+          "type": "Call",
+          "strike": 100,
+          "bid": 1.5,
+          "ask": 1.51,
+          "bid_timestamp": "2026-11-05T15:00:00+00:00",
+          "ask_timestamp": "2026-11-05T15:00:00+00:00",
+          "volume": 10,
+          "open_interest": 20,
+          "bid_size": 10,
+          "ask_size": 10,
+          "status": "fresh",
+          "quote_age_seconds": 0.0,
+          "qty": -1,
+          "price": 1.5,
+          "expiration": "2026-11-06"
+        },
+        {
+          "contract": "SPY261106C00105000",
+          "type": "Call",
+          "strike": 105,
+          "bid": 0.49,
+          "ask": 0.5,
+          "bid_timestamp": "2026-11-05T15:00:00+00:00",
+          "ask_timestamp": "2026-11-05T15:00:00+00:00",
+          "volume": 10,
+          "open_interest": 20,
+          "bid_size": 10,
+          "ask_size": 10,
+          "status": "fresh",
+          "quote_age_seconds": 0.0,
+          "qty": 1,
+          "price": 0.5,
+          "expiration": "2026-11-06"
+        }
+      ],
+      "contract_multiplier": 100,
+      "total_contracts": 4,
+      "evaluated_at": "2026-11-05T15:00:00+00:00",
+      "retrieved_at": "2026-11-05T15:00:00+00:00",
+      "oldest_quote_age_seconds": 0.0,
+      "entry_premium": 200.0,
+      "entry_fees": 2.6,
+      "net_cash": 197.4,
+      "entry_debit": 0,
+      "entry_credit": 197.4,
+      "max_profit": 197.4,
+      "profit_unbounded": false,
+      "max_loss": 302.6,
+      "loss_unbounded": false,
+      "capital_at_risk": 302.6,
+      "return_on_max_risk": 0.6523463317911434,
+      "breakevens": [
+        98.026,
+        101.974
+      ],
+      "payoff": [
+        {
+          "terminal_price": 93.5,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 93.6,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 93.7,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 93.8,
+          "pnl": -302.5999999999999
+        },
+        {
+          "terminal_price": 93.9,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 94.0,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 94.1,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 94.2,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 94.3,
+          "pnl": -302.5999999999999
+        },
+        {
+          "terminal_price": 94.4,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 94.5,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 94.6,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 94.7,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 94.8,
+          "pnl": -302.5999999999999
+        },
+        {
+          "terminal_price": 94.9,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 95.0,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 95.1,
+          "pnl": -292.6000000000006
+        },
+        {
+          "terminal_price": 95.2,
+          "pnl": -282.5999999999997
+        },
+        {
+          "terminal_price": 95.3,
+          "pnl": -272.60000000000025
+        },
+        {
+          "terminal_price": 95.4,
+          "pnl": -262.59999999999945
+        },
+        {
+          "terminal_price": 95.5,
+          "pnl": -252.6
+        },
+        {
+          "terminal_price": 95.6,
+          "pnl": -242.60000000000056
+        },
+        {
+          "terminal_price": 95.7,
+          "pnl": -232.5999999999997
+        },
+        {
+          "terminal_price": 95.8,
+          "pnl": -222.60000000000028
+        },
+        {
+          "terminal_price": 95.9,
+          "pnl": -212.59999999999943
+        },
+        {
+          "terminal_price": 96.0,
+          "pnl": -202.6
+        },
+        {
+          "terminal_price": 96.1,
+          "pnl": -192.60000000000056
+        },
+        {
+          "terminal_price": 96.2,
+          "pnl": -182.5999999999997
+        },
+        {
+          "terminal_price": 96.3,
+          "pnl": -172.60000000000028
+        },
+        {
+          "terminal_price": 96.4,
+          "pnl": -162.59999999999943
+        },
+        {
+          "terminal_price": 96.5,
+          "pnl": -152.6
+        },
+        {
+          "terminal_price": 96.513,
+          "pnl": -151.29999999999947
+        },
+        {
+          "terminal_price": 96.6,
+          "pnl": -142.60000000000056
+        },
+        {
+          "terminal_price": 96.7,
+          "pnl": -132.5999999999997
+        },
+        {
+          "terminal_price": 96.8,
+          "pnl": -122.60000000000028
+        },
+        {
+          "terminal_price": 96.9,
+          "pnl": -112.59999999999943
+        },
+        {
+          "terminal_price": 97.0,
+          "pnl": -102.6
+        },
+        {
+          "terminal_price": 97.1,
+          "pnl": -92.60000000000056
+        },
+        {
+          "terminal_price": 97.2,
+          "pnl": -82.59999999999971
+        },
+        {
+          "terminal_price": 97.3,
+          "pnl": -72.60000000000028
+        },
+        {
+          "terminal_price": 97.4,
+          "pnl": -62.599999999999426
+        },
+        {
+          "terminal_price": 97.5,
+          "pnl": -52.599999999999994
+        },
+        {
+          "terminal_price": 97.6,
+          "pnl": -42.60000000000056
+        },
+        {
+          "terminal_price": 97.7,
+          "pnl": -32.59999999999971
+        },
+        {
+          "terminal_price": 97.8,
+          "pnl": -22.60000000000028
+        },
+        {
+          "terminal_price": 97.9,
+          "pnl": -12.599999999999426
+        },
+        {
+          "terminal_price": 98.0,
+          "pnl": -2.5999999999999943
+        },
+        {
+          "terminal_price": 98.026,
+          "pnl": -3.694822225952521e-13
+        },
+        {
+          "terminal_price": 98.1,
+          "pnl": 7.399999999999437
+        },
+        {
+          "terminal_price": 98.2,
+          "pnl": 17.40000000000029
+        },
+        {
+          "terminal_price": 98.3,
+          "pnl": 27.39999999999972
+        },
+        {
+          "terminal_price": 98.4,
+          "pnl": 37.400000000000574
+        },
+        {
+          "terminal_price": 98.5,
+          "pnl": 47.400000000000006
+        },
+        {
+          "terminal_price": 98.6,
+          "pnl": 57.39999999999944
+        },
+        {
+          "terminal_price": 98.7,
+          "pnl": 67.40000000000029
+        },
+        {
+          "terminal_price": 98.8,
+          "pnl": 77.39999999999972
+        },
+        {
+          "terminal_price": 98.9,
+          "pnl": 87.40000000000057
+        },
+        {
+          "terminal_price": 99.0,
+          "pnl": 97.4
+        },
+        {
+          "terminal_price": 99.013,
+          "pnl": 98.70000000000053
+        },
+        {
+          "terminal_price": 99.1,
+          "pnl": 107.39999999999944
+        },
+        {
+          "terminal_price": 99.2,
+          "pnl": 117.40000000000029
+        },
+        {
+          "terminal_price": 99.3,
+          "pnl": 127.39999999999972
+        },
+        {
+          "terminal_price": 99.4,
+          "pnl": 137.40000000000057
+        },
+        {
+          "terminal_price": 99.5,
+          "pnl": 147.4
+        },
+        {
+          "terminal_price": 99.6,
+          "pnl": 157.39999999999944
+        },
+        {
+          "terminal_price": 99.7,
+          "pnl": 167.4000000000003
+        },
+        {
+          "terminal_price": 99.8,
+          "pnl": 177.39999999999972
+        },
+        {
+          "terminal_price": 99.9,
+          "pnl": 187.40000000000057
+        },
+        {
+          "terminal_price": 100.0,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 100.1,
+          "pnl": 187.40000000000057
+        },
+        {
+          "terminal_price": 100.2,
+          "pnl": 177.39999999999972
+        },
+        {
+          "terminal_price": 100.3,
+          "pnl": 167.4000000000003
+        },
+        {
+          "terminal_price": 100.4,
+          "pnl": 157.39999999999944
+        },
+        {
+          "terminal_price": 100.5,
+          "pnl": 147.4
+        },
+        {
+          "terminal_price": 100.6,
+          "pnl": 137.40000000000057
+        },
+        {
+          "terminal_price": 100.7,
+          "pnl": 127.39999999999972
+        },
+        {
+          "terminal_price": 100.8,
+          "pnl": 117.40000000000029
+        },
+        {
+          "terminal_price": 100.9,
+          "pnl": 107.39999999999944
+        },
+        {
+          "terminal_price": 100.987,
+          "pnl": 98.70000000000053
+        },
+        {
+          "terminal_price": 101.0,
+          "pnl": 97.4
+        },
+        {
+          "terminal_price": 101.1,
+          "pnl": 87.40000000000057
+        },
+        {
+          "terminal_price": 101.2,
+          "pnl": 77.39999999999972
+        },
+        {
+          "terminal_price": 101.3,
+          "pnl": 67.40000000000029
+        },
+        {
+          "terminal_price": 101.4,
+          "pnl": 57.39999999999944
+        },
+        {
+          "terminal_price": 101.5,
+          "pnl": 47.400000000000006
+        },
+        {
+          "terminal_price": 101.6,
+          "pnl": 37.400000000000574
+        },
+        {
+          "terminal_price": 101.7,
+          "pnl": 27.39999999999972
+        },
+        {
+          "terminal_price": 101.8,
+          "pnl": 17.40000000000029
+        },
+        {
+          "terminal_price": 101.9,
+          "pnl": 7.399999999999437
+        },
+        {
+          "terminal_price": 101.974,
+          "pnl": -3.694822225952521e-13
+        },
+        {
+          "terminal_price": 102.0,
+          "pnl": -2.5999999999999943
+        },
+        {
+          "terminal_price": 102.1,
+          "pnl": -12.599999999999426
+        },
+        {
+          "terminal_price": 102.2,
+          "pnl": -22.60000000000028
+        },
+        {
+          "terminal_price": 102.3,
+          "pnl": -32.59999999999971
+        },
+        {
+          "terminal_price": 102.4,
+          "pnl": -42.60000000000056
+        },
+        {
+          "terminal_price": 102.5,
+          "pnl": -52.599999999999994
+        },
+        {
+          "terminal_price": 102.6,
+          "pnl": -62.599999999999426
+        },
+        {
+          "terminal_price": 102.7,
+          "pnl": -72.60000000000028
+        },
+        {
+          "terminal_price": 102.8,
+          "pnl": -82.59999999999971
+        },
+        {
+          "terminal_price": 102.9,
+          "pnl": -92.60000000000056
+        },
+        {
+          "terminal_price": 103.0,
+          "pnl": -102.6
+        },
+        {
+          "terminal_price": 103.1,
+          "pnl": -112.59999999999943
+        },
+        {
+          "terminal_price": 103.2,
+          "pnl": -122.60000000000028
+        },
+        {
+          "terminal_price": 103.3,
+          "pnl": -132.5999999999997
+        },
+        {
+          "terminal_price": 103.4,
+          "pnl": -142.60000000000056
+        },
+        {
+          "terminal_price": 103.487,
+          "pnl": -151.29999999999947
+        },
+        {
+          "terminal_price": 103.5,
+          "pnl": -152.6
+        },
+        {
+          "terminal_price": 103.6,
+          "pnl": -162.59999999999943
+        },
+        {
+          "terminal_price": 103.7,
+          "pnl": -172.60000000000028
+        },
+        {
+          "terminal_price": 103.8,
+          "pnl": -182.5999999999997
+        },
+        {
+          "terminal_price": 103.9,
+          "pnl": -192.60000000000056
+        },
+        {
+          "terminal_price": 104.0,
+          "pnl": -202.6
+        },
+        {
+          "terminal_price": 104.1,
+          "pnl": -212.59999999999943
+        },
+        {
+          "terminal_price": 104.2,
+          "pnl": -222.60000000000028
+        },
+        {
+          "terminal_price": 104.3,
+          "pnl": -232.5999999999997
+        },
+        {
+          "terminal_price": 104.4,
+          "pnl": -242.60000000000056
+        },
+        {
+          "terminal_price": 104.5,
+          "pnl": -252.6
+        },
+        {
+          "terminal_price": 104.6,
+          "pnl": -262.59999999999945
+        },
+        {
+          "terminal_price": 104.7,
+          "pnl": -272.60000000000025
+        },
+        {
+          "terminal_price": 104.8,
+          "pnl": -282.5999999999997
+        },
+        {
+          "terminal_price": 104.9,
+          "pnl": -292.6000000000006
+        },
+        {
+          "terminal_price": 105.0,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 105.1,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 105.2,
+          "pnl": -302.5999999999999
+        },
+        {
+          "terminal_price": 105.3,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 105.4,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 105.5,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 105.6,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 105.7,
+          "pnl": -302.5999999999999
+        },
+        {
+          "terminal_price": 105.8,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 105.9,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 106.0,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 106.1,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 106.2,
+          "pnl": -302.5999999999999
+        },
+        {
+          "terminal_price": 106.3,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 106.4,
+          "pnl": -302.6
+        },
+        {
+          "terminal_price": 106.5,
+          "pnl": -302.6
+        }
+      ],
+      "liquidity_warnings": [],
+      "greek_exposure": {
+        "delta": null,
+        "gamma": null,
+        "theta": null,
+        "vega": null,
+        "rho": null
+      },
+      "capital_treatment": "defined_risk_with_assignment",
+      "assumptions": [
+        "Buy at ask and sell at bid; displayed quotes do not guarantee fills.",
+        "Entry fees charged once per absolute contract; exit fees and exercise/assignment charges excluded.",
+        "Same-expiration standard 100-share contracts; payoff assumes all legs held through expiration.",
+        "Theoretical capital at risk does not establish brokerage buying power.",
+        "Greeks are provider observations; future volatility and expiration sensitivity may change.",
+        "Event risk evidence unavailable. Payoff validity does not establish a trading edge."
+      ]
+    },
+    "chain": {
+      "symbol": "SPY",
+      "expiration": "2026-11-06",
+      "calls": [
+        {
+          "contract": "SPY261106C00100000",
+          "type": "Call",
+          "strike": 100,
+          "bid": 1.5,
+          "ask": 1.51,
+          "bid_timestamp": "2026-11-05T15:00:00+00:00",
+          "ask_timestamp": "2026-11-05T15:00:00+00:00",
+          "volume": 10,
+          "open_interest": 20,
+          "bid_size": 10,
+          "ask_size": 10,
+          "status": "fresh",
+          "quote_age_seconds": 0.0
+        },
+        {
+          "contract": "SPY261106C00105000",
+          "type": "Call",
+          "strike": 105,
+          "bid": 0.49,
+          "ask": 0.5,
+          "bid_timestamp": "2026-11-05T15:00:00+00:00",
+          "ask_timestamp": "2026-11-05T15:00:00+00:00",
+          "volume": 10,
+          "open_interest": 20,
+          "bid_size": 10,
+          "ask_size": 10,
+          "status": "fresh",
+          "quote_age_seconds": 0.0
+        }
+      ],
+      "puts": [
+        {
+          "contract": "SPY261106P00095000",
+          "type": "Put",
+          "strike": 95,
+          "bid": 0.49,
+          "ask": 0.5,
+          "bid_timestamp": "2026-11-05T15:00:00+00:00",
+          "ask_timestamp": "2026-11-05T15:00:00+00:00",
+          "volume": 10,
+          "open_interest": 20,
+          "bid_size": 10,
+          "ask_size": 10,
+          "status": "fresh",
+          "quote_age_seconds": 0.0
+        },
+        {
+          "contract": "SPY261106P00100000",
+          "type": "Put",
+          "strike": 100,
+          "bid": 1.5,
+          "ask": 1.51,
+          "bid_timestamp": "2026-11-05T15:00:00+00:00",
+          "ask_timestamp": "2026-11-05T15:00:00+00:00",
+          "volume": 10,
+          "open_interest": 20,
+          "bid_size": 10,
+          "ask_size": 10,
+          "status": "fresh",
+          "quote_age_seconds": 0.0
+        }
+      ]
+    }
+  },
+  {
+    "request": {
+      "strategy": "long_call_butterfly",
+      "legs": [
+        {
+          "contract": "SPY261106C00095000",
+          "qty": 1
+        },
+        {
+          "contract": "SPY261106C00100000",
+          "qty": -2
+        },
+        {
+          "contract": "SPY261106C00105000",
+          "qty": 1
+        }
+      ]
+    },
+    "result": {
+      "strategy": "long_call_butterfly",
+      "geometry": "long_call_butterfly",
+      "direction": "neutral",
+      "status": "available",
+      "eligible_for_analysis": true,
+      "reason": null,
+      "limit_breaches": [],
+      "symbol": "SPY",
+      "expiration": "2026-11-06",
+      "dte": 1,
+      "legs": [
+        {
+          "contract": "SPY261106C00095000",
+          "type": "Call",
+          "strike": 95,
+          "bid": 5.99,
+          "ask": 6,
+          "bid_timestamp": "2026-11-05T15:00:00+00:00",
+          "ask_timestamp": "2026-11-05T15:00:00+00:00",
+          "volume": 10,
+          "open_interest": 20,
+          "bid_size": 10,
+          "ask_size": 10,
+          "status": "fresh",
+          "quote_age_seconds": 0.0,
+          "qty": 1,
+          "price": 6,
+          "expiration": "2026-11-06"
+        },
+        {
+          "contract": "SPY261106C00100000",
+          "type": "Call",
+          "strike": 100,
+          "bid": 3,
+          "ask": 3.01,
+          "bid_timestamp": "2026-11-05T15:00:00+00:00",
+          "ask_timestamp": "2026-11-05T15:00:00+00:00",
+          "volume": 10,
+          "open_interest": 20,
+          "bid_size": 10,
+          "ask_size": 10,
+          "status": "fresh",
+          "quote_age_seconds": 0.0,
+          "qty": -2,
+          "price": 3,
+          "expiration": "2026-11-06"
+        },
+        {
+          "contract": "SPY261106C00105000",
+          "type": "Call",
+          "strike": 105,
+          "bid": 0.99,
+          "ask": 1,
+          "bid_timestamp": "2026-11-05T15:00:00+00:00",
+          "ask_timestamp": "2026-11-05T15:00:00+00:00",
+          "volume": 10,
+          "open_interest": 20,
+          "bid_size": 10,
+          "ask_size": 10,
+          "status": "fresh",
+          "quote_age_seconds": 0.0,
+          "qty": 1,
+          "price": 1,
+          "expiration": "2026-11-06"
+        }
+      ],
+      "contract_multiplier": 100,
+      "total_contracts": 4,
+      "evaluated_at": "2026-11-05T15:00:00+00:00",
+      "retrieved_at": "2026-11-05T15:00:00+00:00",
+      "oldest_quote_age_seconds": 0.0,
+      "entry_premium": -100.0,
+      "entry_fees": 2.6,
+      "net_cash": -102.6,
+      "entry_debit": 102.6,
+      "entry_credit": 0,
+      "max_profit": 397.4,
+      "profit_unbounded": false,
+      "max_loss": 102.6,
+      "loss_unbounded": false,
+      "capital_at_risk": 102.6,
+      "return_on_max_risk": 3.8732943469785575,
+      "breakevens": [
+        96.026,
+        103.974
+      ],
+      "payoff": [
+        {
+          "terminal_price": 93.5,
+          "pnl": -102.6
+        },
+        {
+          "terminal_price": 93.6,
+          "pnl": -102.6
+        },
+        {
+          "terminal_price": 93.7,
+          "pnl": -102.6
+        },
+        {
+          "terminal_price": 93.8,
+          "pnl": -102.6
+        },
+        {
+          "terminal_price": 93.9,
+          "pnl": -102.6
+        },
+        {
+          "terminal_price": 94.0,
+          "pnl": -102.6
+        },
+        {
+          "terminal_price": 94.1,
+          "pnl": -102.6
+        },
+        {
+          "terminal_price": 94.2,
+          "pnl": -102.6
+        },
+        {
+          "terminal_price": 94.3,
+          "pnl": -102.6
+        },
+        {
+          "terminal_price": 94.4,
+          "pnl": -102.6
+        },
+        {
+          "terminal_price": 94.5,
+          "pnl": -102.6
+        },
+        {
+          "terminal_price": 94.6,
+          "pnl": -102.6
+        },
+        {
+          "terminal_price": 94.7,
+          "pnl": -102.6
+        },
+        {
+          "terminal_price": 94.8,
+          "pnl": -102.6
+        },
+        {
+          "terminal_price": 94.9,
+          "pnl": -102.6
+        },
+        {
+          "terminal_price": 95.0,
+          "pnl": -102.6
+        },
+        {
+          "terminal_price": 95.1,
+          "pnl": -92.60000000000056
+        },
+        {
+          "terminal_price": 95.2,
+          "pnl": -82.59999999999971
+        },
+        {
+          "terminal_price": 95.3,
+          "pnl": -72.60000000000028
+        },
+        {
+          "terminal_price": 95.4,
+          "pnl": -62.599999999999426
+        },
+        {
+          "terminal_price": 95.5,
+          "pnl": -52.599999999999994
+        },
+        {
+          "terminal_price": 95.513,
+          "pnl": -51.29999999999947
+        },
+        {
+          "terminal_price": 95.6,
+          "pnl": -42.60000000000056
+        },
+        {
+          "terminal_price": 95.7,
+          "pnl": -32.59999999999971
+        },
+        {
+          "terminal_price": 95.8,
+          "pnl": -22.60000000000028
+        },
+        {
+          "terminal_price": 95.9,
+          "pnl": -12.599999999999426
+        },
+        {
+          "terminal_price": 96.0,
+          "pnl": -2.5999999999999943
+        },
+        {
+          "terminal_price": 96.026,
+          "pnl": -3.694822225952521e-13
+        },
+        {
+          "terminal_price": 96.1,
+          "pnl": 7.399999999999437
+        },
+        {
+          "terminal_price": 96.2,
+          "pnl": 17.40000000000029
+        },
+        {
+          "terminal_price": 96.3,
+          "pnl": 27.39999999999972
+        },
+        {
+          "terminal_price": 96.4,
+          "pnl": 37.400000000000574
+        },
+        {
+          "terminal_price": 96.5,
+          "pnl": 47.400000000000006
+        },
+        {
+          "terminal_price": 96.6,
+          "pnl": 57.39999999999944
+        },
+        {
+          "terminal_price": 96.7,
+          "pnl": 67.40000000000029
+        },
+        {
+          "terminal_price": 96.8,
+          "pnl": 77.39999999999972
+        },
+        {
+          "terminal_price": 96.9,
+          "pnl": 87.40000000000057
+        },
+        {
+          "terminal_price": 97.0,
+          "pnl": 97.4
+        },
+        {
+          "terminal_price": 97.1,
+          "pnl": 107.39999999999944
+        },
+        {
+          "terminal_price": 97.2,
+          "pnl": 117.40000000000029
+        },
+        {
+          "terminal_price": 97.3,
+          "pnl": 127.39999999999972
+        },
+        {
+          "terminal_price": 97.4,
+          "pnl": 137.40000000000057
+        },
+        {
+          "terminal_price": 97.5,
+          "pnl": 147.4
+        },
+        {
+          "terminal_price": 97.6,
+          "pnl": 157.39999999999944
+        },
+        {
+          "terminal_price": 97.7,
+          "pnl": 167.4000000000003
+        },
+        {
+          "terminal_price": 97.8,
+          "pnl": 177.39999999999972
+        },
+        {
+          "terminal_price": 97.9,
+          "pnl": 187.40000000000057
+        },
+        {
+          "terminal_price": 98.0,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 98.013,
+          "pnl": 198.70000000000053
+        },
+        {
+          "terminal_price": 98.1,
+          "pnl": 207.39999999999944
+        },
+        {
+          "terminal_price": 98.2,
+          "pnl": 217.4000000000003
+        },
+        {
+          "terminal_price": 98.3,
+          "pnl": 227.39999999999972
+        },
+        {
+          "terminal_price": 98.4,
+          "pnl": 237.40000000000057
+        },
+        {
+          "terminal_price": 98.5,
+          "pnl": 247.4
+        },
+        {
+          "terminal_price": 98.6,
+          "pnl": 257.3999999999994
+        },
+        {
+          "terminal_price": 98.7,
+          "pnl": 267.4000000000003
+        },
+        {
+          "terminal_price": 98.8,
+          "pnl": 277.39999999999975
+        },
+        {
+          "terminal_price": 98.9,
+          "pnl": 287.40000000000055
+        },
+        {
+          "terminal_price": 99.0,
+          "pnl": 297.4
+        },
+        {
+          "terminal_price": 99.1,
+          "pnl": 307.3999999999994
+        },
+        {
+          "terminal_price": 99.2,
+          "pnl": 317.4000000000003
+        },
+        {
+          "terminal_price": 99.3,
+          "pnl": 327.39999999999975
+        },
+        {
+          "terminal_price": 99.4,
+          "pnl": 337.40000000000055
+        },
+        {
+          "terminal_price": 99.5,
+          "pnl": 347.4
+        },
+        {
+          "terminal_price": 99.6,
+          "pnl": 357.3999999999994
+        },
+        {
+          "terminal_price": 99.7,
+          "pnl": 367.4000000000003
+        },
+        {
+          "terminal_price": 99.8,
+          "pnl": 377.39999999999975
+        },
+        {
+          "terminal_price": 99.9,
+          "pnl": 387.40000000000055
+        },
+        {
+          "terminal_price": 100.0,
+          "pnl": 397.4
+        },
+        {
+          "terminal_price": 100.1,
+          "pnl": 387.40000000000055
+        },
+        {
+          "terminal_price": 100.2,
+          "pnl": 377.39999999999964
+        },
+        {
+          "terminal_price": 100.3,
+          "pnl": 367.4000000000003
+        },
+        {
+          "terminal_price": 100.4,
+          "pnl": 357.3999999999994
+        },
+        {
+          "terminal_price": 100.5,
+          "pnl": 347.4
+        },
+        {
+          "terminal_price": 100.6,
+          "pnl": 337.40000000000055
+        },
+        {
+          "terminal_price": 100.7,
+          "pnl": 327.39999999999964
+        },
+        {
+          "terminal_price": 100.8,
+          "pnl": 317.4000000000003
+        },
+        {
+          "terminal_price": 100.9,
+          "pnl": 307.3999999999994
+        },
+        {
+          "terminal_price": 101.0,
+          "pnl": 297.4
+        },
+        {
+          "terminal_price": 101.1,
+          "pnl": 287.40000000000055
+        },
+        {
+          "terminal_price": 101.2,
+          "pnl": 277.39999999999964
+        },
+        {
+          "terminal_price": 101.3,
+          "pnl": 267.4000000000003
+        },
+        {
+          "terminal_price": 101.4,
+          "pnl": 257.3999999999994
+        },
+        {
+          "terminal_price": 101.5,
+          "pnl": 247.4
+        },
+        {
+          "terminal_price": 101.6,
+          "pnl": 237.40000000000057
+        },
+        {
+          "terminal_price": 101.7,
+          "pnl": 227.39999999999966
+        },
+        {
+          "terminal_price": 101.8,
+          "pnl": 217.40000000000035
+        },
+        {
+          "terminal_price": 101.9,
+          "pnl": 207.39999999999944
+        },
+        {
+          "terminal_price": 101.987,
+          "pnl": 198.70000000000053
+        },
+        {
+          "terminal_price": 102.0,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 102.1,
+          "pnl": 187.40000000000057
+        },
+        {
+          "terminal_price": 102.2,
+          "pnl": 177.39999999999966
+        },
+        {
+          "terminal_price": 102.3,
+          "pnl": 167.40000000000035
+        },
+        {
+          "terminal_price": 102.4,
+          "pnl": 157.39999999999944
+        },
+        {
+          "terminal_price": 102.5,
+          "pnl": 147.4
+        },
+        {
+          "terminal_price": 102.6,
+          "pnl": 137.40000000000057
+        },
+        {
+          "terminal_price": 102.7,
+          "pnl": 127.39999999999966
+        },
+        {
+          "terminal_price": 102.8,
+          "pnl": 117.40000000000035
+        },
+        {
+          "terminal_price": 102.9,
+          "pnl": 107.39999999999944
+        },
+        {
+          "terminal_price": 103.0,
+          "pnl": 97.4
+        },
+        {
+          "terminal_price": 103.1,
+          "pnl": 87.40000000000057
+        },
+        {
+          "terminal_price": 103.2,
+          "pnl": 77.39999999999966
+        },
+        {
+          "terminal_price": 103.3,
+          "pnl": 67.40000000000035
+        },
+        {
+          "terminal_price": 103.4,
+          "pnl": 57.39999999999944
+        },
+        {
+          "terminal_price": 103.5,
+          "pnl": 47.400000000000006
+        },
+        {
+          "terminal_price": 103.6,
+          "pnl": 37.400000000000574
+        },
+        {
+          "terminal_price": 103.7,
+          "pnl": 27.399999999999665
+        },
+        {
+          "terminal_price": 103.8,
+          "pnl": 17.400000000000347
+        },
+        {
+          "terminal_price": 103.9,
+          "pnl": 7.399999999999437
+        },
+        {
+          "terminal_price": 103.974,
+          "pnl": -4.263256414560601e-13
+        },
+        {
+          "terminal_price": 104.0,
+          "pnl": -2.5999999999999943
+        },
+        {
+          "terminal_price": 104.1,
+          "pnl": -12.599999999999426
+        },
+        {
+          "terminal_price": 104.2,
+          "pnl": -22.600000000000335
+        },
+        {
+          "terminal_price": 104.3,
+          "pnl": -32.59999999999965
+        },
+        {
+          "terminal_price": 104.4,
+          "pnl": -42.60000000000056
+        },
+        {
+          "terminal_price": 104.487,
+          "pnl": -51.29999999999947
+        },
+        {
+          "terminal_price": 104.5,
+          "pnl": -52.599999999999994
+        },
+        {
+          "terminal_price": 104.6,
+          "pnl": -62.599999999999426
+        },
+        {
+          "terminal_price": 104.7,
+          "pnl": -72.60000000000034
+        },
+        {
+          "terminal_price": 104.8,
+          "pnl": -82.59999999999965
+        },
+        {
+          "terminal_price": 104.9,
+          "pnl": -92.60000000000056
+        },
+        {
+          "terminal_price": 105.0,
+          "pnl": -102.6
+        },
+        {
+          "terminal_price": 105.1,
+          "pnl": -102.6
+        },
+        {
+          "terminal_price": 105.2,
+          "pnl": -102.59999999999994
+        },
+        {
+          "terminal_price": 105.3,
+          "pnl": -102.60000000000005
+        },
+        {
+          "terminal_price": 105.4,
+          "pnl": -102.60000000000011
+        },
+        {
+          "terminal_price": 105.5,
+          "pnl": -102.6
+        },
+        {
+          "terminal_price": 105.6,
+          "pnl": -102.59999999999988
+        },
+        {
+          "terminal_price": 105.7,
+          "pnl": -102.59999999999994
+        },
+        {
+          "terminal_price": 105.8,
+          "pnl": -102.60000000000005
+        },
+        {
+          "terminal_price": 105.9,
+          "pnl": -102.60000000000011
+        },
+        {
+          "terminal_price": 106.0,
+          "pnl": -102.6
+        },
+        {
+          "terminal_price": 106.1,
+          "pnl": -102.59999999999988
+        },
+        {
+          "terminal_price": 106.2,
+          "pnl": -102.59999999999994
+        },
+        {
+          "terminal_price": 106.3,
+          "pnl": -102.60000000000005
+        },
+        {
+          "terminal_price": 106.4,
+          "pnl": -102.60000000000011
+        },
+        {
+          "terminal_price": 106.5,
+          "pnl": -102.6
+        }
+      ],
+      "liquidity_warnings": [],
+      "greek_exposure": {
+        "delta": null,
+        "gamma": null,
+        "theta": null,
+        "vega": null,
+        "rho": null
+      },
+      "capital_treatment": "defined_risk_with_assignment",
+      "assumptions": [
+        "Buy at ask and sell at bid; displayed quotes do not guarantee fills.",
+        "Entry fees charged once per absolute contract; exit fees and exercise/assignment charges excluded.",
+        "Same-expiration standard 100-share contracts; payoff assumes all legs held through expiration.",
+        "Theoretical capital at risk does not establish brokerage buying power.",
+        "Greeks are provider observations; future volatility and expiration sensitivity may change.",
+        "Event risk evidence unavailable. Payoff validity does not establish a trading edge."
+      ]
+    },
+    "chain": {
+      "symbol": "SPY",
+      "expiration": "2026-11-06",
+      "calls": [
+        {
+          "contract": "SPY261106C00095000",
+          "type": "Call",
+          "strike": 95,
+          "bid": 5.99,
+          "ask": 6,
+          "bid_timestamp": "2026-11-05T15:00:00+00:00",
+          "ask_timestamp": "2026-11-05T15:00:00+00:00",
+          "volume": 10,
+          "open_interest": 20,
+          "bid_size": 10,
+          "ask_size": 10,
+          "status": "fresh",
+          "quote_age_seconds": 0.0
+        },
+        {
+          "contract": "SPY261106C00100000",
+          "type": "Call",
+          "strike": 100,
+          "bid": 3,
+          "ask": 3.01,
+          "bid_timestamp": "2026-11-05T15:00:00+00:00",
+          "ask_timestamp": "2026-11-05T15:00:00+00:00",
+          "volume": 10,
+          "open_interest": 20,
+          "bid_size": 10,
+          "ask_size": 10,
+          "status": "fresh",
+          "quote_age_seconds": 0.0
+        },
+        {
+          "contract": "SPY261106C00105000",
+          "type": "Call",
+          "strike": 105,
+          "bid": 0.99,
+          "ask": 1,
+          "bid_timestamp": "2026-11-05T15:00:00+00:00",
+          "ask_timestamp": "2026-11-05T15:00:00+00:00",
+          "volume": 10,
+          "open_interest": 20,
+          "bid_size": 10,
+          "ask_size": 10,
+          "status": "fresh",
+          "quote_age_seconds": 0.0
+        }
+      ],
+      "puts": []
+    }
+  },
+  {
+    "request": {
+      "strategy": "long_put_butterfly",
+      "legs": [
+        {
+          "contract": "SPY261106P00095000",
+          "qty": 1
+        },
+        {
+          "contract": "SPY261106P00100000",
+          "qty": -2
+        },
+        {
+          "contract": "SPY261106P00105000",
+          "qty": 1
+        }
+      ]
+    },
+    "result": {
+      "strategy": "long_put_butterfly",
+      "geometry": "long_put_butterfly",
+      "direction": "neutral",
+      "status": "available",
+      "eligible_for_analysis": true,
+      "reason": null,
+      "limit_breaches": [],
+      "symbol": "SPY",
+      "expiration": "2026-11-06",
+      "dte": 1,
+      "legs": [
+        {
+          "contract": "SPY261106P00095000",
+          "type": "Put",
+          "strike": 95,
+          "bid": 0.99,
+          "ask": 1,
+          "bid_timestamp": "2026-11-05T15:00:00+00:00",
+          "ask_timestamp": "2026-11-05T15:00:00+00:00",
+          "volume": 10,
+          "open_interest": 20,
+          "bid_size": 10,
+          "ask_size": 10,
+          "status": "fresh",
+          "quote_age_seconds": 0.0,
+          "qty": 1,
+          "price": 1,
+          "expiration": "2026-11-06"
+        },
+        {
+          "contract": "SPY261106P00100000",
+          "type": "Put",
+          "strike": 100,
+          "bid": 3,
+          "ask": 3.01,
+          "bid_timestamp": "2026-11-05T15:00:00+00:00",
+          "ask_timestamp": "2026-11-05T15:00:00+00:00",
+          "volume": 10,
+          "open_interest": 20,
+          "bid_size": 10,
+          "ask_size": 10,
+          "status": "fresh",
+          "quote_age_seconds": 0.0,
+          "qty": -2,
+          "price": 3,
+          "expiration": "2026-11-06"
+        },
+        {
+          "contract": "SPY261106P00105000",
+          "type": "Put",
+          "strike": 105,
+          "bid": 5.99,
+          "ask": 6,
+          "bid_timestamp": "2026-11-05T15:00:00+00:00",
+          "ask_timestamp": "2026-11-05T15:00:00+00:00",
+          "volume": 10,
+          "open_interest": 20,
+          "bid_size": 10,
+          "ask_size": 10,
+          "status": "fresh",
+          "quote_age_seconds": 0.0,
+          "qty": 1,
+          "price": 6,
+          "expiration": "2026-11-06"
+        }
+      ],
+      "contract_multiplier": 100,
+      "total_contracts": 4,
+      "evaluated_at": "2026-11-05T15:00:00+00:00",
+      "retrieved_at": "2026-11-05T15:00:00+00:00",
+      "oldest_quote_age_seconds": 0.0,
+      "entry_premium": -100.0,
+      "entry_fees": 2.6,
+      "net_cash": -102.6,
+      "entry_debit": 102.6,
+      "entry_credit": 0,
+      "max_profit": 397.4,
+      "profit_unbounded": false,
+      "max_loss": 102.6,
+      "loss_unbounded": false,
+      "capital_at_risk": 102.6,
+      "return_on_max_risk": 3.8732943469785575,
+      "breakevens": [
+        96.026,
+        103.974
+      ],
+      "payoff": [
+        {
+          "terminal_price": 93.5,
+          "pnl": -102.6
+        },
+        {
+          "terminal_price": 93.6,
+          "pnl": -102.60000000000011
+        },
+        {
+          "terminal_price": 93.7,
+          "pnl": -102.60000000000005
+        },
+        {
+          "terminal_price": 93.8,
+          "pnl": -102.59999999999994
+        },
+        {
+          "terminal_price": 93.9,
+          "pnl": -102.59999999999988
+        },
+        {
+          "terminal_price": 94.0,
+          "pnl": -102.6
+        },
+        {
+          "terminal_price": 94.1,
+          "pnl": -102.60000000000011
+        },
+        {
+          "terminal_price": 94.2,
+          "pnl": -102.60000000000005
+        },
+        {
+          "terminal_price": 94.3,
+          "pnl": -102.59999999999994
+        },
+        {
+          "terminal_price": 94.4,
+          "pnl": -102.59999999999988
+        },
+        {
+          "terminal_price": 94.5,
+          "pnl": -102.6
+        },
+        {
+          "terminal_price": 94.6,
+          "pnl": -102.60000000000011
+        },
+        {
+          "terminal_price": 94.7,
+          "pnl": -102.60000000000005
+        },
+        {
+          "terminal_price": 94.8,
+          "pnl": -102.59999999999994
+        },
+        {
+          "terminal_price": 94.9,
+          "pnl": -102.6
+        },
+        {
+          "terminal_price": 95.0,
+          "pnl": -102.6
+        },
+        {
+          "terminal_price": 95.1,
+          "pnl": -92.60000000000056
+        },
+        {
+          "terminal_price": 95.2,
+          "pnl": -82.59999999999965
+        },
+        {
+          "terminal_price": 95.3,
+          "pnl": -72.60000000000034
+        },
+        {
+          "terminal_price": 95.4,
+          "pnl": -62.599999999999426
+        },
+        {
+          "terminal_price": 95.5,
+          "pnl": -52.599999999999994
+        },
+        {
+          "terminal_price": 95.513,
+          "pnl": -51.29999999999947
+        },
+        {
+          "terminal_price": 95.6,
+          "pnl": -42.60000000000056
+        },
+        {
+          "terminal_price": 95.7,
+          "pnl": -32.59999999999965
+        },
+        {
+          "terminal_price": 95.8,
+          "pnl": -22.600000000000335
+        },
+        {
+          "terminal_price": 95.9,
+          "pnl": -12.599999999999426
+        },
+        {
+          "terminal_price": 96.0,
+          "pnl": -2.5999999999999943
+        },
+        {
+          "terminal_price": 96.026,
+          "pnl": -4.263256414560601e-13
+        },
+        {
+          "terminal_price": 96.1,
+          "pnl": 7.399999999999437
+        },
+        {
+          "terminal_price": 96.2,
+          "pnl": 17.400000000000347
+        },
+        {
+          "terminal_price": 96.3,
+          "pnl": 27.399999999999665
+        },
+        {
+          "terminal_price": 96.4,
+          "pnl": 37.400000000000574
+        },
+        {
+          "terminal_price": 96.5,
+          "pnl": 47.400000000000006
+        },
+        {
+          "terminal_price": 96.6,
+          "pnl": 57.39999999999944
+        },
+        {
+          "terminal_price": 96.7,
+          "pnl": 67.40000000000035
+        },
+        {
+          "terminal_price": 96.8,
+          "pnl": 77.39999999999966
+        },
+        {
+          "terminal_price": 96.9,
+          "pnl": 87.40000000000057
+        },
+        {
+          "terminal_price": 97.0,
+          "pnl": 97.4
+        },
+        {
+          "terminal_price": 97.1,
+          "pnl": 107.39999999999944
+        },
+        {
+          "terminal_price": 97.2,
+          "pnl": 117.40000000000035
+        },
+        {
+          "terminal_price": 97.3,
+          "pnl": 127.39999999999966
+        },
+        {
+          "terminal_price": 97.4,
+          "pnl": 137.40000000000057
+        },
+        {
+          "terminal_price": 97.5,
+          "pnl": 147.4
+        },
+        {
+          "terminal_price": 97.6,
+          "pnl": 157.39999999999944
+        },
+        {
+          "terminal_price": 97.7,
+          "pnl": 167.40000000000035
+        },
+        {
+          "terminal_price": 97.8,
+          "pnl": 177.39999999999966
+        },
+        {
+          "terminal_price": 97.9,
+          "pnl": 187.40000000000057
+        },
+        {
+          "terminal_price": 98.0,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 98.013,
+          "pnl": 198.70000000000053
+        },
+        {
+          "terminal_price": 98.1,
+          "pnl": 207.39999999999944
+        },
+        {
+          "terminal_price": 98.2,
+          "pnl": 217.40000000000035
+        },
+        {
+          "terminal_price": 98.3,
+          "pnl": 227.39999999999966
+        },
+        {
+          "terminal_price": 98.4,
+          "pnl": 237.40000000000057
+        },
+        {
+          "terminal_price": 98.5,
+          "pnl": 247.4
+        },
+        {
+          "terminal_price": 98.6,
+          "pnl": 257.3999999999994
+        },
+        {
+          "terminal_price": 98.7,
+          "pnl": 267.4000000000003
+        },
+        {
+          "terminal_price": 98.8,
+          "pnl": 277.39999999999964
+        },
+        {
+          "terminal_price": 98.9,
+          "pnl": 287.40000000000055
+        },
+        {
+          "terminal_price": 99.0,
+          "pnl": 297.4
+        },
+        {
+          "terminal_price": 99.1,
+          "pnl": 307.3999999999994
+        },
+        {
+          "terminal_price": 99.2,
+          "pnl": 317.4000000000003
+        },
+        {
+          "terminal_price": 99.3,
+          "pnl": 327.39999999999964
+        },
+        {
+          "terminal_price": 99.4,
+          "pnl": 337.40000000000055
+        },
+        {
+          "terminal_price": 99.5,
+          "pnl": 347.4
+        },
+        {
+          "terminal_price": 99.6,
+          "pnl": 357.3999999999994
+        },
+        {
+          "terminal_price": 99.7,
+          "pnl": 367.4000000000003
+        },
+        {
+          "terminal_price": 99.8,
+          "pnl": 377.39999999999964
+        },
+        {
+          "terminal_price": 99.9,
+          "pnl": 387.40000000000055
+        },
+        {
+          "terminal_price": 100.0,
+          "pnl": 397.4
+        },
+        {
+          "terminal_price": 100.1,
+          "pnl": 387.40000000000055
+        },
+        {
+          "terminal_price": 100.2,
+          "pnl": 377.39999999999975
+        },
+        {
+          "terminal_price": 100.3,
+          "pnl": 367.4000000000003
+        },
+        {
+          "terminal_price": 100.4,
+          "pnl": 357.3999999999994
+        },
+        {
+          "terminal_price": 100.5,
+          "pnl": 347.4
+        },
+        {
+          "terminal_price": 100.6,
+          "pnl": 337.40000000000055
+        },
+        {
+          "terminal_price": 100.7,
+          "pnl": 327.39999999999975
+        },
+        {
+          "terminal_price": 100.8,
+          "pnl": 317.4000000000003
+        },
+        {
+          "terminal_price": 100.9,
+          "pnl": 307.3999999999994
+        },
+        {
+          "terminal_price": 101.0,
+          "pnl": 297.4
+        },
+        {
+          "terminal_price": 101.1,
+          "pnl": 287.40000000000055
+        },
+        {
+          "terminal_price": 101.2,
+          "pnl": 277.39999999999975
+        },
+        {
+          "terminal_price": 101.3,
+          "pnl": 267.4000000000003
+        },
+        {
+          "terminal_price": 101.4,
+          "pnl": 257.3999999999994
+        },
+        {
+          "terminal_price": 101.5,
+          "pnl": 247.4
+        },
+        {
+          "terminal_price": 101.6,
+          "pnl": 237.40000000000057
+        },
+        {
+          "terminal_price": 101.7,
+          "pnl": 227.39999999999972
+        },
+        {
+          "terminal_price": 101.8,
+          "pnl": 217.4000000000003
+        },
+        {
+          "terminal_price": 101.9,
+          "pnl": 207.39999999999944
+        },
+        {
+          "terminal_price": 101.987,
+          "pnl": 198.70000000000053
+        },
+        {
+          "terminal_price": 102.0,
+          "pnl": 197.4
+        },
+        {
+          "terminal_price": 102.1,
+          "pnl": 187.40000000000057
+        },
+        {
+          "terminal_price": 102.2,
+          "pnl": 177.39999999999972
+        },
+        {
+          "terminal_price": 102.3,
+          "pnl": 167.4000000000003
+        },
+        {
+          "terminal_price": 102.4,
+          "pnl": 157.39999999999944
+        },
+        {
+          "terminal_price": 102.5,
+          "pnl": 147.4
+        },
+        {
+          "terminal_price": 102.6,
+          "pnl": 137.40000000000057
+        },
+        {
+          "terminal_price": 102.7,
+          "pnl": 127.39999999999972
+        },
+        {
+          "terminal_price": 102.8,
+          "pnl": 117.40000000000029
+        },
+        {
+          "terminal_price": 102.9,
+          "pnl": 107.39999999999944
+        },
+        {
+          "terminal_price": 103.0,
+          "pnl": 97.4
+        },
+        {
+          "terminal_price": 103.1,
+          "pnl": 87.40000000000057
+        },
+        {
+          "terminal_price": 103.2,
+          "pnl": 77.39999999999972
+        },
+        {
+          "terminal_price": 103.3,
+          "pnl": 67.40000000000029
+        },
+        {
+          "terminal_price": 103.4,
+          "pnl": 57.39999999999944
+        },
+        {
+          "terminal_price": 103.5,
+          "pnl": 47.400000000000006
+        },
+        {
+          "terminal_price": 103.6,
+          "pnl": 37.400000000000574
+        },
+        {
+          "terminal_price": 103.7,
+          "pnl": 27.39999999999972
+        },
+        {
+          "terminal_price": 103.8,
+          "pnl": 17.40000000000029
+        },
+        {
+          "terminal_price": 103.9,
+          "pnl": 7.399999999999437
+        },
+        {
+          "terminal_price": 103.974,
+          "pnl": -3.694822225952521e-13
+        },
+        {
+          "terminal_price": 104.0,
+          "pnl": -2.5999999999999943
+        },
+        {
+          "terminal_price": 104.1,
+          "pnl": -12.599999999999426
+        },
+        {
+          "terminal_price": 104.2,
+          "pnl": -22.60000000000028
+        },
+        {
+          "terminal_price": 104.3,
+          "pnl": -32.59999999999971
+        },
+        {
+          "terminal_price": 104.4,
+          "pnl": -42.60000000000056
+        },
+        {
+          "terminal_price": 104.487,
+          "pnl": -51.29999999999947
+        },
+        {
+          "terminal_price": 104.5,
+          "pnl": -52.599999999999994
+        },
+        {
+          "terminal_price": 104.6,
+          "pnl": -62.599999999999426
+        },
+        {
+          "terminal_price": 104.7,
+          "pnl": -72.60000000000028
+        },
+        {
+          "terminal_price": 104.8,
+          "pnl": -82.59999999999971
+        },
+        {
+          "terminal_price": 104.9,
+          "pnl": -92.60000000000056
+        },
+        {
+          "terminal_price": 105.0,
+          "pnl": -102.6
+        },
+        {
+          "terminal_price": 105.1,
+          "pnl": -102.6
+        },
+        {
+          "terminal_price": 105.2,
+          "pnl": -102.6
+        },
+        {
+          "terminal_price": 105.3,
+          "pnl": -102.6
+        },
+        {
+          "terminal_price": 105.4,
+          "pnl": -102.6
+        },
+        {
+          "terminal_price": 105.5,
+          "pnl": -102.6
+        },
+        {
+          "terminal_price": 105.6,
+          "pnl": -102.6
+        },
+        {
+          "terminal_price": 105.7,
+          "pnl": -102.6
+        },
+        {
+          "terminal_price": 105.8,
+          "pnl": -102.6
+        },
+        {
+          "terminal_price": 105.9,
+          "pnl": -102.6
+        },
+        {
+          "terminal_price": 106.0,
+          "pnl": -102.6
+        },
+        {
+          "terminal_price": 106.1,
+          "pnl": -102.6
+        },
+        {
+          "terminal_price": 106.2,
+          "pnl": -102.6
+        },
+        {
+          "terminal_price": 106.3,
+          "pnl": -102.6
+        },
+        {
+          "terminal_price": 106.4,
+          "pnl": -102.6
+        },
+        {
+          "terminal_price": 106.5,
+          "pnl": -102.6
+        }
+      ],
+      "liquidity_warnings": [],
+      "greek_exposure": {
+        "delta": null,
+        "gamma": null,
+        "theta": null,
+        "vega": null,
+        "rho": null
+      },
+      "capital_treatment": "defined_risk_with_assignment",
+      "assumptions": [
+        "Buy at ask and sell at bid; displayed quotes do not guarantee fills.",
+        "Entry fees charged once per absolute contract; exit fees and exercise/assignment charges excluded.",
+        "Same-expiration standard 100-share contracts; payoff assumes all legs held through expiration.",
+        "Theoretical capital at risk does not establish brokerage buying power.",
+        "Greeks are provider observations; future volatility and expiration sensitivity may change.",
+        "Event risk evidence unavailable. Payoff validity does not establish a trading edge."
+      ]
+    },
+    "chain": {
+      "symbol": "SPY",
+      "expiration": "2026-11-06",
+      "calls": [],
+      "puts": [
+        {
+          "contract": "SPY261106P00095000",
+          "type": "Put",
+          "strike": 95,
+          "bid": 0.99,
+          "ask": 1,
+          "bid_timestamp": "2026-11-05T15:00:00+00:00",
+          "ask_timestamp": "2026-11-05T15:00:00+00:00",
+          "volume": 10,
+          "open_interest": 20,
+          "bid_size": 10,
+          "ask_size": 10,
+          "status": "fresh",
+          "quote_age_seconds": 0.0
+        },
+        {
+          "contract": "SPY261106P00100000",
+          "type": "Put",
+          "strike": 100,
+          "bid": 3,
+          "ask": 3.01,
+          "bid_timestamp": "2026-11-05T15:00:00+00:00",
+          "ask_timestamp": "2026-11-05T15:00:00+00:00",
+          "volume": 10,
+          "open_interest": 20,
+          "bid_size": 10,
+          "ask_size": 10,
+          "status": "fresh",
+          "quote_age_seconds": 0.0
+        },
+        {
+          "contract": "SPY261106P00105000",
+          "type": "Put",
+          "strike": 105,
+          "bid": 5.99,
+          "ask": 6,
+          "bid_timestamp": "2026-11-05T15:00:00+00:00",
+          "ask_timestamp": "2026-11-05T15:00:00+00:00",
+          "volume": 10,
+          "open_interest": 20,
+          "bid_size": 10,
+          "ask_size": 10,
+          "status": "fresh",
+          "quote_age_seconds": 0.0
+        }
+      ]
+    }
+  },
+  {
+    "request": {
+      "strategy": "long_straddle",
+      "legs": [
+        {
+          "contract": "SPY261106C00100000",
+          "qty": 1
+        },
+        {
+          "contract": "SPY261106P00100000",
+          "qty": 1
+        }
+      ]
+    },
+    "result": {
+      "strategy": "long_straddle",
+      "geometry": "long_straddle",
+      "direction": "two_sided",
+      "status": "available",
+      "eligible_for_analysis": true,
+      "reason": null,
+      "limit_breaches": [],
+      "symbol": "SPY",
+      "expiration": "2026-11-06",
+      "dte": 1,
+      "legs": [
+        {
+          "contract": "SPY261106C00100000",
+          "type": "Call",
+          "strike": 100,
+          "bid": 2.99,
+          "ask": 3,
+          "bid_timestamp": "2026-11-05T15:00:00+00:00",
+          "ask_timestamp": "2026-11-05T15:00:00+00:00",
+          "volume": 10,
+          "open_interest": 20,
+          "bid_size": 10,
+          "ask_size": 10,
+          "status": "fresh",
+          "quote_age_seconds": 0.0,
+          "qty": 1,
+          "price": 3,
+          "expiration": "2026-11-06"
+        },
+        {
+          "contract": "SPY261106P00100000",
+          "type": "Put",
+          "strike": 100,
+          "bid": 2.99,
+          "ask": 3,
+          "bid_timestamp": "2026-11-05T15:00:00+00:00",
+          "ask_timestamp": "2026-11-05T15:00:00+00:00",
+          "volume": 10,
+          "open_interest": 20,
+          "bid_size": 10,
+          "ask_size": 10,
+          "status": "fresh",
+          "quote_age_seconds": 0.0,
+          "qty": 1,
+          "price": 3,
+          "expiration": "2026-11-06"
+        }
+      ],
+      "contract_multiplier": 100,
+      "total_contracts": 2,
+      "evaluated_at": "2026-11-05T15:00:00+00:00",
+      "retrieved_at": "2026-11-05T15:00:00+00:00",
+      "oldest_quote_age_seconds": 0.0,
+      "entry_premium": -600.0,
+      "entry_fees": 1.3,
+      "net_cash": -601.3,
+      "entry_debit": 601.3,
+      "entry_credit": 0,
+      "max_profit": null,
+      "profit_unbounded": true,
+      "max_loss": 601.3,
+      "loss_unbounded": false,
+      "capital_at_risk": 601.3,
+      "return_on_max_risk": null,
+      "breakevens": [
+        93.98700000000001,
+        106.013
+      ],
+      "payoff": [
+        {
+          "terminal_price": 92.18310000000001,
+          "pnl": 180.38999999999896
+        },
+        {
+          "terminal_price": 92.28267834394906,
+          "pnl": 170.43216560509427
+        },
+        {
+          "terminal_price": 92.3822566878981,
+          "pnl": 160.47433121018935
+        },
+        {
+          "terminal_price": 92.48183503184714,
+          "pnl": 150.51649681528602
+        },
+        {
+          "terminal_price": 92.58141337579619,
+          "pnl": 140.5586624203812
+        },
+        {
+          "terminal_price": 92.68099171974524,
+          "pnl": 130.6008280254764
+        },
+        {
+          "terminal_price": 92.78057006369428,
+          "pnl": 120.6429936305716
+        },
+        {
+          "terminal_price": 92.88014840764332,
+          "pnl": 110.68515923566815
+        },
+        {
+          "terminal_price": 92.97972675159237,
+          "pnl": 100.72732484076346
+        },
+        {
+          "terminal_price": 93.07930509554141,
+          "pnl": 90.76949044585854
+        },
+        {
+          "terminal_price": 93.17888343949046,
+          "pnl": 80.81165605095384
+        },
+        {
+          "terminal_price": 93.2784617834395,
+          "pnl": 70.8538216560504
+        },
+        {
+          "terminal_price": 93.37804012738854,
+          "pnl": 60.89598726114559
+        },
+        {
+          "terminal_price": 93.47761847133759,
+          "pnl": 50.938152866240785
+        },
+        {
+          "terminal_price": 93.57719681528664,
+          "pnl": 40.98031847133598
+        },
+        {
+          "terminal_price": 93.67677515923567,
+          "pnl": 31.022484076432647
+        },
+        {
+          "terminal_price": 93.77635350318472,
+          "pnl": 21.064649681527726
+        },
+        {
+          "terminal_price": 93.87593184713377,
+          "pnl": 11.106815286623032
+        },
+        {
+          "terminal_price": 93.97551019108282,
+          "pnl": 1.1489808917181108
+        },
+        {
+          "terminal_price": 93.98700000000001,
+          "pnl": -9.094947017729282e-13
+        },
+        {
+          "terminal_price": 94.07508853503185,
+          "pnl": -8.808853503185219
+        },
+        {
+          "terminal_price": 94.1746668789809,
+          "pnl": -18.766687898090026
+        },
+        {
+          "terminal_price": 94.27424522292995,
+          "pnl": -28.724522292994834
+        },
+        {
+          "terminal_price": 94.373823566879,
+          "pnl": -38.68235668789964
+        },
+        {
+          "terminal_price": 94.47340191082803,
+          "pnl": -48.640191082803085
+        },
+        {
+          "terminal_price": 94.57298025477708,
+          "pnl": -58.59802547770778
+        },
+        {
+          "terminal_price": 94.67255859872613,
+          "pnl": -68.5558598726127
+        },
+        {
+          "terminal_price": 94.77213694267517,
+          "pnl": -78.5136942675174
+        },
+        {
+          "terminal_price": 94.87171528662421,
+          "pnl": -88.47152866242084
+        },
+        {
+          "terminal_price": 94.97129363057326,
+          "pnl": -98.42936305732565
+        },
+        {
+          "terminal_price": 95.0708719745223,
+          "pnl": -108.38719745223045
+        },
+        {
+          "terminal_price": 95.17045031847135,
+          "pnl": -118.34503184713526
+        },
+        {
+          "terminal_price": 95.27002866242039,
+          "pnl": -128.30286624203865
+        },
+        {
+          "terminal_price": 95.36960700636943,
+          "pnl": -138.26070063694345
+        },
+        {
+          "terminal_price": 95.46918535031848,
+          "pnl": -148.21853503184826
+        },
+        {
+          "terminal_price": 95.56876369426753,
+          "pnl": -158.17636942675307
+        },
+        {
+          "terminal_price": 95.66834203821657,
+          "pnl": -168.13420382165646
+        },
+        {
+          "terminal_price": 95.76792038216561,
+          "pnl": -178.09203821656126
+        },
+        {
+          "terminal_price": 95.86749872611466,
+          "pnl": -188.04987261146607
+        },
+        {
+          "terminal_price": 95.96707707006371,
+          "pnl": -198.00770700637088
+        },
+        {
+          "terminal_price": 96.06665541401274,
+          "pnl": -207.96554140127427
+        },
+        {
+          "terminal_price": 96.16623375796179,
+          "pnl": -217.92337579617907
+        },
+        {
+          "terminal_price": 96.26581210191084,
+          "pnl": -227.88121019108388
+        },
+        {
+          "terminal_price": 96.36539044585989,
+          "pnl": -237.8390445859887
+        },
+        {
+          "terminal_price": 96.46496878980892,
+          "pnl": -247.79687898089207
+        },
+        {
+          "terminal_price": 96.56454713375797,
+          "pnl": -257.7547133757969
+        },
+        {
+          "terminal_price": 96.66412547770702,
+          "pnl": -267.7125477707017
+        },
+        {
+          "terminal_price": 96.76370382165607,
+          "pnl": -277.6703821656065
+        },
+        {
+          "terminal_price": 96.8632821656051,
+          "pnl": -287.6282165605099
+        },
+        {
+          "terminal_price": 96.96286050955415,
+          "pnl": -297.5860509554147
+        },
+        {
+          "terminal_price": 96.99350000000001,
+          "pnl": -300.6500000000011
+        },
+        {
+          "terminal_price": 97.0624388535032,
+          "pnl": -307.5438853503195
+        },
+        {
+          "terminal_price": 97.16201719745224,
+          "pnl": -317.5017197452243
+        },
+        {
+          "terminal_price": 97.26159554140128,
+          "pnl": -327.4595541401277
+        },
+        {
+          "terminal_price": 97.36117388535033,
+          "pnl": -337.4173885350325
+        },
+        {
+          "terminal_price": 97.46075222929937,
+          "pnl": -347.3752229299373
+        },
+        {
+          "terminal_price": 97.56033057324842,
+          "pnl": -357.3330573248421
+        },
+        {
+          "terminal_price": 97.65990891719746,
+          "pnl": -367.2908917197455
+        },
+        {
+          "terminal_price": 97.7594872611465,
+          "pnl": -377.2487261146503
+        },
+        {
+          "terminal_price": 97.85906560509555,
+          "pnl": -387.2065605095551
+        },
+        {
+          "terminal_price": 97.9586439490446,
+          "pnl": -397.1643949044599
+        },
+        {
+          "terminal_price": 98.05822229299363,
+          "pnl": -407.1222292993633
+        },
+        {
+          "terminal_price": 98.15780063694268,
+          "pnl": -417.0800636942681
+        },
+        {
+          "terminal_price": 98.25737898089173,
+          "pnl": -427.0378980891729
+        },
+        {
+          "terminal_price": 98.35695732484078,
+          "pnl": -436.99573248407773
+        },
+        {
+          "terminal_price": 98.45653566878981,
+          "pnl": -446.9535668789811
+        },
+        {
+          "terminal_price": 98.55611401273886,
+          "pnl": -456.91140127388593
+        },
+        {
+          "terminal_price": 98.65569235668791,
+          "pnl": -466.86923566879074
+        },
+        {
+          "terminal_price": 98.75527070063696,
+          "pnl": -476.82707006369554
+        },
+        {
+          "terminal_price": 98.85484904458599,
+          "pnl": -486.78490445859893
+        },
+        {
+          "terminal_price": 98.95442738853504,
+          "pnl": -496.74273885350374
+        },
+        {
+          "terminal_price": 99.05400573248409,
+          "pnl": -506.70057324840855
+        },
+        {
+          "terminal_price": 99.15358407643313,
+          "pnl": -516.6584076433134
+        },
+        {
+          "terminal_price": 99.25316242038217,
+          "pnl": -526.6162420382168
+        },
+        {
+          "terminal_price": 99.35274076433122,
+          "pnl": -536.5740764331215
+        },
+        {
+          "terminal_price": 99.45231910828026,
+          "pnl": -546.5319108280264
+        },
+        {
+          "terminal_price": 99.55189745222931,
+          "pnl": -556.4897452229311
+        },
+        {
+          "terminal_price": 99.65147579617835,
+          "pnl": -566.4475796178345
+        },
+        {
+          "terminal_price": 99.7510541401274,
+          "pnl": -576.4054140127394
+        },
+        {
+          "terminal_price": 99.85063248407644,
+          "pnl": -586.3632484076442
+        },
+        {
+          "terminal_price": 99.95021082802549,
+          "pnl": -596.321082802549
+        },
+        {
+          "terminal_price": 100.0,
+          "pnl": -601.3
+        },
+        {
+          "terminal_price": 100.04978917197452,
+          "pnl": -596.3210828025476
+        },
+        {
+          "terminal_price": 100.14936751592357,
+          "pnl": -586.3632484076427
+        },
+        {
+          "terminal_price": 100.24894585987262,
+          "pnl": -576.405414012738
+        },
+        {
+          "terminal_price": 100.34852420382167,
+          "pnl": -566.4475796178331
+        },
+        {
+          "terminal_price": 100.4481025477707,
+          "pnl": -556.4897452229297
+        },
+        {
+          "terminal_price": 100.54768089171975,
+          "pnl": -546.5319108280249
+        },
+        {
+          "terminal_price": 100.6472592356688,
+          "pnl": -536.5740764331201
+        },
+        {
+          "terminal_price": 100.74683757961785,
+          "pnl": -526.6162420382153
+        },
+        {
+          "terminal_price": 100.84641592356688,
+          "pnl": -516.6584076433119
+        },
+        {
+          "terminal_price": 100.94599426751593,
+          "pnl": -506.7005732484071
+        },
+        {
+          "terminal_price": 101.04557261146498,
+          "pnl": -496.7427388535023
+        },
+        {
+          "terminal_price": 101.14515095541402,
+          "pnl": -486.7849044585975
+        },
+        {
+          "terminal_price": 101.24472929936306,
+          "pnl": -476.8270700636941
+        },
+        {
+          "terminal_price": 101.3443076433121,
+          "pnl": -466.8692356687893
+        },
+        {
+          "terminal_price": 101.44388598726115,
+          "pnl": -456.9114012738845
+        },
+        {
+          "terminal_price": 101.5434643312102,
+          "pnl": -446.9535668789797
+        },
+        {
+          "terminal_price": 101.64304267515924,
+          "pnl": -436.9957324840763
+        },
+        {
+          "terminal_price": 101.74262101910828,
+          "pnl": -427.0378980891715
+        },
+        {
+          "terminal_price": 101.84219936305733,
+          "pnl": -417.0800636942667
+        },
+        {
+          "terminal_price": 101.94177770700638,
+          "pnl": -407.1222292993619
+        },
+        {
+          "terminal_price": 102.04135605095541,
+          "pnl": -397.1643949044585
+        },
+        {
+          "terminal_price": 102.14093439490446,
+          "pnl": -387.2065605095537
+        },
+        {
+          "terminal_price": 102.24051273885351,
+          "pnl": -377.2487261146489
+        },
+        {
+          "terminal_price": 102.34009108280256,
+          "pnl": -367.2908917197441
+        },
+        {
+          "terminal_price": 102.43966942675159,
+          "pnl": -357.3330573248407
+        },
+        {
+          "terminal_price": 102.53924777070064,
+          "pnl": -347.3752229299359
+        },
+        {
+          "terminal_price": 102.63882611464969,
+          "pnl": -337.4173885350311
+        },
+        {
+          "terminal_price": 102.73840445859874,
+          "pnl": -327.4595541401263
+        },
+        {
+          "terminal_price": 102.83798280254777,
+          "pnl": -317.5017197452229
+        },
+        {
+          "terminal_price": 102.93756114649682,
+          "pnl": -307.5438853503181
+        },
+        {
+          "terminal_price": 103.0065,
+          "pnl": -300.6499999999997
+        },
+        {
+          "terminal_price": 103.03713949044587,
+          "pnl": -297.58605095541327
+        },
+        {
+          "terminal_price": 103.13671783439491,
+          "pnl": -287.62821656050846
+        },
+        {
+          "terminal_price": 103.23629617834395,
+          "pnl": -277.6703821656051
+        },
+        {
+          "terminal_price": 103.335874522293,
+          "pnl": -267.71254777070027
+        },
+        {
+          "terminal_price": 103.43545286624204,
+          "pnl": -257.75471337579546
+        },
+        {
+          "terminal_price": 103.5350312101911,
+          "pnl": -247.79687898089065
+        },
+        {
+          "terminal_price": 103.63460955414013,
+          "pnl": -237.83904458598727
+        },
+        {
+          "terminal_price": 103.73418789808917,
+          "pnl": -227.88121019108246
+        },
+        {
+          "terminal_price": 103.83376624203822,
+          "pnl": -217.92337579617765
+        },
+        {
+          "terminal_price": 103.93334458598727,
+          "pnl": -207.96554140127284
+        },
+        {
+          "terminal_price": 104.03292292993632,
+          "pnl": -198.00770700636804
+        },
+        {
+          "terminal_price": 104.13250127388535,
+          "pnl": -188.04987261146465
+        },
+        {
+          "terminal_price": 104.2320796178344,
+          "pnl": -178.09203821655984
+        },
+        {
+          "terminal_price": 104.33165796178345,
+          "pnl": -168.13420382165503
+        },
+        {
+          "terminal_price": 104.43123630573248,
+          "pnl": -158.17636942675165
+        },
+        {
+          "terminal_price": 104.53081464968153,
+          "pnl": -148.21853503184684
+        },
+        {
+          "terminal_price": 104.63039299363058,
+          "pnl": -138.26070063694203
+        },
+        {
+          "terminal_price": 104.72997133757963,
+          "pnl": -128.30286624203723
+        },
+        {
+          "terminal_price": 104.82954968152866,
+          "pnl": -118.34503184713384
+        },
+        {
+          "terminal_price": 104.92912802547771,
+          "pnl": -108.38719745222903
+        },
+        {
+          "terminal_price": 105.02870636942676,
+          "pnl": -98.42936305732422
+        },
+        {
+          "terminal_price": 105.1282847133758,
+          "pnl": -88.47152866241936
+        },
+        {
+          "terminal_price": 105.22786305732484,
+          "pnl": -78.51369426751603
+        },
+        {
+          "terminal_price": 105.32744140127389,
+          "pnl": -68.55585987261122
+        },
+        {
+          "terminal_price": 105.42701974522294,
+          "pnl": -58.598025477706415
+        },
+        {
+          "terminal_price": 105.52659808917198,
+          "pnl": -48.64019108280161
+        },
+        {
+          "terminal_price": 105.62617643312103,
+          "pnl": -38.6823566878968
+        },
+        {
+          "terminal_price": 105.72575477707007,
+          "pnl": -28.72452229299347
+        },
+        {
+          "terminal_price": 105.82533312101911,
+          "pnl": -18.76668789808855
+        },
+        {
+          "terminal_price": 105.92491146496816,
+          "pnl": -8.808853503183855
+        },
+        {
+          "terminal_price": 106.013,
+          "pnl": 5.684341886080801e-13
+        },
+        {
+          "terminal_price": 106.0244898089172,
+          "pnl": 1.1489808917195887
+        },
+        {
+          "terminal_price": 106.12406815286624,
+          "pnl": 11.106815286624396
+        },
+        {
+          "terminal_price": 106.22364649681529,
+          "pnl": 21.064649681529204
+        },
+        {
+          "terminal_price": 106.32322484076434,
+          "pnl": 31.02248407643401
+        },
+        {
+          "terminal_price": 106.42280318471339,
+          "pnl": 40.98031847133882
+        },
+        {
+          "terminal_price": 106.52238152866242,
+          "pnl": 50.93815286624226
+        },
+        {
+          "terminal_price": 106.62195987261147,
+          "pnl": 60.895987261146956
+        },
+        {
+          "terminal_price": 106.72153821656052,
+          "pnl": 70.85382165605188
+        },
+        {
+          "terminal_price": 106.82111656050955,
+          "pnl": 80.81165605095521
+        },
+        {
+          "terminal_price": 106.9206949044586,
+          "pnl": 90.76949044586001
+        },
+        {
+          "terminal_price": 107.02027324840765,
+          "pnl": 100.72732484076482
+        },
+        {
+          "terminal_price": 107.1198515923567,
+          "pnl": 110.68515923566963
+        },
+        {
+          "terminal_price": 107.21942993630573,
+          "pnl": 120.64299363057307
+        },
+        {
+          "terminal_price": 107.31900828025478,
+          "pnl": 130.60082802547777
+        },
+        {
+          "terminal_price": 107.41858662420383,
+          "pnl": 140.5586624203827
+        },
+        {
+          "terminal_price": 107.51816496815287,
+          "pnl": 150.51649681528738
+        },
+        {
+          "terminal_price": 107.61774331210191,
+          "pnl": 160.47433121019083
+        },
+        {
+          "terminal_price": 107.71732165605096,
+          "pnl": 170.43216560509563
+        },
+        {
+          "terminal_price": 107.8169,
+          "pnl": 180.39000000000044
+        }
+      ],
+      "liquidity_warnings": [],
+      "greek_exposure": {
+        "delta": null,
+        "gamma": null,
+        "theta": null,
+        "vega": null,
+        "rho": null
+      },
+      "capital_treatment": "fully_paid_long_options",
+      "assumptions": [
+        "Buy at ask and sell at bid; displayed quotes do not guarantee fills.",
+        "Entry fees charged once per absolute contract; exit fees and exercise/assignment charges excluded.",
+        "Same-expiration standard 100-share contracts; payoff assumes all legs held through expiration.",
+        "Theoretical capital at risk does not establish brokerage buying power.",
+        "Greeks are provider observations; future volatility and expiration sensitivity may change.",
+        "Event risk evidence unavailable. Payoff validity does not establish a trading edge."
+      ]
+    },
+    "chain": {
+      "symbol": "SPY",
+      "expiration": "2026-11-06",
+      "calls": [
+        {
+          "contract": "SPY261106C00100000",
+          "type": "Call",
+          "strike": 100,
+          "bid": 2.99,
+          "ask": 3,
+          "bid_timestamp": "2026-11-05T15:00:00+00:00",
+          "ask_timestamp": "2026-11-05T15:00:00+00:00",
+          "volume": 10,
+          "open_interest": 20,
+          "bid_size": 10,
+          "ask_size": 10,
+          "status": "fresh",
+          "quote_age_seconds": 0.0
+        }
+      ],
+      "puts": [
+        {
+          "contract": "SPY261106P00100000",
+          "type": "Put",
+          "strike": 100,
+          "bid": 2.99,
+          "ask": 3,
+          "bid_timestamp": "2026-11-05T15:00:00+00:00",
+          "ask_timestamp": "2026-11-05T15:00:00+00:00",
+          "volume": 10,
+          "open_interest": 20,
+          "bid_size": 10,
+          "ask_size": 10,
+          "status": "fresh",
+          "quote_age_seconds": 0.0
+        }
+      ]
+    }
+  },
+  {
+    "request": {
+      "strategy": "long_strangle",
+      "legs": [
+        {
+          "contract": "SPY261106C00105000",
+          "qty": 1
+        },
+        {
+          "contract": "SPY261106P00095000",
+          "qty": 1
+        }
+      ]
+    },
+    "result": {
+      "strategy": "long_strangle",
+      "geometry": "long_strangle",
+      "direction": "two_sided",
+      "status": "available",
+      "eligible_for_analysis": true,
+      "reason": null,
+      "limit_breaches": [],
+      "symbol": "SPY",
+      "expiration": "2026-11-06",
+      "dte": 1,
+      "legs": [
+        {
+          "contract": "SPY261106C00105000",
+          "type": "Call",
+          "strike": 105,
+          "bid": 1.99,
+          "ask": 2,
+          "bid_timestamp": "2026-11-05T15:00:00+00:00",
+          "ask_timestamp": "2026-11-05T15:00:00+00:00",
+          "volume": 10,
+          "open_interest": 20,
+          "bid_size": 10,
+          "ask_size": 10,
+          "status": "fresh",
+          "quote_age_seconds": 0.0,
+          "qty": 1,
+          "price": 2,
+          "expiration": "2026-11-06"
+        },
+        {
+          "contract": "SPY261106P00095000",
+          "type": "Put",
+          "strike": 95,
+          "bid": 1.99,
+          "ask": 2,
+          "bid_timestamp": "2026-11-05T15:00:00+00:00",
+          "ask_timestamp": "2026-11-05T15:00:00+00:00",
+          "volume": 10,
+          "open_interest": 20,
+          "bid_size": 10,
+          "ask_size": 10,
+          "status": "fresh",
+          "quote_age_seconds": 0.0,
+          "qty": 1,
+          "price": 2,
+          "expiration": "2026-11-06"
+        }
+      ],
+      "contract_multiplier": 100,
+      "total_contracts": 2,
+      "evaluated_at": "2026-11-05T15:00:00+00:00",
+      "retrieved_at": "2026-11-05T15:00:00+00:00",
+      "oldest_quote_age_seconds": 0.0,
+      "entry_premium": -400.0,
+      "entry_fees": 1.3,
+      "net_cash": -401.3,
+      "entry_debit": 401.3,
+      "entry_credit": 0,
+      "max_profit": null,
+      "profit_unbounded": true,
+      "max_loss": 401.3,
+      "loss_unbounded": false,
+      "capital_at_risk": 401.3,
+      "return_on_max_risk": null,
+      "breakevens": [
+        90.98700000000001,
+        109.013
+      ],
+      "payoff": [
+        {
+          "terminal_price": 88.2831,
+          "pnl": 270.3899999999996
+        },
+        {
+          "terminal_price": 88.38281829787235,
+          "pnl": 260.41817021276523
+        },
+        {
+          "terminal_price": 88.48253659574469,
+          "pnl": 250.44634042553088
+        },
+        {
+          "terminal_price": 88.58225489361702,
+          "pnl": 240.4745106382981
+        },
+        {
+          "terminal_price": 88.68197319148936,
+          "pnl": 230.50268085106376
+        },
+        {
+          "terminal_price": 88.7816914893617,
+          "pnl": 220.5308510638294
+        },
+        {
+          "terminal_price": 88.88140978723405,
+          "pnl": 210.55902127659516
+        },
+        {
+          "terminal_price": 88.98112808510639,
+          "pnl": 200.58719148936092
+        },
+        {
+          "terminal_price": 89.08084638297873,
+          "pnl": 190.61536170212656
+        },
+        {
+          "terminal_price": 89.18056468085106,
+          "pnl": 180.64353191489369
+        },
+        {
+          "terminal_price": 89.2802829787234,
+          "pnl": 170.67170212765944
+        },
+        {
+          "terminal_price": 89.38000127659575,
+          "pnl": 160.6998723404251
+        },
+        {
+          "terminal_price": 89.47971957446809,
+          "pnl": 150.72804255319073
+        },
+        {
+          "terminal_price": 89.57943787234043,
+          "pnl": 140.7562127659565
+        },
+        {
+          "terminal_price": 89.67915617021276,
+          "pnl": 130.7843829787236
+        },
+        {
+          "terminal_price": 89.7788744680851,
+          "pnl": 120.81255319148926
+        },
+        {
+          "terminal_price": 89.87859276595745,
+          "pnl": 110.84072340425502
+        },
+        {
+          "terminal_price": 89.97831106382979,
+          "pnl": 100.86889361702072
+        },
+        {
+          "terminal_price": 90.07802936170214,
+          "pnl": 90.89706382978642
+        },
+        {
+          "terminal_price": 90.17774765957448,
+          "pnl": 80.92523404255212
+        },
+        {
+          "terminal_price": 90.27746595744681,
+          "pnl": 70.95340425531924
+        },
+        {
+          "terminal_price": 90.37718425531915,
+          "pnl": 60.98157446808494
+        },
+        {
+          "terminal_price": 90.4769025531915,
+          "pnl": 51.009744680850645
+        },
+        {
+          "terminal_price": 90.57662085106384,
+          "pnl": 41.037914893616346
+        },
+        {
+          "terminal_price": 90.67633914893618,
+          "pnl": 31.066085106382047
+        },
+        {
+          "terminal_price": 90.77605744680852,
+          "pnl": 21.09425531914775
+        },
+        {
+          "terminal_price": 90.87577574468085,
+          "pnl": 11.122425531914871
+        },
+        {
+          "terminal_price": 90.9754940425532,
+          "pnl": 1.1505957446805724
+        },
+        {
+          "terminal_price": 90.98700000000001,
+          "pnl": -9.094947017729282e-13
+        },
+        {
+          "terminal_price": 91.07521234042554,
+          "pnl": -8.821234042553726
+        },
+        {
+          "terminal_price": 91.17493063829788,
+          "pnl": -18.793063829788025
+        },
+        {
+          "terminal_price": 91.27464893617022,
+          "pnl": -28.764893617022324
+        },
+        {
+          "terminal_price": 91.37436723404255,
+          "pnl": -38.7367234042552
+        },
+        {
+          "terminal_price": 91.4740855319149,
+          "pnl": -48.7085531914895
+        },
+        {
+          "terminal_price": 91.57380382978724,
+          "pnl": -58.6803829787238
+        },
+        {
+          "terminal_price": 91.67352212765958,
+          "pnl": -68.6522127659581
+        },
+        {
+          "terminal_price": 91.77324042553192,
+          "pnl": -78.6240425531924
+        },
+        {
+          "terminal_price": 91.87295872340427,
+          "pnl": -88.5958723404267
+        },
+        {
+          "terminal_price": 91.9726770212766,
+          "pnl": -98.56770212765957
+        },
+        {
+          "terminal_price": 92.07239531914894,
+          "pnl": -108.53953191489387
+        },
+        {
+          "terminal_price": 92.17211361702128,
+          "pnl": -118.51136170212817
+        },
+        {
+          "terminal_price": 92.27183191489362,
+          "pnl": -128.48319148936247
+        },
+        {
+          "terminal_price": 92.37155021276597,
+          "pnl": -138.45502127659677
+        },
+        {
+          "terminal_price": 92.47126851063831,
+          "pnl": -148.42685106383107
+        },
+        {
+          "terminal_price": 92.57098680851064,
+          "pnl": -158.39868085106394
+        },
+        {
+          "terminal_price": 92.67070510638298,
+          "pnl": -168.37051063829824
+        },
+        {
+          "terminal_price": 92.77042340425533,
+          "pnl": -178.34234042553254
+        },
+        {
+          "terminal_price": 92.87014170212767,
+          "pnl": -188.31417021276684
+        },
+        {
+          "terminal_price": 92.96986000000001,
+          "pnl": -198.28600000000114
+        },
+        {
+          "terminal_price": 92.99350000000001,
+          "pnl": -200.65000000000117
+        },
+        {
+          "terminal_price": 93.06957829787234,
+          "pnl": -208.25782978723402
+        },
+        {
+          "terminal_price": 93.16929659574468,
+          "pnl": -218.22965957446831
+        },
+        {
+          "terminal_price": 93.26901489361703,
+          "pnl": -228.2014893617026
+        },
+        {
+          "terminal_price": 93.36873319148937,
+          "pnl": -238.1733191489369
+        },
+        {
+          "terminal_price": 93.46845148936171,
+          "pnl": -248.1451489361712
+        },
+        {
+          "terminal_price": 93.56816978723405,
+          "pnl": -258.1169787234055
+        },
+        {
+          "terminal_price": 93.66788808510638,
+          "pnl": -268.0888085106384
+        },
+        {
+          "terminal_price": 93.76760638297873,
+          "pnl": -278.0606382978727
+        },
+        {
+          "terminal_price": 93.86732468085107,
+          "pnl": -288.032468085107
+        },
+        {
+          "terminal_price": 93.96704297872341,
+          "pnl": -298.0042978723413
+        },
+        {
+          "terminal_price": 94.06676127659576,
+          "pnl": -307.9761276595756
+        },
+        {
+          "terminal_price": 94.16647957446808,
+          "pnl": -317.94795744680846
+        },
+        {
+          "terminal_price": 94.26619787234043,
+          "pnl": -327.91978723404276
+        },
+        {
+          "terminal_price": 94.36591617021277,
+          "pnl": -337.89161702127706
+        },
+        {
+          "terminal_price": 94.46563446808511,
+          "pnl": -347.86344680851136
+        },
+        {
+          "terminal_price": 94.56535276595746,
+          "pnl": -357.83527659574565
+        },
+        {
+          "terminal_price": 94.6650710638298,
+          "pnl": -367.80710638297995
+        },
+        {
+          "terminal_price": 94.76478936170213,
+          "pnl": -377.77893617021283
+        },
+        {
+          "terminal_price": 94.86450765957447,
+          "pnl": -387.75076595744713
+        },
+        {
+          "terminal_price": 94.96422595744681,
+          "pnl": -397.7225957446814
+        },
+        {
+          "terminal_price": 95.0,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 95.06394425531916,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 95.1636625531915,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 95.26338085106383,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 95.36309914893617,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 95.46281744680851,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 95.56253574468086,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 95.6622540425532,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 95.76197234042554,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 95.86169063829787,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 95.96140893617022,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 96.06112723404256,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 96.1608455319149,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 96.26056382978724,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 96.36028212765959,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 96.46000042553192,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 96.55971872340426,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 96.6594370212766,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 96.75915531914895,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 96.85887361702129,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 96.95859191489362,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 97.05831021276596,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 97.1580285106383,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 97.25774680851065,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 97.35746510638299,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 97.45718340425532,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 97.5,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 97.55690170212766,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 97.65662,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 97.75633829787235,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 97.85605659574469,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 97.95577489361703,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 98.05549319148938,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 98.1552114893617,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 98.25492978723405,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 98.35464808510639,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 98.45436638297873,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 98.55408468085108,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 98.6538029787234,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 98.75352127659575,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 98.85323957446809,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 98.95295787234043,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 99.05267617021278,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 99.1523944680851,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 99.25211276595745,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 99.35183106382979,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 99.45154936170213,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 99.55126765957448,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 99.65098595744682,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 99.75070425531916,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 99.85042255319149,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 99.95014085106384,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 100.0,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 100.04985914893618,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 100.14957744680852,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 100.24929574468086,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 100.3490140425532,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 100.44873234042554,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 100.54845063829788,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 100.64816893617022,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 100.74788723404257,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 100.8476055319149,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 100.94732382978724,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 101.04704212765958,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 101.14676042553192,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 101.24647872340427,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 101.3461970212766,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 101.44591531914894,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 101.54563361702128,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 101.64535191489362,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 101.74507021276597,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 101.84478851063831,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 101.94450680851065,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 102.04422510638298,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 102.14394340425532,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 102.24366170212767,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 102.34338000000001,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 102.44309829787235,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 102.5,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 102.54281659574468,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 102.64253489361703,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 102.74225319148937,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 102.84197148936171,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 102.94168978723405,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 103.04140808510638,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 103.14112638297873,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 103.24084468085107,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 103.34056297872341,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 103.44028127659575,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 103.5399995744681,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 103.63971787234044,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 103.73943617021277,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 103.83915446808511,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 103.93887276595746,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 104.0385910638298,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 104.13830936170214,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 104.23802765957447,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 104.33774595744681,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 104.43746425531916,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 104.5371825531915,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 104.63690085106384,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 104.73661914893617,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 104.83633744680851,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 104.93605574468086,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 105.0,
+          "pnl": -401.3
+        },
+        {
+          "terminal_price": 105.0357740425532,
+          "pnl": -397.72259574468
+        },
+        {
+          "terminal_price": 105.13549234042554,
+          "pnl": -387.7507659574457
+        },
+        {
+          "terminal_price": 105.23521063829789,
+          "pnl": -377.7789361702114
+        },
+        {
+          "terminal_price": 105.33492893617023,
+          "pnl": -367.8071063829771
+        },
+        {
+          "terminal_price": 105.43464723404256,
+          "pnl": -357.83527659574423
+        },
+        {
+          "terminal_price": 105.5343655319149,
+          "pnl": -347.86344680850993
+        },
+        {
+          "terminal_price": 105.63408382978724,
+          "pnl": -337.89161702127564
+        },
+        {
+          "terminal_price": 105.73380212765959,
+          "pnl": -327.91978723404134
+        },
+        {
+          "terminal_price": 105.83352042553193,
+          "pnl": -317.94795744680704
+        },
+        {
+          "terminal_price": 105.93323872340426,
+          "pnl": -307.97612765957416
+        },
+        {
+          "terminal_price": 106.0329570212766,
+          "pnl": -298.00429787233986
+        },
+        {
+          "terminal_price": 106.13267531914894,
+          "pnl": -288.03246808510556
+        },
+        {
+          "terminal_price": 106.23239361702129,
+          "pnl": -278.06063829787126
+        },
+        {
+          "terminal_price": 106.33211191489363,
+          "pnl": -268.08880851063697
+        },
+        {
+          "terminal_price": 106.43183021276596,
+          "pnl": -258.1169787234041
+        },
+        {
+          "terminal_price": 106.5315485106383,
+          "pnl": -248.1451489361698
+        },
+        {
+          "terminal_price": 106.63126680851065,
+          "pnl": -238.1733191489355
+        },
+        {
+          "terminal_price": 106.73098510638299,
+          "pnl": -228.2014893617012
+        },
+        {
+          "terminal_price": 106.83070340425533,
+          "pnl": -218.2296595744669
+        },
+        {
+          "terminal_price": 106.93042170212767,
+          "pnl": -208.2578297872326
+        },
+        {
+          "terminal_price": 107.0065,
+          "pnl": -200.64999999999975
+        },
+        {
+          "terminal_price": 107.03014000000002,
+          "pnl": -198.2859999999983
+        },
+        {
+          "terminal_price": 107.12985829787235,
+          "pnl": -188.31417021276542
+        },
+        {
+          "terminal_price": 107.22957659574469,
+          "pnl": -178.34234042553112
+        },
+        {
+          "terminal_price": 107.32929489361703,
+          "pnl": -168.37051063829682
+        },
+        {
+          "terminal_price": 107.42901319148937,
+          "pnl": -158.39868085106252
+        },
+        {
+          "terminal_price": 107.52873148936172,
+          "pnl": -148.42685106382822
+        },
+        {
+          "terminal_price": 107.62844978723405,
+          "pnl": -138.45502127659535
+        },
+        {
+          "terminal_price": 107.72816808510639,
+          "pnl": -128.48319148936105
+        },
+        {
+          "terminal_price": 107.82788638297873,
+          "pnl": -118.51136170212675
+        },
+        {
+          "terminal_price": 107.92760468085108,
+          "pnl": -108.53953191489245
+        },
+        {
+          "terminal_price": 108.02732297872342,
+          "pnl": -98.56770212765815
+        },
+        {
+          "terminal_price": 108.12704127659575,
+          "pnl": -88.59587234042527
+        },
+        {
+          "terminal_price": 108.22675957446809,
+          "pnl": -78.62404255319098
+        },
+        {
+          "terminal_price": 108.32647787234043,
+          "pnl": -68.65221276595668
+        },
+        {
+          "terminal_price": 108.42619617021278,
+          "pnl": -58.68038297872238
+        },
+        {
+          "terminal_price": 108.52591446808512,
+          "pnl": -48.70855319148808
+        },
+        {
+          "terminal_price": 108.62563276595745,
+          "pnl": -38.7367234042552
+        },
+        {
+          "terminal_price": 108.72535106382979,
+          "pnl": -28.764893617020903
+        },
+        {
+          "terminal_price": 108.82506936170213,
+          "pnl": -18.793063829786604
+        },
+        {
+          "terminal_price": 108.92478765957448,
+          "pnl": -8.821234042552305
+        },
+        {
+          "terminal_price": 109.013,
+          "pnl": 5.115907697472721e-13
+        },
+        {
+          "terminal_price": 109.02450595744682,
+          "pnl": 1.1505957446819934
+        },
+        {
+          "terminal_price": 109.12422425531916,
+          "pnl": 11.122425531916292
+        },
+        {
+          "terminal_price": 109.2239425531915,
+          "pnl": 21.09425531915059
+        },
+        {
+          "terminal_price": 109.32366085106383,
+          "pnl": 31.06608510638347
+        },
+        {
+          "terminal_price": 109.42337914893618,
+          "pnl": 41.03791489361777
+        },
+        {
+          "terminal_price": 109.52309744680852,
+          "pnl": 51.009744680852066
+        },
+        {
+          "terminal_price": 109.62281574468086,
+          "pnl": 60.981574468086365
+        },
+        {
+          "terminal_price": 109.7225340425532,
+          "pnl": 70.95340425532066
+        },
+        {
+          "terminal_price": 109.82225234042554,
+          "pnl": 80.92523404255354
+        },
+        {
+          "terminal_price": 109.92197063829788,
+          "pnl": 90.89706382978784
+        },
+        {
+          "terminal_price": 110.02168893617022,
+          "pnl": 100.86889361702214
+        },
+        {
+          "terminal_price": 110.12140723404256,
+          "pnl": 110.8407234042565
+        },
+        {
+          "terminal_price": 110.22112553191491,
+          "pnl": 120.81255319149074
+        },
+        {
+          "terminal_price": 110.32084382978724,
+          "pnl": 130.7843829787236
+        },
+        {
+          "terminal_price": 110.42056212765958,
+          "pnl": 140.75621276595797
+        },
+        {
+          "terminal_price": 110.52028042553192,
+          "pnl": 150.7280425531922
+        },
+        {
+          "terminal_price": 110.61999872340427,
+          "pnl": 160.69987234042645
+        },
+        {
+          "terminal_price": 110.71971702127661,
+          "pnl": 170.6717021276608
+        },
+        {
+          "terminal_price": 110.81943531914894,
+          "pnl": 180.64353191489369
+        },
+        {
+          "terminal_price": 110.91915361702128,
+          "pnl": 190.61536170212793
+        },
+        {
+          "terminal_price": 111.01887191489362,
+          "pnl": 200.58719148936228
+        },
+        {
+          "terminal_price": 111.11859021276597,
+          "pnl": 210.55902127659664
+        },
+        {
+          "terminal_price": 111.21830851063831,
+          "pnl": 220.53085106383088
+        },
+        {
+          "terminal_price": 111.31802680851065,
+          "pnl": 230.50268085106512
+        },
+        {
+          "terminal_price": 111.417745106383,
+          "pnl": 240.47451063829948
+        },
+        {
+          "terminal_price": 111.51746340425532,
+          "pnl": 250.44634042553236
+        },
+        {
+          "terminal_price": 111.61718170212767,
+          "pnl": 260.4181702127666
+        },
+        {
+          "terminal_price": 111.71690000000001,
+          "pnl": 270.39000000000095
+        }
+      ],
+      "liquidity_warnings": [],
+      "greek_exposure": {
+        "delta": null,
+        "gamma": null,
+        "theta": null,
+        "vega": null,
+        "rho": null
+      },
+      "capital_treatment": "fully_paid_long_options",
+      "assumptions": [
+        "Buy at ask and sell at bid; displayed quotes do not guarantee fills.",
+        "Entry fees charged once per absolute contract; exit fees and exercise/assignment charges excluded.",
+        "Same-expiration standard 100-share contracts; payoff assumes all legs held through expiration.",
+        "Theoretical capital at risk does not establish brokerage buying power.",
+        "Greeks are provider observations; future volatility and expiration sensitivity may change.",
+        "Event risk evidence unavailable. Payoff validity does not establish a trading edge."
+      ]
+    },
+    "chain": {
+      "symbol": "SPY",
+      "expiration": "2026-11-06",
+      "calls": [
+        {
+          "contract": "SPY261106C00105000",
+          "type": "Call",
+          "strike": 105,
+          "bid": 1.99,
+          "ask": 2,
+          "bid_timestamp": "2026-11-05T15:00:00+00:00",
+          "ask_timestamp": "2026-11-05T15:00:00+00:00",
+          "volume": 10,
+          "open_interest": 20,
+          "bid_size": 10,
+          "ask_size": 10,
+          "status": "fresh",
+          "quote_age_seconds": 0.0
+        }
+      ],
+      "puts": [
+        {
+          "contract": "SPY261106P00095000",
+          "type": "Put",
+          "strike": 95,
+          "bid": 1.99,
+          "ask": 2,
+          "bid_timestamp": "2026-11-05T15:00:00+00:00",
+          "ask_timestamp": "2026-11-05T15:00:00+00:00",
+          "volume": 10,
+          "open_interest": 20,
+          "bid_size": 10,
+          "ask_size": 10,
+          "status": "fresh",
+          "quote_age_seconds": 0.0
+        }
+      ]
+    }
+  }
+]

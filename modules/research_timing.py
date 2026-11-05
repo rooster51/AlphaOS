@@ -96,7 +96,7 @@ class ResearchTimingMiddleware:
         method, path = scope.get('method'), scope.get('path')
         quote_symbol = path.rsplit('/', 1)[-1] if method == 'GET' and path in ('/v1/quote/SPY', '/v1/quote/QQQ') else None
         option_route = re.fullmatch(r'/v1/options/(SPY|QQQ)/(?:expirations|chain/[0-9-]+)', path or '')
-        if method == 'GET' and option_route:
+        if method in ('GET', 'POST') and option_route:
             quote_symbol = option_route[1]
         research = method == 'POST' and path in ('/v1/research/market', '/v1/research/observation')
         if scope['type'] != 'http' or not (research or quote_symbol):

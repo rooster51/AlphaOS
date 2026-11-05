@@ -18,7 +18,8 @@ from modules.symbol_registry import SYMBOLS, instrument, metadata as instrument_
 from .contracts import APIError,SCHEMA_VERSION,CAVEATS,friction
 from modules.option_quote_quality import option_quality
 from .cache import TTLStore
-from .live_options import assess_contracts, contract_identity, scenario, MAX_AGE_SECONDS
+from .live_options import (assess_contracts, contract_identity, scenario, MAX_AGE_SECONDS,
+    research_scenario, underlying_eligible, unavailable_scenario)
 from .provider import MarketProvider
 from modules.quote_freshness import freshness, normalize_timestamp
 from modules.research_timing import stage
@@ -165,6 +166,28 @@ class ResearchService:
             result.update(source='Public', max_quote_age_seconds=MAX_AGE_SECONDS)
         return {**result,'quality':{**result['quality'],**option_quality(legs,self.clock(),result['retrieved_at'],'entire_chain'),
             'timing':self.timing(None,legs)}}
+
+    def chain_research(self, symbol, expiration, request):
+        symbol = symbol_value(symbol)
+        expiration = self.expiration(expiration)
+        bundle = self.chain(symbol, expiration, explicit=True)
+        underlying_error = None
+        try:
+            quote = self.quote(symbol, refresh=True)
+        except APIError as error:
+            quote = None
+            underlying_error = error.code
+        now = self.clock()
+        if quote is None or not underlying_eligible(quote, now):
+            results = [unavailable_scenario(item, "underlying_quote_ineligible") for item in request.scenarios]
+        else:
+            results = [research_scenario(bundle['chain'], item, quote['quote']['last'], now,
+                bundle['retrieved_at'], request.limits, request.entry_fee_per_contract)
+                for item in request.scenarios]
+        return dict(source='Public', symbol=symbol, expiration=expiration,
+            request=request.model_dump(mode='json'), evaluated_at=now.isoformat(),
+            retrieved_at=bundle['retrieved_at'], underlying=quote, underlying_error=underlying_error,
+            scenarios=results, comparison_basis='Common contract observations and evaluation time; descriptive ordering only.')
 
     def snapshot(self,symbol,horizon=3,spot=None,snapshot_id=None,refresh=False,quote_bundle=None):
         symbol=symbol_value(symbol);horizon=horizon_value(horizon)

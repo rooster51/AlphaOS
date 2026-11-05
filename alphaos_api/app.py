@@ -19,7 +19,7 @@ from modules.price_structure import nearest_levels
 from modules.forward_distribution import summarize_forward_distribution
 from .contracts import APIError,TradeRequest,CompareRequest,ResearchResponse,ErrorResponse,SCHEMA_VERSION,friction
 from .service import ResearchService,symbol_value,horizon_value
-from .live_options import assess_contracts, scenario, underlying_eligible
+from .live_options import assess_contracts, scenario, underlying_eligible, ChainResearchRequest
 from .config import load_secret_files
 from modules.research_control import checkpoint
 from .json_encoding import encode_json
@@ -232,6 +232,14 @@ def research_live_vertical(symbol:str,expiration:date,option_type:Literal['put',
     bundle,trade,quote=service.exact_trade(symbol,expiration,option_type,short_strike,long_strike,horizon,refresh)
     result=service.research(bundle,trade)
     return respond(service.envelope(dict(**service.evidence(result,trade),quotes=quote),bundle))
+
+
+@router.post('/options/{symbol}/chain/{expiration}', response_model=ResearchResponse,
+    operation_id='research_contract_scenarios')
+def research_contract_scenarios(symbol: str, expiration: date, request: ChainResearchRequest):
+    service = app.state.service
+    result = service.chain_research(symbol, expiration, request)
+    return respond(service.envelope(result, symbol=symbol_value(symbol)))
 
 
 @router.get('/options/{symbol}/scan',response_model=ResearchResponse,operation_id='scan_credit_spreads')

@@ -2,8 +2,9 @@ import { record } from "../../../lib/market-candidates.ts";
 import { readRuntimeBindings } from "#alphaos-runtime";
 import { getServerConfig } from "../../../lib/server-config.ts";
 import { validSessionCookie } from "../../../lib/website-auth.ts";
+import { validResearchRequest, validResearchResults, stableJSON, type ResearchRequest } from "../../../lib/options-research.ts";
 
-export async function GET(request: Request) {
+async function optionsResponse(request: Request, research?: ResearchRequest) {
   const reply = (body: unknown, status = 200) => Response.json(body, {
     status, headers: { "Cache-Control": "private, no-store", Vary: "Cookie" },
   });
@@ -22,7 +23,8 @@ export async function GET(request: Request) {
   if ((symbol !== "SPY" && symbol !== "QQQ")
       || (expiration !== null && !/^\d{4}-\d{2}-\d{2}$/.test(expiration))
       || (buy !== null && (!expiration || buy.length > 32 || !contract.test(buy)))
-      || (sell !== null && (!buy || sell.length > 32 || !contract.test(sell)))) {
+      || (sell !== null && (!buy || sell.length > 32 || !contract.test(sell)))
+      || (request.method === "POST" && (!research || !expiration || buy || sell))) {
     return reply({ code: "invalid_options_request" }, 400);
   }
 
@@ -32,7 +34,7 @@ export async function GET(request: Request) {
   }
   const url = new URL(expiration ? `/v1/options/${symbol}/chain/${expiration}` :
     `/v1/options/${symbol}/expirations`, base);
-  if (expiration) {
+  if (expiration && !research) {
     url.searchParams.set("explicit", "true");
     url.searchParams.set("refresh", buy ? "false" : "true");
   }
@@ -44,7 +46,9 @@ export async function GET(request: Request) {
   let status: number | undefined;
   try {
     const response = await fetch(url, {
-      headers: { Authorization: `Bearer ${token}`, Accept: "application/json", "X-AlphaOS-Request-ID": requestId },
+      method: research ? "POST" : "GET",
+      body: research ? JSON.stringify(research) : undefined,
+      headers: { Authorization: `Bearer ${token}`, Accept: "application/json", "Content-Type": "application/json", "X-AlphaOS-Request-ID": requestId },
       cache: "no-store", redirect: "error", signal: AbortSignal.any([deadline, request.signal]),
     });
     status = response.status;
@@ -55,7 +59,13 @@ export async function GET(request: Request) {
       const code = record(payload.error).code;
       return reply({ code: typeof code === "string" && /^[a-z_]{1,64}$/.test(code) ? code : "backend_rejected_request" }, status);
     }
-    if (record(payload.meta).symbol !== symbol || (expiration
+    if (record(payload.meta).symbol !== symbol || (research
+      ? evidence.symbol !== symbol || evidence.expiration !== expiration || evidence.source !== "Public"
+        || stableJSON(evidence.request) !== stableJSON(research)
+        || !validResearchResults(evidence.scenarios, research)
+        || (evidence.scenarios as Record<string, unknown>[]).some(result =>
+          result.legs && (result.expiration !== expiration || result.symbol !== symbol))
+      : expiration
       ? chain.symbol !== symbol || chain.expiration !== expiration || evidence.source !== "Public"
         || !Array.isArray(chain.calls) || !Array.isArray(chain.puts)
       : !Array.isArray(evidence.expirations) || evidence.expirations.some(date =>
@@ -68,5 +78,42 @@ export async function GET(request: Request) {
   } finally {
     console.info(JSON.stringify({ event: "option_chain_bridge", symbol, request_id: requestId,
       elapsed_ms: Math.round(performance.now() - started), upstream_status: status }));
+  }
+}
+
+export async function GET(request: Request) {
+  return optionsResponse(request);
+}
+
+export async function POST(request: Request) {
+  const origin = new URL(request.url).origin;
+  if (request.headers.get("origin") !== origin || request.headers.get("sec-fetch-site") === "cross-site") {
+    return Response.json({ code: "csrf_rejected" }, { status: 403, headers: { "Cache-Control": "no-store" } });
+  }
+  // Bound the streamed body as well as requests with Content-Length.
+  const reader = request.body?.getReader();
+  let text = "";
+  let size = 0;
+  const decoder = new TextDecoder();
+  try {
+    if (!reader) throw new Error();
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      size += value.byteLength;
+      if (size > 20000) {
+        await reader.cancel();
+        throw new Error();
+      }
+      text += decoder.decode(value, { stream: true });
+    }
+    text += decoder.decode();
+    const payload: unknown = JSON.parse(text);
+    if (!validResearchRequest(payload)) throw new Error();
+    return optionsResponse(request, payload);
+  } catch {
+    return Response.json({ code: "invalid_options_request" }, { status: 400, headers: { "Cache-Control": "no-store" } });
+  } finally {
+    reader?.releaseLock();
   }
 }
