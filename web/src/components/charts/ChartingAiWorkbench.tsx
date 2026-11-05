@@ -64,6 +64,20 @@ function messageForCode(code: string): string {
     "The assistant is unavailable. No answer was generated.";
 }
 
+/**
+ * Provider failures carry a sanitised status and category (never a provider
+ * message), so the operator can tell a rejected key from a missing model,
+ * exhausted quota or unreachable endpoint after a single attempt.
+ */
+function providerDetail(data: Record<string, unknown> | null): string {
+  const status = typeof data?.provider_status === "number" ? `HTTP ${data.provider_status}` : null;
+  const category = typeof data?.provider_error_category === "string"
+    ? data.provider_error_category.replace(/_/g, " ") : null;
+  const host = typeof data?.provider_host === "string" && data.provider_host ? data.provider_host : null;
+  const parts = [status, category, host].filter((part): part is string => Boolean(part));
+  return parts.length > 0 ? ` (provider ${parts.join(" · ")})` : "";
+}
+
 function formatTimestamp(value: string): string {
   const parsed = Date.parse(value);
   return Number.isFinite(parsed) ? new Date(parsed).toISOString() : "timestamp unavailable";
@@ -183,7 +197,8 @@ export function ChartingAiWorkbench({ initialSymbol }: { initialSymbol: ChartSym
       setPending({
         question,
         status: "error",
-        message: messageForCode(typeof data?.code === "string" ? data.code : ""),
+        message: messageForCode(typeof data?.code === "string" ? data.code : "") +
+          (data?.code === "chat_provider_error" ? providerDetail(data) : ""),
       });
     } catch {
       const timedOut = controller.signal.aborted;

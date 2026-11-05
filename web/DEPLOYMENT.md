@@ -124,7 +124,16 @@ existing bounded bcrypt concurrency remains independent protection.
    Functions scope where Netlify offers scopes. Reuse the approved values from
    the current website/API configuration; do not commit them, put them in
    `netlify.toml`, or expose them as `NEXT_PUBLIC_*`. No limiter-mode
-   environment variable should be added.
+   environment variable should be added. When the assistant is enabled, a
+   provider rejection is reported only by HTTP status, a fixed category and the
+   provider host: the structured log event `charts_chat_provider_error` (or
+   `charts_chat_provider_unreachable` for a network/timeout failure) is written
+   to the Netlify function log, and the same sanitised fields are returned to
+   the signed-in page. Provider error bodies and messages are neither logged
+   nor returned. For Google Gemini, set
+   `ALPHAOS_CHAT_API_URL=https://generativelanguage.googleapis.com/v1beta/openai/chat/completions`
+   with the bare model id (`gemini-2.5-flash`); Gemini's compatibility layer
+   rejects an invalid key with HTTP 400 `INVALID_ARGUMENT`, not 401.
 5. Once explicitly authorized, create a Netlify deploy preview and verify its
    runtime environment, anonymous denial, login/logout, CSRF rejection, Render
    connectivity, and shared limit across separate client IPs. Confirm missing

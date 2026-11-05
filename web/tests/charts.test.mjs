@@ -8,6 +8,7 @@ import {
   buildChatRequestBody,
   buildSystemPrompt,
   chatConfiguration,
+  classifyProviderFailure,
   detectChartAccessClaim,
   parseChatCompletion,
   parseChatRequest,
@@ -469,4 +470,116 @@ test("chat route refuses when verified evidence is unavailable", async () => {
   const body = await response.json();
   assert.equal(body.code, "market_evidence_backend_error");
   assert.equal(modelCalls, 0);
+});
+
+test("provider failures are classified from status and envelope, not provider prose", () => {
+  const cases = [
+    [400, [{ error: { code: 400, message: "Please pass a valid API key", status: "INVALID_ARGUMENT" } }], "invalid_api_key"],
+    [400, { error: { type: "invalid_request_error", code: "invalid_api_key" } }, "invalid_api_key"],
+    [401, { error: { type: "authentication_error" } }, "authentication"],
+    [403, { error: { code: 403, message: "API not enabled", status: "PERMISSION_DENIED" } }, "permission_denied"],
+    [404, { error: { code: 404, message: "models/gemini-9.9-nope is not found for API version v1beta" } }, "model_not_found"],
+    [404, { error: { code: 404, message: "The requested URL /v1/chat was not found on this server." } }, "endpoint_not_found"],
+    [429, [{ error: { status: "RESOURCE_EXHAUSTED", message: "Quota exceeded for quota metric" } }], "quota_exceeded"],
+    [429, { error: { code: "rate_limit_exceeded" } }, "rate_limited"],
+    [400, { error: { status: "INVALID_ARGUMENT", message: "Invalid JSON payload: unknown field" } }, "invalid_request"],
+    [500, { error: { status: "INTERNAL" } }, "provider_unavailable"],
+    [418, null, "unknown"],
+    [999, null, "unknown"],
+  ];
+  for (const [status, payload, category] of cases) {
+    assert.deepEqual(classifyProviderFailure(status, payload), {
+      status: status >= 100 && status <= 599 ? status : 0,
+      category,
+    }, `${status} ${JSON.stringify(payload)}`);
+  }
+});
+
+test("chat route reports a sanitised provider rejection and never its body", async () => {
+  process.env.ALPHAOS_API_TOKEN = "research-secret";
+  process.env.ALPHAOS_API_URL = "https://research.example";
+  process.env.ALPHAOS_CHAT_API_KEY = "chat-secret-value";
+  process.env.ALPHAOS_CHAT_MODEL = "gemini-2.5-flash";
+  process.env.ALPHAOS_CHAT_API_URL =
+    "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
+
+  const logs = [];
+  const originalError = console.error;
+  console.error = (...args) => { logs.push(args.map(String).join(" ")); };
+  try {
+    globalThis.fetch = fakeFetch((url) => {
+      if (url.includes("/v1/market/")) return Response.json(marketEnvelope("SPY"));
+      if (url.includes("/v1/structure/")) return Response.json(structureEnvelope("SPY"));
+      return Response.json([{
+        error: {
+          code: 400,
+          message: "Please pass a valid API key: chat-secret-value",
+          status: "INVALID_ARGUMENT",
+        },
+      }], { status: 400 });
+    });
+
+    const response = await chatPost(new Request("http://localhost:3000/api/charts/chat", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ symbol: "SPY", messages: [{ role: "user", content: "hello" }] }),
+    }));
+    assert.equal(response.status, 502);
+    const body = await response.json();
+    assert.equal(body.code, "chat_provider_error");
+    assert.equal(body.provider_status, 400);
+    assert.equal(body.provider_error_category, "invalid_api_key");
+    assert.equal(body.provider_host, "generativelanguage.googleapis.com");
+
+    const serialized = JSON.stringify(body);
+    assert.ok(!serialized.includes("chat-secret-value"));
+    assert.ok(!serialized.includes("Please pass a valid API key"));
+
+    const log = logs.join("\n");
+    assert.match(log, /charts_chat_provider_error/);
+    assert.match(log, /"provider_status":400/);
+    assert.match(log, /"provider_error_category":"invalid_api_key"/);
+    assert.ok(!log.includes("chat-secret-value"));
+    assert.ok(!log.includes("Please pass a valid API key"));
+  } finally {
+    console.error = originalError;
+  }
+});
+
+test("chat route records an unreachable provider without leaking credentials", async () => {
+  process.env.ALPHAOS_API_TOKEN = "research-secret";
+  process.env.ALPHAOS_API_URL = "https://research.example";
+  process.env.ALPHAOS_CHAT_API_KEY = "chat-secret-value";
+  process.env.ALPHAOS_CHAT_MODEL = "gemini-2.5-flash";
+  process.env.ALPHAOS_CHAT_API_URL =
+    "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
+
+  const logs = [];
+  const originalError = console.error;
+  console.error = (...args) => { logs.push(args.map(String).join(" ")); };
+  try {
+    globalThis.fetch = fakeFetch((url) => {
+      if (url.includes("/v1/market/")) return Response.json(marketEnvelope("SPY"));
+      if (url.includes("/v1/structure/")) return Response.json(structureEnvelope("SPY"));
+      throw new TypeError("fetch failed");
+    });
+
+    const response = await chatPost(new Request("http://localhost:3000/api/charts/chat", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ symbol: "SPY", messages: [{ role: "user", content: "hello" }] }),
+    }));
+    assert.equal(response.status, 502);
+    const body = await response.json();
+    assert.equal(body.code, "chat_provider_error");
+    assert.equal(body.provider_status, undefined);
+    assert.ok(!JSON.stringify(body).includes("chat-secret-value"));
+
+    const log = logs.join("\n");
+    assert.match(log, /charts_chat_provider_unreachable/);
+    assert.match(log, /"cause":"network"/);
+    assert.ok(!log.includes("chat-secret-value"));
+  } finally {
+    console.error = originalError;
+  }
 });

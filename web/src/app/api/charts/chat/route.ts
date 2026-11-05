@@ -3,6 +3,7 @@ import { loadChartEvidence } from "../../../../lib/chart-evidence.ts";
 import {
   buildChatRequestBody,
   chatConfiguration,
+  classifyProviderFailure,
   detectChartAccessClaim,
   evidenceSummary,
   parseChatCompletion,
@@ -12,6 +13,7 @@ import {
 } from "../../../../lib/chart-chat.ts";
 
 const CHAT_TIMEOUT_MS = 25_000;
+const PROVIDER_ERROR_BODY_LIMIT = 8_192;
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX = 30;
 const attempts = new Map<string, { count: number; resetAt: number }>();
@@ -76,6 +78,16 @@ function unavailable(status: number, code: string, message: string) {
   );
 }
 
+/** Bounded provider error body, used only for local classification. */
+async function providerErrorPayload(response: Response): Promise<unknown> {
+  try {
+    const text = (await response.text()).slice(0, PROVIDER_ERROR_BODY_LIMIT);
+    return text ? JSON.parse(text) : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function POST(request: Request) {
   if (!sameOrigin(request)) {
     return unavailable(403, "cross_origin_rejected",
@@ -110,6 +122,9 @@ export async function POST(request: Request) {
   }
   const evidence = evidenceResult.evidence;
 
+  // Host only: it identifies a misrouted endpoint without exposing any credential.
+  const providerHost = new URL(configuration.endpoint).host;
+
   let upstream: Response;
   try {
     upstream = await fetch(configuration.endpoint, {
@@ -126,6 +141,13 @@ export async function POST(request: Request) {
   } catch (error) {
     const timedOut = error instanceof DOMException &&
       (error.name === "TimeoutError" || error.name === "AbortError");
+    console.error(JSON.stringify({
+      event: "charts_chat_provider_unreachable",
+      symbol: evidence.symbol,
+      model: configuration.model,
+      provider_host: providerHost,
+      cause: timedOut ? "timeout" : "network",
+    }));
     return unavailable(
       timedOut ? 504 : 502,
       timedOut ? "chat_timeout" : "chat_provider_error",
@@ -136,9 +158,30 @@ export async function POST(request: Request) {
   }
 
   if (!upstream.ok) {
-    // Provider error bodies are never forwarded: they can contain request metadata.
-    return unavailable(502, "chat_provider_error",
-      "The AI assistant provider rejected the request. No answer was generated.");
+    // Provider error bodies are never forwarded or logged: they can contain
+    // request metadata. Only the status and a fixed category are reported so an
+    // operator can tell a bad key from a bad model, quota or endpoint.
+    const failure = classifyProviderFailure(
+      upstream.status, await providerErrorPayload(upstream));
+    console.error(JSON.stringify({
+      event: "charts_chat_provider_error",
+      symbol: evidence.symbol,
+      model: configuration.model,
+      provider_host: providerHost,
+      provider_status: failure.status,
+      provider_error_category: failure.category,
+    }));
+    return Response.json(
+      {
+        status: "unavailable",
+        code: "chat_provider_error",
+        message: "The AI assistant provider rejected the request. No answer was generated.",
+        provider_status: failure.status,
+        provider_error_category: failure.category,
+        provider_host: providerHost,
+      },
+      { status: 502, headers: { "Cache-Control": "no-store" } },
+    );
   }
 
   let body: unknown;

@@ -232,3 +232,88 @@ export function parseChatCompletion(value: unknown): string | null {
   if (!reply || reply.length > MAX_REPLY_CHARS) return null;
   return reply;
 }
+
+/**
+ * Sanitised upstream failure classification.
+ *
+ * A provider rejection used to be reported as one opaque "provider error",
+ * which made an invalid key, an unavailable model, an exhausted quota, a wrong
+ * endpoint and a provider outage indistinguishable. Only the HTTP status and a
+ * fixed category leave this module: provider error messages and bodies can echo
+ * request metadata and are never returned or logged.
+ */
+export type ProviderFailureCategory =
+  | "invalid_api_key"
+  | "authentication"
+  | "permission_denied"
+  | "model_not_found"
+  | "endpoint_not_found"
+  | "quota_exceeded"
+  | "rate_limited"
+  | "invalid_request"
+  | "provider_unavailable"
+  | "unknown";
+
+export type ProviderFailure = { status: number; category: ProviderFailureCategory };
+
+function record(value: unknown): Record<string, unknown> | null {
+  return value !== null && typeof value === "object" && !Array.isArray(value)
+    ? value as Record<string, unknown> : null;
+}
+
+/**
+ * Providers shape error envelopes differently: OpenAI sends
+ * `{ error: { type, code, message } }`, while Gemini's OpenAI compatibility
+ * layer wraps the same object in a one-element array and reports a rejected
+ * key as HTTP 400 `INVALID_ARGUMENT` rather than 401. Fields are read from
+ * either shape and flattened for matching only.
+ */
+function providerErrorFields(payload: unknown): string {
+  const root = Array.isArray(payload) ? record(payload[0]) : record(payload);
+  const error = record(root?.error) ?? root;
+  if (!error) return "";
+  const details = Array.isArray(error.details) ? error.details : [];
+  const reasons = details
+    .map((detail) => record(detail)?.reason)
+    .filter((reason): reason is string => typeof reason === "string");
+  return [
+    error.status,
+    error.type,
+    error.code,
+    error.reason,
+    ...reasons,
+    error.message,
+  ]
+    .filter((item): item is string => typeof item === "string")
+    .join(" ")
+    .toLowerCase();
+}
+
+export function classifyProviderFailure(status: number, payload: unknown): ProviderFailure {
+  const code = Number.isInteger(status) && status >= 100 && status <= 599 ? status : 0;
+  const fields = providerErrorFields(payload);
+  // Gemini reports an invalid or restricted key as HTTP 400 API_KEY_INVALID.
+  if (/api[_ -]?key|credential|unauthenticated/.test(fields)) {
+    return { status: code, category: "invalid_api_key" };
+  }
+  if (code === 401) return { status: code, category: "authentication" };
+  if (code === 403) return { status: code, category: "permission_denied" };
+  if (code === 404) {
+    return { status: code, category: /model/.test(fields) ? "model_not_found" : "endpoint_not_found" };
+  }
+  if (code === 429) {
+    return {
+      status: code,
+      category: /quota|resource_exhausted|billing/.test(fields)
+        ? "quota_exceeded" : "rate_limited",
+    };
+  }
+  if (code === 400) {
+    if (/model/.test(fields) && /not found|does not exist|not supported|unsupported|invalid/.test(fields)) {
+      return { status: code, category: "model_not_found" };
+    }
+    return { status: code, category: "invalid_request" };
+  }
+  if (code >= 500) return { status: code, category: "provider_unavailable" };
+  return { status: code, category: "unknown" };
+}
