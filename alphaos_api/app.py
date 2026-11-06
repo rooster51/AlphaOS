@@ -19,7 +19,7 @@ from modules.price_structure import nearest_levels
 from modules.forward_distribution import summarize_forward_distribution
 from .contracts import APIError,TradeRequest,CompareRequest,ResearchResponse,ErrorResponse,SCHEMA_VERSION,friction
 from .service import ResearchService,symbol_value,horizon_value
-from .live_options import assess_contracts, scenario, underlying_eligible
+from .live_options import assess_contracts, scenario, underlying_eligible, ChainResearchRequest
 from .config import load_secret_files
 from modules.research_control import checkpoint
 from .json_encoding import encode_json
@@ -106,7 +106,12 @@ def sanitized(value, *, _state=None, _release=False):
 def respond(value):
     with stage('response_serialization'):
         from .buffered_research_json import encode_research_response
-        return Response(content=encode_research_response(value, sanitize=sanitized, encode=encode_json),media_type='application/json')
+        content = encode_research_response(value, sanitize=sanitized, encode=encode_json)
+        if isinstance(value, dict) and value.get('response_format') == 'summary-v1':
+            from .research_projection import MAX_SUMMARY_BYTES
+            if len(content) > MAX_SUMMARY_BYTES:
+                raise APIError('research_summary_too_large', 503)
+        return Response(content=content,media_type='application/json')
 
 
 def error_response(code,status):
@@ -135,7 +140,7 @@ async def http_error(request,exc):return error_response('not_found' if exc.statu
 
 @app.middleware('http')
 async def safe_boundary(request,call_next):
-    research = request.url.path in ('/v1/research/market','/v1/research/observation') and request.method == 'POST'
+    research = request.url.path in ('/v1/research/market','/v1/research/market/candidate','/v1/research/observation') and request.method == 'POST'
     correlation = request.headers.get('X-AlphaOS-Request-ID','')
     correlation = correlation if re.fullmatch('[0-9a-f]{32}',correlation) else secrets.token_hex(16)
     started = perf_counter()
@@ -232,6 +237,14 @@ def research_live_vertical(symbol:str,expiration:date,option_type:Literal['put',
     bundle,trade,quote=service.exact_trade(symbol,expiration,option_type,short_strike,long_strike,horizon,refresh)
     result=service.research(bundle,trade)
     return respond(service.envelope(dict(**service.evidence(result,trade),quotes=quote),bundle))
+
+
+@router.post('/options/{symbol}/chain/{expiration}', response_model=ResearchResponse,
+    operation_id='research_contract_scenarios')
+def research_contract_scenarios(symbol: str, expiration: date, request: ChainResearchRequest):
+    service = app.state.service
+    result = service.chain_research(symbol, expiration, request)
+    return respond(service.envelope(result, symbol=symbol_value(symbol)))
 
 
 @router.get('/options/{symbol}/scan',response_model=ResearchResponse,operation_id='scan_credit_spreads')

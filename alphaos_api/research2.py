@@ -37,6 +37,22 @@ class MarketRequest(Request):
     width: float | None = Field(default=None, gt=0, le=100, strict=True)
 
 
+class MarketTransportRequest(MarketRequest):
+    """REST-only representation choice; shared research/MCP inputs stay stable."""
+    response_format: Literal['full', 'summary-v1'] = 'full'
+
+
+class CandidateReference(Request):
+    bucket: Literal['candidates', 'excluded']
+    index: int = Field(ge=0, le=10000, strict=True)
+    candidate_sha256: str = Field(pattern=r'^[a-f0-9]{64}$')
+    archive_sha256: str = Field(pattern=r'^[a-f0-9]{64}$')
+
+
+class CandidateDetailRequest(MarketRequest):
+    detail: CandidateReference
+
+
 class ObservationRequest(Request):
     symbol: Literal['QQQ', 'SPY']
     research_mode: Literal['current', 'historical'] = 'current'
@@ -112,7 +128,8 @@ def json_safe(value):
 
 def envelope(request, research, source, caveats=(), *, json_ready=True):
     value = dict(schema_version=VERSION, request=request.model_dump(mode='json',
-        exclude_none=isinstance(request, (StructureRequest, StructuresRequest))),
+        exclude_none=isinstance(request, (StructureRequest, StructuresRequest)),
+        exclude={'response_format'} if isinstance(request, MarketRequest) else set()),
         read_only=True, research=research, provenance=dict(source=source), caveats=list(caveats))
     return json_safe(value) if json_ready else value
 
@@ -152,9 +169,9 @@ class ArchiveResearchService:
         bars['symbol'] = symbol
         return bars
 
-    def run(self, request, *, json_ready=True):
+    def run(self, request, *, json_ready=True, expected_archive_sha256=None):
         with execution(request.symbol, request.research_mode):
-            return self._run(request, json_ready=json_ready)
+            return self._run(request, json_ready=json_ready, expected_archive_sha256=expected_archive_sha256)
 
     def observe(self, request, *, json_ready=True):
         from modules.archive_observation import archive_observation
@@ -179,7 +196,7 @@ class ArchiveResearchService:
             result['request'] = request.model_dump(mode='json')
             return json_safe(result) if json_ready else result
 
-    def _run(self, request, *, json_ready=True):
+    def _run(self, request, *, json_ready=True, expected_archive_sha256=None):
         history = None
         history_loading = dict(status="unavailable", reason="completed_history_unavailable")
         caveats = ['Archive observations are not executable live quotes.',
@@ -196,6 +213,8 @@ class ArchiveResearchService:
             raise APIError(error.code, 503) from None
         except Exception:
             raise APIError('archive_unavailable', 503) from None
+        if expected_archive_sha256 is not None and record.get('metadata', {}).get('archive_sha256') != expected_archive_sha256:
+            raise APIError('research_evidence_changed', 409)
         try:
             with timing_stage('history_load'):
                 history = self.history_loader(request.symbol)
@@ -299,8 +318,25 @@ class ArchiveResearchService:
 
 def register_research2(router, service, respond):
     @router.post('/research/market', operation_id='run_market_v2')
-    async def run_market(request: MarketRequest, http_request: HTTPRequest):
-        return await run_cancellable(lambda: service().run(request,json_ready=False),http_request)
+    async def run_market(request: MarketTransportRequest, http_request: HTTPRequest):
+        def calculate():
+            value = service().run(request,json_ready=False)
+            if request.response_format == 'summary-v1':
+                from .research_projection import summarize
+                with timing_stage('response_projection'):
+                    value = summarize(value)
+            return value
+        return await run_cancellable(calculate,http_request)
+
+    @router.post('/research/market/candidate', operation_id='market_candidate_detail_v1')
+    async def market_candidate(request: CandidateDetailRequest, http_request: HTTPRequest):
+        def calculate():
+            from .research_projection import select_detail
+            base = MarketRequest(**request.model_dump(exclude={'detail', 'response_format'}))
+            value = service().run(base, json_ready=False,
+                expected_archive_sha256=request.detail.archive_sha256)
+            return select_detail(value, request.detail)
+        return await run_cancellable(calculate, http_request)
 
     @router.post('/research/observation', operation_id='get_archive_observation_v1',response_model=ObservationResponse)
     async def observe_market(request: ObservationRequest, http_request: HTTPRequest):

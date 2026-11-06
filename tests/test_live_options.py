@@ -63,7 +63,7 @@ def test_authenticated_discovery_and_dated_chain(monkeypatch, provider):
     assert client.get("/v1/quote/QQQ", headers=auth).json()["evidence"]["quote"]["symbol"] == "QQQ"
     assert client.get("/v1/options/SPY/chain/2026-11-03?explicit=true", headers=auth).status_code == 422
     provider.chain.assert_called_once_with("SPY", EXPIRATION)
-    assert client.post(path, headers=auth).status_code in (404, 405)
+    assert client.post(path, headers=auth).status_code == 422
 
 
 @pytest.mark.parametrize(("rows", "status"), [
