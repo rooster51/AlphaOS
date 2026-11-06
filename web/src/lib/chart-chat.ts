@@ -1,0 +1,339 @@
+/**
+ * Pure request/response policy for the Charting & AI assistant.
+ *
+ * The model is grounded only on the server-supplied AlphaOS evidence record.
+ * Nothing in this module reads TradingView; the guard below rejects replies
+ * that claim chart, candle, indicator or drawing visibility.
+ */
+import type {
+  ChartEvidence,
+  ChatEvidenceSummary,
+  ChatTurn,
+  EvidenceMode,
+} from "./chart-types.ts";
+
+export const MAX_HISTORY_MESSAGES = 12;
+export const MAX_MESSAGE_CHARS = 2_000;
+export const MAX_TOTAL_CHARS = 12_000;
+export const MAX_REPLY_CHARS = 8_000;
+
+export type ParsedChatRequest = { symbol: "SPY" | "QQQ"; messages: ChatTurn[] };
+
+export function parseChatRequest(value: unknown): ParsedChatRequest | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const input = value as Record<string, unknown>;
+  if (Object.keys(input).some((key) => key !== "symbol" && key !== "messages")) return null;
+
+  if (typeof input.symbol !== "string") return null;
+  const symbol = input.symbol.toUpperCase();
+  if (symbol !== "SPY" && symbol !== "QQQ") return null;
+
+  if (!Array.isArray(input.messages) || input.messages.length === 0 ||
+      input.messages.length > MAX_HISTORY_MESSAGES) return null;
+
+  const messages: ChatTurn[] = [];
+  let total = 0;
+  for (const item of input.messages) {
+    if (!item || typeof item !== "object" || Array.isArray(item)) return null;
+    const turn = item as Record<string, unknown>;
+    if (Object.keys(turn).some((key) => key !== "role" && key !== "content")) return null;
+    if (turn.role !== "user" && turn.role !== "assistant") return null;
+    if (typeof turn.content !== "string") return null;
+    const content = turn.content.trim();
+    if (!content || content.length > MAX_MESSAGE_CHARS) return null;
+    total += content.length;
+    if (total > MAX_TOTAL_CHARS) return null;
+    messages.push({ role: turn.role, content });
+  }
+  if (messages[messages.length - 1]?.role !== "user") return null;
+  return { symbol, messages };
+}
+
+const MODE_LABEL: Record<EvidenceMode, string> = {
+  current: "CURRENT-MARKET EVIDENCE (fresh at retrieval)",
+  point_in_time: "POINT-IN-TIME EVIDENCE (not current market conditions)",
+};
+
+export function evidenceSummary(evidence: ChartEvidence): ChatEvidenceSummary {
+  return {
+    symbol: evidence.symbol,
+    mode: evidence.mode,
+    source: evidence.source,
+    as_of: evidence.as_of,
+    age_seconds: evidence.age_seconds,
+    spot: evidence.spot,
+    atr_14: evidence.atr_14,
+    levels: evidence.levels,
+    market_state: evidence.market_state,
+    data_status: evidence.data_status,
+  };
+}
+
+/** Marker used in the prompt for a dimension the backend never reported. */
+const UNREPORTED = "not reported by the AlphaOS backend";
+
+/**
+ * The evidence block is generated only from the verified AlphaOS record.
+ * TradingView appears here solely as an explicit prohibition.
+ */
+export function buildSystemPrompt(evidence: ChartEvidence): string {
+  const state = evidence.market_state;
+  const unreported: string[] = [];
+  if (!state.direction_reported) unreported.push("market direction");
+  if (state.ema_structure === null) unreported.push("EMA trend structure");
+  if (state.movement_state === null) unreported.push("movement state");
+  if (state.volatility_state === null) unreported.push("volatility state");
+  if (state.premium_state === null) unreported.push("premium state");
+  const facts = {
+    symbol: evidence.symbol,
+    evidence_mode: MODE_LABEL[evidence.mode],
+    data_source: "AlphaOS research API (Public provider observations)",
+    quote_as_of_utc: evidence.as_of,
+    evidence_age_seconds_at_retrieval: evidence.age_seconds,
+    underlying_price: evidence.spot,
+    atr_14: evidence.atr_14,
+    market_state: {
+      direction: state.direction_reported ? state.direction : UNREPORTED,
+      backend_ema_trend_structure: state.ema_structure ?? UNREPORTED,
+      movement_state: state.movement_state ?? UNREPORTED,
+      volatility_state: state.volatility_state ?? UNREPORTED,
+      premium_state: state.premium_state ?? UNREPORTED,
+    },
+    backend_price_levels: evidence.levels,
+    backend_unreported_dimensions: unreported,
+    backend_data_status: evidence.data_status,
+    backend_freshness: evidence.freshness,
+    market_session: evidence.market_session,
+    backend_caveats: evidence.caveats,
+  };
+
+  return [
+    "You are the AlphaOS Charting & AI research assistant for a read-only options research terminal.",
+    "You explain only the AlphaOS evidence record supplied below. You have no other market data.",
+    "",
+    `## AlphaOS evidence (${evidence.symbol})`,
+    JSON.stringify(facts, null, 2),
+    "",
+    "## Hard rules",
+    "1. You cannot see the embedded TradingView chart, its candles, indicators, studies, drawings, trendlines, overlays, watchlists or widget state. AlphaOS does not receive them. Never claim, imply or guess what the chart displays, and never describe candles you were not given.",
+    "2. Do not invent quotes, candles, volumes, indicators, moving averages, support/resistance prices, signals, probabilities, expected values or trade recommendations. If a value is not in the evidence above, say it is unavailable.",
+    "3. Always state the evidence timestamp when you describe conditions, and label the evidence as current-market or point-in-time exactly as given. If it is point-in-time, say it is historical and not current market conditions.",
+    "4. Levels above are backend-generated from completed history. Describe them as AlphaOS levels with the recorded timestamp; do not present them as exact levels visible on TradingView.",
+    "5. Answers are educational research, not advice, not a signal, not an executable quote, and not a prediction of future prices.",
+    "6. Options ideas may only be framed as areas the user could research (structure, risk, expiration). Never recommend placing an order, never size a position, and never claim an edge.",
+    "7. If the user asks for anything the evidence cannot support (intraday trend, volume, indicator values, current bid/ask, news), state clearly what is missing and offer what the evidence does support.",
+    "8. Keep answers concise, conversational and evidence-based. Do not use headings unless the answer needs structure.",
+    "9. Distinguish missing evidence from neutral conditions. Any dimension listed in backend_unreported_dimensions, and any value reading 'not reported by the AlphaOS backend', was not supplied by AlphaOS. Say the backend does not provide it. Never restate a missing classification as neutral, balanced, mixed, range-bound, calm or consolidating.",
+    "10. backend_ema_trend_structure is the backend's EMA ordering for the completed session (bullish, bearish or mixed); 'mixed' means no clean EMA ordering, not a neutral forecast. An empty backend_price_levels list means the backend returned no levels for this snapshot, not that price has no structure.",
+  ].join("\n");
+}
+
+export function buildModelMessages(
+  evidence: ChartEvidence,
+  messages: ChatTurn[],
+): Array<{ role: "system" | "user" | "assistant"; content: string }> {
+  return [
+    { role: "system", content: buildSystemPrompt(evidence) },
+    ...messages.map((message) => ({ role: message.role, content: message.content })),
+  ];
+}
+
+/**
+ * Fail-closed detector for claims of direct chart access. The route replaces
+ * any matching reply; model output is never returned with a chart claim.
+ */
+const CHART_CLAIM_PATTERNS: RegExp[] = [
+  /\bi (?:can|could|am able to) (?:see|read|view|access) (?:your|the) (?:tradingview )?(?:chart|candles?|indicators?|drawings?|studies)\b/i,
+  /\b(?:looking at|based on) (?:your|the) (?:tradingview |embedded |live )?chart\b/i,
+  /\b(?:your|the) (?:tradingview )?(?:chart|candles?) (?:currently )?(?:shows?|displays?|indicates?|tells?)\b/i,
+  /\b(?:the|your) (?:current|latest) candle (?:shows?|closed|is|was)\b/i,
+  /\bi (?:have|can get) access to (?:your|the) (?:tradingview )?(?:chart|candles?)\b/i,
+  /\b(?:drawings?|trendlines?|indicators?|studies) (?:on|in) your chart\b/i,
+  /\b(?:i|we) (?:see|read) (?:the|your) (?:tradingview|embedded) chart\b/i,
+];
+
+export function detectChartAccessClaim(reply: string): boolean {
+  return CHART_CLAIM_PATTERNS.some((pattern) => pattern.test(reply));
+}
+
+export const SAFE_CHART_CLAIM_REPLY = [
+  "I can't read the TradingView chart. AlphaOS does not receive its candles, indicators, drawings or widget state,",
+  "so I can't describe what it currently shows.",
+  "",
+  "I can only discuss the independently retrieved AlphaOS evidence for this symbol, including its timestamp and",
+  "any backend-generated price levels. If you rephrase the question around that evidence, I can help with it.",
+].join(" ");
+
+/** Disclosures returned with every reply and rendered in the UI. */
+export function disclosuresFor(evidence: ChartEvidence): string[] {
+  const disclosures = [
+    "The assistant receives the selected symbol and AlphaOS research evidence only. It has no access to TradingView candles, indicators, drawings or chart state.",
+    `Evidence source: ${evidence.source} via the AlphaOS research API, observed ${evidence.as_of} (${evidence.age_seconds}s old at retrieval).`,
+  ];
+  if (evidence.mode === "point_in_time") {
+    disclosures.push(
+      "This evidence is point-in-time and is not current market conditions. The market may have moved since the recorded observation.");
+  } else {
+    disclosures.push(
+      "This evidence was fresh at retrieval. It is a research observation, not an executable quote or a broker price.");
+  }
+  disclosures.push(
+    "TradingView chart data may be delayed and is not used, read or verified by AlphaOS.");
+  return disclosures;
+}
+
+export type ChatConfiguration =
+  | { configured: true; endpoint: string; model: string; key: string }
+  | { configured: false; message: string };
+
+const DEFAULT_CHAT_ENDPOINT = "https://api.openai.com/v1/chat/completions";
+
+export function chatConfiguration(
+  env: Record<string, string | undefined> = {},
+): ChatConfiguration {
+  const key = env.ALPHAOS_CHAT_API_KEY?.trim();
+  const model = env.ALPHAOS_CHAT_MODEL?.trim();
+  if (!key || !model) {
+    return {
+      configured: false,
+      message:
+        "The AlphaOS AI assistant is not configured on this deployment. " +
+        "An operator must set ALPHAOS_CHAT_API_KEY and ALPHAOS_CHAT_MODEL " +
+        "(optionally ALPHAOS_CHAT_API_URL) on the web service. No answer was generated.",
+    };
+  }
+  const raw = env.ALPHAOS_CHAT_API_URL?.trim() || DEFAULT_CHAT_ENDPOINT;
+  let endpoint: URL;
+  try {
+    endpoint = new URL(raw);
+    const loopback = endpoint.hostname === "127.0.0.1" ||
+      endpoint.hostname === "localhost" || endpoint.hostname === "[::1]";
+    const secure = endpoint.protocol === "https:" ||
+      (endpoint.protocol === "http:" && loopback);
+    if (!secure || endpoint.username || endpoint.password) {
+      throw new Error("Invalid chat endpoint");
+    }
+  } catch {
+    return {
+      configured: false,
+      message:
+        "The AlphaOS AI assistant endpoint configuration is invalid. " +
+        "ALPHAOS_CHAT_API_URL must be an HTTPS chat-completions URL.",
+    };
+  }
+  return { configured: true, endpoint: endpoint.toString(), model, key };
+}
+
+export function buildChatRequestBody(
+  configuration: { endpoint: string; model: string },
+  evidence: ChartEvidence,
+  messages: ChatTurn[],
+): Record<string, unknown> {
+  return {
+    model: configuration.model,
+    temperature: 0.2,
+    max_tokens: 700,
+    stream: false,
+    messages: buildModelMessages(evidence, messages),
+  };
+}
+
+export function parseChatCompletion(value: unknown): string | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const choices = (value as Record<string, unknown>).choices;
+  if (!Array.isArray(choices) || choices.length === 0) return null;
+  const first = choices[0];
+  if (!first || typeof first !== "object" || Array.isArray(first)) return null;
+  const message = (first as Record<string, unknown>).message;
+  if (!message || typeof message !== "object" || Array.isArray(message)) return null;
+  const content = (message as Record<string, unknown>).content;
+  if (typeof content !== "string") return null;
+  const reply = content.trim();
+  if (!reply || reply.length > MAX_REPLY_CHARS) return null;
+  return reply;
+}
+
+/**
+ * Sanitised upstream failure classification.
+ *
+ * A provider rejection used to be reported as one opaque "provider error",
+ * which made an invalid key, an unavailable model, an exhausted quota, a wrong
+ * endpoint and a provider outage indistinguishable. Only the HTTP status and a
+ * fixed category leave this module: provider error messages and bodies can echo
+ * request metadata and are never returned or logged.
+ */
+export type ProviderFailureCategory =
+  | "invalid_api_key"
+  | "authentication"
+  | "permission_denied"
+  | "model_not_found"
+  | "endpoint_not_found"
+  | "quota_exceeded"
+  | "rate_limited"
+  | "invalid_request"
+  | "provider_unavailable"
+  | "unknown";
+
+export type ProviderFailure = { status: number; category: ProviderFailureCategory };
+
+function record(value: unknown): Record<string, unknown> | null {
+  return value !== null && typeof value === "object" && !Array.isArray(value)
+    ? value as Record<string, unknown> : null;
+}
+
+/**
+ * Providers shape error envelopes differently: OpenAI sends
+ * `{ error: { type, code, message } }`, while Gemini's OpenAI compatibility
+ * layer wraps the same object in a one-element array and reports a rejected
+ * key as HTTP 400 `INVALID_ARGUMENT` rather than 401. Fields are read from
+ * either shape and flattened for matching only.
+ */
+function providerErrorFields(payload: unknown): string {
+  const root = Array.isArray(payload) ? record(payload[0]) : record(payload);
+  const error = record(root?.error) ?? root;
+  if (!error) return "";
+  const details = Array.isArray(error.details) ? error.details : [];
+  const reasons = details
+    .map((detail) => record(detail)?.reason)
+    .filter((reason): reason is string => typeof reason === "string");
+  return [
+    error.status,
+    error.type,
+    error.code,
+    error.reason,
+    ...reasons,
+    error.message,
+  ]
+    .filter((item): item is string => typeof item === "string")
+    .join(" ")
+    .toLowerCase();
+}
+
+export function classifyProviderFailure(status: number, payload: unknown): ProviderFailure {
+  const code = Number.isInteger(status) && status >= 100 && status <= 599 ? status : 0;
+  const fields = providerErrorFields(payload);
+  // Gemini reports an invalid or restricted key as HTTP 400 API_KEY_INVALID.
+  if (/api[_ -]?key|credential|unauthenticated/.test(fields)) {
+    return { status: code, category: "invalid_api_key" };
+  }
+  if (code === 401) return { status: code, category: "authentication" };
+  if (code === 403) return { status: code, category: "permission_denied" };
+  if (code === 404) {
+    return { status: code, category: /model/.test(fields) ? "model_not_found" : "endpoint_not_found" };
+  }
+  if (code === 429) {
+    return {
+      status: code,
+      category: /quota|resource_exhausted|billing/.test(fields)
+        ? "quota_exceeded" : "rate_limited",
+    };
+  }
+  if (code === 400) {
+    if (/model/.test(fields) && /not found|does not exist|not supported|unsupported|invalid/.test(fields)) {
+      return { status: code, category: "model_not_found" };
+    }
+    return { status: code, category: "invalid_request" };
+  }
+  if (code >= 500) return { status: code, category: "provider_unavailable" };
+  return { status: code, category: "unknown" };
+}

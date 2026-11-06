@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
+  CandlestickChart,
   LineChart,
   Compass,
   Layers,
@@ -19,6 +20,7 @@ import {
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/charts", label: "Charting & AI", icon: CandlestickChart },
   { href: "/market", label: "Market Research", icon: LineChart },
   { href: "/strategies", label: "Strategy Explorer", icon: Compass },
   { href: "/options", label: "Options Chain", icon: Compass },
