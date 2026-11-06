@@ -63,35 +63,70 @@ function evidenceFailure(error: unknown): ChartEvidenceFailure {
 }
 
 const KINDS = new Set(["support", "resistance", "mid", "atr"]);
+
+/**
+ * Label a backend level from the observations that formed its cluster.
+ * `/v1/structure` returns `sources` such as "swing_high, 20d_high", not a
+ * display label, so the previous adapter dropped every level.
+ */
+function levelLabel(level: Record<string, unknown>, kind: string): string {
+  const sources = text(level.sources, 80);
+  if (sources) return sources.replace(/_/g, " ");
+  return text(level.label, 80) ?? `${kind} level`;
+}
+
 function levelsFrom(value: unknown, spot: number): EvidenceLevel[] {
   if (!Array.isArray(value)) return [];
   const levels: EvidenceLevel[] = [];
   for (const row of value.slice(0, 10)) {
     const level = object(row);
-    if (!level || typeof level.label !== "string" || !level.label.trim() ||
-        level.label.length > 80 || !finitePositive(level.price)) continue;
-    const rawKind = String(level.kind ?? level.side ?? "").toLowerCase();
-    if (!KINDS.has(rawKind)) continue;
-    const distance = typeof level.distance_pct === "number" && Number.isFinite(level.distance_pct)
-      ? level.distance_pct
-      : (level.price - spot) / spot * 100;
+    if (!level) continue;
+    // `/v1/structure` emits `side`, `level` (the price), cluster bounds and the
+    // source observations; an older adapter shape used `kind` + `price`.
+    const backendPrice = finitePositive(level.level) ? level.level : null;
+    const legacyPrice = finitePositive(level.price) ? level.price : null;
+    const price = backendPrice ?? legacyPrice;
+    const rawKind = String(level.side ?? level.kind ?? "").toLowerCase();
+    if (price === null || !KINDS.has(rawKind)) continue;
+    // The backend's distance_pct is a decimal fraction of spot and the legacy
+    // shape used percentages; derive it from the two verified prices instead
+    // of guessing units.
+    const distance = (price - spot) / spot * 100;
+    const zoneLow = finitePositive(level.zone_low) ? level.zone_low : null;
+    const zoneHigh = finitePositive(level.zone_high) ? level.zone_high : null;
     levels.push({
-      label: level.label,
-      price: level.price,
+      label: levelLabel(level, rawKind),
+      price,
       kind: rawKind as EvidenceLevel["kind"],
       distance_pct: Number.isFinite(distance) ? Math.round(distance * 100) / 100 : null,
+      ...(zoneLow !== null && zoneHigh !== null && zoneLow <= zoneHigh
+        ? { zone_low: zoneLow, zone_high: zoneHigh }
+        : {}),
     });
   }
   return levels;
 }
 
 const STATE_KEYS = ["movement_state", "volatility_state", "premium_state"] as const;
+const TREND_STRUCTURES = new Set(["bullish", "bearish", "mixed"]);
+
+/**
+ * `/v1/market` returns the completed-session feature row as `market_state`: it
+ * carries `ema_structure` and price-based measures, but no opportunity
+ * classification. Missing dimensions stay explicitly missing (direction is
+ * `unknown` with `direction_reported: false`) so neither the prompt nor the UI
+ * can mistake an absent classification for a neutral market.
+ */
 function marketStateFrom(value: unknown): MarketStateSummary {
   const state = object(value) ?? {};
   const direction = state.direction;
+  const reported = direction === "bullish" || direction === "bearish" || direction === "neutral";
+  const ema = state.ema_structure;
   return {
-    direction: direction === "bullish" || direction === "bearish" || direction === "neutral"
-      ? direction : "unknown",
+    direction: reported ? direction : "unknown",
+    direction_reported: reported,
+    ema_structure: typeof ema === "string" && TREND_STRUCTURES.has(ema)
+      ? ema as MarketStateSummary["ema_structure"] : null,
     movement_state: text(state.movement_state),
     volatility_state: text(state.volatility_state),
     premium_state: text(state.premium_state),

@@ -43,7 +43,18 @@ host or a client bundle.
 Evidence is one verified market/structure pair from the existing authenticated
 `/v1/market/{symbol}` and `/v1/structure/{symbol}` endpoints sharing one
 `snapshot_id`; the page reports the backend timestamp and labels stale evidence
-`point_in_time` instead of presenting it as current. The assistant receives the
+`point_in_time` instead of presenting it as current. `/v1/structure` returns
+clustered level records (`side`, `level`, `zone_low`, `zone_high`, `sources`,
+`observations`, `distance_atr`), which the adapter maps to labelled levels and
+zones; `distance_pct` is recomputed from the verified level and spot because the
+endpoint reports a decimal fraction of spot. `/v1/market` returns the
+completed-session feature row as `market_state`: `ema_structure` is the only
+trend classification that endpoint exposes, and it carries no direction,
+movement, volatility or premium classification. Those dimensions are labelled
+`not reported by the AlphaOS backend` and listed in
+`backend_unreported_dimensions`, so an absent classification is never presented
+as neutral and no value is synthesised; the page shows the backend EMA structure
+and an explicit `not reported` direction. The assistant receives the
 symbol and that evidence record only, and a fail-closed guard replaces any reply
 that claims TradingView chart, candle, indicator or drawing access. AlphaOS does
 not read, scrape or mirror the widget. Missing configuration yields an explicit

@@ -64,15 +64,26 @@ export function evidenceSummary(evidence: ChartEvidence): ChatEvidenceSummary {
     spot: evidence.spot,
     atr_14: evidence.atr_14,
     levels: evidence.levels,
+    market_state: evidence.market_state,
     data_status: evidence.data_status,
   };
 }
+
+/** Marker used in the prompt for a dimension the backend never reported. */
+const UNREPORTED = "not reported by the AlphaOS backend";
 
 /**
  * The evidence block is generated only from the verified AlphaOS record.
  * TradingView appears here solely as an explicit prohibition.
  */
 export function buildSystemPrompt(evidence: ChartEvidence): string {
+  const state = evidence.market_state;
+  const unreported: string[] = [];
+  if (!state.direction_reported) unreported.push("market direction");
+  if (state.ema_structure === null) unreported.push("EMA trend structure");
+  if (state.movement_state === null) unreported.push("movement state");
+  if (state.volatility_state === null) unreported.push("volatility state");
+  if (state.premium_state === null) unreported.push("premium state");
   const facts = {
     symbol: evidence.symbol,
     evidence_mode: MODE_LABEL[evidence.mode],
@@ -81,8 +92,15 @@ export function buildSystemPrompt(evidence: ChartEvidence): string {
     evidence_age_seconds_at_retrieval: evidence.age_seconds,
     underlying_price: evidence.spot,
     atr_14: evidence.atr_14,
-    market_state: evidence.market_state,
+    market_state: {
+      direction: state.direction_reported ? state.direction : UNREPORTED,
+      backend_ema_trend_structure: state.ema_structure ?? UNREPORTED,
+      movement_state: state.movement_state ?? UNREPORTED,
+      volatility_state: state.volatility_state ?? UNREPORTED,
+      premium_state: state.premium_state ?? UNREPORTED,
+    },
     backend_price_levels: evidence.levels,
+    backend_unreported_dimensions: unreported,
     backend_data_status: evidence.data_status,
     backend_freshness: evidence.freshness,
     market_session: evidence.market_session,
@@ -105,6 +123,8 @@ export function buildSystemPrompt(evidence: ChartEvidence): string {
     "6. Options ideas may only be framed as areas the user could research (structure, risk, expiration). Never recommend placing an order, never size a position, and never claim an edge.",
     "7. If the user asks for anything the evidence cannot support (intraday trend, volume, indicator values, current bid/ask, news), state clearly what is missing and offer what the evidence does support.",
     "8. Keep answers concise, conversational and evidence-based. Do not use headings unless the answer needs structure.",
+    "9. Distinguish missing evidence from neutral conditions. Any dimension listed in backend_unreported_dimensions, and any value reading 'not reported by the AlphaOS backend', was not supplied by AlphaOS. Say the backend does not provide it. Never restate a missing classification as neutral, balanced, mixed, range-bound, calm or consolidating.",
+    "10. backend_ema_trend_structure is the backend's EMA ordering for the completed session (bullish, bearish or mixed); 'mixed' means no clean EMA ordering, not a neutral forecast. An empty backend_price_levels list means the backend returned no levels for this snapshot, not that price has no structure.",
   ].join("\n");
 }
 

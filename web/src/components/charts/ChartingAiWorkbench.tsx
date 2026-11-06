@@ -306,6 +306,18 @@ export function ChartingAiWorkbench({ initialSymbol }: { initialSymbol: ChartSym
                     · ATR(14){" "}
                     <span className="text-terminal-200">{evidence.evidence.atr_14.toFixed(2)}</span>
                   </p>
+                  <p className="sm:col-span-2">
+                    Backend structure:{" "}
+                    <span className="text-terminal-200">
+                      {evidence.evidence.market_state.ema_structure ?? "not reported"}
+                    </span>{" "}
+                    · direction:{" "}
+                    <span className="text-terminal-200">
+                      {evidence.evidence.market_state.direction_reported
+                        ? evidence.evidence.market_state.direction
+                        : "not reported"}
+                    </span>
+                  </p>
                   {evidence.evidence.levels.length > 0 && (
                     <p className="sm:col-span-2">
                       Backend levels:{" "}
@@ -313,7 +325,12 @@ export function ChartingAiWorkbench({ initialSymbol }: { initialSymbol: ChartSym
                         <span key={`${level.label}-${level.price}`} className="mr-2 inline-block">
                           <span className="text-terminal-300">{level.label}</span>{" "}
                           <span className="text-terminal-200">{level.price.toFixed(2)}</span>{" "}
-                          <span className="text-terminal-500">({level.kind})</span>
+                          <span className="text-terminal-500">
+                            ({level.kind}
+                            {level.zone_low !== undefined && level.zone_high !== undefined
+                              ? ` · zone ${level.zone_low.toFixed(2)}–${level.zone_high.toFixed(2)}`
+                              : ""})
+                          </span>
                         </span>
                       ))}
                     </p>

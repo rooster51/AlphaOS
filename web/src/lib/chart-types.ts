@@ -24,10 +24,22 @@ export type EvidenceLevel = {
   price: number;
   kind: "support" | "resistance" | "mid" | "atr";
   distance_pct: number | null;
+  /** Cluster bounds returned by the backend; absent when it returned none. */
+  zone_low?: number;
+  zone_high?: number;
 };
+
+export type TrendStructure = "bullish" | "bearish" | "mixed";
 
 export type MarketStateSummary = {
   direction: "bullish" | "bearish" | "neutral" | "unknown";
+  /**
+   * False when the backend reported no direction at all. `unknown` alone must
+   * never be read as a neutral market; only an explicit backend `neutral` is.
+   */
+  direction_reported: boolean;
+  /** Completed-session EMA ordering, the only trend classification `/v1/market` returns. */
+  ema_structure: TrendStructure | null;
   movement_state: string | null;
   volatility_state: string | null;
   premium_state: string | null;
@@ -84,6 +96,7 @@ export type ChatEvidenceSummary = {
   spot: number;
   atr_14: number;
   levels: EvidenceLevel[];
+  market_state: MarketStateSummary;
   data_status: string;
 };
 

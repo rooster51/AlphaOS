@@ -143,6 +143,121 @@ test("stale evidence is returned as point-in-time with its original timestamp", 
   assert.equal(result.evidence.data_status, "latest_available");
 });
 
+// Shapes copied from a live serialization of the backend engine: /v1/market
+// returns the completed-session feature row, /v1/structure returns clustered
+// level records with `side`, `level`, zone bounds and `sources`.
+function backendMarketEnvelope(symbol, state = {}, options = {}) {
+  const envelope = marketEnvelope(symbol, { currentSpot: 660.48, ...options });
+  envelope.evidence.market_state = {
+    date: "2026-11-03T00:00:00",
+    symbol,
+    close: 660.48,
+    return_5d: 0.0123,
+    rsi_14: 54.2,
+    distance_ema_21_atr: 0.81,
+    realized_vol_20d: 0.043,
+    range_position_20: 0.72,
+    ema_structure: "mixed",
+    ...state,
+  };
+  return envelope;
+}
+
+function backendStructureEnvelope(symbol) {
+  const envelope = structureEnvelope(symbol);
+  envelope.evidence.levels = [
+    { side: "support", level: 650.1, zone_low: 649.2, zone_high: 651,
+      distance_pct: -0.0157, distance_atr: -0.63, observations: 3,
+      last_observed_sessions_ago: 12, sources: "swing_low, 20d_low", abs_distance_atr: 0.63 },
+    { side: "resistance", level: 672.4, zone_low: 671, zone_high: 673.8,
+      distance_pct: 0.018, distance_atr: 0.73, observations: 2,
+      last_observed_sessions_ago: 4, sources: "swing_high", abs_distance_atr: 0.73 },
+  ];
+  return envelope;
+}
+
+test("backend level records and the completed-session trend structure are mapped", async () => {
+  const result = await loadChartEvidence("QQQ", {
+    ...options,
+    request: jsonFetch(backendMarketEnvelope("QQQ"), backendStructureEnvelope("QQQ")),
+  });
+
+  assert.equal(result.status, "ok");
+  const { evidence } = result;
+  assert.equal(evidence.spot, 660.48);
+  assert.deepEqual(evidence.levels, [
+    { label: "swing low, 20d low", price: 650.1, kind: "support", distance_pct: -1.57,
+      zone_low: 649.2, zone_high: 651 },
+    { label: "swing high", price: 672.4, kind: "resistance", distance_pct: 1.8,
+      zone_low: 671, zone_high: 673.8 },
+  ]);
+  assert.equal(evidence.market_state.ema_structure, "mixed");
+  assert.equal(evidence.market_state.direction, "unknown");
+  assert.equal(evidence.market_state.direction_reported, false);
+
+  const prompt = buildSystemPrompt(evidence);
+  assert.match(prompt, /"backend_ema_trend_structure": "mixed"/);
+  assert.match(prompt, /"direction": "not reported by the AlphaOS backend"/);
+  assert.match(prompt, /"market direction"/);
+  assert.match(prompt, /swing low, 20d low/);
+  assert.ok(!/"direction": "neutral"/.test(prompt));
+});
+
+test("missing classifications are disclosed, never reported as neutral", async () => {
+  const market = marketEnvelope("SPY");
+  market.evidence.market_state = {};
+  const structure = structureEnvelope("SPY");
+  structure.evidence.levels = [];
+
+  const result = await loadChartEvidence("SPY", {
+    ...options,
+    request: jsonFetch(market, structure),
+  });
+
+  assert.equal(result.status, "ok");
+  assert.deepEqual(result.evidence.levels, []);
+  assert.equal(result.evidence.market_state.direction_reported, false);
+  assert.equal(result.evidence.market_state.ema_structure, null);
+
+  const prompt = buildSystemPrompt(result.evidence);
+  for (const dimension of ["market direction", "EMA trend structure",
+    "movement state", "volatility state", "premium state"]) {
+    assert.match(prompt, new RegExp(dimension), dimension);
+  }
+  assert.match(prompt, /"backend_price_levels": \[\]/);
+  assert.ok(!/"direction": "neutral"/.test(prompt));
+  assert.ok(!/"backend_ema_trend_structure": "mixed"/.test(prompt));
+});
+
+test("an explicit backend neutral direction and conflicting EMA structure are both preserved", async () => {
+  const market = marketEnvelope("SPY");
+  market.evidence.market_state = {
+    direction: "neutral",
+    ema_structure: "bullish",
+    movement_state: "range_bound",
+    volatility_state: null,
+    premium_state: "fair",
+  };
+
+  const result = await loadChartEvidence("SPY", {
+    ...options,
+    request: jsonFetch(market, structureEnvelope("SPY")),
+  });
+
+  assert.equal(result.status, "ok");
+  assert.equal(result.evidence.market_state.direction, "neutral");
+  assert.equal(result.evidence.market_state.direction_reported, true);
+  assert.equal(result.evidence.market_state.ema_structure, "bullish");
+  assert.equal(result.evidence.market_state.movement_state, "range_bound");
+  assert.equal(result.evidence.market_state.volatility_state, null);
+
+  const prompt = buildSystemPrompt(result.evidence);
+  assert.match(prompt, /"direction": "neutral"/);
+  assert.match(prompt, /"backend_ema_trend_structure": "bullish"/);
+  assert.match(prompt, /"volatility state"/);
+  assert.ok(!/"market direction"/.test(prompt));
+});
+
 test("evidence is unavailable rather than substituted when pairs disagree", async () => {
   const mismatch = await loadChartEvidence("SPY", {
     ...options,
@@ -387,6 +502,8 @@ test("chat route grounds a reply and never exposes provider credentials", async 
   assert.equal(body.chart_claim_blocked, false);
   assert.equal(body.model, "grounded-model");
   assert.equal(body.evidence.as_of, AS_OF);
+  assert.equal(body.evidence.market_state.direction, "bullish");
+  assert.equal(body.evidence.market_state.direction_reported, true);
   assert.ok(body.disclosures.some((item) => /no access to TradingView/.test(item)));
   assert.match(providerBody.messages[0].content, /TradingView/);
   assert.equal(providerBody.messages[1].content, "Is this a breakout?");
