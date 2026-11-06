@@ -106,7 +106,12 @@ def sanitized(value, *, _state=None, _release=False):
 def respond(value):
     with stage('response_serialization'):
         from .buffered_research_json import encode_research_response
-        return Response(content=encode_research_response(value, sanitize=sanitized, encode=encode_json),media_type='application/json')
+        content = encode_research_response(value, sanitize=sanitized, encode=encode_json)
+        if isinstance(value, dict) and value.get('response_format') == 'summary-v1':
+            from .research_projection import MAX_SUMMARY_BYTES
+            if len(content) > MAX_SUMMARY_BYTES:
+                raise APIError('research_summary_too_large', 503)
+        return Response(content=content,media_type='application/json')
 
 
 def error_response(code,status):
@@ -135,7 +140,7 @@ async def http_error(request,exc):return error_response('not_found' if exc.statu
 
 @app.middleware('http')
 async def safe_boundary(request,call_next):
-    research = request.url.path in ('/v1/research/market','/v1/research/observation') and request.method == 'POST'
+    research = request.url.path in ('/v1/research/market','/v1/research/market/candidate','/v1/research/observation') and request.method == 'POST'
     correlation = request.headers.get('X-AlphaOS-Request-ID','')
     correlation = correlation if re.fullmatch('[0-9a-f]{32}',correlation) else secrets.token_hex(16)
     started = perf_counter()
