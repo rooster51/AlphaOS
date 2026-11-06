@@ -1,6 +1,7 @@
 # Strategy Research performance stabilization — November 6, 2026
 
-Status: implementation and local verification; **not a hosted timeout cure**.
+Status: approved API staging verification recorded below; Netlify preview and
+idle-resume acceptance remain incomplete. **Not a complete hosted timeout cure.**
 Continue draft PR #88; retain PR #87 and Freebuff charting separately. No merge,
 production change or deployment is authorized by this continuation request.
 
@@ -161,3 +162,140 @@ temporary approved staging compute increase on the same service and revision,
 then repeat isolated cold and simultaneous trials. Do not change production,
 increase the deadline, add stale research reuse or rebuild the engine to hide an
 unmeasured infrastructure problem.
+
+## Approved deployment and actual API acceptance (11:06–11:10 a.m. Eastern)
+
+After the report above, the owner explicitly approved integration `42e4106` for
+`alphaos-api-staging` in My Workspace and preview publication once its staging
+backend target is verified. The configured staging branch was advanced by
+fast-forward; production and merges were untouched. Auto-deploy remains off.
+
+The first deployment, `dep-dbmvg2rncjis73akj2ag`, checked out the approved commit
+but initially stalled during rollout. A health request timed out after eight
+seconds; another instance startup was subsequently logged. Render reported the
+deployment live at 16:02:12 UTC, yet the served OpenAPI schema still lacked
+`MarketTransportRequest` and the candidate-detail endpoint. Requests
+`1b5eace507fa409fb69674a06aafc419` (QQQ) and
+`ae594c7fd81e47d48ca8f9cf5af9b7d0` (SPY) returned backend HTTP 422
+`invalid_request` on instance `5fzq9`. They are failed version-verification
+attempts, not new-code performance acceptance. The precise platform mechanism
+behind this routing/artifact discrepancy was not established.
+
+A cleared-cache redeployment of the same approved commit,
+`dep-dbmvl3om7kps73cf4a6g`, became live at 16:06:10 UTC. Served OpenAPI then
+confirmed both the summary model and detail endpoint. The measured requests
+below correlate to new instance `tnvkr`. Runtime preparation took 12,594 ms before
+port readiness; this startup interval is separate from request latency.
+
+These execute the actual website bridge locally against the real authenticated
+staging backend, then consume and validate the complete body. They are **not
+measurements from a deployed Netlify website session**. Current cases use $150
+capital and strict freshness; width is automatic and expiration is archive-selected
+except in the explicitly selected expiration case. All selected 2026-11-06.
+
+| Case | Symbol | Bridge / caller ms | HTTP | Complete decoded bytes | Request ID |
+| --- | --- | --- | --- | --- | --- |
+| First research pair after readiness | SPY | 9,491 / 9,499 | 200 | 1,045,428 | `d1deeb215e434f458224609b6803374d` |
+| First research pair after readiness | QQQ | 9,548 / 9,573 | 200 | 1,248,542 | `90f6f43193904a1ca5ff3267df136133` |
+| Warm isolated | QQQ | 4,950 / 4,989 | 200 | 1,248,542 | `7e1cf19297294386938bcec55578e760` |
+| Warm isolated | SPY | 5,510 / 5,537 | 200 | 1,045,428 | `fd42067d2bc640b38db9061f8ebb8072` |
+| Pinned detail pair | QQQ | 6,052 / 6,074 | 200 | 17,124 | `54e35b5a695242ff803935afc5f80058` |
+| Pinned detail pair | SPY | 6,527 / 6,529 | 200 | 17,150 | `ff43d7260224488d9918e4d2223bd872` |
+| Explicit expiration pair | SPY | 7,908 / 7,915 | 200 | 1,045,437 | `3ae912d20dd34636bee197615a8b0ab0` |
+| Explicit expiration pair | QQQ | 7,939 / 7,965 | 200 | 1,248,550 | `6c6df951e4fb49f6b92239f364b417fe` |
+| Historical pair | SPY | 7,278 / 7,287 | 200 | 1,045,567 | `7c201bb59990456eae7b7181914de4f0` |
+| Historical pair | QQQ | 8,157 / 8,182 | 200 | 1,248,681 | `26f9836a9f7c4f71adcdb15874d336a8` |
+
+The first pair is cold **research on an already-ready fresh process**, following
+the application's static preparation. No research/provider/archive call had
+warmed that process. It is not a sleeping-service wake-up test or an isolated
+cold-start trial per symbol. Every 200 response above passed complete-body schema
+validation within 12 seconds. First-pair archive ages were 43.0/47.0 seconds;
+isolated warm ages were 66.0/75.1 seconds, with the unchanged 600-second maximum.
+Historical mode explicitly retained its non-current evidence semantics.
+
+### Correlated processing stages
+
+Nested stages must not be added as independent work.
+
+| Stage, ms | First-pair QQQ | First-pair SPY | Warm QQQ | Warm SPY |
+| --- | --- | --- | --- | --- |
+| Archive read and validation | 1,315 | 1,591 | 701 | 894 |
+| Completed history | 2,211 | 2,208 | 1,376 | 1,270 |
+| Classification | 0 | 0 | 0 | 0 |
+| Width enumeration | 99 | 201 | 93 | 6 |
+| Candidate payoff | 2,303 | 2,002 | 708 | 1,409 |
+| Summary projection, including digests | 1,499 | 1,600 | 895 | 795 |
+| Response serialization | 402 | 400 | 202 | 197 |
+| Backend complete request | 9,145 | 9,098 | 4,377 | 5,058 |
+| Bridge headers / body / schema | 9,459 / 77 / 8 | 9,417 / 49 / 19 | 4,791 / 141 / 14 | 5,454 / 40 / 12 |
+
+### Same-archive full/summary and detail consistency
+
+A legacy full-response control pair on this same deployment returned 200 in
+9,113 ms QQQ (`8f881814830741a08bf1c795426a1665`) and 8,910 ms SPY
+(`4cc1ae5dfd0d4ba3a976bf06a4893cee`). Archive checksums matched the warm summaries.
+Every accepted candidate's summary fields, exact quotes, economics and order
+matched the corresponding full record: all 236 QQQ candidates and 188 SPY
+candidates. Both website assessments produced identical accepted eligibility
+results. Exclusion counts were 467 QQQ and 487 SPY. The first retrieved complete
+detail for each symbol also matched its summary and reference.
+
+Actual complete decoded full/summary sizes were **5,419,767 / 1,248,542 bytes QQQ**
+and **4,877,820 / 1,045,428 bytes SPY**. The legacy control was another warm
+concurrent trial, so comparing its latency to the first research pair does not
+isolate projection performance. The earlier fixed-input replay supplies that
+controlled comparison. The measured benefit is payload reduction; no new
+candidate calculation speedup is claimed.
+
+A separate direct HTTPS transport probe, with a fresh connection per symbol and
+negotiated gzip, received 113,337 bytes QQQ and 102,233 bytes SPY. QQQ DNS/TCP/TLS
+completion was 106/246/279 ms, headers 9,268 ms, complete transfer 9,308 ms
+(`8eba4d598abd4a7aa7e0e3916981a9dd`). SPY was 137/277/316 ms, headers 9,319 ms,
+complete transfer 9,483 ms (`60cfa3b69fb5499f8956bd8be6f12dee`). These transport
+probes are distinct from bridge schema-validation acceptance.
+
+### Real cancellation and fixture-only failures
+
+Both client cancellations returned bridge HTTP 499 without research:
+QQQ 764 ms (`796a2ea96ad943e9a3e0458df7ae6e80`), SPY 752 ms
+(`9d75f2d69daf438a8e0477908b92ba35`). Render observed both disconnects at
+444 ms after backend admission. Archive download/read and execution were
+cancelled at 497/552 ms respectively; no history or candidate work followed.
+
+Missing/stale/corrupt archives, malformed/slow response bodies, reference changes,
+size overflow and upstream 429 handling were exercised with explicit fixtures.
+Those results are not represented as destructive live-archive tests or an
+authenticated Netlify 429 reproduction.
+
+### Verification and remaining acceptance
+
+Functional PR #88 commit `b17fa2a` passed local full Python: **1,439 tests plus
+64 subtests**, one skipped. Website unit tests: 237; TypeScript and production
+build passed; Chromium: 59 passed, two skipped. GitHub
+[tests run 42245494545](https://github.com/rooster51/AlphaOS/actions/runs/42245494545)
+and [Workers run 42245494758](https://github.com/rooster51/AlphaOS/actions/runs/42245494758)
+passed, including PostgreSQL, Windows and both Workers configurations.
+Integrated `42e4106` passed 119 focused Python tests, 239 website tests,
+TypeScript/build and Chromium 61 passed / two skipped.
+
+Netlify publication remains conditional on verifying its intended staging
+backend. The local Netlify CLI has no authenticated user or token. A dedicated
+browser sign-in reached GitHub authentication for Netlify, but no authenticated
+dashboard was available; the handoff tab subsequently disappeared. The requested
+non-secret preview backend URL is still missing. The PR's preview-skip guard
+remains in place until that condition is satisfied. Do not claim the actual
+Netlify website path or the original uncorrelated 429 is resolved.
+
+The free service's idle-wake behavior must also be measured separately. Its
+observed static preparation alone took 12.594 seconds before listening. Render
+[documents idle suspension after 15 minutes and roughly a minute to resume](https://render.com/docs/free#spinning-down-on-idle).
+Ready-instance research passing does not establish a sleeping-service 12-second
+guarantee. An idle-wake trial is pending; its outcome will be recorded in PR #88.
+No periodic keep-alive or increased website deadline is being used to hide this
+constraint. An approved always-on staging compute plan would be the least
+disruptive infrastructure alternative if idle wake prevents acceptance.
+
+**Recommendation remains draft / do not merge.** The new API summary/detail path
+passed the ready-instance trials above, while Netlify and idle-wake acceptance
+are still outstanding. Production and charting remain untouched.
