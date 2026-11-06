@@ -2,9 +2,12 @@ import { validateArchiveObservation } from "../../../../lib/archive-observation.
 import { getServerConfig } from "../../../../lib/server-config.ts";
 import { readRuntimeBindings } from "#alphaos-runtime";
 import { validSessionCookie } from "../../../../lib/website-auth.ts";
+import { validCandidateReference, validResearchSummary } from "../../../../lib/research-summary.ts";
 
 type MarketPayload = {
-  view?: "observation";
+  view?: "observation" | "candidate";
+  response_format?: "summary-v1";
+  detail?: Record<string, unknown>;
   symbol: "SPY" | "QQQ";
   research_mode?: "current" | "historical";
   expiration?: string;
@@ -16,7 +19,7 @@ type MarketPayload = {
 function parseMarketPayload(value: unknown): MarketPayload | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
   const input = value as Record<string, unknown>;
-  const allowed = new Set(["symbol", "research_mode", "expiration", "available_capital", "objective", "width", "view"]);
+  const allowed = new Set(["symbol", "research_mode", "expiration", "available_capital", "objective", "width", "view", "response_format", "detail"]);
   if (Object.keys(input).some((key) => !allowed.has(key))) return null;
 
   if (typeof input.symbol !== "string") return null;
@@ -24,9 +27,22 @@ function parseMarketPayload(value: unknown): MarketPayload | null {
   if (symbol !== "SPY" && symbol !== "QQQ") return null;
 
   const payload: MarketPayload = { symbol };
+  if (input.response_format !== undefined) {
+    if (input.response_format !== 'summary-v1' || input.view !== undefined) return null;
+    payload.response_format = 'summary-v1';
+  }
+  if (input.detail !== undefined) {
+    if (input.view !== 'candidate' || !validCandidateReference(input.detail)) return null;
+    payload.detail = input.detail as Record<string, unknown>;
+  }
   if (input.view !== undefined) {
-    if (input.view !== "observation" || ["available_capital","objective","width"].some(k => k in input)) return null;
-    payload.view = "observation";
+    if (input.view === 'candidate') {
+      if (!payload.detail) return null;
+      payload.view = 'candidate';
+    } else {
+      if (input.view !== "observation" || ["available_capital","objective","width"].some(k => k in input)) return null;
+      payload.view = "observation";
+    }
   }
   if (input.research_mode !== undefined) {
     if (input.research_mode !== "current" && input.research_mode !== "historical") return null;
@@ -169,6 +185,8 @@ type BridgeTrace = {
   upstream_status?: number;
   upstream_json?: boolean;
   backend_correlated?: boolean;
+  backend_target?: "staging" | "production" | "other";
+  upstream_server?: "Render" | "Netlify" | "Cloudflare" | "other";
   upstream_code?: string;
   outcome?: "backend_timeout" | "backend_unreachable" | "request_cancelled";
   timeout_phase?: "response_headers" | "response_body" | "schema_validation";
@@ -178,6 +196,7 @@ const KNOWN_UPSTREAM_CODES = new Set([
   "archive_stale", "archive_missing", "archive_not_configured", "archive_unavailable",
   "archive_research_unavailable", "archive_expiration_unavailable", "api_not_configured",
   "internal_error", "authentication_required", "forbidden", "invalid_request",
+  "research_evidence_changed", "research_summary_too_large",
 ]);
 const PREVIEW_DIAGNOSTIC_HOST = "deploy-preview-82--alphaostrading.netlify.app";
 const SAFE_VALIDATION_CATEGORIES = new Set([
@@ -299,11 +318,14 @@ async function marketRequest(request: Request, trace: BridgeTrace, timeout: () =
   }
 
   trace.stage = "fetch";
+  trace.backend_target = origin.hostname === 'alphaos-api-staging.onrender.com' ? 'staging'
+    : origin.hostname === 'alphaos.onrender.com' ? 'production' : 'other';
   const fetchStarted = performance.now();
   let response: Response;
   try {
     const {view,...backendPayload} = payload;
-    response = await fetch(new URL(view === "observation" ? "/v1/research/observation" : "/v1/research/market", origin), {
+    response = await fetch(new URL(view === "observation" ? "/v1/research/observation"
+      : view === 'candidate' ? '/v1/research/market/candidate' : "/v1/research/market", origin), {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -330,11 +352,16 @@ async function marketRequest(request: Request, trace: BridgeTrace, timeout: () =
   trace.upstream_status = response.status;
   trace.upstream_json = (response.headers.get("Content-Type") ?? "").toLowerCase().includes("application/json");
   trace.backend_correlated = response.headers.get("X-AlphaOS-Request-ID") === trace.request_id;
+  const upstreamServer = response.headers.get('server')?.toLowerCase() ?? '';
+  trace.upstream_server = upstreamServer === 'netlify' ? 'Netlify' : upstreamServer === 'cloudflare'
+    ? 'Cloudflare' : upstreamServer === 'render' ? 'Render' : 'other';
   trace.stage = "response_body";
   if (!response.ok) {
     const code = upstreamErrorCode(await readErrorPayload(response, trace));
     trace.upstream_code = KNOWN_UPSTREAM_CODES.has(code ?? "") ? code! : "unrecognized_or_missing";
-    const detail = response.status === 401
+    const detail = code === 'research_evidence_changed' ? 'research_evidence_changed'
+      : code === 'research_summary_too_large' ? 'research_summary_too_large'
+      : response.status === 401
       ? "backend_authentication_required"
       : response.status === 403
         ? "backend_authentication_rejected"
@@ -403,8 +430,22 @@ async function marketRequest(request: Request, trace: BridgeTrace, timeout: () =
         ? validation.categories[0] : "multiple_validation_failures";
       trace.validation_fields = validation.fields;
     }
+  } else if (payload.view === 'candidate') {
+    const detail = object(responsePayload), reference = object(detail?.reference);
+    const detailRequest = object(detail?.request);
+    valid = detail?.schema_version === 'alphaos-candidate-detail-v1' && detail.read_only === true &&
+      detail.verified_for_trading === false && object(detail.candidate) !== null &&
+      detailRequest?.symbol === payload.symbol &&
+      detailRequest?.research_mode === (payload.research_mode ?? 'current') &&
+      detailRequest?.available_capital === (payload.available_capital ?? null) &&
+      (detailRequest?.width ?? null) === (payload.width ?? null) &&
+      (detailRequest?.expiration ?? null) === (payload.expiration ?? null) &&
+      validCandidateReference(reference) && Object.keys(payload.detail!).every(key => reference?.[key] === payload.detail![key]) &&
+      object(object(detail.archive)?.storage)?.archive_sha256 === reference?.archive_sha256;
+    if (!valid) trace.validation_category = 'research_schema_mismatch';
   } else {
     valid = validResearchEnvelope(responsePayload, payload.symbol, payload.research_mode, payload.expiration, payload.width);
+    if (payload.response_format === 'summary-v1') valid = valid && validResearchSummary(responsePayload);
     if (!valid) trace.validation_category = "research_schema_mismatch";
   }
   trace.schema_validation_ms = Math.round(performance.now() - validationStarted);

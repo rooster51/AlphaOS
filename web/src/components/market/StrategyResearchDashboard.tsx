@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { Activity, ChevronDown, CircleAlert, ExternalLink, ShieldCheck } from "lucide-react";
 import { Header } from "@/components/shell/Header";
 import { StatusPill } from "@/components/shell/StatusPill";
-import { archiveExpirations, buyingPower, record } from "@/lib/market-candidates";
+import { archiveExpirations, buyingPower, candidateViews, record } from "@/lib/market-candidates";
+import { validResearchSummary } from "@/lib/research-summary";
 import {
   archiveVerificationReason,
   assessStrategyCandidates,
@@ -48,6 +49,8 @@ const ERROR_MESSAGES: Record<string, string> = {
   response_schema_mismatch: "The backend response did not match the verified research schema.",
   backend_timeout: "The research request timed out. No substitute data was displayed.",
   backend_unreachable: "The research backend could not be reached.",
+  backend_rate_limited: "The upstream service is rate limiting research. Wait before retrying.",
+  research_summary_too_large: "The complete research summary exceeds its safe response limit. No candidates were omitted or substituted.",
 };
 
 function parseBundle(
@@ -61,6 +64,7 @@ function parseBundle(
   const archive = record(research.archive);
   const session = record(research.research_session);
   const mode = query.research_mode;
+  if (envelope.response_format !== undefined && !validResearchSummary(envelope)) return null;
 
   if (
     outer.verified_for_trading !== false ||
@@ -312,10 +316,12 @@ function PayoffDetails({ research }: { research: Record<string, unknown> }) {
 function OpportunityCard({
   assessment,
   symbol,
+  query,
   compact = false,
 }: {
   assessment: OpportunityAssessment;
   symbol: MarketSymbol;
+  query: DashboardQuery;
   compact?: boolean;
 }) {
   const candidate = assessment.candidate as Record<string, unknown>;
@@ -388,11 +394,53 @@ function OpportunityCard({
           {legs.map((leg, index) => (
             <QuoteLeg key={`${String(leg.contract ?? index)}-${index}`} leg={leg} />
           ))}
-          <PayoffDetails research={research} />
+          {candidate.detail ? <CandidateEvidence candidate={candidate} query={query} /> : <PayoffDetails research={research} />}
         </div>
       </details>
     </article>
   );
+}
+
+function CandidateEvidence({candidate, query}: {candidate: Record<string, unknown>; query: DashboardQuery}) {
+  const [detail, setDetail] = useState<Record<string, unknown> | null>(null);
+  const [complete, setComplete] = useState<Record<string, unknown> | null>(null);
+  const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(false);
+  const active = useRef<AbortController | null>(null);
+  useEffect(() => () => active.current?.abort(), []);
+  async function load() {
+    active.current?.abort();
+    const controller = new AbortController(); active.current = controller;
+    setLoading(true); setMessage('');
+    try {
+      const response = await fetch('/api/research/market', {method: 'POST', cache: 'no-store',
+        headers: {'Content-Type': 'application/json'}, signal: controller.signal,
+        body: JSON.stringify({...query, view: 'candidate', detail: candidate.detail})});
+      const body = record(await response.json());
+      if (!response.ok) throw new Error(body.code === 'research_evidence_changed'
+        ? 'Evidence changed. Run research again; newer evidence was not substituted.'
+        : ERROR_MESSAGES[String(body.code)] ?? 'Complete evidence is unavailable.');
+      const envelope = record(body.research), reference = record(envelope.reference);
+      if (body.verified_for_trading !== false || envelope.schema_version !== 'alphaos-candidate-detail-v1' ||
+          Object.entries(record(candidate.detail)).some(([key,value]) => reference[key] !== value)) {
+        throw new Error('Complete evidence did not match this candidate. Run research again.');
+      }
+      const views = candidateViews({candidates: [envelope.candidate]});
+      if (!controller.signal.aborted) {
+        setDetail(record(views[0]?.research));
+        setComplete(record(envelope.candidate));
+      }
+    } catch (error) {
+      if (!controller.signal.aborted) setMessage(error instanceof Error ? error.message : 'Complete evidence is unavailable.');
+    } finally { if (!controller.signal.aborted) setLoading(false); }
+  }
+  return <div className="space-y-2">
+    <p className="text-xs text-terminal-400">Summary includes exact quotes and max-loss checks. Full payoff samples and supporting evidence load on request; changed evidence requires a new research run.</p>
+    {!detail && <button type="button" disabled={loading} onClick={() => void load()} className="rounded border border-terminal-700 px-3 py-2 text-sm">{loading ? 'Loading evidence…' : 'Load complete candidate evidence'}</button>}
+    {message && <p role="status" className="text-xs text-warning">{message}</p>}
+    {detail && <PayoffDetails research={detail} />}
+    {complete && <details><summary className="cursor-pointer text-xs">Complete candidate evidence record</summary><pre className="max-h-96 overflow-auto whitespace-pre-wrap break-all text-xs">{JSON.stringify(complete, null, 2)}</pre></details>}
+  </div>;
 }
 
 function TechnicalResearch({ bundle }: { bundle: ResearchBundle }) {
@@ -495,9 +543,11 @@ function TechnicalResearch({ bundle }: { bundle: ResearchBundle }) {
 function UnavailableResearch({
   assessments,
   bundle,
+  query,
 }: {
   assessments: OpportunityAssessment[];
   bundle: ResearchBundle;
+  query: DashboardQuery;
 }) {
   const unavailable = assessments.filter((item) => item.status === "unavailable");
   const unaffordable = assessments.filter((item) => item.status === "unaffordable");
@@ -508,6 +558,8 @@ function UnavailableResearch({
   const exclusions = Array.isArray(session.excluded)
     ? session.excluded.map(record)
     : [];
+  const budgetExclusions = exclusions.filter(row => row.reason === 'exceeds_available_capital');
+  const [showExclusions, setShowExclusions] = useState(false);
 
   return (
     <details className="rounded-xl border border-terminal-800 bg-terminal-900/40">
@@ -516,6 +568,16 @@ function UnavailableResearch({
         <ChevronDown className="h-4 w-4 shrink-0 text-terminal-400" aria-hidden="true" />
       </summary>
       <div className="space-y-4 border-t border-terminal-800 px-4 py-4 sm:px-5">
+        {session.transport !== undefined && budgetExclusions.length > 0 && <section>
+          <h3 className="text-xs font-semibold text-warning">Backend-rejected above max-loss budget · {budgetExclusions.length}</h3>
+          <p className="text-xs text-terminal-400">All exclusion records are included. These are rejected structures, not qualifying opportunities.</p>
+          <details onToggle={event => setShowExclusions(event.currentTarget.open)}><summary className="cursor-pointer text-xs">Inspect all budget exclusions</summary>
+            {showExclusions && <ul className="space-y-3">{budgetExclusions.map((row, index) => <li key={index} className="text-xs">
+              {familyLabel(row.strategy_family)} · required {formatMoney(row.required_capital)} · budget {formatMoney(row.available_capital)}
+              <CandidateEvidence candidate={row} query={query} />
+            </li>)}</ul>}
+          </details>
+        </section>}
         {assessments.length === 0 && routes.length === 0 && exclusions.length === 0 && (
           <p className="text-xs text-terminal-500">The backend returned no additional candidates, exclusions, or unavailable routes.</p>
         )}
@@ -702,7 +764,7 @@ export function StrategyResearchDashboard({
         const response = await fetch("/api/research/market", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(submitted),
+          body: JSON.stringify({...submitted, response_format: 'summary-v1'}),
           cache: "no-store",
           signal: controller.signal,
         });
@@ -920,6 +982,8 @@ function ResearchResults({
   query: DashboardQuery;
 }) {
   const archiveReason = archiveVerificationReason(bundle.archive, query.symbol, bundle.asOf, bundle.mode);
+  const aboveBudget = Array.isArray(bundle.session.excluded)
+    ? bundle.session.excluded.filter(item => record(item).reason === 'exceeds_available_capital').length : 0;
   const freshness = record(bundle.archive.freshness);
   const observation = record(bundle.archive.observation);
   const age = typeof freshness.age_seconds === "number" && Number.isFinite(freshness.age_seconds)
@@ -973,7 +1037,7 @@ function ResearchResults({
 
       <div className="grid grid-cols-3 gap-2 sm:gap-3">
         <Metric label="Eligible by backend" value={String(eligible.length)} accent={eligible.length > 0} />
-        <Metric label="Above max-loss budget" value={String(unaffordable.length)} />
+        <Metric label="Above max-loss budget" value={String(aboveBudget)} />
         <Metric label="Unavailable evidence" value={String(unavailable.length)} />
       </div>
 
@@ -988,7 +1052,7 @@ function ResearchResults({
           </div>
           <div className={`grid gap-3 ${eligible.length > 1 ? "xl:grid-cols-2" : ""}`}>
             {eligible.slice(0, 4).map((assessment, index) => (
-              <OpportunityCard key={`${query.symbol}-${candidateKey(assessment, index)}`} assessment={assessment} symbol={query.symbol} compact={eligible.length > 1} />
+              <OpportunityCard key={`${query.symbol}-${candidateKey(assessment, index)}`} assessment={assessment} symbol={query.symbol} query={query} compact={eligible.length > 1} />
             ))}
           </div>
           {eligible.length > 4 && (
@@ -996,7 +1060,7 @@ function ResearchResults({
               <summary className="cursor-pointer text-xs font-medium text-terminal-300">Additional eligible strategies · {eligible.length - 4}</summary>
               <div className="mt-3 grid gap-3 xl:grid-cols-2">
                 {eligible.slice(4).map((assessment, index) => (
-                  <OpportunityCard key={`${query.symbol}-additional-${candidateKey(assessment, index)}`} assessment={assessment} symbol={query.symbol} compact />
+                  <OpportunityCard key={`${query.symbol}-additional-${candidateKey(assessment, index)}`} assessment={assessment} symbol={query.symbol} query={query} compact />
                 ))}
               </div>
             </details>
@@ -1009,9 +1073,9 @@ function ResearchResults({
             <div>
               <h2 className="font-mono text-lg font-bold tracking-wide text-warning">NO TRADE</h2>
               <p className="mt-1 text-sm text-terminal-200">No opportunity satisfies the backend max-loss limit and all current archive, contract-quote, and research-evidence checks.</p>
-              {(unaffordable.length > 0 || unavailable.length > 0) && (
+              {(aboveBudget > 0 || unavailable.length > 0) && (
                 <p className="mt-2 text-xs text-terminal-500">
-                  {unaffordable.length} above budget · {unavailable.length} unavailable or unsupported. Expand the research details below for backend-provided reasons.
+                  {aboveBudget} above budget · {unavailable.length} unavailable or unsupported. Expand the research details below for backend-provided reasons.
                 </p>
               )}
             </div>
@@ -1025,7 +1089,7 @@ function ResearchResults({
       )}
 
       <TechnicalResearch bundle={bundle} />
-      <UnavailableResearch assessments={assessments} bundle={bundle} />
+      <UnavailableResearch assessments={assessments} bundle={bundle} query={query} />
       <ResearchDiagnostics bundle={bundle} />
 
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-terminal-800 pt-4">

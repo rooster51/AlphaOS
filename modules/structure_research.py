@@ -7,7 +7,7 @@ from copy import deepcopy
 from datetime import date
 from math import isclose, isfinite
 
-from modules.options_payoff import trade_analysis, validate_trade
+from modules.options_payoff import trade_analysis, validate_trade, copy_trade_input
 
 
 def _number(value):
@@ -57,7 +57,7 @@ def research_structure(candidate,*,symbol=None,spot=None,as_of=None,expected_mov
     Cached max-profit/loss, probability, fit, and recommendation fields are ignored.
     """
     if not isinstance(candidate,dict):raise ValueError('Candidate must be a mapping.')
-    trade=deepcopy(candidate)
+    trade=copy_trade_input(candidate)
     if symbol is not None and trade.get('symbol') and symbol.strip().upper()!=str(trade['symbol']).strip().upper():
         raise ValueError('Underlying mismatch.')
     if spot is not None and trade.get('spot') is not None and _number(spot)!=_number(trade['spot']):
