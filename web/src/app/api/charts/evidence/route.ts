@@ -1,4 +1,5 @@
-import { loadChartEvidence } from "../../../../lib/chart-evidence.ts";
+import { loadChartEvidence, logEvidenceTiming } from "../../../../lib/chart-evidence.ts";
+import type { EvidenceTiming } from "../../../../lib/chart-evidence.ts";
 import type { ChartEvidenceCode } from "../../../../lib/chart-types.ts";
 
 const STATUS: Record<ChartEvidenceCode, number> = {
@@ -14,7 +15,12 @@ const STATUS: Record<ChartEvidenceCode, number> = {
 /** Read-only evidence endpoint; credentials stay server-side. */
 export async function GET(request: Request) {
   const symbol = new URL(request.url).searchParams.get("symbol") ?? "";
-  const result = await loadChartEvidence(symbol);
+  const captured: { timing?: EvidenceTiming } = {};
+  const result = await loadChartEvidence(symbol, {
+    onTiming: (value) => { captured.timing = value; },
+  });
+  logEvidenceTiming("charts_evidence_timing", captured.timing,
+    result.status === "ok" ? "ok" : result.code);
   if (result.status === "unavailable") {
     return Response.json(
       { status: "unavailable", code: result.code, message: result.message },

@@ -62,6 +62,30 @@ not read, scrape or mirror the widget. Missing configuration yields an explicit
 substituted price, level or answer. This remains read-only research: no
 recommendation, sizing, order or execution path exists.
 
+### Evidence timeouts and diagnostics
+
+One evidence request retrieves `/v1/market` and then `/v1/structure`: the
+snapshot id returned by market bounds the structure query, so the two legs are
+sequential by design and cannot run in parallel without breaking snapshot
+consistency. Both legs share one 8.5s wall-clock budget (`DEFAULT_BUDGET_MS`,
+below Netlify's default 10s synchronous function limit) with a 9s cap per leg.
+Without that shared budget two slow legs could exceed the platform limit and
+the page would receive a platform error instead of a bounded
+`market_evidence_timeout`.
+
+Measured warm legs take 0.2-0.3s. A sleeping Render instance needs roughly 40
+seconds to boot, which no in-function timeout and no client retry can cover, so
+the service must stay warm (a scheduler pinging it every 10 minutes) rather
+than raising these limits. When `ALPHAOS_PREVIEW_DIAGNOSTICS=true`, which
+`netlify.toml` already sets for deploy previews, each request logs one line
+such as
+
+`{"event":"charts_evidence_timing","outcome":"market_evidence_timeout","symbol":"SPY","budget_ms":8500,"market_ms":8500,"structure_ms":null,"total_ms":8512,"timeout_phase":"market"}`
+
+which names the leg that ran out of time. The line carries durations, the
+symbol, the outcome and the phase only: never a token, backend URL, provider
+body or market value.
+
 ## Netlify Free compatibility
 
 The root `netlify.toml` targets only `web/` as the build base. Netlify therefore

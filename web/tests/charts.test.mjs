@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { afterEach, test } from "node:test";
 
-import { loadChartEvidence } from "../src/lib/chart-evidence.ts";
+import { loadChartEvidence, logEvidenceTiming } from "../src/lib/chart-evidence.ts";
 import {
   MAX_HISTORY_MESSAGES,
   SAFE_CHART_CLAIM_REPLY,
@@ -587,6 +587,137 @@ test("chat route refuses when verified evidence is unavailable", async () => {
   const body = await response.json();
   assert.equal(body.code, "market_evidence_backend_error");
   assert.equal(modelCalls, 0);
+});
+
+function hangingStructure() {
+  return (url, init) => {
+    if (String(url).includes("/v1/market/")) {
+      return Promise.resolve(Response.json(marketEnvelope("SPY")));
+    }
+    return new Promise((resolve, reject) => {
+      init.signal.addEventListener("abort", () =>
+        reject(new DOMException("The operation was aborted.", "AbortError")));
+    });
+  };
+}
+
+test("a slow structure leg times out as a structure-phase timeout", async () => {
+  const timings = [];
+  const startedAt = Date.now();
+  const result = await loadChartEvidence("SPY", {
+    ...options,
+    request: hangingStructure(),
+    timeoutMs: 40,
+    budgetMs: 2_000,
+    onTiming: (timing) => timings.push(timing),
+  });
+
+  assert.equal(result.status, "unavailable");
+  assert.equal(result.code, "market_evidence_timeout");
+  assert.equal("evidence" in result, false, "no partial evidence is returned");
+  assert.equal(timings.length, 1, "timing is reported once");
+  assert.equal(timings[0].timeout_phase, "structure");
+  assert.ok(timings[0].market_ms !== null, "market leg is measured");
+  assert.ok(timings[0].structure_ms !== null, "structure leg is measured");
+  assert.ok(Date.now() - startedAt < 2_000, "the request stays bounded");
+});
+
+test("the shared budget bounds a slow market leg below the platform limit", async () => {
+  const timings = [];
+  const startedAt = Date.now();
+  const hanging = (url, init) => new Promise((resolve, reject) => {
+    init.signal.addEventListener("abort", () =>
+      reject(new DOMException("The operation was aborted.", "AbortError")));
+  });
+  const result = await loadChartEvidence("SPY", {
+    ...options,
+    request: hanging,
+    timeoutMs: 30_000,
+    budgetMs: 60,
+    onTiming: (timing) => timings.push(timing),
+  });
+
+  assert.equal(result.code, "market_evidence_timeout");
+  assert.equal(timings[0].timeout_phase, "market");
+  assert.equal(timings[0].budget_ms, 60);
+  assert.equal(timings[0].structure_ms, null, "structure was never attempted");
+  assert.ok(Date.now() - startedAt < 2_000, "the budget, not the 30s cap, stopped it");
+});
+
+test("a failed market leg never requests structure and reports no timeout phase", async () => {
+  const calls = [];
+  const timings = [];
+  const result = await loadChartEvidence("SPY", {
+    ...options,
+    budgetMs: 2_000,
+    request: async (url) => {
+      calls.push(String(url));
+      return Response.json({ error: { code: "stale_quote" } }, { status: 503 });
+    },
+    onTiming: (timing) => timings.push(timing),
+  });
+
+  assert.equal(result.code, "market_evidence_backend_error");
+  assert.equal(calls.length, 1);
+  assert.match(calls[0], /\/v1\/market\/SPY/);
+  assert.equal(timings[0].timeout_phase, null);
+  assert.equal(timings[0].structure_ms, null);
+});
+
+test("structure is requested only after market and carries its verified snapshot id", async () => {
+  const order = [];
+  const result = await loadChartEvidence("SPY", {
+    ...options,
+    request: async (url) => {
+      order.push(String(url));
+      if (String(url).includes("/v1/market/")) {
+        return Response.json(marketEnvelope("SPY", { snapshotId: "snap-abc123" }));
+      }
+      return Response.json(structureEnvelope("SPY", { snapshotId: "snap-abc123" }));
+    },
+  });
+
+  assert.equal(result.status, "ok");
+  assert.equal(order.length, 2);
+  assert.match(order[0], /\/v1\/market\/SPY\?horizon=3$/);
+  assert.match(order[1], /\/v1\/structure\/SPY\?horizon=3&levels=5&snapshot_id=snap-abc123$/);
+});
+
+test("timing diagnostics carry durations only and stay gated off by default", async () => {
+  const timings = [];
+  await loadChartEvidence("SPY", {
+    ...options,
+    request: jsonFetch(marketEnvelope("SPY"), structureEnvelope("SPY")),
+    onTiming: (timing) => timings.push(timing),
+  });
+  const [timing] = timings;
+  assert.deepEqual(Object.keys(timing).sort(),
+    ["budget_ms", "market_ms", "structure_ms", "symbol", "timeout_phase", "total_ms"]);
+  assert.equal(timing.timeout_phase, null);
+  assert.ok(timing.market_ms >= 0 && timing.structure_ms >= 0 && timing.total_ms >= 0);
+  assert.ok(!JSON.stringify(timing).includes("test-token"));
+
+  const lines = [];
+  const originalLog = console.log;
+  console.log = (...args) => lines.push(args.join(" "));
+  try {
+    delete process.env.ALPHAOS_PREVIEW_DIAGNOSTICS;
+    logEvidenceTiming("charts_evidence_timing", timing, "ok");
+    assert.equal(lines.length, 0, "diagnostics are off without the preview flag");
+
+    process.env.ALPHAOS_PREVIEW_DIAGNOSTICS = "true";
+    logEvidenceTiming("charts_evidence_timing", timing, "ok");
+    assert.equal(lines.length, 1);
+    const line = JSON.parse(lines[0]);
+    assert.equal(line.event, "charts_evidence_timing");
+    assert.equal(line.outcome, "ok");
+    assert.equal(line.budget_ms, timing.budget_ms);
+    assert.ok(!lines[0].includes("test-token"), "never a credential");
+    assert.ok(!lines[0].includes("research.example"), "never the backend host");
+  } finally {
+    console.log = originalLog;
+    delete process.env.ALPHAOS_PREVIEW_DIAGNOSTICS;
+  }
 });
 
 test("provider failures are classified from status and envelope, not provider prose", () => {

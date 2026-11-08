@@ -8,6 +8,7 @@
  * envelopes cannot be verified against each other the caller gets an explicit
  * unavailable result.
  */
+import { readRuntimeBindings } from "#alphaos-runtime";
 import { fetchResearchEnvelope, object, ResearchUnavailableError } from "./research-evidence.ts";
 import { getServerConfig } from "./server-config.ts";
 import type {
@@ -21,6 +22,12 @@ import type {
 } from "./chart-types.ts";
 
 const DEFAULT_TIMEOUT_MS = 9_000;
+// Netlify's synchronous function limit defaults to 10s and this site sets no
+// override, so both legs share one budget below that limit: the route returns
+// its own bounded error instead of being killed mid-response. Measured warm
+// legs are ~0.2-0.3s; a sleeping Render instance needs ~40s to boot, which no
+// in-function timeout can cover (see DEPLOYMENT.md).
+const DEFAULT_BUDGET_MS = 8_500;
 const CAVEAT_LIMIT = 8;
 
 function isTimestamp(value: unknown): value is string {
@@ -153,12 +160,31 @@ function normalizeSymbol(value: string): ChartSymbol | null {
   return symbol === "SPY" || symbol === "QQQ" ? symbol : null;
 }
 
+export type EvidenceTimeoutPhase = "market" | "structure";
+
+/**
+ * Bounded retrieval timing. Durations and the phase that ran out of time only:
+ * never a credential, backend URL, provider body or market value.
+ */
+export type EvidenceTiming = {
+  symbol: string;
+  budget_ms: number;
+  market_ms: number | null;
+  structure_ms: number | null;
+  total_ms: number;
+  timeout_phase: EvidenceTimeoutPhase | null;
+};
+
 export type LoadChartEvidenceOptions = {
   request?: typeof fetch;
   token?: string;
   baseUrl?: string;
   now?: () => number;
   timeoutMs?: number;
+  /** Wall-clock budget shared by both legs; defaults below the function limit. */
+  budgetMs?: number;
+  clock?: () => number;
+  onTiming?: (timing: EvidenceTiming) => void;
 };
 
 /**
@@ -172,6 +198,31 @@ export type LoadChartEvidenceOptions = {
 export async function loadChartEvidence(
   symbol: string,
   options: LoadChartEvidenceOptions = {},
+): Promise<ChartEvidenceResult> {
+  const clock = options.clock ?? Date.now;
+  const startedAt = clock();
+  const timing: EvidenceTiming = {
+    symbol: symbol.trim().toUpperCase().slice(0, 8) || "unknown",
+    budget_ms: options.budgetMs ?? DEFAULT_BUDGET_MS,
+    market_ms: null,
+    structure_ms: null,
+    total_ms: 0,
+    timeout_phase: null,
+  };
+  try {
+    return await retrieveChartEvidence(symbol, options, timing, startedAt, clock);
+  } finally {
+    timing.total_ms = Math.max(0, Math.round(clock() - startedAt));
+    options.onTiming?.(timing);
+  }
+}
+
+async function retrieveChartEvidence(
+  symbol: string,
+  options: LoadChartEvidenceOptions,
+  timing: EvidenceTiming,
+  startedAt: number,
+  clock: () => number,
 ): Promise<ChartEvidenceResult> {
   const normalized = normalizeSymbol(symbol);
   if (!normalized) {
@@ -207,22 +258,45 @@ export async function loadChartEvidence(
   const now = options.now ?? Date.now;
   const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
 
+  // Each leg gets its own timeout and at most what remains of the shared
+  // budget. Structure depends on the market snapshot id, so the two legs cannot
+  // run in parallel without breaking snapshot consistency.
+  const remaining = () => Math.max(0, timing.budget_ms - (clock() - startedAt));
+  const legTimeout = () => Math.min(timeoutMs, remaining());
+
   let market: Awaited<ReturnType<typeof fetchResearchEnvelope>>;
   let structure: Awaited<ReturnType<typeof fetchResearchEnvelope>>;
+  let phase: EvidenceTimeoutPhase = "market";
   try {
-    market = await fetchResearchEnvelope(
-      `${origin.origin}/v1/market/${normalized}?horizon=3`, token, request, timeoutMs);
+    if (remaining() <= 0) {
+      throw new ResearchUnavailableError("Research API request timed out");
+    }
+    let legStarted = clock();
+    try {
+      market = await fetchResearchEnvelope(
+        `${origin.origin}/v1/market/${normalized}?horizon=3`, token, request, legTimeout());
+    } finally {
+      timing.market_ms = Math.max(0, Math.round(clock() - legStarted));
+    }
     const marketMeta = object(market.meta);
     const snapshotId = text(marketMeta?.snapshot_id, 128);
     if (!snapshotId) {
       return failure("market_evidence_mismatch",
         "The AlphaOS research backend did not return a verifiable snapshot identifier.");
     }
-    structure = await fetchResearchEnvelope(
-      `${origin.origin}/v1/structure/${normalized}?horizon=3&levels=5&snapshot_id=${encodeURIComponent(snapshotId)}`,
-      token, request, timeoutMs);
+    phase = "structure";
+    legStarted = clock();
+    try {
+      structure = await fetchResearchEnvelope(
+        `${origin.origin}/v1/structure/${normalized}?horizon=3&levels=5&snapshot_id=${encodeURIComponent(snapshotId)}`,
+        token, request, legTimeout());
+    } finally {
+      timing.structure_ms = Math.max(0, Math.round(clock() - legStarted));
+    }
   } catch (error) {
-    return evidenceFailure(error);
+    const result = evidenceFailure(error);
+    if (result.code === "market_evidence_timeout") timing.timeout_phase = phase;
+    return result;
   }
 
   const meta = object(market.meta);
@@ -286,6 +360,22 @@ export async function loadChartEvidence(
     caveats: caveatsFrom(object(market)?.caveats, object(structure)?.caveats),
   };
   return { status: "ok", evidence };
+}
+
+/**
+ * Structured, preview-gated timing diagnostics. Enabled by the deploy-preview
+ * environment (`ALPHAOS_PREVIEW_DIAGNOSTICS`), so production logs stay quiet.
+ * Durations, outcome and phase only: no credential, backend URL or market data.
+ */
+export function logEvidenceTiming(
+  event: string,
+  timing: EvidenceTiming | undefined,
+  outcome?: string,
+): void {
+  if (!timing) return;
+  const values = readRuntimeBindings().bindings as Record<string, unknown>;
+  if (values.ALPHAOS_PREVIEW_DIAGNOSTICS !== "true") return;
+  console.log(JSON.stringify({ event, outcome: outcome ?? null, ...timing }));
 }
 
 /** Timestamp/host label used in UI copy, never a fabricated observation. */

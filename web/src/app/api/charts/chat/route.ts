@@ -1,5 +1,6 @@
 import { readRuntimeBindings } from "#alphaos-runtime";
-import { loadChartEvidence } from "../../../../lib/chart-evidence.ts";
+import { loadChartEvidence, logEvidenceTiming } from "../../../../lib/chart-evidence.ts";
+import type { EvidenceTiming } from "../../../../lib/chart-evidence.ts";
 import {
   buildChatRequestBody,
   chatConfiguration,
@@ -115,8 +116,15 @@ export async function POST(request: Request) {
     return unavailable(503, "chat_not_configured", configuration.message);
   }
 
-  // Grounding evidence is fetched independently on every request.
-  const evidenceResult = await loadChartEvidence(parsed.symbol);
+  // Grounding evidence is fetched independently on every request: the panel's
+  // copy is never trusted. The shared budget keeps evidence plus model call
+  // inside the platform's function limit.
+  const captured: { timing?: EvidenceTiming } = {};
+  const evidenceResult = await loadChartEvidence(parsed.symbol, {
+    onTiming: (value) => { captured.timing = value; },
+  });
+  logEvidenceTiming("charts_chat_evidence_timing", captured.timing,
+    evidenceResult.status === "ok" ? "ok" : evidenceResult.code);
   if (evidenceResult.status === "unavailable") {
     return unavailable(503, evidenceResult.code, evidenceResult.message);
   }
