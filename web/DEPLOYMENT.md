@@ -75,8 +75,9 @@ the page would receive a platform error instead of a bounded
 
 Measured warm legs take 0.2-0.3s. A sleeping Render instance needs roughly 40
 seconds to boot, which no in-function timeout and no client retry can cover, so
-the service must stay warm (a scheduler pinging it every 10 minutes) rather
-than raising these limits. When `ALPHAOS_PREVIEW_DIAGNOSTICS=true`, which
+the service must stay warm (a scheduler pinging the public `/health` route every
+10 minutes) rather than raising these limits; the job specification, free-hour
+budget and limits are in `docs/render_keepwarm.md`. When `ALPHAOS_PREVIEW_DIAGNOSTICS=true`, which
 `netlify.toml` already sets for deploy previews, each request logs one line
 such as
 
