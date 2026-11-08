@@ -11,6 +11,12 @@ export: server-rendered pages and the `/api` routes need a server runtime.
 Render is the simplest fit with the existing backend; configure the web service
 to run `npm run build` and `npm start`, preferably in the backend's region.
 
+The AlphaOS API runs on Render as a Free instance, which spins down after 15
+minutes without inbound traffic and takes about a minute to boot again. A public
+`GET https://alphaos.onrender.com/health` keeps it warm without credentials; the
+job specification, monthly Free instance-hour budget and its limits are in
+[`docs/render_keepwarm.md`](../docs/render_keepwarm.md).
+
 Set these server-side environment variables in the hosting provider:
 
 | Variable | Requirement |
@@ -18,74 +24,12 @@ Set these server-side environment variables in the hosting provider:
 | `ALPHAOS_API_URL` | HTTPS base URL of the AlphaOS API. |
 | `ALPHAOS_API_TOKEN` | Required secret bearer token; never expose it as `NEXT_PUBLIC_*`. |
 | `ALPHAOS_DEMO_MODE` | Optional; set to `true` only when intentionally showing labeled synthetic fixtures. Leave unset or `false` for normal read-only use. |
-| `ALPHAOS_CHAT_API_KEY` | Optional secret for the `/charts` assistant. Server-side only; never `NEXT_PUBLIC_*`. Unset keeps the documented assistant-unavailable state. |
-| `ALPHAOS_CHAT_MODEL` | Optional model name for the `/charts` assistant; required together with the key. |
-| `ALPHAOS_CHAT_API_URL` | Optional HTTPS OpenAI-compatible chat-completions URL. |
 
 `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` are present in
 `.env.example` for a future integration but are not used by the current web
 foundation. Do not configure them as a substitute for authenticated account
 integration. `/api/health` confirms only that the web process responds; it does
 not verify backend credentials, account access, or current market evidence.
-
-## Charting & AI (`/charts`)
-
-`/charts` embeds the official TradingView Advanced Chart widget and pairs it
-with an assistant that is grounded only in independently retrieved AlphaOS
-evidence. Both `web/src/app/api/charts/evidence` and
-`web/src/app/api/charts/chat` are ordinary Next.js route handlers, so they run
-as Netlify Functions under the same runtime as the existing research bridges,
-and they sit behind the `10-auth-gate` Edge Function like every other `/api`
-path. Credentials (`ALPHAOS_API_TOKEN`, `ALPHAOS_CHAT_API_KEY`) stay server-side
-and are read from the deployment's runtime bindings, never from a hardcoded
-host or a client bundle.
-
-Evidence is one verified market/structure pair from the existing authenticated
-`/v1/market/{symbol}` and `/v1/structure/{symbol}` endpoints sharing one
-`snapshot_id`; the page reports the backend timestamp and labels stale evidence
-`point_in_time` instead of presenting it as current. `/v1/structure` returns
-clustered level records (`side`, `level`, `zone_low`, `zone_high`, `sources`,
-`observations`, `distance_atr`), which the adapter maps to labelled levels and
-zones; `distance_pct` is recomputed from the verified level and spot because the
-endpoint reports a decimal fraction of spot. `/v1/market` returns the
-completed-session feature row as `market_state`: `ema_structure` is the only
-trend classification that endpoint exposes, and it carries no direction,
-movement, volatility or premium classification. Those dimensions are labelled
-`not reported by the AlphaOS backend` and listed in
-`backend_unreported_dimensions`, so an absent classification is never presented
-as neutral and no value is synthesised; the page shows the backend EMA structure
-and an explicit `not reported` direction. The assistant receives the
-symbol and that evidence record only, and a fail-closed guard replaces any reply
-that claims TradingView chart, candle, indicator or drawing access. AlphaOS does
-not read, scrape or mirror the widget. Missing configuration yields an explicit
-`chat_not_configured` / `market_evidence_not_configured` response rather than a
-substituted price, level or answer. This remains read-only research: no
-recommendation, sizing, order or execution path exists.
-
-### Evidence timeouts and diagnostics
-
-One evidence request retrieves `/v1/market` and then `/v1/structure`: the
-snapshot id returned by market bounds the structure query, so the two legs are
-sequential by design and cannot run in parallel without breaking snapshot
-consistency. Both legs share one 8.5s wall-clock budget (`DEFAULT_BUDGET_MS`,
-below Netlify's default 10s synchronous function limit) with a 9s cap per leg.
-Without that shared budget two slow legs could exceed the platform limit and
-the page would receive a platform error instead of a bounded
-`market_evidence_timeout`.
-
-Measured warm legs take 0.2-0.3s. A sleeping Render instance needs roughly 40
-seconds to boot, which no in-function timeout and no client retry can cover, so
-the service must stay warm (a scheduler pinging the public `/health` route every
-10 minutes) rather than raising these limits; the job specification, free-hour
-budget and limits are in `docs/render_keepwarm.md`. When `ALPHAOS_PREVIEW_DIAGNOSTICS=true`, which
-`netlify.toml` already sets for deploy previews, each request logs one line
-such as
-
-`{"event":"charts_evidence_timing","outcome":"market_evidence_timeout","symbol":"SPY","budget_ms":8500,"market_ms":8500,"structure_ms":null,"total_ms":8512,"timeout_phase":"market"}`
-
-which names the leg that ran out of time. The line carries durations, the
-symbol, the outcome and the phase only: never a token, backend URL, provider
-body or market value.
 
 ## Netlify Free compatibility
 
@@ -154,22 +98,11 @@ existing bounded bcrypt concurrency remains independent protection.
    adapter.
 4. In the site's environment-variable settings, add the existing server-side
    values `ALPHAOS_API_URL`, `ALPHAOS_API_TOKEN`, `ALPHAOS_PASSWORD_HASH`,
-   `ALPHAOS_SESSION_KEY`, and `ALPHAOS_DEMO_MODE=false`. Add
-   `ALPHAOS_CHAT_API_KEY`, `ALPHAOS_CHAT_MODEL` and, if the provider is not
-   OpenAI, `ALPHAOS_CHAT_API_URL` to enable the `/charts` assistant. Give secret values
+   `ALPHAOS_SESSION_KEY`, and `ALPHAOS_DEMO_MODE=false`. Give secret values
    Functions scope where Netlify offers scopes. Reuse the approved values from
    the current website/API configuration; do not commit them, put them in
    `netlify.toml`, or expose them as `NEXT_PUBLIC_*`. No limiter-mode
-   environment variable should be added. When the assistant is enabled, a
-   provider rejection is reported only by HTTP status, a fixed category and the
-   provider host: the structured log event `charts_chat_provider_error` (or
-   `charts_chat_provider_unreachable` for a network/timeout failure) is written
-   to the Netlify function log, and the same sanitised fields are returned to
-   the signed-in page. Provider error bodies and messages are neither logged
-   nor returned. For Google Gemini, set
-   `ALPHAOS_CHAT_API_URL=https://generativelanguage.googleapis.com/v1beta/openai/chat/completions`
-   with the bare model id (`gemini-2.5-flash`); Gemini's compatibility layer
-   rejects an invalid key with HTTP 400 `INVALID_ARGUMENT`, not 401.
+   environment variable should be added.
 5. Once explicitly authorized, create a Netlify deploy preview and verify its
    runtime environment, anonymous denial, login/logout, CSRF rejection, Render
    connectivity, and shared limit across separate client IPs. Confirm missing

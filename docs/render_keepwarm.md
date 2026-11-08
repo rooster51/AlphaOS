@@ -7,9 +7,9 @@ request. Measured on 2026-11-04: the first request after idle waited **42.65 s**
 while DNS took 12 ms, TCP 16 ms and TLS 38 ms — the wait is the boot, not the
 network. Warm `GET /health` answers in 0.18–0.34 s.
 
-That boot is what surfaced as `market_evidence_timeout` on `/charts`: the page
-allows one 8.5 s budget for the verified market + structure pair, so a sleeping
-backend cannot answer. The evidence budget is unchanged; this heartbeat removes
+That boot is what surfaced as `market_evidence_timeout` on `/charts` (the
+Charting & AI change carried by PR #85): the page allows one 8.5 s budget for the
+verified market + structure pair, so a sleeping backend cannot answer. The evidence budget is unchanged; this heartbeat removes
 the boot from the common path.
 
 ## Decision
