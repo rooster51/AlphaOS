@@ -42,5 +42,24 @@ def test_keepwarm_doc_records_job_spec_and_budget():
     assert 'no credential' in doc
 
 
+def test_doc_brackets_both_dst_regimes_without_rescheduling():
+    doc = DOC.read_text(encoding='utf-8')
+    # Regular session in UTC under each regime; the fixed UTC window covers both.
+    assert '13:30' in doc and '14:30' in doc
+    assert '22:05' in doc
+    # The two DST changes are named, and no reconfiguration is required.
+    assert '2026-11-01' in doc and '2027-03-14' in doc
+    assert 'no reconfiguration' in doc
+    # Extended hours are explicitly out of scope for this window.
+    assert 'Extended hours are **not** covered' in doc
+
+
+def test_doc_records_awake_hour_accounting():
+    doc = DOC.read_text(encoding='utf-8')
+    assert '222 h/month' in doc          # window plus spin-down tail
+    assert '520 h' in doc                # unused allowance in a 31-day month
+    assert 'spun-down service consumes no instance hours' in doc
+
+
 def test_web_deployment_points_at_keepwarm_doc():
     assert 'docs/render_keepwarm.md' in WEB_DEPLOYMENT.read_text(encoding='utf-8')

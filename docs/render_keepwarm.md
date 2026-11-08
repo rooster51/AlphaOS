@@ -50,6 +50,30 @@ Cadence rationale: the sleep threshold is 15 minutes, so a 10 minute cadence
 tolerates exactly one missed beat. An external scheduler does not fire at an
 exact instant; the collector documentation already notes this.
 
+## UTC window versus US session hours (DST)
+
+The job is fixed in UTC, so its Eastern-time coverage shifts by one hour at each
+DST change. The session shifts by the same hour, so the cron expression never
+needs editing.
+
+| Regime | Regular session (UTC) | Warm coverage | Lead before open / tail after close |
+| --- | --- | --- | --- |
+| EDT, Mar–Nov (UTC−4) | 13:30–20:00 | 12:00–22:05 | 1 h 30 / 2 h 05 |
+| EST, Nov–Mar (UTC−5) | 14:30–21:00 | 12:00–22:05 | 2 h 30 / 1 h 05 |
+
+`*/10 12-21 * * 1-5` fires 12:00 … 21:50 UTC, and the 15-minute sleep threshold
+keeps the instance warm until about 22:05 UTC. Coverage therefore brackets the
+regular session in both regimes across the 2026-11-01 change to EST and the
+2027-03-14 change back to EDT, with no reconfiguration. The collector heartbeat
+in `docs/intraday_scheduler.md` uses its own `*/5 13-21 * * 1-5` window for the
+same reason; the keep-warm window starts an hour earlier because it has no
+publication deadline to miss.
+
+Extended hours are **not** covered: the post-market session ends at 20:00 ET,
+which is 00:00 UTC in EDT and 01:00 UTC in EST. If evening research matters,
+extend the last hour to `*/10 12-00 * * 1-5` (13 h/day ≈ 282 h/month weekdays,
+≈ 396 h seven days a week) and recheck the instance-hour budget below.
+
 ## Free instance hours
 
 Render grants **750 Free instance hours per workspace per calendar month**, and a
@@ -59,8 +83,14 @@ awake Free service pushes the workspace over it — Render then suspends **all**
 Free web services in that workspace until the next month begins.
 
 Budget for the window above: 10 hours/day × ~21.7 weekdays ≈ **217 h/month**
-(seven days a week would be ~304 h). Both leave ample headroom. Do not move this
-job to 24/7 without checking the workspace allowance for every Free service.
+(seven days a week would be ~304 h). Each day also keeps the instance awake for
+the ~15 minutes between the last ping and spin-down (≈5 h/month), so the
+realistic draw is **≈222 h/month**. A 31-day month has 744 h, leaving ≈520 h of
+the allowance unused for any other Free service in the workspace. Only awake
+time counts: a spun-down service consumes no instance hours, and a failed ping
+therefore does not accumulate cost. Do not move this job to 24/7 without
+checking the workspace allowance for every Free service: one always-on service
+already consumes 730–744 h.
 
 ## Monitoring and verification
 
