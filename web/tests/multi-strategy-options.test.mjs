@@ -28,12 +28,16 @@ test('all supported family results retain the Python fixture economics and contr
 
 test('comparison bridge authenticates, rejects CSRF and malformed evidence, and uses one bounded request',async t=>{
   Object.assign(process.env,authBindings,{ALPHAOS_API_URL:'https://backend.test',ALPHAOS_API_TOKEN:'fixture-token'});
+  let forwardedId;
   const upstream=t.mock.method(globalThis,'fetch',async(url,options)=>{
     assert.equal(url.pathname,'/v1/options/SPY/chain/2026-11-06');
     assert.equal(options.method,'POST');assert.equal(options.cache,'no-store');assert.equal(options.redirect,'error');
     assert.deepEqual(JSON.parse(options.body),payload);
+    assert.equal(options.headers.Authorization,'Bearer fixture-token');
+    forwardedId=options.headers['X-AlphaOS-Request-ID'];
+    assert.match(forwardedId,/^[a-f0-9]{32}$/);
     return Response.json({meta:{symbol:'SPY'},evidence:{source:'Public',symbol:'SPY',expiration:'2026-11-06',request:payload,
-      scenarios:fixtures.slice(0,2).map(item=>item.result)}});
+      scenarios:fixtures.slice(0,2).map(item=>item.result)}},{headers:{'X-AlphaOS-Request-ID':forwardedId}});
   });
   assert.equal((await POST(request(payload,false))).status,401);
   assert.equal((await POST(request(payload,true,'https://evil.test'))).status,403);
@@ -41,6 +45,7 @@ test('comparison bridge authenticates, rejects CSRF and malformed evidence, and 
   assert.equal(upstream.mock.callCount(),0);
   const response=await POST(request());assert.equal(response.status,200);
   assert.equal(response.headers.get('Cache-Control'),'private, no-store');
+  assert.equal(response.headers.get('X-AlphaOS-Request-ID'),forwardedId);
   assert.deepEqual((await response.json()).scenarios,fixtures.slice(0,2).map(item=>item.result));
   assert.equal(upstream.mock.callCount(),1);
   upstream.mock.mockImplementation(async()=>Response.json({meta:{symbol:'SPY'},evidence:{source:'Public',symbol:'SPY',expiration:'2026-11-06',request:payload,

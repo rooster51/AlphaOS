@@ -5,8 +5,9 @@ import { validSessionCookie } from "../../../lib/website-auth.ts";
 import { validResearchRequest, validResearchResults, stableJSON, type ResearchRequest } from "../../../lib/options-research.ts";
 
 async function optionsResponse(request: Request, research?: ResearchRequest) {
+  const requestId = crypto.randomUUID().replaceAll("-", "");
   const reply = (body: unknown, status = 200) => Response.json(body, {
-    status, headers: { "Cache-Control": "private, no-store", Vary: "Cookie" },
+    status, headers: { "Cache-Control": "private, no-store", Vary: "Cookie", "X-AlphaOS-Request-ID": requestId },
   });
   const { bindings } = readRuntimeBindings();
   if (!await validSessionCookie(request, {
@@ -40,10 +41,10 @@ async function optionsResponse(request: Request, research?: ResearchRequest) {
   }
   if (buy) url.searchParams.set("buy", buy);
   if (sell) url.searchParams.set("sell", sell);
-  const requestId = crypto.randomUUID().replaceAll("-", "");
   const deadline = AbortSignal.timeout(8000);
   const started = performance.now();
   let status: number | undefined;
+  let correlated: boolean | undefined;
   try {
     const response = await fetch(url, {
       method: research ? "POST" : "GET",
@@ -52,6 +53,7 @@ async function optionsResponse(request: Request, research?: ResearchRequest) {
       cache: "no-store", redirect: "error", signal: AbortSignal.any([deadline, request.signal]),
     });
     status = response.status;
+    correlated = response.headers.get("X-AlphaOS-Request-ID") === requestId;
     const payload = record(await response.json());
     const evidence = record(payload.evidence);
     const chain = record(evidence.chain);
@@ -77,7 +79,7 @@ async function optionsResponse(request: Request, research?: ResearchRequest) {
     return reply({ code: deadline.aborted ? "request_timeout" : "backend_unreachable" }, deadline.aborted ? 504 : 502);
   } finally {
     console.info(JSON.stringify({ event: "option_chain_bridge", symbol, request_id: requestId,
-      elapsed_ms: Math.round(performance.now() - started), upstream_status: status }));
+      elapsed_ms: Math.round(performance.now() - started), upstream_status: status, backend_correlated: correlated }));
   }
 }
 
