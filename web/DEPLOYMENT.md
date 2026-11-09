@@ -11,6 +11,12 @@ export: server-rendered pages and the `/api` routes need a server runtime.
 Render is the simplest fit with the existing backend; configure the web service
 to run `npm run build` and `npm start`, preferably in the backend's region.
 
+The AlphaOS API runs on Render as a Free instance, which spins down after 15
+minutes without inbound traffic and takes about a minute to boot again. A public
+`GET https://alphaos.onrender.com/health` keeps it warm without credentials; the
+job specification, monthly Free instance-hour budget and its limits are in
+[`docs/render_keepwarm.md`](../docs/render_keepwarm.md).
+
 Set these server-side environment variables in the hosting provider:
 
 | Variable | Requirement |
