@@ -14,7 +14,12 @@ const TV_STUB = `window.TradingView = { widget: function (options) {
   el.appendChild(node);
 } };`;
 
-function evidence(symbol: string, mode: "current" | "point_in_time" = "current") {
+function evidence(
+  symbol: string,
+  mode: "current" | "point_in_time" = "current",
+  overnight = false,
+) {
+  const quoteSession = mode === "current" ? "regular_session" : overnight ? "overnight" : "closed";
   return {
     status: "ok",
     evidence: {
@@ -30,8 +35,41 @@ function evidence(symbol: string, mode: "current" | "point_in_time" = "current")
         { label: "PIVOT_HIGH_20", price: 505.5, kind: "resistance", distance_pct: 1.08 },
         { label: "PIVOT_LOW_20", price: 494.2, kind: "support", distance_pct: -1.18 },
       ],
+      quote: {
+        price: 500.12,
+        as_of: AS_OF,
+        session: quoteSession,
+        context: overnight ? "overnight_observation" : mode === "current"
+          ? "regular_session_observation" : "dated_closed_market_observation",
+        current: mode === "current",
+        executable: false,
+        ats_verified: false,
+        data_status: mode === "current" ? "fresh" : "latest_available",
+        freshness: mode === "current" ? "fresh" : "stale",
+        reason: overnight ? "overnight_observation" : mode === "current"
+          ? "within_active_age_limit" : "predates_latest_session_close",
+        market_state_source: "NYSE calendar; 04:00-20:00 ET extended policy; overnight ATS status unverified",
+      },
+      completed_session: {
+        session: "2026-11-06",
+        close: 498.7,
+        as_of: "2026-11-06",
+        ema_structure: "bearish",
+        ema_9: 499.5,
+        ema_21: 501.2,
+        ema_50: 503.4,
+      },
+      technical_as_of: "2026-11-06",
+      levels_as_of: "2026-11-06",
       market_state: {
-        direction: "bullish",
+        direction: "unknown",
+        direction_reported: false,
+        ema_structure: "bearish",
+        as_of: "2026-11-06",
+        close: 498.7,
+        ema_9: 499.5,
+        ema_21: 501.2,
+        ema_50: 503.4,
         movement_state: "directional",
         volatility_state: "normal",
         premium_state: null,
@@ -39,7 +77,11 @@ function evidence(symbol: string, mode: "current" | "point_in_time" = "current")
       data_status: mode === "current" ? "fresh" : "latest_available",
       freshness: mode === "current" ? "fresh" : "stale",
       market_session: mode === "current" ? "regular_open" : "closed",
-      caveats: ["Underlying observations are not executable option quotes."],
+      caveats: [
+        overnight ? "Observed price is an overnight/off-hours print; overnight ATS status is unverified and it is not a current-market or executable quote."
+          : "Underlying observations are not executable option quotes.",
+        "Completed-session EMA, ATR and levels are dated 2026-11-06 and were not computed from the observed quote.",
+      ],
     },
   };
 }
@@ -53,6 +95,7 @@ function chatBody(symbol: string, options: { reply?: string; blocked?: boolean }
     reply: options.reply ?? REPLY,
     chart_access: "none",
     chart_claim_blocked: options.blocked ?? false,
+    trade_claim_blocked: false,
     model: "test-model",
     evidence: {
       symbol,
@@ -63,7 +106,28 @@ function chatBody(symbol: string, options: { reply?: string; blocked?: boolean }
       spot: 500.12,
       atr_14: 6.4,
       levels: [],
+      quote: {
+        price: 500.12, as_of: AS_OF, session: "regular_session",
+        context: "regular_session_observation", current: true, executable: false,
+        ats_verified: false, data_status: "fresh", freshness: "fresh",
+        reason: "within_active_age_limit",
+        market_state_source: "NYSE calendar; 04:00-20:00 ET extended policy; overnight ATS status unverified",
+      },
+      completed_session: {
+        session: "2026-11-06", close: 498.7, as_of: "2026-11-06",
+        ema_structure: "bearish", ema_9: 499.5, ema_21: 501.2, ema_50: 503.4,
+      },
+      technical_as_of: "2026-11-06",
+      levels_as_of: "2026-11-06",
+      market_state: {
+        direction: "unknown", direction_reported: false, ema_structure: "bearish",
+        as_of: "2026-11-06", close: 498.7, ema_9: 499.5, ema_21: 501.2, ema_50: 503.4,
+        movement_state: "directional", volatility_state: "normal", premium_state: null,
+      },
       data_status: "fresh",
+      freshness: "fresh",
+      market_session: "regular_open",
+      caveats: ["Underlying observations are not executable option quotes."],
     },
     disclosures: [
       "The assistant receives the selected symbol and AlphaOS research evidence only. It has no access to TradingView candles, indicators, drawings or chart state.",
@@ -72,12 +136,16 @@ function chatBody(symbol: string, options: { reply?: string; blocked?: boolean }
   };
 }
 
-async function stubChart(page: Page, mode: "current" | "point_in_time" = "current") {
+async function stubChart(
+  page: Page,
+  mode: "current" | "point_in_time" = "current",
+  overnight = false,
+) {
   await page.route("https://s3.tradingview.com/tv.js", (route) =>
     route.fulfill({ status: 200, contentType: "application/javascript", body: TV_STUB }));
   await page.route("**/api/charts/evidence**", (route) => {
     const symbol = new URL(route.request().url()).searchParams.get("symbol") ?? "SPY";
-    return route.fulfill({ json: evidence(symbol === "QQQ" ? "QQQ" : "SPY", mode) });
+    return route.fulfill({ json: evidence(symbol === "QQQ" ? "QQQ" : "SPY", mode, overnight) });
   });
 }
 
@@ -110,8 +178,10 @@ test("Charting & AI is reachable from navigation and renders the candlestick wid
 
   await expect(page.getByText(/Chart source: TradingView Advanced Chart widget/)).toBeVisible();
   await expect(page.getByText(/may be delayed/).first()).toBeVisible();
-  await expect(page.getByText(/Market data as of:/)).toBeVisible();
+  await expect(page.getByText(/Observed quote as of:/)).toBeVisible();
   await expect(page.getByText("2026-11-04T15:30:00", { exact: false }).first()).toBeVisible();
+  await expect(page.getByText(/Completed session:/).first()).toBeVisible();
+  await expect(page.getByText("2026-11-06", { exact: false }).first()).toBeVisible();
   await expect(page.getByText(/The assistant cannot see the TradingView chart/)).toBeVisible();
 });
 
@@ -165,6 +235,20 @@ test("stale evidence is labelled point-in-time beside the timestamp", async ({ p
   await expect(page.getByText("POINT-IN-TIME").first()).toBeVisible();
   await expect(page.getByText(/not current market conditions/).first()).toBeVisible();
   await expect(page.getByText("2026-11-04T15:30:00", { exact: false }).first()).toBeVisible();
+});
+
+test("overnight evidence is labelled separately from the completed session and its EMA", async ({ page }) => {
+  await stubChart(page, "point_in_time", true);
+  await stubChat(page);
+  await page.goto("/charts?symbol=SPY");
+
+  await expect(page.getByText("OVERNIGHT · NOT CURRENT")).toBeVisible();
+  await expect(page.getByText(/overnight\/off-hours print/).first()).toBeVisible();
+  await expect(page.getByText(/not a completed-session close/).first()).toBeVisible();
+  await expect(page.getByText(/Completed session:/).first()).toBeVisible();
+  await expect(page.getByText(/Technical structure as of:/)).toBeVisible();
+  await expect(page.getByText(/EMA9/)).toBeVisible();
+  await expect(page.getByText("2026-11-06", { exact: false }).first()).toBeVisible();
 });
 
 test("unconfigured assistant shows an explicit unavailable state, never a fake reply", async ({ page }) => {
@@ -222,7 +306,7 @@ test("mobile layout keeps chart, timestamp and chat usable without horizontal ov
   await page.goto("/charts");
 
   await expect(page.getByTestId("tv-widget")).toHaveAttribute("data-symbol", "AMEX:SPY");
-  await expect(page.getByText(/Market data as of:/)).toBeVisible();
+  await expect(page.getByText(/Observed quote as of:/)).toBeVisible();
   await page.getByLabel("Ask the AlphaOS assistant about SPY").fill("Is the market trending or consolidating?");
   await page.getByRole("button", { name: "Send" }).click();
   await expect(page.getByText(REPLY)).toBeVisible();

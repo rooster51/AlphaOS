@@ -6,10 +6,12 @@ import {
   chatConfiguration,
   classifyProviderFailure,
   detectChartAccessClaim,
+  detectUnsupportedTradeClaim,
   evidenceSummary,
   parseChatCompletion,
   parseChatRequest,
   SAFE_CHART_CLAIM_REPLY,
+  SAFE_UNSUPPORTED_TRADE_REPLY,
   disclosuresFor,
 } from "../../../../lib/chart-chat.ts";
 
@@ -206,20 +208,23 @@ export async function POST(request: Request) {
   }
 
   const chartClaimBlocked = detectChartAccessClaim(reply);
-  if (chartClaimBlocked) {
+  const tradeClaimBlocked = !chartClaimBlocked && detectUnsupportedTradeClaim(reply);
+  if (chartClaimBlocked || tradeClaimBlocked) {
     console.warn(JSON.stringify({
       event: "charts_chat_guardrail",
       symbol: evidence.symbol,
-      outcome: "chart_access_claim_blocked",
+      outcome: chartClaimBlocked ? "chart_access_claim_blocked" : "unsupported_trade_claim_blocked",
     }));
   }
 
   return Response.json(
     {
       status: "ok",
-      reply: chartClaimBlocked ? SAFE_CHART_CLAIM_REPLY : reply,
+      reply: chartClaimBlocked ? SAFE_CHART_CLAIM_REPLY
+        : tradeClaimBlocked ? SAFE_UNSUPPORTED_TRADE_REPLY : reply,
       chart_access: "none",
       chart_claim_blocked: chartClaimBlocked,
+      trade_claim_blocked: tradeClaimBlocked,
       model: configuration.model,
       evidence: evidenceSummary(evidence),
       disclosures: disclosuresFor(evidence),

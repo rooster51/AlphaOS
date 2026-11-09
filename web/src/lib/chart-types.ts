@@ -19,6 +19,51 @@ export const DEFAULT_CHART_INTERVAL: ChartInterval = "15";
 
 export type EvidenceMode = "current" | "point_in_time";
 
+/** Session of the observed quote, independent of the evaluation-time session. */
+export type QuoteSession =
+  | "regular_session"
+  | "extended_hours"
+  | "overnight"
+  | "off_hours"
+  | "closed"
+  | "unknown";
+
+export type ObservationContext =
+  | "regular_session_observation"
+  | "extended_hours_observation"
+  | "completed_session_close_observation"
+  | "overnight_observation"
+  | "off_hours_observation"
+  | "dated_closed_market_observation"
+  | "unknown";
+
+export type QuoteObservation = {
+  price: number;
+  as_of: string;
+  session: QuoteSession;
+  context: ObservationContext;
+  /** True only when the backend verified a fresh active-session quote. */
+  current: boolean;
+  /** Always false: research observations are never broker-executable quotes. */
+  executable: false;
+  /** False when overnight ATS coverage/entitlement has not been verified. */
+  ats_verified: boolean;
+  data_status: string;
+  freshness: string;
+  reason: string | null;
+  market_state_source: string | null;
+};
+
+export type CompletedSession = {
+  session: string | null;
+  close: number | null;
+  as_of: string | null;
+  ema_structure: TrendStructure | null;
+  ema_9: number | null;
+  ema_21: number | null;
+  ema_50: number | null;
+};
+
 export type EvidenceLevel = {
   label: string;
   price: number;
@@ -40,6 +85,12 @@ export type MarketStateSummary = {
   direction_reported: boolean;
   /** Completed-session EMA ordering, the only trend classification `/v1/market` returns. */
   ema_structure: TrendStructure | null;
+  /** Date of the completed feature row that produced the EMA classification. */
+  as_of: string | null;
+  close: number | null;
+  ema_9: number | null;
+  ema_21: number | null;
+  ema_50: number | null;
   movement_state: string | null;
   volatility_state: string | null;
   premium_state: string | null;
@@ -56,9 +107,16 @@ export type ChartEvidence = {
   as_of: string;
   retrieved_at: string;
   age_seconds: number;
+  /** Price used to express level distance; labelled as an observed quote, never "current". */
   spot: number;
   atr_14: number;
   levels: EvidenceLevel[];
+  quote: QuoteObservation;
+  completed_session: CompletedSession;
+  /** Completed-session date used for the EMA/ATR/levels evidence. */
+  technical_as_of: string | null;
+  /** Date of the completed structure record; may be null on older backends. */
+  levels_as_of: string | null;
   market_state: MarketStateSummary;
   data_status: string;
   freshness: string;
@@ -96,8 +154,15 @@ export type ChatEvidenceSummary = {
   spot: number;
   atr_14: number;
   levels: EvidenceLevel[];
+  quote: QuoteObservation;
+  completed_session: CompletedSession;
+  technical_as_of: string | null;
+  levels_as_of: string | null;
   market_state: MarketStateSummary;
   data_status: string;
+  freshness: string;
+  market_session: string;
+  caveats: string[];
 };
 
 export type ChatSuccessBody = {
@@ -105,6 +170,7 @@ export type ChatSuccessBody = {
   reply: string;
   chart_access: "none";
   chart_claim_blocked: boolean;
+  trade_claim_blocked: boolean;
   model: string;
   evidence: ChatEvidenceSummary;
   disclosures: string[];

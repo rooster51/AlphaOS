@@ -17,8 +17,12 @@ import type {
   ChartEvidenceFailure,
   ChartEvidenceResult,
   ChartSymbol,
+  CompletedSession,
   EvidenceLevel,
   MarketStateSummary,
+  ObservationContext,
+  QuoteObservation,
+  QuoteSession,
 } from "./chart-types.ts";
 
 const DEFAULT_TIMEOUT_MS = 9_000;
@@ -40,6 +44,15 @@ function finitePositive(value: unknown): value is number {
 }
 function text(value: unknown, limit = 64): string | null {
   return typeof value === "string" && value.trim() && value.length <= limit ? value : null;
+}
+function dateOnly(value: unknown): string | null {
+  const raw = text(value, 40);
+  if (!raw) return null;
+  const date = raw.slice(0, 10);
+  return /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : null;
+}
+function samePrice(left: number, right: number): boolean {
+  return Math.abs(left - right) <= 0.005;
 }
 function failure(code: ChartEvidenceCode, message: string): ChartEvidenceFailure {
   return { status: "unavailable", code, message };
@@ -116,6 +129,39 @@ function levelsFrom(value: unknown, spot: number): EvidenceLevel[] {
 
 const STATE_KEYS = ["movement_state", "volatility_state", "premium_state"] as const;
 const TREND_STRUCTURES = new Set(["bullish", "bearish", "mixed"]);
+const QUOTE_SESSIONS = new Set<QuoteSession>([
+  "regular_session", "extended_hours", "overnight", "off_hours", "closed", "unknown",
+]);
+const OBSERVATION_CONTEXTS = new Set<ObservationContext>([
+  "regular_session_observation", "extended_hours_observation",
+  "completed_session_close_observation", "overnight_observation",
+  "off_hours_observation", "dated_closed_market_observation", "unknown",
+]);
+
+function quoteSession(value: unknown): QuoteSession {
+  return typeof value === "string" && QUOTE_SESSIONS.has(value as QuoteSession)
+    ? value as QuoteSession : "unknown";
+}
+function observationContext(value: unknown): ObservationContext {
+  return typeof value === "string" && OBSERVATION_CONTEXTS.has(value as ObservationContext)
+    ? value as ObservationContext : "unknown";
+}
+
+/** Recompute the documented completed-session EMA ordering from the same row. */
+function emaOrderingMatches(
+  structure: MarketStateSummary["ema_structure"],
+  close: number | null,
+  ema9: number | null,
+  ema21: number | null,
+  ema50: number | null,
+): boolean | null {
+  if (structure === null || close === null || ema9 === null || ema21 === null || ema50 === null) {
+    return null;
+  }
+  const computed = close > ema9 && ema9 > ema21 && ema21 > ema50 ? "bullish"
+    : close < ema9 && ema9 < ema21 && ema21 < ema50 ? "bearish" : "mixed";
+  return computed === structure;
+}
 
 /**
  * `/v1/market` returns the completed-session feature row as `market_state`: it
@@ -134,6 +180,11 @@ function marketStateFrom(value: unknown): MarketStateSummary {
     direction_reported: reported,
     ema_structure: typeof ema === "string" && TREND_STRUCTURES.has(ema)
       ? ema as MarketStateSummary["ema_structure"] : null,
+    as_of: dateOnly(state.date),
+    close: finitePositive(state.close) ? state.close : null,
+    ema_9: finitePositive(state.ema_9) ? state.ema_9 : null,
+    ema_21: finitePositive(state.ema_21) ? state.ema_21 : null,
+    ema_50: finitePositive(state.ema_50) ? state.ema_50 : null,
     movement_state: text(state.movement_state),
     volatility_state: text(state.volatility_state),
     premium_state: text(state.premium_state),
@@ -322,8 +373,12 @@ async function retrieveChartEvidence(
 
   const quote = object(marketEvidence.underlying_quote);
   const underlying = object(quote?.quote);
-  const spot = finitePositive(meta.current_spot) ? meta.current_spot
-    : finitePositive(underlying?.last) ? underlying.last : null;
+  const currentSpot = finitePositive(meta.current_spot) ? meta.current_spot : null;
+  const quoteLast = finitePositive(underlying?.last) ? underlying.last : null;
+  // A non-live quote may still be displayed, but only as an observed quote.
+  // `current` below requires verified `meta.current_spot`, so the fallback is
+  // never promoted to a current-market price.
+  const spot = currentSpot ?? quoteLast;
   const atr = structureEvidence.atr;
   const asOf = meta.quote_as_of;
   if (spot === null || !finitePositive(atr) || !isTimestamp(asOf)) {
@@ -331,15 +386,90 @@ async function retrieveChartEvidence(
       "AlphaOS evidence is missing a verified price, volatility measure or observation timestamp.");
   }
 
+  const state = marketStateFrom(marketEvidence.market_state);
+  const metaClose = finitePositive(meta.research_close) ? meta.research_close : null;
+  const metaSession = dateOnly(meta.research_session);
+  const completedClose = metaClose ?? state.close;
+  const completedSession = metaSession ?? state.as_of;
+  if (metaClose !== null && state.close !== null && !samePrice(metaClose, state.close)) {
+    return failure("market_evidence_mismatch",
+      "AlphaOS completed-session close and market-state close disagree.");
+  }
+  if (metaSession && state.as_of && metaSession !== state.as_of) {
+    return failure("market_evidence_mismatch",
+      "AlphaOS completed-session date and market-state date disagree.");
+  }
+  const emaMatch = emaOrderingMatches(state.ema_structure, state.close,
+    state.ema_9, state.ema_21, state.ema_50);
+  if (emaMatch === false) {
+    return failure("market_evidence_mismatch",
+      "AlphaOS completed-session EMA values do not match the reported EMA structure.");
+  }
+
+  const structureAnchor = finitePositive(structureEvidence.anchor_spot) ? structureEvidence.anchor_spot : null;
+  const structureClose = finitePositive(structureEvidence.research_close) ? structureEvidence.research_close : null;
+  const structureAsOf = dateOnly(structureEvidence.structure_as_of);
+  if (structureAnchor !== null && !samePrice(structureAnchor, spot)) {
+    return failure("market_evidence_mismatch",
+      "AlphaOS structure evidence was anchored to a different observed price.");
+  }
+  if (structureClose !== null && completedClose !== null && !samePrice(structureClose, completedClose)) {
+    return failure("market_evidence_mismatch",
+      "AlphaOS structure and market evidence used different completed-session closes.");
+  }
+  if (structureAsOf && completedSession && structureAsOf !== completedSession) {
+    return failure("market_evidence_mismatch",
+      "AlphaOS structure and market evidence used different completed sessions.");
+  }
+
   const quality = object(meta.quote_freshness) ?? {};
   const dataStatus = text(quality.data_status) ?? "unknown";
   const freshness = text(quality.freshness) ?? "unknown";
   const marketSession = text(quality.market_state) ?? "unknown";
-  const mode = quality.usable_for_live_research === true && dataStatus === "fresh" &&
-    freshness === "fresh" && (marketSession === "regular_open" || marketSession === "extended_hours")
-    ? "current" : "point_in_time";
+  const observedSession = quoteSession(quality.quote_session);
+  const observedContext = observationContext(quality.observation_context);
+  const liveSession = marketSession === "regular_open" || marketSession === "extended_hours";
+  const current = currentSpot !== null && quality.usable_for_live_research === true &&
+    dataStatus === "fresh" && freshness === "fresh" && liveSession &&
+    observedSession !== "overnight" && observedSession !== "off_hours" && observedSession !== "closed";
+  const mode = current ? "current" : "point_in_time";
   const retrievedAt = now();
   const ageSeconds = Math.max(0, Math.round((retrievedAt - Date.parse(asOf)) / 1000));
+
+  const quoteObservation: QuoteObservation = {
+    price: spot,
+    as_of: asOf,
+    session: observedSession,
+    context: observedContext,
+    current,
+    executable: false,
+    ats_verified: quality.overnight_ats_verified === true,
+    data_status: dataStatus,
+    freshness,
+    reason: text(quality.freshness_reason, 80),
+    market_state_source: text(quality.market_state_source, 240),
+  };
+  const completed: CompletedSession = {
+    session: completedSession,
+    close: completedClose,
+    as_of: completedSession,
+    ema_structure: state.ema_structure,
+    ema_9: state.ema_9,
+    ema_21: state.ema_21,
+    ema_50: state.ema_50,
+  };
+
+  const caveats = caveatsFrom(object(market)?.caveats, object(structure)?.caveats)
+    .slice(0, CAVEAT_LIMIT - 2);
+  if (observedSession === "overnight" || observedContext === "overnight_observation") {
+    caveats.unshift("Observed price is an overnight/off-hours print; overnight ATS status is unverified and it is not a current-market or executable quote.");
+  } else if (observedSession === "extended_hours" || observedSession === "off_hours" ||
+      observedContext === "extended_hours_observation" || observedContext === "off_hours_observation") {
+    caveats.unshift("Observed price is an extended/off-hours print; it is not a regular-session close or an executable quote.");
+  }
+  if (completedSession && caveats.length < CAVEAT_LIMIT) {
+    caveats.push(`Completed-session EMA, ATR and levels are dated ${completedSession} and were not computed from the observed quote.`);
+  }
 
   const evidence: ChartEvidence = {
     symbol: normalized,
@@ -351,13 +481,17 @@ async function retrieveChartEvidence(
     spot,
     atr_14: atr,
     levels: levelsFrom(structureEvidence.levels, spot),
-    market_state: marketStateFrom(marketEvidence.market_state),
+    quote: quoteObservation,
+    completed_session: completed,
+    technical_as_of: completedSession,
+    levels_as_of: structureAsOf ?? completedSession,
+    market_state: state,
     data_status: dataStatus,
     freshness,
     market_session: marketSession,
     // AlphaOS 2.0's ResearchEnvelope type omits caveats even though the runtime
     // envelope must carry them; read them without widening the shared type.
-    caveats: caveatsFrom(object(market)?.caveats, object(structure)?.caveats),
+    caveats: caveats.slice(0, CAVEAT_LIMIT),
   };
   return { status: "ok", evidence };
 }

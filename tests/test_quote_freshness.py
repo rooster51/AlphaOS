@@ -65,6 +65,48 @@ def test_bid_ask_does_not_replace_or_invalidate_fresh_last(bid,ask,reason):
         assert f['quote_quality']['bid_ask_spread_pct']==pytest.approx(9.13/749.765*100)
 
 
+def test_sunday_overnight_print_is_not_a_completed_session_observation():
+    # 2026-11-09T01:56:26Z is Sunday 2026-11-08 20:56:26 ET, after the
+    # 04:00-20:00 ET extended policy window. It is an overnight print, not the
+    # Friday regular-session close.
+    stamp = '2026-11-09T01:56:26Z'
+    f = freshness(q(stamp), dt(stamp))
+    assert f['market_state'] == 'closed'
+    assert f['quote_session'] == 'overnight'
+    assert f['observation_context'] == 'overnight_observation'
+    assert f['data_status'] == 'latest_available'
+    assert f['freshness_reason'] == 'overnight_observation'
+    assert f['usable_for_live_research'] is False
+    assert f['usable_for_contextual_research'] is True
+    assert f['overnight_ats_verified'] is False
+    assert 'overnight ATS status unverified' in f['market_state_source']
+    assert require_research_quote(q(stamp), dt(stamp), live=False)['observation_context'] == 'overnight_observation'
+    with pytest.raises(QuoteUnavailable):
+        require_research_quote(q(stamp), dt(stamp), live=True)
+
+
+def test_completed_close_remains_a_completed_session_observation():
+    # Friday 15:59:55 ET, inside the existing two-minute close tolerance.
+    f = freshness(q('2026-11-06T20:59:55Z'), dt('2026-11-07T14:00:00Z'))
+    assert f['market_state'] == 'closed'
+    assert f['quote_session'] == 'regular_session'
+    assert f['observation_context'] == 'completed_session_close_observation'
+    assert f['data_status'] == 'latest_available'
+    assert f['freshness_reason'] == 'latest_completed_session_observation'
+
+
+def test_sunday_overnight_print_is_stale_on_monday_premarket():
+    # Monday 08:00 ET: the evaluation session is extended, but the print is
+    # still a Sunday overnight observation and must not become "fresh".
+    f = freshness(q('2026-11-09T01:56:26Z'), dt('2026-11-09T13:00:00Z'))
+    assert f['market_state'] == 'extended_hours'
+    assert f['quote_session'] == 'overnight'
+    assert f['observation_context'] == 'overnight_observation'
+    assert f['data_status'] == 'stale'
+    assert f['freshness_reason'] == 'active_quote_too_old'
+    assert f['usable_for_live_research'] is False
+
+
 def test_limits_future_calendar_failure(monkeypatch):
     monkeypatch.setenv('ALPHAOS_MAX_QUOTE_AGE_SECONDS','10')
     assert freshness(q(),dt('2026-09-25T14:00:11Z'))['data_status']=='stale'

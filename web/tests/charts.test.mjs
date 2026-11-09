@@ -10,8 +10,10 @@ import {
   chatConfiguration,
   classifyProviderFailure,
   detectChartAccessClaim,
+  detectUnsupportedTradeClaim,
   parseChatCompletion,
   parseChatRequest,
+  SAFE_UNSUPPORTED_TRADE_REPLY,
 } from "../src/lib/chart-chat.ts";
 import { POST as chatPost } from "../src/app/api/charts/chat/route.ts";
 
@@ -43,17 +45,34 @@ function marketEnvelope(symbol, options = {}) {
       source: "Public",
       snapshot_id: options.snapshotId ?? "snap-test",
       quote_as_of: AS_OF,
+      research_session: "2026-11-03",
+      research_close: options.researchClose === undefined ? 500 : options.researchClose,
       current_spot: options.currentSpot === undefined ? 500 : options.currentSpot,
       quote_freshness: {
         data_status: options.dataStatus ?? "fresh",
         freshness: options.freshness ?? "fresh",
         market_state: options.marketState ?? "regular_open",
+        quote_session: options.quoteSession ?? "regular_session",
+        observation_context: options.observationContext ?? "regular_session_observation",
+        freshness_reason: options.freshnessReason ?? "within_active_age_limit",
+        market_state_source: "NYSE calendar; 04:00-20:00 ET extended policy; overnight ATS status unverified",
+        overnight_ats_verified: false,
         usable_for_live_research: options.usable ?? true,
       },
       quote_retrieved_at: "2026-11-04T15:30:01+00:00",
     },
     evidence: {
-      market_state: { direction: "bullish", movement_state: "directional", volatility_state: "normal" },
+      market_state: {
+        date: "2026-11-03T00:00:00",
+        close: options.researchClose === undefined ? 500 : options.researchClose,
+        ema_structure: "bullish",
+        ema_9: 499,
+        ema_21: 498,
+        ema_50: 497,
+        direction: "bullish",
+        movement_state: "directional",
+        volatility_state: "normal",
+      },
       underlying_quote: { quote: { last: 500 }, retrieved_at: "2026-11-04T15:30:01+00:00" },
     },
     caveats: ["Underlying observations are not executable option quotes."],
@@ -72,6 +91,9 @@ function structureEnvelope(symbol, options = {}) {
     },
     evidence: {
       atr: options.atr === undefined ? 6.5 : options.atr,
+      anchor_spot: options.currentSpot === undefined ? 500 : options.currentSpot,
+      research_close: options.researchClose === undefined ? 500 : options.researchClose,
+      structure_as_of: "2026-11-03",
       levels: options.levels ?? [
         { label: "PIVOT_HIGH_20", price: 505.5, kind: "resistance", distance_pct: 1.1 },
         { label: "PIVOT_LOW_20", price: 494.2, side: "support", distance_pct: -1.16 },
@@ -121,7 +143,7 @@ test("loadChartEvidence verifies a fresh market/structure pair", async () => {
   assert.equal(evidence.data_status, "fresh");
 });
 
-test("stale evidence is returned as point-in-time with its original timestamp", async () => {
+test("overnight evidence is point-in-time and keeps quote and completed-session provenance separate", async () => {
   const result = await loadChartEvidence("QQQ", {
     ...options,
     request: jsonFetch(
@@ -130,6 +152,9 @@ test("stale evidence is returned as point-in-time with its original timestamp", 
         dataStatus: "latest_available",
         freshness: "stale",
         marketState: "closed",
+        quoteSession: "overnight",
+        observationContext: "overnight_observation",
+        freshnessReason: "overnight_observation",
         usable: false,
       }),
       structureEnvelope("QQQ", { currentSpot: null }),
@@ -141,17 +166,51 @@ test("stale evidence is returned as point-in-time with its original timestamp", 
   assert.equal(result.evidence.as_of, AS_OF);
   assert.equal(result.evidence.spot, 500);
   assert.equal(result.evidence.data_status, "latest_available");
+  assert.equal(result.evidence.quote.session, "overnight");
+  assert.equal(result.evidence.quote.context, "overnight_observation");
+  assert.equal(result.evidence.quote.current, false);
+  assert.equal(result.evidence.quote.executable, false);
+  assert.equal(result.evidence.quote.ats_verified, false);
+  assert.equal(result.evidence.completed_session.session, "2026-11-03");
+  assert.equal(result.evidence.completed_session.close, 500);
+  assert.equal(result.evidence.technical_as_of, "2026-11-03");
+  assert.equal(result.evidence.levels_as_of, "2026-11-03");
+  assert.match(result.evidence.caveats[0], /overnight\/off-hours print/);
+
+  const prompt = buildSystemPrompt(result.evidence);
+  assert.match(prompt, /POINT-IN-TIME OVERNIGHT OBSERVATION/);
+  assert.match(prompt, /"market_session": "overnight"/);
+  assert.match(prompt, /"is_current_market": false/);
+  assert.match(prompt, /"completed_session_technical_structure"/);
+  assert.match(prompt, /"session": "2026-11-03"/);
+  assert.match(prompt, /overnight ATS status is unverified/);
+});
+
+test("missing current_spot never promotes underlying.last to a current quote", async () => {
+  const result = await loadChartEvidence("SPY", {
+    ...options,
+    request: jsonFetch(
+      marketEnvelope("SPY", { currentSpot: null, usable: true }),
+      structureEnvelope("SPY", { currentSpot: null }),
+    ),
+  });
+  assert.equal(result.status, "ok");
+  assert.equal(result.evidence.spot, 500);
+  assert.equal(result.evidence.mode, "point_in_time");
+  assert.equal(result.evidence.quote.current, false);
+  assert.equal(result.evidence.quote.session, "regular_session");
 });
 
 // Shapes copied from a live serialization of the backend engine: /v1/market
 // returns the completed-session feature row, /v1/structure returns clustered
 // level records with `side`, `level`, zone bounds and `sources`.
 function backendMarketEnvelope(symbol, state = {}, options = {}) {
-  const envelope = marketEnvelope(symbol, { currentSpot: 660.48, ...options });
+  const currentSpot = options.currentSpot === undefined ? 660.48 : options.currentSpot;
+  const envelope = marketEnvelope(symbol, { currentSpot, researchClose: currentSpot, ...options });
   envelope.evidence.market_state = {
     date: "2026-11-03T00:00:00",
     symbol,
-    close: 660.48,
+    close: currentSpot,
     return_5d: 0.0123,
     rsi_14: 54.2,
     distance_ema_21_atr: 0.81,
@@ -163,8 +222,9 @@ function backendMarketEnvelope(symbol, state = {}, options = {}) {
   return envelope;
 }
 
-function backendStructureEnvelope(symbol) {
-  const envelope = structureEnvelope(symbol);
+function backendStructureEnvelope(symbol, options = {}) {
+  const currentSpot = options.currentSpot === undefined ? 660.48 : options.currentSpot;
+  const envelope = structureEnvelope(symbol, { currentSpot, researchClose: currentSpot });
   envelope.evidence.levels = [
     { side: "support", level: 650.1, zone_low: 649.2, zone_high: 651,
       distance_pct: -0.0157, distance_atr: -0.63, observations: 3,
@@ -194,6 +254,9 @@ test("backend level records and the completed-session trend structure are mapped
   assert.equal(evidence.market_state.ema_structure, "mixed");
   assert.equal(evidence.market_state.direction, "unknown");
   assert.equal(evidence.market_state.direction_reported, false);
+  assert.equal(evidence.completed_session.close, 660.48);
+  assert.equal(evidence.completed_session.session, "2026-11-03");
+  assert.equal(evidence.levels_as_of, "2026-11-03");
 
   const prompt = buildSystemPrompt(evidence);
   assert.match(prompt, /"backend_ema_trend_structure": "mixed"/);
@@ -201,6 +264,36 @@ test("backend level records and the completed-session trend structure are mapped
   assert.match(prompt, /"market direction"/);
   assert.match(prompt, /swing low, 20d low/);
   assert.ok(!/"direction": "neutral"/.test(prompt));
+
+  const bearish = await loadChartEvidence("SPY", {
+    ...options,
+    request: jsonFetch(
+      backendMarketEnvelope("SPY", {
+        close: 100, ema_9: 101, ema_21: 102, ema_50: 103, ema_structure: "bearish",
+      }, { currentSpot: 100 }),
+      backendStructureEnvelope("SPY", { currentSpot: 100 }),
+    ),
+  });
+  assert.equal(bearish.status, "ok");
+  assert.equal(bearish.evidence.market_state.ema_9, 101);
+  assert.equal(bearish.evidence.market_state.ema_21, 102);
+  assert.equal(bearish.evidence.market_state.ema_50, 103);
+  const bearishPrompt = buildSystemPrompt(bearish.evidence);
+  assert.match(bearishPrompt, /"ema_9": 101/);
+  assert.match(bearishPrompt, /"ema_21": 102/);
+  assert.match(bearishPrompt, /"ema_50": 103/);
+
+  const inconsistent = await loadChartEvidence("SPY", {
+    ...options,
+    request: jsonFetch(
+      backendMarketEnvelope("SPY", {
+        close: 100, ema_9: 101, ema_21: 102, ema_50: 103, ema_structure: "bullish",
+      }, { currentSpot: 100 }),
+      backendStructureEnvelope("SPY", { currentSpot: 100 }),
+    ),
+  });
+  assert.equal(inconsistent.status, "unavailable");
+  assert.equal(inconsistent.code, "market_evidence_mismatch");
 });
 
 test("missing classifications are disclosed, never reported as neutral", async () => {
@@ -333,6 +426,27 @@ test("system prompt carries evidence and forbids TradingView access claims", asy
   assert.match(prompt, new RegExp(AS_OF.replace(/[.+]/g, "\\$&")));
   assert.match(prompt, /PIVOT_HIGH_20/);
   assert.match(prompt, /CURRENT-MARKET EVIDENCE/);
+});
+
+test("unsupported trade claims are detected without blocking unavailable-value statements", () => {
+  const claims = [
+    "There is a 65% probability of profit on this spread.",
+    "The option premium is $1.25 and the bid is 1.20.",
+    "Buy 3 contracts of the 505 call.",
+    "Size the position at 2 contracts.",
+    "You should sell a put spread here.",
+    "Expected value is $42 per contract.",
+  ];
+  for (const claim of claims) assert.equal(detectUnsupportedTradeClaim(claim), true, claim);
+
+  const safe = [
+    "I can't provide a probability of profit from this evidence.",
+    "Option quotes, expected values and position sizing are unavailable.",
+    "The evidence does not contain an executable option price or a recommendation.",
+    "There is no probability estimate or position size in the AlphaOS record.",
+  ];
+  for (const reply of safe) assert.equal(detectUnsupportedTradeClaim(reply), false, reply);
+  assert.match(SAFE_UNSUPPORTED_TRADE_REPLY, /no option quotes/);
 });
 
 test("chart access claims are detected, including plausible paraphrases", () => {
@@ -500,6 +614,7 @@ test("chat route grounds a reply and never exposes provider credentials", async 
   assert.equal(body.reply, reply);
   assert.equal(body.chart_access, "none");
   assert.equal(body.chart_claim_blocked, false);
+  assert.equal(body.trade_claim_blocked, false);
   assert.equal(body.model, "grounded-model");
   assert.equal(body.evidence.as_of, AS_OF);
   assert.equal(body.evidence.market_state.direction, "bullish");
@@ -511,6 +626,35 @@ test("chat route grounds a reply and never exposes provider credentials", async 
   const serialized = JSON.stringify(body);
   assert.ok(!serialized.includes("chat-secret"));
   assert.ok(!serialized.includes("research-secret"));
+});
+
+test("chat route replaces unsupported probability, option-price and sizing claims", async () => {
+  process.env.ALPHAOS_API_TOKEN = "research-secret";
+  process.env.ALPHAOS_API_URL = "https://research.example";
+  process.env.ALPHAOS_CHAT_API_KEY = "chat-secret";
+  process.env.ALPHAOS_CHAT_MODEL = "grounded-model";
+  process.env.ALPHAOS_CHAT_API_URL = "https://chat.example/v1/chat/completions";
+
+  globalThis.fetch = fakeFetch((url) => {
+    if (url.includes("/v1/market/")) return Response.json(marketEnvelope("SPY"));
+    if (url.includes("/v1/structure/")) return Response.json(structureEnvelope("SPY"));
+    return Response.json({
+      choices: [{ message: { content: "There is a 65% probability of profit. Buy 3 contracts at $1.25 premium." } }],
+    });
+  });
+
+  const response = await chatPost(new Request("http://localhost:3000/api/charts/chat", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ symbol: "SPY", messages: [{ role: "user", content: "What is the trade?" }] }),
+  }));
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.equal(body.chart_claim_blocked, false);
+  assert.equal(body.trade_claim_blocked, true);
+  assert.equal(body.reply, SAFE_UNSUPPORTED_TRADE_REPLY);
+  assert.ok(!body.reply.includes("65%"));
+  assert.ok(!body.reply.includes("$1.25"));
 });
 
 test("chat route replaces replies that claim TradingView chart access", async () => {

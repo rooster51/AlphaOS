@@ -174,7 +174,11 @@ def market_snapshot(symbol:str,horizon:int=3,spot:float|None=Query(None,gt=0,all
 @router.get('/structure/{symbol}',response_model=ResearchResponse,operation_id='get_price_structure')
 def price_structure(symbol:str,horizon:int=3,spot:float|None=Query(None,gt=0,allow_inf_nan=False),snapshot_id:str|None=None,levels:int=Query(3,ge=1,le=10)):
     service=app.state.service;s=service.snapshot(symbol,horizon,spot,snapshot_id)
-    return respond(service.envelope(dict(atr=s['prepared']['structure']['atr'],levels=nearest_levels(s['prepared']['structure'],levels)),s))
+    structure=s['prepared']['structure']
+    return respond(service.envelope(dict(atr=structure['atr'],levels=nearest_levels(structure,levels),
+        anchor_spot=structure['spot'],research_close=structure['research_close'],
+        structure_as_of=structure['config']['as_of'],
+        anchor_source='completed_session_close' if structure['spot']==structure['research_close'] else 'observed_quote_last'),s))
 
 
 @router.get('/distribution/{symbol}',response_model=ResearchResponse,operation_id='get_forward_distribution')

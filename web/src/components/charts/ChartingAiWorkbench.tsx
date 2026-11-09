@@ -56,7 +56,7 @@ type EvidenceState =
   | { kind: "ready"; evidence: ChartEvidence }
   | { kind: "unavailable"; message: string };
 
-type ChatMessage = ChatTurn & { blocked?: boolean };
+type ChatMessage = ChatTurn & { blocked?: boolean; tradeBlocked?: boolean };
 type Pending = { question: string; status: "sending" | "error"; message?: string };
 
 function messageForCode(code: string): string {
@@ -91,7 +91,8 @@ function object(value: unknown): Record<string, unknown> | null {
 function isSuccessBody(value: unknown): value is ChatSuccessBody {
   const body = object(value);
   return body?.status === "ok" && typeof body.reply === "string" &&
-    typeof body.chart_claim_blocked === "boolean" && object(body.evidence) !== null;
+    typeof body.chart_claim_blocked === "boolean" &&
+    typeof body.trade_claim_blocked === "boolean" && object(body.evidence) !== null;
 }
 
 export function ChartingAiWorkbench({ initialSymbol }: { initialSymbol: ChartSymbol }) {
@@ -181,7 +182,8 @@ export function ChartingAiWorkbench({ initialSymbol }: { initialSymbol: ChartSym
         setMessages((current) => [
           ...current,
           { role: "user", content: question },
-          { role: "assistant", content: body.reply, blocked: body.chart_claim_blocked },
+          { role: "assistant", content: body.reply, blocked: body.chart_claim_blocked,
+            tradeBlocked: body.trade_claim_blocked },
         ]);
         setDisclosures(Array.isArray(body.disclosures)
           ? body.disclosures.filter((item): item is string => typeof item === "string")
@@ -277,7 +279,9 @@ export function ChartingAiWorkbench({ initialSymbol }: { initialSymbol: ChartSym
                 </h2>
                 {evidence.kind === "ready" && (
                   <StatusPill
-                    label={evidence.evidence.mode === "current" ? "CURRENT AT RETRIEVAL" : "POINT-IN-TIME"}
+                    label={evidence.evidence.mode === "current" ? "CURRENT AT RETRIEVAL"
+                      : evidence.evidence.quote.session === "overnight" ? "OVERNIGHT · NOT CURRENT"
+                      : "POINT-IN-TIME"}
                     variant={evidence.evidence.mode === "current" ? "archive" : "warning"}
                   />
                 )}
@@ -292,17 +296,37 @@ export function ChartingAiWorkbench({ initialSymbol }: { initialSymbol: ChartSym
                     via AlphaOS research API (not TradingView)
                   </p>
                   <p>
-                    Market data as of:{" "}
-                    <span className="text-terminal-200">{formatTimestamp(evidence.evidence.as_of)}</span>
+                    Observed quote as of:{" "}
+                    <span className="text-terminal-200">{formatTimestamp(evidence.evidence.quote.as_of)}</span>
+                  </p>
+                  <p>
+                    Quote session:{" "}
+                    <span className="text-terminal-200">{evidence.evidence.quote.session}</span>{" "}
+                    · status {evidence.evidence.quote.data_status}
                   </p>
                   <p>
                     Age at retrieval:{" "}
                     <span className="text-terminal-200">{evidence.evidence.age_seconds}s</span>{" "}
-                    · status {evidence.evidence.data_status}
+                    · reason {evidence.evidence.quote.reason ?? "not reported"}
                   </p>
                   <p>
-                    Spot{" "}
-                    <span className="text-terminal-200">{evidence.evidence.spot.toFixed(2)}</span>{" "}
+                    Completed session:{" "}
+                    <span className="text-terminal-200">{evidence.evidence.completed_session.session ?? "not reported"}</span>
+                  </p>
+                  <p>
+                    Observed quote:{" "}
+                    <span className="text-terminal-200">{evidence.evidence.quote.price.toFixed(2)}</span>{" "}
+                    · completed close{" "}
+                    <span className="text-terminal-200">
+                      {evidence.evidence.completed_session.close !== null
+                        ? evidence.evidence.completed_session.close.toFixed(2) : "not reported"}
+                    </span>
+                  </p>
+                  <p>
+                    Technical structure as of:{" "}
+                    <span className="text-terminal-200">
+                      {evidence.evidence.technical_as_of ?? "not reported"}
+                    </span>{" "}
                     · ATR(14){" "}
                     <span className="text-terminal-200">{evidence.evidence.atr_14.toFixed(2)}</span>
                   </p>
@@ -311,6 +335,18 @@ export function ChartingAiWorkbench({ initialSymbol }: { initialSymbol: ChartSym
                     <span className="text-terminal-200">
                       {evidence.evidence.market_state.ema_structure ?? "not reported"}
                     </span>{" "}
+                    · EMA9{" "}
+                    <span className="text-terminal-200">
+                      {evidence.evidence.market_state.ema_9?.toFixed(2) ?? "not reported"}
+                    </span>{" "}
+                    · EMA21{" "}
+                    <span className="text-terminal-200">
+                      {evidence.evidence.market_state.ema_21?.toFixed(2) ?? "not reported"}
+                    </span>{" "}
+                    · EMA50{" "}
+                    <span className="text-terminal-200">
+                      {evidence.evidence.market_state.ema_50?.toFixed(2) ?? "not reported"}
+                    </span>{" "}
                     · direction:{" "}
                     <span className="text-terminal-200">
                       {evidence.evidence.market_state.direction_reported
@@ -318,9 +354,19 @@ export function ChartingAiWorkbench({ initialSymbol }: { initialSymbol: ChartSym
                         : "not reported"}
                     </span>
                   </p>
+                  <p className="sm:col-span-2">
+                    Session source:{" "}
+                    <span className="text-terminal-200">{evidence.evidence.quote.market_state_source ?? "not reported"}</span>
+                    {" "}· overnight ATS verified{" "}
+                    <span className="text-terminal-200">
+                      {evidence.evidence.quote.ats_verified ? "yes" : "no (unverified)"}
+                    </span>
+                  </p>
                   {evidence.evidence.levels.length > 0 && (
                     <p className="sm:col-span-2">
-                      Backend levels:{" "}
+                      Backend levels as of {evidence.evidence.levels_as_of ?? "unreported"}{" "}
+                      (distance from observed quote {" "}
+                      {evidence.evidence.spot.toFixed(2)}):{" "}
                       {evidence.evidence.levels.map((level) => (
                         <span key={`${level.label}-${level.price}`} className="mr-2 inline-block">
                           <span className="text-terminal-300">{level.label}</span>{" "}
@@ -337,9 +383,9 @@ export function ChartingAiWorkbench({ initialSymbol }: { initialSymbol: ChartSym
                   )}
                   {evidence.evidence.mode === "point_in_time" && (
                     <p role="status" className="sm:col-span-2 text-warning">
-                      This evidence is point-in-time and is not current market
-                      conditions. The market may have moved since the recorded
-                      observation.
+                      {evidence.evidence.quote.session === "overnight"
+                        ? "The observed price is an overnight/off-hours print, not a completed-session close or a current-market price. Overnight ATS status is unverified. The EMA, ATR and levels are from the completed session above and were not computed from the observed quote."
+                        : "This evidence is point-in-time and is not current market conditions. The market may have moved since the recorded observation. The EMA, ATR and levels are from the completed session above and were not computed from the observed quote."}
                     </p>
                   )}
                 </div>
@@ -393,8 +439,10 @@ export function ChartingAiWorkbench({ initialSymbol }: { initialSymbol: ChartSym
                 </button>
               </div>
               <p className="font-mono text-[10px] leading-relaxed text-terminal-500">
-                Assistant context: {symbol} ·{" "}
-                {readyEvidence ? formatTimestamp(readyEvidence.as_of) : "evidence timestamp pending"}
+                Assistant context: {symbol} · quote{" "}
+                {readyEvidence ? formatTimestamp(readyEvidence.quote.as_of) : "timestamp pending"}
+                {readyEvidence?.completed_session.session
+                  ? ` · technical ${readyEvidence.completed_session.session}` : ""}
                 <br />
                 The assistant cannot see the TradingView chart, its candles,
                 indicators or drawings.
@@ -449,6 +497,13 @@ export function ChartingAiWorkbench({ initialSymbol }: { initialSymbol: ChartSym
                     <p className="mt-2 border-t border-warning/30 pt-2 text-warning">
                       Guardrail: the model tried to describe the TradingView chart.
                       That answer was replaced because AlphaOS has no chart access.
+                    </p>
+                  )}
+                  {message.tradeBlocked && (
+                    <p className="mt-2 border-t border-warning/30 pt-2 text-warning">
+                      Guardrail: the model asserted an option quote, probability or
+                      position size that AlphaOS evidence does not contain. That
+                      answer was replaced.
                     </p>
                   )}
                 </div>
