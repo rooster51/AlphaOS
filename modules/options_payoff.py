@@ -1,7 +1,38 @@
 """Deterministic expiration analysis. No pricing or probability model."""
 from math import ceil, isfinite
+from copy import deepcopy
 
 from modules.premium_engine import analyze, payoff
+
+_SCALAR_TYPES = (str, int, float, bool, type(None), bytes, complex)
+
+
+def copy_trade_input(candidate):
+    """Copy quote-bearing trades without dispatching deepcopy for every scalar.
+
+    Discovery visits the same scalar quote fields across hundreds of positions.
+    Mutable observations still use deepcopy with one memo, preserving ownership,
+    shared references and custom object copying exactly as on the legacy path.
+    """
+    legs = candidate.get('legs') if type(candidate) is dict else None
+    if type(legs) is not list or any(type(leg) is not dict for leg in legs):
+        return deepcopy(candidate)
+    copied, copied_legs = {}, []
+    memo = {id(candidate): copied, id(legs): copied_legs}
+    for leg in legs:
+        copied_legs.append(memo.setdefault(id(leg), {}))
+
+    def copy_value(value):
+        if type(value) in _SCALAR_TYPES:
+            return value
+        return deepcopy(value, memo)
+
+    for key, value in candidate.items():
+        copied[copy_value(key)] = copy_value(value)
+    for leg, copied_leg in zip(legs, copied_legs):
+        for key, value in leg.items():
+            copied_leg[copy_value(key)] = copy_value(value)
+    return copied
 
 
 def validate_trade(trade):

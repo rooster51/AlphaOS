@@ -84,7 +84,8 @@ def test_real_app_timing_middleware_shares_sanitized_id_with_response(boundary, 
     assert 'DO_NOT_LOG' not in caplog.text
 
 
-def test_independent_and_concurrent_historical_requests_keep_contexts_isolated(timed_boundary, caplog):
+@pytest.mark.parametrize('response_format', ['full', 'summary-v1'])
+def test_independent_and_concurrent_historical_requests_keep_contexts_isolated(timed_boundary, caplog, response_format):
     client, _, service, _ = timed_boundary
     storages = {symbol:ReadOnlyClient() for symbol in ('SPY','QQQ')}
     for symbol, storage in storages.items():
@@ -93,7 +94,7 @@ def test_independent_and_concurrent_historical_requests_keep_contexts_isolated(t
         storages[symbol],symbol,as_of,max_age_seconds=300,**kwargs)
     service.history_loader = lambda symbol: history().assign(symbol=symbol)
     def invoke(symbol):
-        return client.post('/v1/research/market',json=dict(symbol=symbol,research_mode='historical'),
+        return client.post('/v1/research/market',json=dict(symbol=symbol,research_mode='historical', response_format=response_format),
             headers={'Authorization':'Bearer owner-test-secret','X-AlphaOS-Request-ID':('a' if symbol=='SPY' else 'b')*32})
     independent = {symbol:invoke(symbol).json() for symbol in storages}
     barrier = Barrier(2)
@@ -136,7 +137,8 @@ def test_auth_failure_logs_arrival_without_starting_research(timed_boundary, cap
     assert [r['stage'] for r in records(caplog) if r['phase']=='start'] == ['request']
 
 
-def test_observed_disconnect_signals_worker_without_consuming_extra_messages(caplog):
+@pytest.mark.parametrize('path', ['/v1/research/market', '/v1/research/market/candidate'])
+def test_observed_disconnect_signals_worker_without_consuming_extra_messages(caplog, path):
     async def exercise():
         messages = iter([{'type':'http.request','body':b'private'}, {'type':'http.disconnect'}])
         async def receive(): return next(messages)
@@ -149,7 +151,7 @@ def test_observed_disconnect_signals_worker_without_consuming_extra_messages(cap
             await send({'type':'http.response.start','status':200,'headers':[]})
             await send({'type':'http.response.body','body':b'private'})
         with pytest.raises(asyncio.CancelledError):
-            await ResearchTimingMiddleware(app)(dict(type='http',method='POST',path='/v1/research/market',headers=[]),receive,send)
+            await ResearchTimingMiddleware(app)(dict(type='http',method='POST',path=path,headers=[]),receive,send)
         assert not sent
     asyncio.run(exercise())
     rows = records(caplog)
@@ -159,7 +161,8 @@ def test_observed_disconnect_signals_worker_without_consuming_extra_messages(cap
     assert 'private' not in caplog.text
 
 
-def test_cancelled_asgi_request_stops_after_blocking_io_returns(boundary, caplog):
+@pytest.mark.parametrize('response_format', ['full', 'summary-v1'])
+def test_cancelled_asgi_request_stops_after_blocking_io_returns(boundary, caplog, response_format):
     entered, release, finished = Event(), Event(), Event()
     service = boundary[2]
     original_read = service.read_snapshot
@@ -174,7 +177,7 @@ def test_cancelled_asgi_request_stops_after_blocking_io_returns(boundary, caplog
     async def exercise():
         transport = httpx.ASGITransport(app=ResearchTimingMiddleware(boundary[0].app))
         async with httpx.AsyncClient(transport=transport,base_url='https://alphaos.onrender.com') as client:
-            task = asyncio.create_task(client.post('/v1/research/market', json=dict(symbol='QQQ',research_mode='historical'),
+            task = asyncio.create_task(client.post('/v1/research/market', json=dict(symbol='QQQ',research_mode='historical', response_format=response_format),
                 headers={'Authorization':'Bearer owner-test-secret','X-AlphaOS-Request-ID':'c'*32}))
             try:
                 assert await asyncio.to_thread(entered.wait, 5)
