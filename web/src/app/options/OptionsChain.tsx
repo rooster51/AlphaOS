@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { StrategyWorkbench } from "./StrategyWorkbench";
 
 type Right = "Call" | "Put";
 type Leg = {
@@ -147,6 +148,7 @@ export function OptionsChain() {
           {scenario.legs.map(leg => <p key={leg.contract}>{leg.qty > 0 ? "Buy at ask" : "Sell at bid"} · {leg.contract} · {dollars(leg.price)} per share</p>)}
         </div> : <p>NO TRADE · {scenario.reason}</p>)}
       </section>
+      <StrategyWorkbench key={`${symbol}-${date}-${data.retrieved_at}`} symbol={symbol} expiration={date} contracts={legs} />
       <div className="overflow-x-auto rounded border border-terminal-800" tabIndex={0} aria-label="Scrollable options table">
         <table className="w-full whitespace-nowrap text-left">
           <thead><tr>{["Strike", "Side", "Moneyness", "Contract", "Status", "Age (s)", "Spread", ...fields.map(label), "Provider bid time", "Provider ask time", "Provider last time"].map(name =>
