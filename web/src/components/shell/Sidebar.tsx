@@ -23,6 +23,7 @@ const NAV_ITEMS = [
   { href: "/charts", label: "Charting & AI", icon: CandlestickChart },
   { href: "/market", label: "Market Research", icon: LineChart },
   { href: "/strategies", label: "Strategy Explorer", icon: Compass },
+  { href: "/options", label: "Options Chain", icon: Compass },
   { href: "/structures", label: "Structure Lab", icon: Layers },
   { href: "/session", label: "Session Review", icon: History },
   { href: "/journal", label: "Trade Journal", icon: BookOpen, badge: "Foundation" },
