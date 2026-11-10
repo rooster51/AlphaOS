@@ -35,6 +35,18 @@ The response is an `alphaos-candles-v1` snapshot:
 - `candles`: native OHLCV rows with ISO-8601 UTC timestamps
 - `provider_capabilities` and `entitlement`: provenance and policy decisions
 
+`last_bar_status` is derived only from provider completion evidence. The local
+clock does not turn an unconfirmed last bar into `partial`; an open interval is
+reported separately as `last_bar_window_open`, and absent provider evidence is
+reported as `last_bar_completion_unverified` with status `unknown`.
+
+`completeness` describes the whole regular session. While that session is still
+open, it is `unknown` with `session_in_progress`, even when the provider's
+full-session expected count is larger than the bars received so far. A completed
+session is `incomplete` when its validated row count is below the provider's
+expected count or when internal gaps/provider-skipped rows are present. A
+narrowed `limit` never changes `received_bars` or completeness.
+
 `received_bars` describes the provider response before `limit`; `returned_bars`
 describes the bars in this response. A narrowed `limit` does not turn an
 incomplete provider session into a complete one.
@@ -135,9 +147,9 @@ cross-process or persistent candle cache.
 
 | HTTP | Code examples | Meaning |
 | --- | --- | --- |
-| 400 | `unsupported_symbol`, `unsupported_interval`, `unsupported_session`, `invalid_limit` | Request is outside the v1 surface. |
+| 400 | `unsupported_symbol` | Symbol is outside the v1 surface. |
 | 401/403 | `authentication_required`, `forbidden`, `data_use_denied` | Authentication or policy failure. |
-| 422 | `invalid_request` | Query validation failure. |
+| 422 | `invalid_request` | Query validation failure for `interval`, `session`, or `limit`. |
 | 429 | `public_rate_limit` | Provider throttling; do not retry aggressively. |
 | 503 | `public_not_configured`, `provider_unavailable`, `no_candles`, `invalid_provider_response` | Provider is unavailable or returned unusable data. |
 | 504 | `provider_timeout` | Provider timed out. |
@@ -156,6 +168,10 @@ columns plus a session lookup index. It does **not** rewrite historical rows or
 backfill synthetic metadata; NULL means unknown/legacy. Existing collectors keep
 writing the existing columns unchanged. A later collector change can populate the
 new metadata after the migration is reviewed and applied.
+
+The archive write boundary validates every row's provider before any Supabase
+call and rejects mixed-provider batches. A batch therefore cannot use one
+provider's entitlement to persist another provider's observations.
 
 ## Deliberate non-goals
 

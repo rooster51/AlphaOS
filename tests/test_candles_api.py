@@ -19,12 +19,13 @@ from modules.market_data_contracts import (
 from modules.market_data_gateway import PUBLIC_CAPABILITIES, MarketDataError
 
 NOW = datetime(2026, 10, 2, 14, 0, tzinfo=timezone.utc)
+SESSION_CLOSE = datetime(2026, 10, 2, 20, 0, tzinfo=timezone.utc)
 TOKEN = "test-api-secret"
 
 
-def bars_for(interval: str, count: int = 5) -> tuple[CandleBar, ...]:
+def bars_for(interval: str, count: int = 5, *, at_close: bool = False) -> tuple[CandleBar, ...]:
     step = INTERVAL_SECONDS[interval]
-    end = NOW - timedelta(seconds=step)
+    end = (SESSION_CLOSE if at_close else NOW) - timedelta(seconds=step)
     bars = []
     for index in range(count):
         stamp = end - timedelta(seconds=step * (count - 1 - index))
@@ -43,11 +44,13 @@ class FakeProvider:
     capabilities = PUBLIC_CAPABILITIES
 
     def __init__(self, *, expected: int | None = 5, last_bar_complete: bool | None = True,
-                 warnings: tuple[str, ...] = (), error: MarketDataError | None = None):
+                 warnings: tuple[str, ...] = (), error: MarketDataError | None = None,
+                 at_close: bool = False):
         self.expected = expected
         self.last_bar_complete = last_bar_complete
         self.warnings = warnings
         self.error = error
+        self.at_close = at_close
         self.calls: list[tuple] = []
 
     def candles(self, symbol: str, interval: str, session: str = "regular", limit: int = 390):
@@ -58,7 +61,7 @@ class FakeProvider:
             raise MarketDataError("unsupported_symbol", 400)
         if interval not in SUPPORTED_INTERVALS:
             raise MarketDataError("unsupported_interval", 400)
-        all_bars = bars_for(interval)
+        all_bars = bars_for(interval, at_close=self.at_close)
         bars = all_bars[-min(limit, len(all_bars)):]
         return CandleBatch(
             provider=self.name, symbol=symbol.upper(), interval=interval,
@@ -83,7 +86,7 @@ def get(client, path="/v1/candles/SPY", **kwargs):
     return client.get(path, headers={"Authorization": f"Bearer {TOKEN}"}, **kwargs)
 
 
-def test_all_symbols_and_native_intervals_use_normalized_contract():
+def test_all_symbols_and_native_intervals_use_normalized_contract_during_session():
     for symbol in SUPPORTED_SYMBOLS:
         for interval in SUPPORTED_INTERVALS:
             provider = FakeProvider()
@@ -92,12 +95,26 @@ def test_all_symbols_and_native_intervals_use_normalized_contract():
             assert snapshot.interval == interval
             assert snapshot.provider == "Public"
             assert snapshot.returned_bars == snapshot.received_bars == 5
-            assert snapshot.completeness == "complete"
+            assert snapshot.completeness == "unknown"
+            assert "session_in_progress" in snapshot.warnings
+            assert "incomplete_session" not in snapshot.warnings
             assert snapshot.freshness == "fresh"
             assert snapshot.last_bar_status == "complete"
             assert len(snapshot.candles) == 5
             assert snapshot.provider_capabilities["native_candles"] is True
             assert provider.calls == [(symbol, interval, "regular", 390)]
+
+
+def test_all_symbols_and_native_intervals_are_complete_after_close():
+    for symbol in SUPPORTED_SYMBOLS:
+        for interval in SUPPORTED_INTERVALS:
+            provider = FakeProvider(at_close=True)
+            snapshot = CandleService(provider=provider, clock=lambda: SESSION_CLOSE).get(symbol, interval)
+            assert snapshot.completeness == "complete"
+            assert "session_in_progress" not in snapshot.warnings
+            assert "incomplete_session" not in snapshot.warnings
+            assert snapshot.last_bar_status == "complete"
+            assert len(snapshot.candles) == 5
 
 
 def test_cache_reuses_snapshot_identity_and_rechecks_entitlement():
@@ -132,7 +149,7 @@ def test_api_requires_authentication(client, monkeypatch):
 
 
 def test_api_returns_typed_snapshot(client, monkeypatch):
-    install(monkeypatch, CandleService(provider=FakeProvider(), clock=lambda: NOW))
+    install(monkeypatch, CandleService(provider=FakeProvider(at_close=True), clock=lambda: SESSION_CLOSE))
     response = get(client, params={"interval": "5m", "session": "regular", "limit": 390})
     assert response.status_code == 200, response.text
     payload = response.json()
@@ -142,7 +159,7 @@ def test_api_returns_typed_snapshot(client, monkeypatch):
     assert payload["provider"] == "Public"
     assert payload["session"] == "regular"
     assert payload["snapshot_id"]
-    assert payload["latest_candle_at"] == bars_for("5m")[-1].time
+    assert payload["latest_candle_at"] == bars_for("5m", at_close=True)[-1].time
     assert payload["expected_bars"] == payload["received_bars"] == payload["returned_bars"] == 5
     assert payload["completeness"] == "complete"
     assert payload["last_bar_status"] == "complete"
@@ -156,7 +173,7 @@ def test_api_returns_typed_snapshot(client, monkeypatch):
 
 
 def test_limit_narrows_returned_bars_not_provider_counts(client, monkeypatch):
-    install(monkeypatch, CandleService(provider=FakeProvider(), clock=lambda: NOW))
+    install(monkeypatch, CandleService(provider=FakeProvider(at_close=True), clock=lambda: SESSION_CLOSE))
     response = get(client, params={"limit": 2})
     assert response.status_code == 200, response.text
     payload = response.json()
@@ -167,9 +184,31 @@ def test_limit_narrows_returned_bars_not_provider_counts(client, monkeypatch):
     assert len(payload["candles"]) == 2
 
 
+def test_in_progress_session_is_unknown_not_historically_incomplete(client, monkeypatch):
+    provider = FakeProvider(expected=390)
+    install(monkeypatch, CandleService(provider=provider, clock=lambda: NOW))
+    response = get(client)
+    assert response.status_code == 200, response.text
+    payload = response.json()
+    assert payload["completeness"] == "unknown"
+    assert "session_in_progress" in payload["warnings"]
+    assert "incomplete_session" not in payload["warnings"]
+    assert payload["last_bar_status"] == "complete"
+
+
+def test_unknown_last_bar_is_not_inferred_from_the_clock(client, monkeypatch):
+    provider = FakeProvider(last_bar_complete=None)
+    install(monkeypatch, CandleService(provider=provider, clock=lambda: NOW))
+    response = get(client)
+    assert response.status_code == 200, response.text
+    payload = response.json()
+    assert payload["last_bar_status"] == "unknown"
+    assert "last_bar_completion_unverified" in payload["warnings"]
+
+
 def test_stale_incomplete_and_partial_states_are_explicit(client, monkeypatch):
     provider = FakeProvider(expected=7, last_bar_complete=False)
-    service = CandleService(provider=provider, clock=lambda: NOW + timedelta(minutes=5))
+    service = CandleService(provider=provider, clock=lambda: SESSION_CLOSE + timedelta(minutes=5))
     install(monkeypatch, service)
     response = get(client)
     assert response.status_code == 200, response.text

@@ -41,8 +41,11 @@ the existing widget. It must:
 6. Show a compact status row: provider, snapshot time, freshness age, whether the
    last bar is complete/partial/unknown, and completeness.
 7. Show warning chips for `missing_bars`, `incomplete_session`,
-   `last_bar_completion_unverified`, `stale_candles`, and
-   `latest_available_session`; do not hide warnings behind a tooltip only.
+   `provider_incomplete_bars_skipped`, `session_in_progress`,
+   `last_bar_completion_unverified`, `last_bar_window_open`, `stale_candles`,
+   and `latest_available_session`; do not hide warnings behind a tooltip only.
+   `last_bar_window_open` is a time-based warning, not a claim that the provider
+   marked the bar partial.
 8. Include TradingView attribution and the required Lightweight Charts license
    notices.
 9. Be mobile-responsive: touch pan/zoom, readable price/volume labels, a

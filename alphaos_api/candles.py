@@ -86,7 +86,7 @@ def register_candles(router, service, respond):
         "/candles/{symbol}",
         response_model=CandleResponse,
         operation_id="get_candles",
-        responses={400: {"description": "Unsupported symbol or request"},
+        responses={400: {"description": "Unsupported symbol"},
                    403: {"description": "Data use is not entitled"},
                    429: {"description": "Provider throttled the request"},
                    503: {"description": "Provider unavailable"},
