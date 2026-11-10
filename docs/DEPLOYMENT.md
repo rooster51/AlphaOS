@@ -3,6 +3,12 @@
 Current deployment targets are Netlify for the Next.js website, Render for the
 FastAPI backend, and Supabase for the private archive.
 
+## Retired edge deployment
+
+The former edge-hosting path is not part of the current deployment. External
+app, build-integration and credential cleanup that remain after the code removal
+are recorded in [legacy edge decommissioning](LEGACY_EDGE_DECOMMISSION.md).
+
 Read-only control-plane audit: October 16, 2026. The Render services below were
 manually deployed at `d1c9e087a3dbf09490fd113d095c004fecdac738` (main after PR #44).
 Names are service identifiers, not guarantees that a service is unused. The
