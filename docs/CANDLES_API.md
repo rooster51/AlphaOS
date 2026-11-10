@@ -63,11 +63,11 @@ measurement.
   "interval": "1m",
   "provider": "Public",
   "session": "regular",
-  "retrieved_at": "2026-10-02T14:00:00+00:00",
-  "latest_candle_at": "2026-10-02T13:32:00+00:00",
+  "retrieved_at": "2026-10-02T20:00:30+00:00",
+  "latest_candle_at": "2026-10-02T19:59:00+00:00",
   "snapshot_id": "4f6d9b9b1e2a7d4a9f0d6c1b8e3a5c7d2f4a6b8c0d1e3f5a7b9c1d2e3f4a5b6c",
-  "expected_bars": 3,
-  "received_bars": 3,
+  "expected_bars": 390,
+  "received_bars": 390,
   "returned_bars": 3,
   "completeness": "complete",
   "last_bar_status": "complete",
@@ -75,7 +75,7 @@ measurement.
   "warnings": [],
   "candles": [
     {
-      "time": "2026-10-02T13:30:00+00:00",
+      "time": "2026-10-02T19:57:00+00:00",
       "open": 600.0,
       "high": 601.0,
       "low": 599.5,
@@ -83,7 +83,7 @@ measurement.
       "volume": 12500.0
     },
     {
-      "time": "2026-10-02T13:31:00+00:00",
+      "time": "2026-10-02T19:58:00+00:00",
       "open": 600.5,
       "high": 601.2,
       "low": 600.1,
@@ -91,7 +91,7 @@ measurement.
       "volume": 9800.0
     },
     {
-      "time": "2026-10-02T13:32:00+00:00",
+      "time": "2026-10-02T19:59:00+00:00",
       "open": 600.9,
       "high": 601.4,
       "low": 600.4,

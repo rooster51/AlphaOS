@@ -28,15 +28,15 @@ snapshot. It is not accepted verbatim from the browser.
   "symbol": "SPY",
   "interval": "5m",
   "session": "regular",
-  "retrieved_at": "2026-10-02T14:00:00+00:00",
-  "latest_candle_at": "2026-10-02T13:55:00+00:00",
+  "retrieved_at": "2026-10-02T20:05:00+00:00",
+  "latest_candle_at": "2026-10-02T19:55:00+00:00",
   "completeness": "complete",
   "last_bar_status": "complete",
   "freshness": "fresh",
   "warnings": [],
   "candles": [
     {
-      "time": "2026-10-02T13:55:00+00:00",
+      "time": "2026-10-02T19:55:00+00:00",
       "open": 600.0,
       "high": 601.0,
       "low": 599.5,
