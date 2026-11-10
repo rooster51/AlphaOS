@@ -3,6 +3,8 @@ import { day, validateRules, validateSnapshot } from "./challenge.ts";
 import type { Rules, Snapshot } from "./challenge.ts";
 import { validateSpec } from "./planner.ts";
 import type { ContractSpec } from "./planner.ts";
+import { validateQuickReport } from "./progress.ts";
+import type { QuickReport } from "./progress.ts";
 export type Trade = {
   id: string;
   ruleVersion: string;
@@ -124,6 +126,7 @@ export type Ledger = {
   snapshot: Snapshot | null;
   trades: Trade[];
   specs: ContractSpec[];
+  quickReports?: QuickReport[];
 };
 export const storageKey = (profile: string) => {
   if (!/^[a-zA-Z0-9_-]{1,60}$/.test(profile))
@@ -149,6 +152,13 @@ export function validateLedger(value: unknown): Ledger {
   l.rules.forEach(validateRules);
   l.trades.forEach(validateTrade);
   l.specs.forEach(validateSpec);
+  if (l.quickReports !== undefined) {
+    if (!Array.isArray(l.quickReports) || l.quickReports.length > 10000)
+      throw Error("Invalid quick-report history");
+    l.quickReports.forEach((q) => validateQuickReport(q));
+    if (new Set(l.quickReports.map((q) => q.id)).size !== l.quickReports.length)
+      throw Error("Duplicate quick update");
+  }
   if (l.trades.some((t) => !l.rules.some((r) => r.version === t.ruleVersion)))
     throw Error("Journal references an unknown rule version");
   if (
@@ -158,6 +168,10 @@ export function validateLedger(value: unknown): Ledger {
     throw Error("Duplicate trade or rule version");
   if (l.snapshot !== null) {
     const s = validateSnapshot(l.snapshot);
+    if (
+      l.quickReports?.some((q) => Date.parse(q.observedAt) > Date.parse(s.asOf))
+    )
+      throw Error("Advanced verification predates a newer quick report");
     const opened = l.trades.filter(
       (t) => day(t.entryTime) === day(s.asOf),
     ).length;
@@ -174,6 +188,41 @@ export function validateLedger(value: unknown): Ledger {
       );
   }
   return l;
+}
+/** Idempotent local migration; incoming evidence never authorizes an account snapshot. */
+export function mergeLocalBackup(current: Ledger, incoming: Ledger): Ledger {
+  validateLedger(current);
+  validateLedger(incoming);
+  const canonical = (value: unknown): string =>
+    JSON.stringify(value, (_key, v) =>
+      v && typeof v === "object" && !Array.isArray(v)
+        ? Object.fromEntries(
+            Object.entries(v).sort(([a], [b]) => a.localeCompare(b)),
+          )
+        : v,
+    );
+  const merge = <T>(a: T[], b: T[], key: (v: T) => string): T[] => {
+    const map = new Map(a.map((v) => [key(v), v]));
+    for (const item of b) {
+      const old = map.get(key(item));
+      if (old && canonical(old) !== canonical(item))
+        throw Error(`Conflicting backup record: ${key(item)}`);
+      map.set(key(item), item);
+    }
+    return [...map.values()];
+  };
+  return validateLedger({
+    ...current,
+    snapshot: null,
+    rules: merge(incoming.rules, current.rules, (r) => r.version),
+    trades: merge(current.trades, incoming.trades, (t) => t.id),
+    quickReports: merge(
+      current.quickReports ?? [],
+      incoming.quickReports ?? [],
+      (q) => q.id,
+    ),
+    specs: current.specs,
+  });
 }
 export interface LocalStore {
   getItem(key: string): string | null;
