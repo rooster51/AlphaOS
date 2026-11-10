@@ -73,7 +73,7 @@ def test_bcrypt_capacity_fails_closed():
         _slots.release(); _slots.release()
 
 
-def test_worker_render_exchange_integration(client):
+def test_web_render_exchange_integration(client):
     import subprocess
     from pathlib import Path
     from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer

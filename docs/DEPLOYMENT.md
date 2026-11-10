@@ -1,14 +1,12 @@
 # Audited deployment and dependency map
 
-For the prepared website-only Workers deployment and required manual GitHub/
-Cloudflare settings, see [Cloudflare website deployment](CLOUDFLARE_WEBSITE.md).
-That preparation does not change the Render services audited below.
+Current deployment targets are Netlify for the Next.js website, Render for the
+FastAPI backend, and Supabase for the private archive.
 
-Read-only control-plane audit: October 16, 2026. Both user-facing services are
+Read-only control-plane audit: October 16, 2026. The Render services below were
 manually deployed at `d1c9e087a3dbf09490fd113d095c004fecdac738` (main after PR #44).
-Names are service identifiers, not guarantees that a service is unused: the
-website's service is named **alphaos-web-staging** but is the current user-facing
-research website inspected in the Release 1 work.
+Names are service identifiers, not guarantees that a service is unused. The
+**alphaos-web-staging** Render row is historical; the current frontend is Netlify.
 
 > **Currency update (2026-10-24).** Corrections to code and version facts that
 > changed after this audit. The service table, settings and deployment

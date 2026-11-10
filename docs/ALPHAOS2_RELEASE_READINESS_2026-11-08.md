@@ -27,9 +27,7 @@ It changes no pricing, authentication, freshness, deadline, or forwarding policy
 This patch is for #87 only and is not yet deployed.
 
 CI on deployed integration: [tests 42247278448](https://github.com/rooster51/AlphaOS/actions/runs/42247278448)
-and [Workers 42247278493](https://github.com/rooster51/AlphaOS/actions/runs/42247278493)
 passed. #88 head: [tests 42250805424](https://github.com/rooster51/AlphaOS/actions/runs/42250805424)
-and [Workers 42250805440](https://github.com/rooster51/AlphaOS/actions/runs/42250805440)
 passed. The release patch's exact head and CI are recorded in #87's review body.
 
 Existing deterministic coverage checks all twelve families and custom signed

@@ -25,8 +25,8 @@ credential, data, timeout or freshness rule changes.
 | Non-sleeping Render instance (`0.5c-512mb`, legacy name "Starter") | $7/month per instance, prorated to the second | Removes cold starts entirely and raises CPU from 0.1 to 0.5. Required before always-on, unattended or multi-user use. |
 | Server-side evidence cache | $0 (code change) | Does **not** fix a cold start: the first request still pays the boot. Only collapses the panel and chat duplicate pairs into one. Optional follow-up, not a substitute. |
 
-The prior audit in `docs/CLOUDFLARE_RENDER_TIMEOUT.md` reached the same
-conclusion for always-on use: the smallest justified fix is a non-Free instance.
+The prior Render timeout audit reached the same conclusion for always-on use:
+the smallest justified fix is a non-Free instance.
 This heartbeat is the zero-cost mitigation for the pilot's working window, and it
 does not claim always-on availability.
 

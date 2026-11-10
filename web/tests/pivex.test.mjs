@@ -420,9 +420,11 @@ test("imported account observations cannot understate known journal activity", (
   assert.match(plan(p).reason, /Two losing/);
 });
 test("Pivex uses existing auth gate; no anonymous access or cross-origin cookie authorization", async () => {
-  const env = {
-      ...authBindings,
-      ALPHAOS_LOGIN_LIMITER: { limit: async () => ({ success: true }) },
+  const env = { ...authBindings },
+    options = {
+      externalLoginRateLimiter: {
+        limit: async () => ({ allowed: true, retryAfterSeconds: 0 }),
+      },
     },
     origin = "https://website.test";
   let reached = false;
@@ -434,6 +436,7 @@ test("Pivex uses existing auth gate; no anonymous access or cross-origin cookie 
     new Request(origin + "/pivex"),
     env,
     next,
+    options,
   );
   assert.equal(response.status, 303);
   assert.equal(reached, false);
@@ -442,6 +445,7 @@ test("Pivex uses existing auth gate; no anonymous access or cross-origin cookie 
     new Request(origin + "/pivex", { headers: { cookie } }),
     env,
     next,
+    options,
   );
   assert.equal(authorized.status, 200);
   assert.equal(reached, true);
@@ -451,6 +455,7 @@ test("Pivex uses existing auth gate; no anonymous access or cross-origin cookie 
     new Request("https://other.test/pivex", { headers: { cookie } }),
     env,
     next,
+    options,
   );
   assert.equal(reached, false);
 });

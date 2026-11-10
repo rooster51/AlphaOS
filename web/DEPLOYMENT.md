@@ -2,14 +2,12 @@
 
 Current service, backend and dependency ownership is documented in
 [the audited deployment map](../docs/DEPLOYMENT.md) and
-[architecture inventory](../docs/ARCHITECTURE.md). The live website service is
-named `alphaos-web-staging`; its name alone does not identify an unused preview.
-This document describes setup, not authorization to deploy or change settings.
+[architecture inventory](../docs/ARCHITECTURE.md). The current frontend target is
+Netlify; the API runs on Render and archive storage on Supabase. This document
+describes setup, not authorization to deploy or change settings.
 
-Run this app as a Node.js 22 Next.js web service. Do not configure a static
-export: server-rendered pages and the `/api` routes need a server runtime.
-Render is the simplest fit with the existing backend; configure the web service
-to run `npm run build` and `npm start`, preferably in the backend's region.
+Build this app as a Node.js 22 Next.js web service on Netlify. Do not configure a
+static export: server-rendered pages and the `/api` routes need a server runtime.
 
 The AlphaOS API runs on Render as a Free instance, which spins down after 15
 minutes without inbound traffic and takes about a minute to boot again. A public
@@ -45,12 +43,10 @@ build output is `.next`, and the build uses Node.js 22.23.0. Keep the adapter
 package version in `web/package.json` and the plugin declaration in the root
 `netlify.toml` in sync.
 
-The Netlify build uses `tsconfig.netlify.json` to omit the Cloudflare Worker,
-Cloudflare runtime shim, and Vite/Worker config from Next's type-check. The
-application itself continues to use the Node runtime binding (`process.env`);
-the Cloudflare config and Worker entrypoint are retained for the existing
-Cloudflare branch. No Python, trading engine, archive, or Supabase code is
-included in the site build.
+The Netlify build uses `tsconfig.netlify.json`, which extends the application's
+TypeScript config. The application uses the Node runtime binding (`process.env`).
+No Python, trading engine, archive, or Supabase code is included in the site
+build.
 
 The Netlify Edge Function `10-auth-gate` applies the existing
 `protectWebsite` checks to every request before assets, pages, and API routes

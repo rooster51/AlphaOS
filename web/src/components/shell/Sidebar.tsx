@@ -30,7 +30,7 @@ const NAV_ITEMS = [
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
-export function Sidebar({ cloudflareLogin = false }: { cloudflareLogin?: boolean }) {
+export function Sidebar() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -126,9 +126,6 @@ export function Sidebar({ cloudflareLogin = false }: { cloudflareLogin?: boolean
               </div>
             </div>
           </div>
-          {cloudflareLogin && <form method="post" action="/auth/logout" className="px-6 py-2">
-            <button type="submit" className="text-sm text-terminal-300 underline">Sign Out</button>
-          </form>}
           <div className="hidden md:block">{navigation}</div>
           <div id="mobile-primary-navigation" className={mobileOpen ? "md:hidden" : "hidden"}>
             {navigation}

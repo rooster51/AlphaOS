@@ -8,7 +8,7 @@ export function getServerConfig() {
   const base = text("ALPHAOS_API_URL");
   const token = text("ALPHAOS_API_TOKEN");
   const demoMode = text("ALPHAOS_DEMO_MODE");
-  // Workers research never substitutes synthetic examples, even if misconfigured.
+  // Never substitute synthetic examples for research, even if misconfigured.
   const demo = runtime === "node" && demoMode === "true";
   let validUrl = false;
   if (base) {

@@ -5,7 +5,6 @@ export type AuthBindings = {
   ALPHAOS_API_TOKEN?: string;
   ALPHAOS_PASSWORD_HASH?: string;
   ALPHAOS_SESSION_KEY?: string;
-  ALPHAOS_LOGIN_LIMITER?: { limit(input: { key: string }): Promise<{ success: boolean }> };
 };
 export type AuthOptions = {
   externalLoginRateLimiter?: {
@@ -51,8 +50,7 @@ function decode(value: string) {
 export function authConfigured(env: AuthBindings, options: AuthOptions = {}) {
   return /^\$2[aby]\$12\$[./A-Za-z0-9]{53}$/.test(env.ALPHAOS_PASSWORD_HASH ?? "")
     && /^[A-Za-z0-9_-]{43}$/.test(env.ALPHAOS_SESSION_KEY ?? "")
-    && (typeof env.ALPHAOS_LOGIN_LIMITER?.limit === "function"
-      || typeof options.externalLoginRateLimiter?.limit === "function");
+    && typeof options.externalLoginRateLimiter?.limit === "function";
 }
 async function key(env: AuthBindings) {
   // Changing either secret invalidates existing sessions.
@@ -117,7 +115,7 @@ async function readPassword(request: Request) {
     return values.length === 1 && values[0] && utf8.encode(values[0]).length <= 72 ? values[0] : null;
   } finally { reader.releaseLock(); }
 }
-/** Gate runs before vinext, independent of Next.js rewrites, routing and process.env. */
+/** Gate runs before Next.js, independent of rewrites, routing and process.env. */
 export async function protectWebsite(request: Request, env: AuthBindings, next: () => Promise<Response>, options: AuthOptions = {}) {
   const run = async () => {
     const url = new URL(request.url), path = url.pathname;
@@ -137,20 +135,14 @@ export async function protectWebsite(request: Request, env: AuthBindings, next: 
     if (login) {
       if (!authConfigured(env, options)) return loginPage("Sign in is not configured.", 503);
       try {
-        if (typeof env.ALPHAOS_LOGIN_LIMITER?.limit === "function") {
-          // Cloudflare uses one shared bucket, including across source IPs.
-          if (!(await env.ALPHAOS_LOGIN_LIMITER.limit({ key: `alphaos-single-user-login-v1:${url.origin}` })).success) {
-            const response = loginPage("Too many attempts. Try again later.", 429); response.headers.set("Retry-After", "60"); return response;
-          }
-        } else if (typeof options.externalLoginRateLimiter?.limit === "function") {
-          const result = await options.externalLoginRateLimiter.limit();
-          if (!result.allowed) {
-            const response = loginPage("Too many attempts. Try again later.", 429);
-            response.headers.set("Retry-After", String(result.retryAfterSeconds));
-            return response;
-          }
-        } else {
+        if (typeof options.externalLoginRateLimiter?.limit !== "function") {
           return loginPage("Sign in is not configured.", 503);
+        }
+        const result = await options.externalLoginRateLimiter.limit();
+        if (!result.allowed) {
+          const response = loginPage("Too many attempts. Try again later.", 429);
+          response.headers.set("Retry-After", String(result.retryAfterSeconds));
+          return response;
         }
       } catch { return loginPage("Sign in is temporarily unavailable.", 503); }
       const password = await readPassword(request);

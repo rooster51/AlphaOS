@@ -11,7 +11,6 @@ Supabase request was made.
 | `main` | `77ef046` | PR #66 merged; current base |
 | PR #68 | `9c79fcb` | `research/verified-quote-provenance` |
 | PR #69 | `7377e9e` | `feature/entry-evidence-record` |
-| PR #67 | `b93c2a2` | `codex/cloudflare-workers`, context only, unmodified |
 | `validation/provenance-entry-integration` | cherry-picks of `9c79fcb` and `7377e9e` | integration branch |
 
 Both PRs are single commits on `77ef046`, so they were cherry-picked in order.
@@ -66,14 +65,6 @@ flag cannot be submitted; `market_data` carries only a snapshot id and checksum;
 the server re-reads the archive through the checksum-verifying reader before
 producing evidence. `build_entry_record` has no HTTP, MCP or website caller and
 cannot be reached with client JSON.
-
-## Cloudflare compatibility (PR #67 review only)
-
-The combined change introduces no Worker storage, calculation or cache, no new
-environment variable (the website still uses only `ALPHAOS_API_URL` and
-`ALPHAOS_API_TOKEN`), no new dependency and no paid service. Render remains the
-research engine, Supabase the archive, MCP the ChatGPT interface, and the website
-a presenter. PR #67 was not modified or deployed.
 
 ## Remaining blockers
 

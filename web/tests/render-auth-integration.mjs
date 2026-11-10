@@ -10,18 +10,18 @@ globalThis.fetch=(url,init)=>{
   assert.equal(init.redirect,'manual');
   return nativeFetch(new URL('/v1/website-auth/verify',backend),init);
 };
-const env={...authBindings,ALPHAOS_API_URL:'https://auth-backend.test',ALPHAOS_API_TOKEN:'synthetic-api-token',
-  ALPHAOS_LOGIN_LIMITER:{limit:async()=>({success:true})}};
+const limiter={externalLoginRateLimiter:{limit:async()=>({allowed:true,retryAfterSeconds:0})}};
+const env={...authBindings,ALPHAOS_API_URL:'https://auth-backend.test',ALPHAOS_API_TOKEN:'synthetic-api-token'};
 async function login(value) {
   return protectWebsite(new Request('https://website.test/auth/login',{method:'POST',
     headers:{Origin:'https://website.test','Content-Type':'application/x-www-form-urlencoded'},
-    body:new URLSearchParams({password:value})}),env,()=>{throw Error('Unexpected downstream');});
+    body:new URLSearchParams({password:value})}),env,()=>{throw Error('Unexpected downstream');},limiter);
 }
 const bad=await login('incorrect');assert.equal(bad.status,401);assert(!bad.headers.has('set-cookie'));
 const good=await login(password);assert.equal(good.status,303);
 const cookie=good.headers.get('set-cookie').split(';')[0];
 assert(cookie.startsWith(SESSION_COOKIE+'='));assert(!cookie.includes(password));
-assert(await validSession(new Request('https://website.test/api/health',{headers:{cookie}}),env));
+assert(await validSession(new Request('https://website.test/api/health',{headers:{cookie}}),env,Date.now(),limiter));
 env.ALPHAOS_API_TOKEN='forged';
 const denied=await login(password);assert.equal(denied.status,503);assert(!denied.headers.has('set-cookie'));
-console.log('Worker auth exchange -> real FastAPI bearer validation -> native cost-12 bcrypt -> signed session: PASS');
+console.log('Netlify auth exchange -> real FastAPI bearer validation -> native cost-12 bcrypt -> signed session: PASS');

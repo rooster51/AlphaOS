@@ -186,7 +186,7 @@ type BridgeTrace = {
   upstream_json?: boolean;
   backend_correlated?: boolean;
   backend_target?: "staging" | "production" | "other";
-  upstream_server?: "Render" | "Netlify" | "Cloudflare" | "other";
+  upstream_server?: "Render" | "Netlify" | "other";
   upstream_code?: string;
   outcome?: "backend_timeout" | "backend_unreachable" | "request_cancelled";
   timeout_phase?: "response_headers" | "response_body" | "schema_validation";
@@ -353,8 +353,8 @@ async function marketRequest(request: Request, trace: BridgeTrace, timeout: () =
   trace.upstream_json = (response.headers.get("Content-Type") ?? "").toLowerCase().includes("application/json");
   trace.backend_correlated = response.headers.get("X-AlphaOS-Request-ID") === trace.request_id;
   const upstreamServer = response.headers.get('server')?.toLowerCase() ?? '';
-  trace.upstream_server = upstreamServer === 'netlify' ? 'Netlify' : upstreamServer === 'cloudflare'
-    ? 'Cloudflare' : upstreamServer === 'render' ? 'Render' : 'other';
+  trace.upstream_server = upstreamServer === 'netlify' ? 'Netlify'
+    : upstreamServer === 'render' ? 'Render' : 'other';
   trace.stage = "response_body";
   if (!response.ok) {
     const code = upstreamErrorCode(await readErrorPayload(response, trace));
