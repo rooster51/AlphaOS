@@ -194,8 +194,6 @@ def _validate_bars(symbol: str, interval: str, rows, *, now: datetime) -> tuple[
         raise MarketDataError("no_candles")
     # Do not classify completeness here. The same count is normal while a
     # session is still open; build_snapshot owns that clock-aware decision.
-    if expected is None:
-        warnings.append("expected_bar_count_unavailable")
     return tuple(bars), expected, tuple(dict.fromkeys(warnings))
 
 
@@ -254,6 +252,7 @@ def build_snapshot(batch: CandleBatch, *, now: datetime | None = None,
     if in_progress:
         warnings.append("session_in_progress")
     if batch.expected_bars is None:
+        warnings.append("expected_bar_count_unavailable")
         completeness = "unknown"
     elif in_progress:
         # A full-session expected count is not a failure while the session is
