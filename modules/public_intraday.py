@@ -13,16 +13,20 @@ SUPPORTED_AGGREGATIONS = {
 }
 
 
-def fetch_intraday_bars(provider, symbol, aggregation="ONE_MINUTE"):
+def fetch_intraday_bars(provider, symbol, aggregation="ONE_MINUTE", *, period="DAY",
+                        clock=None, return_diagnostics=False):
     if aggregation not in SUPPORTED_AGGREGATIONS:
         raise ValueError("Unsupported intraday aggregation.")
+    if period not in {"DAY", "WEEK", "MONTH"}:
+        raise ValueError("Unsupported intraday period.")
 
     try:
         from public_api_sdk import BarAggregation, BarPeriod
         aggregation_value = getattr(BarAggregation, aggregation)
+        period_value = getattr(BarPeriod, period)
         response = provider.client.get_bars(
             symbol,
-            BarPeriod.DAY,
+            period_value,
             aggregation=aggregation_value,
         )
     except Exception:
@@ -37,8 +41,13 @@ def fetch_intraday_bars(provider, symbol, aggregation="ONE_MINUTE"):
     if bars is None:
         raise RuntimeError("Public intraday response has no regular-market bars.")
 
-    retrieved = datetime.now(timezone.utc).isoformat()
+    retrieved = (clock() if clock is not None else datetime.now(timezone.utc)).isoformat()
+    expected = getattr(regular, "expected_bars", getattr(response, "total_expected_bars", None))
+    if not (isinstance(expected, int) and not isinstance(expected, bool) and expected >= 0):
+        expected = None
+    received = len(bars)
     normalized = []
+    skipped = 0
     for bar in bars:
         ts = getattr(bar, "timestamp", None)
         values = {
@@ -49,6 +58,7 @@ def fetch_intraday_bars(provider, symbol, aggregation="ONE_MINUTE"):
             "volume": getattr(bar, "volume", None),
         }
         if not ts or any(value is None for value in values.values()):
+            skipped += 1
             continue
         normalized.append({
             "schema_version": "intraday-bar-v1",
@@ -62,8 +72,20 @@ def fetch_intraday_bars(provider, symbol, aggregation="ONE_MINUTE"):
             "close": float(values["close"]),
             "volume": float(values["volume"]),
             "retrieved_at": retrieved,
+            "provider_period": period,
+            "provider_expected_bars": expected,
+            "provider_received_bars": received,
+            "provider_skipped_incomplete_bars": skipped,
         })
 
     if not normalized:
         raise RuntimeError("Public returned no complete regular-market intraday bars.")
+    diagnostics = {
+        "provider_period": period,
+        "provider_expected_bars": expected,
+        "provider_received_bars": received,
+        "provider_skipped_incomplete_bars": skipped,
+    }
+    if return_diagnostics:
+        return normalized, diagnostics
     return normalized

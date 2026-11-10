@@ -112,6 +112,11 @@ def research_archive_client():
 def persist_candles(client, rows):
     if not rows:
         return 0
+    from modules.data_entitlements import archive_write_allowed
+    provider = rows[0].get("provider")
+    if not isinstance(provider, str) or not provider:
+        raise ValueError("Candle provider is required.")
+    archive_write_allowed(provider)
     payload = [{
         "provider": r["provider"],
         "symbol": r["symbol"],
