@@ -100,7 +100,7 @@ def _number(value) -> float | None:
 
 
 def _count(value) -> int | None:
-    return value if isinstance(value, int) and not isinstance(value, bool) and value >= 0 else None
+    return value if isinstance(value, int) and not isinstance(value, bool) and value > 0 else None
 
 
 def _validate_symbol(symbol: str) -> str:
@@ -127,6 +127,15 @@ def _regular_bar(timestamp: datetime) -> bool:
     return opening <= timestamp < closing
 
 
+def _session_in_progress(latest: datetime, now: datetime) -> bool:
+    """True only while the regular session containing the latest bar is open."""
+    bounds = regular_session_bounds(latest)
+    if bounds is None:
+        return False
+    opening, closing = bounds
+    return opening <= now < closing
+
+
 def _aligned(timestamp: datetime, interval: str) -> bool:
     step = INTERVAL_SECONDS[interval]
     return (timestamp.second == 0 and timestamp.microsecond == 0 and
@@ -137,7 +146,7 @@ def _validate_bars(symbol: str, interval: str, rows, *, now: datetime) -> tuple[
     bars: list[CandleBar] = []
     warnings: list[str] = []
     previous: datetime | None = None
-    expected = None
+    expected: int | None = None
     previous_session_date = None
     for row in rows:
         if not isinstance(row, dict) or str(row.get("symbol", "")).strip().upper() != symbol:
@@ -159,7 +168,11 @@ def _validate_bars(symbol: str, interval: str, rows, *, now: datetime) -> tuple[
             raise MarketDataError("invalid_provider_response")
         if high < max(opening, close) or low > min(opening, close) or high < low:
             raise MarketDataError("invalid_provider_response")
-        expected = _count(row.get("provider_expected_bars")) or expected
+        expected_count = _count(row.get("provider_expected_bars"))
+        if expected_count is not None:
+            if expected is not None and expected_count != expected:
+                raise MarketDataError("invalid_provider_response")
+            expected = expected_count
         # Detect an internal gap only within one session. The overnight break
         # between sessions is expected and must not be reported as missing bars.
         session_date = stamp.date()
@@ -172,9 +185,9 @@ def _validate_bars(symbol: str, interval: str, rows, *, now: datetime) -> tuple[
         bars.append(CandleBar(stamp.isoformat(), opening, high, low, close, volume))
     if not bars:
         raise MarketDataError("no_candles")
-    if expected is not None and len(bars) < expected:
-        warnings.append("incomplete_session")
-    if not expected:
+    # Do not classify completeness here. The same count is normal while a
+    # session is still open; build_snapshot owns that clock-aware decision.
+    if expected is None:
         warnings.append("expected_bar_count_unavailable")
     return tuple(bars), expected, tuple(dict.fromkeys(warnings))
 
@@ -197,14 +210,13 @@ def _candle_freshness(latest: datetime, interval: str, now: datetime) -> str:
     return "unknown"
 
 
-def _last_bar_status(bars: tuple[CandleBar, ...], interval: str, now: datetime,
-                     provider_status: bool | None) -> str:
+def _last_bar_status(provider_status: bool | None) -> str:
+    """Classify only from provider evidence, never from the local clock."""
     if provider_status is True:
         return "complete"
     if provider_status is False:
         return "partial"
-    latest = datetime.fromisoformat(bars[-1].time)
-    return "partial" if latest + timedelta(seconds=INTERVAL_SECONDS[interval]) > now else "unknown"
+    return "unknown"
 
 
 def build_snapshot(batch: CandleBatch, *, now: datetime | None = None,
@@ -214,24 +226,39 @@ def build_snapshot(batch: CandleBatch, *, now: datetime | None = None,
     decision = entitlement or check_data_use(PRIVATE_RESEARCH, batch.provider)
     if not decision.allowed:
         raise DataUseDenied(decision)
-    warnings = list(batch.warnings)
-    last_status = _last_bar_status(batch.bars, batch.interval, now, batch.last_bar_complete)
-    if last_status == "unknown":
-        warnings.append("last_bar_completion_unverified")
     if not batch.bars:
         raise MarketDataError("no_candles")
+    warnings = list(batch.warnings)
     latest = batch.bars[-1].time
-    freshness_value = _candle_freshness(datetime.fromisoformat(latest), batch.interval, now)
+    latest_dt = datetime.fromisoformat(latest)
+    last_status = _last_bar_status(batch.last_bar_complete)
+    if last_status == "unknown":
+        warnings.append("last_bar_completion_unverified")
+    # The clock can show that the current bar's interval is still open, but it
+    # cannot prove provider completeness. Keep that signal as a warning.
+    if latest_dt + timedelta(seconds=INTERVAL_SECONDS[batch.interval]) > now:
+        warnings.append("last_bar_window_open")
+    freshness_value = _candle_freshness(latest_dt, batch.interval, now)
     if freshness_value == "stale":
         warnings.append("stale_candles")
     elif freshness_value == "latest_available":
         warnings.append("latest_available_session")
+    in_progress = _session_in_progress(latest_dt, now)
+    if in_progress:
+        warnings.append("session_in_progress")
     if batch.expected_bars is None:
         completeness = "unknown"
+    elif in_progress:
+        # A full-session expected count is not a failure while the session is
+        # still accumulating bars. The final count is not known yet.
+        completeness = "unknown"
+    elif (batch.received_bars < batch.expected_bars
+          or "missing_bars" in warnings
+          or "provider_incomplete_bars_skipped" in warnings):
+        completeness = "incomplete"
+        warnings.append("incomplete_session")
     else:
-        completeness = "complete" if batch.received_bars >= batch.expected_bars else "incomplete"
-        if completeness == "incomplete":
-            warnings.append("incomplete_session")
+        completeness = "complete"
     canonical = {
         "provider": batch.provider,
         "symbol": batch.symbol,
@@ -343,9 +370,8 @@ class PublicMarketDataProvider:
         total_received = len(bars)
         if limit < len(bars):
             bars = bars[-limit:]
-        expected = expected or diagnostics.get("provider_expected_bars")
-        if expected is not None and total_received != expected and "incomplete_session" not in warnings:
-            warnings = warnings + ("incomplete_session",)
+        if expected is None:
+            expected = _count(diagnostics.get("provider_expected_bars"))
         if diagnostics.get("provider_skipped_incomplete_bars"):
             warnings = warnings + ("provider_incomplete_bars_skipped",)
         return CandleBatch(

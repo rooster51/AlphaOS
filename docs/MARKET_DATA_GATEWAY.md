@@ -40,10 +40,19 @@ The gateway rejects provider responses with:
 - unparseable or future timestamps
 
 Missing internal bars are reported as warnings, not filled. When the provider
-supplies an expected count, the response distinguishes complete from incomplete
-sessions. The newest bar is never called complete merely because it is the last
-bar returned; `last_bar_status` is `partial` when the current interval is still
-open and otherwise `unknown` unless the provider supplied completion evidence.
+supplies an expected count, a completed session is `complete` or `incomplete`.
+A session that is still open has `completeness: unknown` and a
+`session_in_progress` warning: a full-session expected count is not a failure
+while bars are still accumulating. A narrowed `limit` changes `returned_bars`,
+not `received_bars` or completeness. Provider-skipped rows add
+`provider_incomplete_bars_skipped` and make a completed session incomplete.
+
+The newest bar is never called complete or partial merely because it is the last
+bar returned or because the local clock says its interval is open.
+`last_bar_status` is `complete` or `partial` only when the provider supplied
+explicit completion evidence; otherwise it is `unknown` with
+`last_bar_completion_unverified`. An open interval is reported separately as
+`last_bar_window_open`.
 
 ## Data-use policy
 
@@ -58,10 +67,12 @@ allows authenticated, private research only. It does not grant:
 Public's Individual API is documented for personal, non-commercial use and says
 third-party dissemination requires prior written approval. The policy therefore
 also blocks Public data from future public exports and AI evidence paths until a
-documented authorization is added. The archive write path checks the provider
-entitlement before touching Supabase. A future licensed feed must be registered
-with its documented basis and authorization reference; it must not inherit Public's
-permissions by name or by cache reuse.
+documented authorization is added. The archive write path validates the provider
+identity on every row and rejects a mixed-provider batch before touching
+Supabase; a single provider batch is then checked against its entitlement. A
+future licensed feed must be registered with its documented basis and
+authorization reference; it must not inherit Public's permissions by name or by
+cache reuse.
 
 ## Read-only probe
 
