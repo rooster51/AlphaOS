@@ -30,7 +30,7 @@ def boundary(monkeypatch):
     service = ArchiveResearchService(
         read_snapshot=partial(read_latest_option_snapshot, storage, max_age_seconds=300),
         history_loader=loader, clock=lambda: datetime.fromisoformat(AS_OF))
-    monkeypatch.setattr(api.app.state, 'archive_research', service)
+    monkeypatch.setitem(api.app.state._state, 'archive_research', service)
     app = FastAPI()
     app.include_router(api.router)
     app.exception_handlers.update(api.app.exception_handlers)

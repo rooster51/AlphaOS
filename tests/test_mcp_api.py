@@ -31,7 +31,7 @@ def env(monkeypatch):
     provider.chain.return_value=chain()
     provider.history.return_value=dataset()
     clock=Clock()
-    monkeypatch.setattr(api.app.state,'service',ResearchService(provider,clock))
+    monkeypatch.setitem(api.app.state._state,'service',ResearchService(provider,clock))
     app=FastAPI()
     app.include_router(api.router)
     app.add_api_route('/health',api.health)
