@@ -343,9 +343,11 @@ test("split cannot overlap or bisect a bar", () => {
   }
 });
 test("unauthorized persistence remains blocked; no cloud journal route or service key is introduced", async () => {
-  const env = {
-      ...authBindings,
-      ALPHAOS_LOGIN_LIMITER: { limit: async () => ({ success: true }) },
+  const env = { ...authBindings },
+    limiter = {
+      externalLoginRateLimiter: {
+        limit: async () => ({ allowed: true, retryAfterSeconds: 60 }),
+      },
     },
     origin = "https://website.test";
   let reached = false;
@@ -359,6 +361,7 @@ test("unauthorized persistence remains blocked; no cloud journal route or servic
         new Request(origin + "/api/pivex/journal"),
         env,
         next,
+        limiter,
       )
     ).status,
     401,
@@ -374,6 +377,7 @@ test("unauthorized persistence remains blocked; no cloud journal route or servic
         }),
         env,
         next,
+        limiter,
       )
     ).status,
     403,
