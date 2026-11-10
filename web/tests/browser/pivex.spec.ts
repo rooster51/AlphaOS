@@ -48,6 +48,7 @@ test("Pivex manual research, fixtures, persistent journal and isolation", async 
     name: "Challenge Journal",
     exact: true,
   });
+  await journal.getByText("Record a closed trade", { exact: true }).click();
   for (const [label, value] of Object.entries({
     "Entry time UTC ISO": "2026-11-09T14:00:00Z",
     "Exit time UTC ISO": "2026-11-09T15:00:00Z",
@@ -95,6 +96,7 @@ test("Pivex manual research, fixtures, persistent journal and isolation", async 
   await page.screenshot({
     path: "test-results/pivex-dashboard-desktop.png",
     fullPage: true,
+    animations: "disabled",
   });
   await page
     .getByRole("button", { name: "Load synthetic long", exact: true })
@@ -110,6 +112,7 @@ test("Pivex manual research, fixtures, persistent journal and isolation", async 
   await page.screenshot({
     path: "test-results/pivex-dashboard-mobile.png",
     fullPage: true,
+    animations: "disabled",
   });
   expect(
     await page.evaluate(
@@ -128,7 +131,7 @@ test("manual account and contract evidence supports cost-aware sizing, midnight 
     exact: true,
   });
   await risk
-    .getByText("Record verified user account entry", { exact: true })
+    .getByText("Advanced Account Verification", { exact: true })
     .click();
   for (const [label, value] of Object.entries({
     "Account evidence reference": "SYNTHETIC BROWSER FIXTURE ONLY",
@@ -149,7 +152,9 @@ test("manual account and contract evidence supports cost-aware sizing, midnight 
     await risk.getByLabel(label, { exact: true }).fill(value);
   await risk.getByRole("checkbox").check();
   await risk.getByRole("button", { name: "Save account observation" }).click();
-  await expect(page.getByRole("status")).toContainText("Saved in this browser");
+  await expect(
+    page.getByRole("status", { name: "Pivex save status" }),
+  ).toContainText("Saved in this browser");
   const planner = page.getByRole("region", {
     name: "Trade Planner",
     exact: true,
