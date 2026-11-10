@@ -27,9 +27,13 @@ import {
   performance,
   net,
   storageKey,
+  mergeLocalBackup,
 } from "@/lib/pivex/journal";
 import type { Ledger } from "@/lib/pivex/journal";
 import { fixture } from "@/lib/pivex/fixtures";
+import { QuickAccountUpdate } from "./QuickAccountUpdate";
+import { BacktestResearch } from "./BacktestResearch";
+import { validateQuickReport } from "@/lib/pivex/progress";
 
 const box = "rounded border border-terminal-800 bg-terminal-900 p-5 space-y-4";
 const input =
@@ -56,7 +60,11 @@ const empty = (): Ledger => ({
 });
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section aria-label={title} className={box}>
+    <section
+      id={title.toLowerCase().replaceAll(" ", "-")}
+      aria-label={title}
+      className={box}
+    >
       <h2 className="text-base font-bold text-terminal-100">{title}</h2>
       {children}
     </section>
@@ -168,6 +176,8 @@ export function PivexDashboard() {
       );
     if (next.trades.some((t) => Date.parse(t.exitTime) > Date.now()))
       throw Error("Closed trades cannot have future exit times");
+    for (const q of next.quickReports ?? [])
+      validateQuickReport(q, new Date().toISOString());
     saveLedger(localStorage, profile, next);
     storedRaw.current = localStorage.getItem(storageKey(profile));
     setLedger(next);
@@ -279,16 +289,20 @@ export function PivexDashboard() {
       <div className="p-4 md:p-8 space-y-6 font-mono text-xs max-w-[1600px] mx-auto w-full">
         <div className="rounded border border-amber-700/50 bg-amber-950/20 p-4 text-amber-200 space-y-2">
           <p>
-            Research and simulation only. No broker connection or trade
-            execution. NAS100 and XAUUSD live research are disabled pending
-            verified specifications and licensed data coverage.
+            Research only · No broker execution. NAS100 and XAUUSD live data
+            remain unavailable pending verified contracts and licensed coverage.
           </p>
-          <p>
-            Local journal: saved on this browser and origin only, separate from
-            options and Robinhood. Challenge labels separate records; they are
-            not user identities or access controls. Anyone with this browser
-            profile can access them. No cloud sync.
-          </p>
+          <details>
+            <summary className="cursor-pointer">
+              Browser-local storage — shared browser access
+            </summary>
+            <p>
+              Local journal: saved on this browser and origin only, separate
+              from options and Robinhood. Challenge labels separate records;
+              they are not user identities or access controls. Anyone with this
+              browser profile can access them. No cloud sync.
+            </p>
+          </details>
         </div>
         <div className="flex flex-wrap items-end gap-3">
           <label className="space-y-1">
@@ -322,142 +336,192 @@ export function PivexDashboard() {
             Export backup
           </button>
         </div>
-        <p role="status" aria-live="polite" className="text-amber-200 min-h-4">
+        <p
+          role="status"
+          aria-label="Pivex save status"
+          aria-live="polite"
+          className="text-amber-200 min-h-4"
+        >
           {notice}
         </p>
+        <nav
+          aria-label="Pivex research questions"
+          className="flex flex-wrap gap-3 text-profit underline"
+        >
+          <a href="#challenge-overview">Challenge progress</a>
+          <a href="#market-setup-scanner">Market setup</a>
+          <a href="#trade-planner">Modeled risk</a>
+          <a href="#historical-backtesting">Historical performance</a>
+        </nav>
         <Section title="Challenge Overview">
-          <dl className="grid grid-cols-2 xl:grid-cols-4 gap-3">
-            <Metric
-              label="Configured starting balance"
-              value={money(rules.startingBalance)}
-            />
-            <Metric
-              label="Profit target"
-              value={`${pct(rules.profitTarget)} / ${money(rules.startingBalance * rules.profitTarget)}`}
-            />
-            <Metric
-              label="Target balance"
-              value={money(rules.startingBalance * (1 + rules.profitTarget))}
-            />
-            <Metric
-              label="Overall equity floor"
-              value={money(risk.overallFloor)}
-            />
-          </dl>
-          <p className="text-terminal-400">
-            Daily drawdown: {pct(rules.dailyDrawdown)} of 00:00 UTC equity ·
-            Overall: {pct(rules.overallDrawdown)} of original balance · Minimum{" "}
-            {rules.minDays} trading days · Largest profitable day ≤{" "}
-            {pct(rules.consistency)} of total net realized profit.
-          </p>
-          <p>
-            No fixed completion deadline by default; active plan, inactivity
-            rules and stage must be confirmed. Current stage: {rules.stage}.
-            Rule version: {rules.version}.
-          </p>
+          <QuickAccountUpdate
+            reports={ledger.quickReports ?? []}
+            rules={rules}
+            now={now}
+            days={stats.tradingDays}
+            dailyAllowance={
+              risk.dailyAllowance == null
+                ? null
+                : Math.max(0, risk.dailyAllowance - (snapshot?.openRisk ?? 0))
+            }
+            ready={ready}
+            onSave={(q) =>
+              attempt(() => {
+                validateQuickReport(q, new Date().toISOString());
+                commit({
+                  ...ledger,
+                  quickReports: [...(ledger.quickReports ?? []), q],
+                  snapshot: null,
+                });
+              })
+            }
+          />
           <details>
             <summary className="cursor-pointer text-profit">
-              Rule provenance and configuration ({ledger.rules.length} versions)
+              Challenge targets and rule provenance
             </summary>
-            <div className="space-y-3 mt-3">
-              <p>
-                {rules.source} Reviewed: {rules.reviewedAt}. Agreement:{" "}
-                {rules.agreementStatus}.
-              </p>
-              <p className="text-amber-200">
-                Official compliance: Unable to verify. Public terms differ from
-                help-center wording on consistency and the daily baseline. An
-                attestation records your review; it does not verify platform
-                compliance or intraday equity history.
-              </p>
-              <ul className="list-disc pl-5 space-y-1">
-                <li>
-                  <a
-                    className="underline"
-                    href="https://help.pivex.com/en/support/solutions/articles/156000324695-what-are-the-drawdown-rules-at-pivex-"
-                  >
-                    Drawdown guidance
-                  </a>
-                </li>
-                <li>
-                  <a
-                    className="underline"
-                    href="https://help.pivex.com/en/support/solutions/articles/156000324708-what-is-a-consistency-rule-and-when-does-it-apply-"
-                  >
-                    Day-based consistency guidance
-                  </a>
-                </li>
-                <li>
-                  <a
-                    className="underline"
-                    href="https://help.pivex.com/en/support/solutions/articles/156000322627-what-are-the-restricted-and-prohibited-trading-strategies-at-pivex-"
-                  >
-                    News and prohibited strategies
-                  </a>
-                </li>
-                <li>
-                  <a
-                    className="underline"
-                    href="https://help.pivex.com/en/support/solutions/articles/156000390426-is-high-frequency-trading-or-copy-trading-allowed-at-pivex-"
-                  >
-                    HFT and copying guidance
-                  </a>
-                </li>
-                <li>
-                  <a
-                    className="underline"
-                    href="https://legal.pivexfunded.com/terms"
-                  >
-                    Legal terms, sections 7–8
-                  </a>
-                </li>
-              </ul>
-              <p>
-                Public-source review: 10 November 2026. Stop loss required by
-                guidance. Review prohibited latency/arbitrage, grid, stacking,
-                copying and unauthorized automation. Help guidance allows
-                challenge news trading and describes a ±5-minute high-impact
-                news window in the funded stage. It flags sub-30-second trades
-                as HFT, with profit-share conditions; this is not a universal
-                30-second minimum-hold permission. Martingale, hedging
-                permissions, stage differences and plan add-ons require the
-                active agreement. No automated interpretation grants permission.
-              </p>
-              <label className="block">
-                New rule version (JSON)
-                <textarea
-                  className={`${input} h-64 mt-2`}
-                  value={rulesText}
-                  onChange={(e) => setRulesText(e.target.value)}
+            <div className="space-y-4 mt-4">
+              <dl className="grid grid-cols-2 xl:grid-cols-4 gap-3">
+                <Metric
+                  label="Configured starting balance"
+                  value={money(rules.startingBalance)}
                 />
-              </label>
-              <button
-                disabled={!ready}
-                className={button}
-                onClick={() =>
-                  attempt(() => {
-                    const r = validateRules(JSON.parse(rulesText));
-                    if (ledger.rules.some((v) => v.version === r.version))
-                      throw Error(
-                        "Use a new rule version; prior provenance is immutable",
-                      );
-                    commit({
-                      ...ledger,
-                      rules: [...ledger.rules, r],
-                      snapshot: null,
-                    });
-                  })
-                }
-              >
-                Append rule version
-              </button>
-              <pre className="overflow-auto max-h-40 text-terminal-400">
-                {JSON.stringify(ledger.rules, null, 2)}
-              </pre>
+                <Metric
+                  label="Profit target"
+                  value={`${pct(rules.profitTarget)} / ${money(rules.startingBalance * rules.profitTarget)}`}
+                />
+                <Metric
+                  label="Target balance"
+                  value={money(
+                    rules.startingBalance * (1 + rules.profitTarget),
+                  )}
+                />
+                <Metric
+                  label="Overall equity floor"
+                  value={money(risk.overallFloor)}
+                />
+              </dl>
+              <p className="text-terminal-400">
+                Daily drawdown: {pct(rules.dailyDrawdown)} of 00:00 UTC equity ·
+                Overall: {pct(rules.overallDrawdown)} of original balance ·
+                Minimum {rules.minDays} trading days · Largest profitable day ≤{" "}
+                {pct(rules.consistency)} of total net realized profit.
+              </p>
+              <p>
+                No fixed completion deadline by default; active plan, inactivity
+                rules and stage must be confirmed. Current stage: {rules.stage}.
+                Rule version: {rules.version}.
+              </p>
+              <details>
+                <summary className="cursor-pointer text-profit">
+                  Rule provenance and configuration ({ledger.rules.length}{" "}
+                  versions)
+                </summary>
+                <div className="space-y-3 mt-3">
+                  <p>
+                    {rules.source} Reviewed: {rules.reviewedAt}. Agreement:{" "}
+                    {rules.agreementStatus}.
+                  </p>
+                  <p className="text-amber-200">
+                    Official compliance: Unable to verify. Public terms differ
+                    from help-center wording on consistency and the daily
+                    baseline. An attestation records your review; it does not
+                    verify platform compliance or intraday equity history.
+                  </p>
+                  <ul className="list-disc pl-5 space-y-1">
+                    <li>
+                      <a
+                        className="underline"
+                        href="https://help.pivex.com/en/support/solutions/articles/156000324695-what-are-the-drawdown-rules-at-pivex-"
+                      >
+                        Drawdown guidance
+                      </a>
+                    </li>
+                    <li>
+                      <a
+                        className="underline"
+                        href="https://help.pivex.com/en/support/solutions/articles/156000324708-what-is-a-consistency-rule-and-when-does-it-apply-"
+                      >
+                        Day-based consistency guidance
+                      </a>
+                    </li>
+                    <li>
+                      <a
+                        className="underline"
+                        href="https://help.pivex.com/en/support/solutions/articles/156000322627-what-are-the-restricted-and-prohibited-trading-strategies-at-pivex-"
+                      >
+                        News and prohibited strategies
+                      </a>
+                    </li>
+                    <li>
+                      <a
+                        className="underline"
+                        href="https://help.pivex.com/en/support/solutions/articles/156000390426-is-high-frequency-trading-or-copy-trading-allowed-at-pivex-"
+                      >
+                        HFT and copying guidance
+                      </a>
+                    </li>
+                    <li>
+                      <a
+                        className="underline"
+                        href="https://legal.pivexfunded.com/terms"
+                      >
+                        Legal terms, sections 7–8
+                      </a>
+                    </li>
+                  </ul>
+                  <p>
+                    Public-source review: 10 November 2026. Stop loss required
+                    by guidance. Review prohibited latency/arbitrage, grid,
+                    stacking, copying and unauthorized automation. Help guidance
+                    allows challenge news trading and describes a ±5-minute
+                    high-impact news window in the funded stage. It flags
+                    sub-30-second trades as HFT, with profit-share conditions;
+                    this is not a universal 30-second minimum-hold permission.
+                    Martingale, hedging permissions, stage differences and plan
+                    add-ons require the active agreement. No automated
+                    interpretation grants permission.
+                  </p>
+                  <label className="block">
+                    New rule version (JSON)
+                    <textarea
+                      className={`${input} h-64 mt-2`}
+                      value={rulesText}
+                      onChange={(e) => setRulesText(e.target.value)}
+                    />
+                  </label>
+                  <button
+                    disabled={!ready}
+                    className={button}
+                    onClick={() =>
+                      attempt(() => {
+                        const r = validateRules(JSON.parse(rulesText));
+                        if (ledger.rules.some((v) => v.version === r.version))
+                          throw Error(
+                            "Use a new rule version; prior provenance is immutable",
+                          );
+                        commit({
+                          ...ledger,
+                          rules: [...ledger.rules, r],
+                          snapshot: null,
+                        });
+                      })
+                    }
+                  >
+                    Append rule version
+                  </button>
+                  <pre className="overflow-auto max-h-40 text-terminal-400">
+                    {JSON.stringify(ledger.rules, null, 2)}
+                  </pre>
+                </div>
+              </details>
             </div>
           </details>
         </Section>
         <Section title="Market Setup Scanner">
+          <h3 className="text-profit font-bold">
+            Is there a valid market setup?
+          </h3>
           <div className="grid md:grid-cols-2 gap-3">
             {instruments.map((i) => (
               <div
@@ -545,6 +609,7 @@ export function PivexDashboard() {
           </div>
         </Section>
         <Section title="Trade Planner">
+          <h3 className="text-profit font-bold">What is the modeled risk?</h3>
           <p>
             Instrument-specific costs and USD account sizing. A modeled size is
             not a qualified setup or permission to trade.
@@ -773,7 +838,7 @@ export function PivexDashboard() {
           </p>
           <details>
             <summary className="cursor-pointer text-profit">
-              Record verified user account entry
+              Advanced Account Verification
             </summary>
             <form onSubmit={snapshotSubmit} className="space-y-4 mt-4">
               <p>
@@ -840,58 +905,67 @@ export function PivexDashboard() {
             costs are subtracted once. Open positions belong in the account
             observation. No sample history.
           </p>
-          <form onSubmit={tradeSubmit} className="space-y-4">
-            <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-3">
-              <label>
-                Journal instrument
-                <select className={input} name="instrument">
-                  {instruments.map((i) => (
-                    <option key={i.id}>{i.id}</option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                Direction
-                <select className={input} name="direction">
-                  <option value="long">Long</option>
-                  <option value="short">Short</option>
-                </select>
-              </label>
-              <Field name="entryTime" label="Entry time UTC ISO" type="text" />
-              <Field name="exitTime" label="Exit time UTC ISO" type="text" />
-              {[
-                ["entry", "Journal entry price"],
-                ["exit", "Exit price"],
-                ["stop", "Initial stop price"],
-                ["target", "Initial target price"],
-                ["size", "Position size lots"],
-                ["fees", "Trade fees USD"],
-                ["otherCosts", "Other costs USD"],
-                ["realizedPnl", "Trade gross realized P&L USD"],
-                ["initialRisk", "Initial planned risk USD"],
-              ].map(([name, label]) => (
-                <Field key={name} name={name} label={label} />
-              ))}
-              <Field name="setup" label="Setup classification" type="text" />
-              <label>
-                Rule adherence
-                <select className={input} name="adherence">
-                  <option value="unknown">Unknown</option>
-                  <option value="adhered">Adhered (user attested)</option>
-                  <option value="breach">Breach</option>
-                </select>
-              </label>
-              <Field name="exitReason" label="Exit reason" type="text" />
-              <Field
-                name="source"
-                label="Trade evidence reference"
-                type="text"
-              />
-            </div>
-            <button className={button} disabled={!ready}>
-              Record closed trade
-            </button>
-          </form>
+          <details>
+            <summary className="cursor-pointer text-profit">
+              Record a closed trade
+            </summary>
+            <form onSubmit={tradeSubmit} className="space-y-4 mt-4">
+              <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-3">
+                <label>
+                  Journal instrument
+                  <select className={input} name="instrument">
+                    {instruments.map((i) => (
+                      <option key={i.id}>{i.id}</option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Direction
+                  <select className={input} name="direction">
+                    <option value="long">Long</option>
+                    <option value="short">Short</option>
+                  </select>
+                </label>
+                <Field
+                  name="entryTime"
+                  label="Entry time UTC ISO"
+                  type="text"
+                />
+                <Field name="exitTime" label="Exit time UTC ISO" type="text" />
+                {[
+                  ["entry", "Journal entry price"],
+                  ["exit", "Exit price"],
+                  ["stop", "Initial stop price"],
+                  ["target", "Initial target price"],
+                  ["size", "Position size lots"],
+                  ["fees", "Trade fees USD"],
+                  ["otherCosts", "Other costs USD"],
+                  ["realizedPnl", "Trade gross realized P&L USD"],
+                  ["initialRisk", "Initial planned risk USD"],
+                ].map(([name, label]) => (
+                  <Field key={name} name={name} label={label} />
+                ))}
+                <Field name="setup" label="Setup classification" type="text" />
+                <label>
+                  Rule adherence
+                  <select className={input} name="adherence">
+                    <option value="unknown">Unknown</option>
+                    <option value="adhered">Adhered (user attested)</option>
+                    <option value="breach">Breach</option>
+                  </select>
+                </label>
+                <Field name="exitReason" label="Exit reason" type="text" />
+                <Field
+                  name="source"
+                  label="Trade evidence reference"
+                  type="text"
+                />
+              </div>
+              <button className={button} disabled={!ready}>
+                Record closed trade
+              </button>
+            </form>
+          </details>
           <div className="overflow-x-auto">
             <table className="w-full text-left whitespace-nowrap">
               <caption className="text-left py-3 text-terminal-400">
@@ -975,9 +1049,28 @@ export function PivexDashboard() {
               >
                 Import backup and replace local challenge
               </button>
+              <button
+                disabled={!ready}
+                className={button}
+                onClick={() =>
+                  attempt(() => {
+                    if (backup.length > 5000000)
+                      throw Error("Backup exceeds 5 MB");
+                    commit(
+                      mergeLocalBackup(
+                        ledger,
+                        validateLedger(JSON.parse(backup)),
+                      ),
+                    );
+                  })
+                }
+              >
+                Merge backup without duplicate IDs
+              </button>
             </div>
           </details>
         </Section>
+        <BacktestResearch />
         <Section title="Strategy Performance">
           <p>
             Local manual journal only; not a verified complete account record.
