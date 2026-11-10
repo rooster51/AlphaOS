@@ -331,6 +331,27 @@ def test_provider_skipped_rows_are_reported_and_completed_session_is_incomplete(
     assert "incomplete_session" in snapshot.warnings
 
 
+def test_expected_count_from_diagnostics_is_not_reported_as_unavailable(monkeypatch):
+    import modules.market_data_gateway as gateway
+    rows = [dict(symbol="SPY", aggregation="ONE_MINUTE",
+                 timestamp="2026-10-02T19:58:00+00:00", open=500, high=501, low=499,
+                 close=500.5, volume=10),
+            dict(symbol="SPY", aggregation="ONE_MINUTE",
+                 timestamp="2026-10-02T19:59:00+00:00", open=500, high=501, low=499,
+                 close=500.5, volume=10)]
+    monkeypatch.setattr(gateway, "fetch_intraday_bars", lambda *args, **kwargs: (rows, {
+        "provider_expected_bars": 2, "provider_received_bars": 2,
+        "provider_skipped_incomplete_bars": 0}))
+    provider = PublicMarketDataProvider(context=lambda: (object(), "synthetic-account"),
+                                        clock=lambda: CLOSED)
+    result = provider.candles("SPY", "1m", "regular", 390)
+    assert result.expected_bars == 2
+    assert "expected_bar_count_unavailable" not in result.warnings
+    snapshot = build_snapshot(result, now=CLOSED)
+    assert snapshot.completeness == "complete"
+    assert "expected_bar_count_unavailable" not in snapshot.warnings
+
+
 def test_unknown_or_unsupported_requests_are_rejected_without_provider_calls():
     provider = PublicMarketDataProvider(context=lambda: (_ for _ in ()).throw(AssertionError("must not authenticate")),
                                         clock=lambda: NOW)
