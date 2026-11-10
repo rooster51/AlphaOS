@@ -16,6 +16,7 @@ from modules.data_entitlements import PRIVATE_RESEARCH, EntitlementDecision
 from scripts.market_data_probe import main, probe_once, summarize
 
 NOW = datetime(2026, 10, 2, 14, 0, tzinfo=timezone.utc)
+CLOSED = datetime(2026, 10, 2, 21, 0, tzinfo=timezone.utc)
 
 
 class FakeProvider:
@@ -57,7 +58,7 @@ class FakeProvider:
 
 
 def test_probe_reports_normalized_measurements_and_quality():
-    result = probe_once(FakeProvider(), "SPY", "1m", clock=lambda: NOW)
+    result = probe_once(FakeProvider(), "SPY", "1m", clock=lambda: CLOSED)
     assert result["available"] is True
     assert result["quote_latency_ms"] is not None
     assert result["candle_latency_ms"] is not None
