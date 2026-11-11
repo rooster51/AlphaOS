@@ -9,6 +9,7 @@ import {
   MAX_LEG_QUANTITY,
   buildStructureRequest,
   structureLabel,
+  parseStructureRequest,
   type LegDraft,
   type StructureForm,
   type StructureRequestInput,
@@ -153,6 +154,16 @@ function Section({
 
 const EMPTY_LEG: LegDraft = { type: "Call", action: "Buy", strike: "", quantity: "1" };
 
+function QuoteProvenance({data}: {data: StructureView['marketData']}) {
+  if (data.kind === 'hypothetical') return <p className="font-mono text-xs text-terminal-400">Hypothetical scenario — no verified market quote provenance.</p>;
+  return <div className="space-y-2 break-all font-mono text-xs text-terminal-300">
+    <p>Verified archive observations; not executable fills. Snapshot: {data.snapshotId}</p>
+    <p>SHA-256: {data.sha256} · Evaluated: {data.evaluatedAt}</p>
+    <p>Provider: {data.provider} · Observed: {data.observedAt} · Archive age {data.archiveAge?.toFixed(1)}s at evaluation</p>
+    {data.legs.map(leg=><p key={leg.contract}>{leg.contract} · bid {leg.bid} at {leg.bidAt} · ask {leg.ask} at {leg.askAt} · oldest quote age {leg.age.toFixed(1)}s at evaluation</p>)}
+  </div>;
+}
+
 export function StructureWorkbench() {
   const [symbol, setSymbol] = useState<"SPY" | "QQQ">("QQQ");
   const [expiration, setExpiration] = useState("");
@@ -161,6 +172,9 @@ export function StructureWorkbench() {
   const [side, setSide] = useState<"debit" | "credit">("debit");
   const [packagePrice, setPackagePrice] = useState("");
   const [fees, setFees] = useState("0");
+  const [archiveBacked, setArchiveBacked] = useState(false);
+  const [snapshotId, setSnapshotId] = useState("");
+  const [snapshotHash, setSnapshotHash] = useState("");
   const [legs, setLegs] = useState<LegDraft[]>([{ ...EMPTY_LEG }]);
   const [thesis, setThesis] = useState("");
   const [formErrors, setFormErrors] = useState<string[]>([]);
@@ -238,6 +252,16 @@ export function StructureWorkbench() {
       return null;
     }
     setFormErrors([]);
+    if (archiveBacked) {
+      const payload = parseStructureRequest({...result.value,
+        market_data: {snapshot_id: snapshotId, archive_sha256: snapshotHash},
+        legs: result.value.legs.map((leg,index)=>({...leg,contract: legs[index].contract ?? ''}))});
+      if (!payload) {
+        setFormErrors(['Enter an archive snapshot ID, SHA-256 and contract identifier for every leg.']);
+        return null;
+      }
+      return payload;
+    }
     return result.value;
   }
 
@@ -320,6 +344,19 @@ export function StructureWorkbench() {
           title="Scenario inputs"
           subtitle="Symbol, expiration, research date and scenario spot are all required by the backend."
         >
+          <label className="block font-mono text-xs text-terminal-300">
+            <input type="checkbox" checked={archiveBacked} onChange={e=>setArchiveBacked(e.target.checked)} />{' '}
+            Validate against a verified archive snapshot
+          </label>
+          {archiveBacked ? <div className="grid gap-3 md:grid-cols-2">
+            <Field id="structure-snapshot-id" label="Archive snapshot ID">
+              <input id="structure-snapshot-id" className={INPUT} value={snapshotId} onChange={e=>setSnapshotId(e.target.value)} />
+            </Field>
+            <Field id="structure-snapshot-hash" label="Archive SHA-256">
+              <input id="structure-snapshot-hash" className={INPUT} value={snapshotHash} onChange={e=>setSnapshotHash(e.target.value)} />
+            </Field>
+            <p className="font-mono text-xs text-terminal-400 md:col-span-2">Use references from the archive research response. The backend checks every contract and current quote age. Spot and package cashflow must match observed buy ask / sell bid. Snapshot rollover fails closed; no automatic repricing.</p>
+          </div> : <p className="font-mono text-xs text-terminal-400">Hypothetical scenario: entered prices are not verified market quotes.</p>}
           <div className="grid gap-4 md:grid-cols-4">
             <Field id="structure-symbol" label="Symbol">
               <select
@@ -437,6 +474,10 @@ export function StructureWorkbench() {
           <div className="space-y-3">
             {legs.map((leg, index) => (
               <div key={index} className="grid gap-3 md:grid-cols-5">
+                {archiveBacked && <Field id={`leg-contract-${index}`} label={`Leg ${index+1} contract ID`}>
+                  <input id={`leg-contract-${index}`} className={INPUT} value={leg.contract ?? ''}
+                    onChange={e=>updateLeg(index,{contract:e.target.value})} />
+                </Field>}
                 <Field id={`leg-type-${index}`} label={`Leg ${index + 1} type`}>
                   <select
                     id={`leg-type-${index}`}
@@ -548,7 +589,8 @@ export function StructureWorkbench() {
               <div className="flex flex-wrap items-center gap-2">
                 <StatusPill label={(single.view.family ?? "unknown").toUpperCase()} variant="neutral" />
                 <StatusPill label={`DIRECTION ${(single.view.direction ?? "unknown").toUpperCase()}`} variant="neutral" />
-                <StatusPill label="SUPPLIED CASHFLOW" variant="mock" />
+                <StatusPill label={single.view.marketData.kind === 'verified_archive' ? 'VERIFIED ARCHIVE' : 'SUPPLIED CASHFLOW'}
+                  variant={single.view.marketData.kind === 'verified_archive' ? 'archive' : 'mock'} />
                 <span className="font-mono text-[11px] text-terminal-400">
                   {single.view.symbol} · expiration {displayDate(single.view.expiration)} · as of {displayDate(single.view.asOf)} · spot {price(single.view.spot)}
                 </span>
@@ -667,6 +709,7 @@ export function StructureWorkbench() {
               <p className="font-mono text-[10px] text-terminal-500">
                 Pricing assumption: {single.view.pricingAssumption ?? "Unavailable"}
               </p>
+              <QuoteProvenance data={single.view.marketData} />
             </Section>
 
             <Section
@@ -811,6 +854,10 @@ export function StructureWorkbench() {
             {comparison.view.thesis && (
               <p className="font-mono text-[11px] text-terminal-400">Thesis: {comparison.view.thesis}</p>
             )}
+            {comparison.view.candidates.map(row=><div key={`provenance-${row.index}`}>
+              <p className="font-mono text-xs text-terminal-400">Candidate {row.index+1} quote provenance</p>
+              <QuoteProvenance data={row.marketData} />
+            </div>)}
             {comparison.view.noCandidate || comparison.view.candidates.length === 0 ? (
               <p className="font-mono text-xs text-terminal-500">
                 The backend returned no comparable candidates. Invalid or insufficient inputs are listed below.

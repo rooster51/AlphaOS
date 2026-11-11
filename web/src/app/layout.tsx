@@ -5,6 +5,7 @@ import { Sidebar } from "@/components/shell/Sidebar";
 export const metadata: Metadata = {
   title: "AlphaOS | Quantitative Options Research Terminal",
   description: "Descriptive options research, deterministic strategy routing, and risk analytics.",
+  robots: { index: false, follow: false },
 };
 
 export default function RootLayout({

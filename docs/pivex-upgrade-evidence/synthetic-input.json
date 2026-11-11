@@ -1,0 +1,609 @@
+{
+  "dataset": {
+    "schema": 1,
+    "instrument": "NAS100",
+    "source": "SYNTHETIC replay fixture v1 — sparse arbitrary bars, no actual market history",
+    "mode": "fixture",
+    "mapping": {
+      "instrument": "NAS100",
+      "instrumentType": "synthetic",
+      "providerSymbol": "SYNTHETIC",
+      "brokerSymbol": "SYNTHETIC",
+      "contractReference": "Synthetic test contract only",
+      "attested": true,
+      "rightsReference": "Generated test fixture; no vendor data",
+      "priceBasis": "mid"
+    },
+    "candles": {
+      "h1": [
+        {
+          "openTime": "2026-11-08T00:00:00.000Z",
+          "closeTime": "2026-11-08T01:00:00.000Z",
+          "open": 100,
+          "close": 101,
+          "low": 99,
+          "high": 102,
+          "complete": true
+        },
+        {
+          "openTime": "2026-11-08T01:00:00.000Z",
+          "closeTime": "2026-11-08T02:00:00.000Z",
+          "open": 102,
+          "close": 103,
+          "low": 101,
+          "high": 104,
+          "complete": true
+        },
+        {
+          "openTime": "2026-11-08T02:00:00.000Z",
+          "closeTime": "2026-11-08T03:00:00.000Z",
+          "open": 104,
+          "close": 105,
+          "low": 103,
+          "high": 106,
+          "complete": true
+        },
+        {
+          "openTime": "2026-11-08T03:00:00.000Z",
+          "closeTime": "2026-11-08T04:00:00.000Z",
+          "open": 106,
+          "close": 107,
+          "low": 105,
+          "high": 108,
+          "complete": true
+        },
+        {
+          "openTime": "2026-11-08T04:00:00.000Z",
+          "closeTime": "2026-11-08T05:00:00.000Z",
+          "open": 108,
+          "close": 109,
+          "low": 107,
+          "high": 110,
+          "complete": true
+        },
+        {
+          "openTime": "2026-11-08T05:00:00.000Z",
+          "closeTime": "2026-11-08T06:00:00.000Z",
+          "open": 110,
+          "close": 111,
+          "low": 109,
+          "high": 112,
+          "complete": true
+        },
+        {
+          "openTime": "2026-11-08T06:00:00.000Z",
+          "closeTime": "2026-11-08T07:00:00.000Z",
+          "open": 112,
+          "close": 113,
+          "low": 111,
+          "high": 114,
+          "complete": true
+        },
+        {
+          "openTime": "2026-11-08T07:00:00.000Z",
+          "closeTime": "2026-11-08T08:00:00.000Z",
+          "open": 114,
+          "close": 115,
+          "low": 113,
+          "high": 116,
+          "complete": true
+        },
+        {
+          "openTime": "2026-11-08T08:00:00.000Z",
+          "closeTime": "2026-11-08T09:00:00.000Z",
+          "open": 116,
+          "close": 117,
+          "low": 115,
+          "high": 118,
+          "complete": true
+        },
+        {
+          "openTime": "2026-11-08T09:00:00.000Z",
+          "closeTime": "2026-11-08T10:00:00.000Z",
+          "open": 118,
+          "close": 119,
+          "low": 117,
+          "high": 120,
+          "complete": true
+        },
+        {
+          "openTime": "2026-11-08T10:00:00.000Z",
+          "closeTime": "2026-11-08T11:00:00.000Z",
+          "open": 120,
+          "close": 121,
+          "low": 119,
+          "high": 122,
+          "complete": true
+        },
+        {
+          "openTime": "2026-11-08T11:00:00.000Z",
+          "closeTime": "2026-11-08T12:00:00.000Z",
+          "open": 122,
+          "close": 123,
+          "low": 121,
+          "high": 124,
+          "complete": true
+        },
+        {
+          "openTime": "2026-11-08T12:00:00.000Z",
+          "closeTime": "2026-11-08T13:00:00.000Z",
+          "open": 124,
+          "close": 125,
+          "low": 123,
+          "high": 126,
+          "complete": true
+        },
+        {
+          "openTime": "2026-11-08T13:00:00.000Z",
+          "closeTime": "2026-11-08T14:00:00.000Z",
+          "open": 126,
+          "close": 127,
+          "low": 125,
+          "high": 128,
+          "complete": true
+        },
+        {
+          "openTime": "2026-11-08T14:00:00.000Z",
+          "closeTime": "2026-11-08T15:00:00.000Z",
+          "open": 128,
+          "close": 129,
+          "low": 127,
+          "high": 130,
+          "complete": true
+        },
+        {
+          "openTime": "2026-11-08T15:00:00.000Z",
+          "closeTime": "2026-11-08T16:00:00.000Z",
+          "open": 130,
+          "close": 131,
+          "low": 129,
+          "high": 132,
+          "complete": true
+        },
+        {
+          "openTime": "2026-11-08T16:00:00.000Z",
+          "closeTime": "2026-11-08T17:00:00.000Z",
+          "open": 132,
+          "close": 133,
+          "low": 131,
+          "high": 134,
+          "complete": true
+        },
+        {
+          "openTime": "2026-11-08T17:00:00.000Z",
+          "closeTime": "2026-11-08T18:00:00.000Z",
+          "open": 134,
+          "close": 135,
+          "low": 133,
+          "high": 136,
+          "complete": true
+        },
+        {
+          "openTime": "2026-11-08T18:00:00.000Z",
+          "closeTime": "2026-11-08T19:00:00.000Z",
+          "open": 136,
+          "close": 137,
+          "low": 135,
+          "high": 138,
+          "complete": true
+        },
+        {
+          "openTime": "2026-11-08T19:00:00.000Z",
+          "closeTime": "2026-11-08T20:00:00.000Z",
+          "open": 138,
+          "close": 139,
+          "low": 137,
+          "high": 140,
+          "complete": true
+        },
+        {
+          "openTime": "2026-11-08T20:00:00.000Z",
+          "closeTime": "2026-11-08T21:00:00.000Z",
+          "open": 140,
+          "close": 141,
+          "low": 139,
+          "high": 142,
+          "complete": true
+        },
+        {
+          "openTime": "2026-11-08T21:00:00.000Z",
+          "closeTime": "2026-11-08T22:00:00.000Z",
+          "open": 142,
+          "close": 143,
+          "low": 141,
+          "high": 144,
+          "complete": true
+        },
+        {
+          "openTime": "2026-11-08T22:00:00.000Z",
+          "closeTime": "2026-11-08T23:00:00.000Z",
+          "open": 144,
+          "close": 145,
+          "low": 143,
+          "high": 146,
+          "complete": true
+        },
+        {
+          "openTime": "2026-11-08T23:00:00.000Z",
+          "closeTime": "2026-11-09T00:00:00.000Z",
+          "open": 146,
+          "close": 150,
+          "low": 144,
+          "high": 152,
+          "complete": true
+        },
+        {
+          "openTime": "2026-11-09T00:00:00.000Z",
+          "closeTime": "2026-11-09T01:00:00.000Z",
+          "open": 100,
+          "close": 101,
+          "low": 99,
+          "high": 102,
+          "complete": true
+        },
+        {
+          "openTime": "2026-11-09T01:00:00.000Z",
+          "closeTime": "2026-11-09T02:00:00.000Z",
+          "open": 102,
+          "close": 103,
+          "low": 101,
+          "high": 104,
+          "complete": true
+        },
+        {
+          "openTime": "2026-11-09T02:00:00.000Z",
+          "closeTime": "2026-11-09T03:00:00.000Z",
+          "open": 104,
+          "close": 105,
+          "low": 103,
+          "high": 106,
+          "complete": true
+        },
+        {
+          "openTime": "2026-11-09T03:00:00.000Z",
+          "closeTime": "2026-11-09T04:00:00.000Z",
+          "open": 106,
+          "close": 107,
+          "low": 105,
+          "high": 108,
+          "complete": true
+        },
+        {
+          "openTime": "2026-11-09T04:00:00.000Z",
+          "closeTime": "2026-11-09T05:00:00.000Z",
+          "open": 108,
+          "close": 109,
+          "low": 107,
+          "high": 110,
+          "complete": true
+        },
+        {
+          "openTime": "2026-11-09T05:00:00.000Z",
+          "closeTime": "2026-11-09T06:00:00.000Z",
+          "open": 110,
+          "close": 111,
+          "low": 109,
+          "high": 112,
+          "complete": true
+        },
+        {
+          "openTime": "2026-11-09T06:00:00.000Z",
+          "closeTime": "2026-11-09T07:00:00.000Z",
+          "open": 112,
+          "close": 113,
+          "low": 111,
+          "high": 114,
+          "complete": true
+        },
+        {
+          "openTime": "2026-11-09T07:00:00.000Z",
+          "closeTime": "2026-11-09T08:00:00.000Z",
+          "open": 114,
+          "close": 115,
+          "low": 113,
+          "high": 116,
+          "complete": true
+        },
+        {
+          "openTime": "2026-11-09T08:00:00.000Z",
+          "closeTime": "2026-11-09T09:00:00.000Z",
+          "open": 116,
+          "close": 117,
+          "low": 115,
+          "high": 118,
+          "complete": true
+        },
+        {
+          "openTime": "2026-11-09T09:00:00.000Z",
+          "closeTime": "2026-11-09T10:00:00.000Z",
+          "open": 118,
+          "close": 119,
+          "low": 117,
+          "high": 120,
+          "complete": true
+        },
+        {
+          "openTime": "2026-11-09T10:00:00.000Z",
+          "closeTime": "2026-11-09T11:00:00.000Z",
+          "open": 120,
+          "close": 121,
+          "low": 119,
+          "high": 122,
+          "complete": true
+        },
+        {
+          "openTime": "2026-11-09T11:00:00.000Z",
+          "closeTime": "2026-11-09T12:00:00.000Z",
+          "open": 122,
+          "close": 123,
+          "low": 121,
+          "high": 124,
+          "complete": true
+        },
+        {
+          "openTime": "2026-11-09T12:00:00.000Z",
+          "closeTime": "2026-11-09T13:00:00.000Z",
+          "open": 124,
+          "close": 125,
+          "low": 123,
+          "high": 126,
+          "complete": true
+        },
+        {
+          "openTime": "2026-11-09T13:00:00.000Z",
+          "closeTime": "2026-11-09T14:00:00.000Z",
+          "open": 126,
+          "close": 127,
+          "low": 125,
+          "high": 128,
+          "complete": true
+        },
+        {
+          "openTime": "2026-11-09T14:00:00.000Z",
+          "closeTime": "2026-11-09T15:00:00.000Z",
+          "open": 128,
+          "close": 129,
+          "low": 127,
+          "high": 130,
+          "complete": true
+        },
+        {
+          "openTime": "2026-11-09T15:00:00.000Z",
+          "closeTime": "2026-11-09T16:00:00.000Z",
+          "open": 130,
+          "close": 131,
+          "low": 129,
+          "high": 132,
+          "complete": true
+        },
+        {
+          "openTime": "2026-11-09T16:00:00.000Z",
+          "closeTime": "2026-11-09T17:00:00.000Z",
+          "open": 132,
+          "close": 133,
+          "low": 131,
+          "high": 134,
+          "complete": true
+        },
+        {
+          "openTime": "2026-11-09T17:00:00.000Z",
+          "closeTime": "2026-11-09T18:00:00.000Z",
+          "open": 134,
+          "close": 135,
+          "low": 133,
+          "high": 136,
+          "complete": true
+        },
+        {
+          "openTime": "2026-11-09T18:00:00.000Z",
+          "closeTime": "2026-11-09T19:00:00.000Z",
+          "open": 136,
+          "close": 137,
+          "low": 135,
+          "high": 138,
+          "complete": true
+        },
+        {
+          "openTime": "2026-11-09T19:00:00.000Z",
+          "closeTime": "2026-11-09T20:00:00.000Z",
+          "open": 138,
+          "close": 139,
+          "low": 137,
+          "high": 140,
+          "complete": true
+        },
+        {
+          "openTime": "2026-11-09T20:00:00.000Z",
+          "closeTime": "2026-11-09T21:00:00.000Z",
+          "open": 140,
+          "close": 141,
+          "low": 139,
+          "high": 142,
+          "complete": true
+        },
+        {
+          "openTime": "2026-11-09T21:00:00.000Z",
+          "closeTime": "2026-11-09T22:00:00.000Z",
+          "open": 142,
+          "close": 143,
+          "low": 141,
+          "high": 144,
+          "complete": true
+        },
+        {
+          "openTime": "2026-11-09T22:00:00.000Z",
+          "closeTime": "2026-11-09T23:00:00.000Z",
+          "open": 144,
+          "close": 145,
+          "low": 143,
+          "high": 146,
+          "complete": true
+        },
+        {
+          "openTime": "2026-11-09T23:00:00.000Z",
+          "closeTime": "2026-11-10T00:00:00.000Z",
+          "open": 146,
+          "close": 150,
+          "low": 144,
+          "high": 152,
+          "complete": true
+        }
+      ],
+      "m15": [
+        {
+          "openTime": "2026-11-08T23:15:00Z",
+          "closeTime": "2026-11-08T23:30:00.000Z",
+          "open": 147,
+          "close": 148,
+          "low": 146,
+          "high": 149,
+          "complete": true
+        },
+        {
+          "openTime": "2026-11-08T23:30:00Z",
+          "closeTime": "2026-11-08T23:45:00.000Z",
+          "open": 148,
+          "close": 146,
+          "low": 144,
+          "high": 149,
+          "complete": true
+        },
+        {
+          "openTime": "2026-11-08T23:45:00Z",
+          "closeTime": "2026-11-09T00:00:00.000Z",
+          "open": 146,
+          "close": 150,
+          "low": 145,
+          "high": 151,
+          "complete": true
+        },
+        {
+          "openTime": "2026-11-09T23:15:00.000Z",
+          "closeTime": "2026-11-09T23:30:00.000Z",
+          "open": 147,
+          "close": 148,
+          "low": 146,
+          "high": 149,
+          "complete": true
+        },
+        {
+          "openTime": "2026-11-09T23:30:00.000Z",
+          "closeTime": "2026-11-09T23:45:00.000Z",
+          "open": 148,
+          "close": 146,
+          "low": 144,
+          "high": 149,
+          "complete": true
+        },
+        {
+          "openTime": "2026-11-09T23:45:00.000Z",
+          "closeTime": "2026-11-10T00:00:00.000Z",
+          "open": 146,
+          "close": 150,
+          "low": 145,
+          "high": 151,
+          "complete": true
+        }
+      ],
+      "m5": [
+        {
+          "openTime": "2026-11-09T00:00:00Z",
+          "closeTime": "2026-11-09T00:05:00.000Z",
+          "open": 150,
+          "close": 149,
+          "low": 147,
+          "high": 151,
+          "complete": true
+        },
+        {
+          "openTime": "2026-11-09T00:05:00Z",
+          "closeTime": "2026-11-09T00:10:00.000Z",
+          "open": 149,
+          "close": 151,
+          "low": 148,
+          "high": 152,
+          "complete": true
+        },
+        {
+          "openTime": "2026-11-09T00:10:00Z",
+          "closeTime": "2026-11-09T00:15:00Z",
+          "complete": true,
+          "open": 149,
+          "high": 168,
+          "low": 148,
+          "close": 167
+        },
+        {
+          "openTime": "2026-11-10T00:00:00.000Z",
+          "closeTime": "2026-11-10T00:05:00.000Z",
+          "open": 150,
+          "close": 149,
+          "low": 147,
+          "high": 151,
+          "complete": true
+        },
+        {
+          "openTime": "2026-11-10T00:05:00.000Z",
+          "closeTime": "2026-11-10T00:10:00.000Z",
+          "open": 149,
+          "close": 151,
+          "low": 148,
+          "high": 152,
+          "complete": true
+        },
+        {
+          "openTime": "2026-11-10T00:10:00Z",
+          "closeTime": "2026-11-10T00:15:00Z",
+          "complete": true,
+          "open": 149,
+          "high": 150,
+          "low": 142,
+          "close": 143
+        }
+      ]
+    },
+    "targets": [
+      {
+        "price": 180,
+        "observedAt": "2026-11-08T23:00:00Z",
+        "reason": "Synthetic pre-existing resistance"
+      },
+      {
+        "price": 180,
+        "observedAt": "2026-11-09T23:00:00.000Z",
+        "reason": "Synthetic pre-existing resistance"
+      }
+    ],
+    "tickSize": 0.5,
+    "bufferTicks": 2,
+    "closedPeriods": []
+  },
+  "config": {
+    "from": "2026-11-09T00:00:00Z",
+    "splitAt": "2026-11-09T12:00:00Z",
+    "to": "2026-11-10T00:15:00Z",
+    "startingEquity": 10000,
+    "lots": 1,
+    "riskBudget": 25,
+    "spec": {
+      "instrument": "NAS100",
+      "brokerSymbol": "SYNTHETIC",
+      "source": "Synthetic test assumptions",
+      "verifiedAt": "2026-11-08T00:00:00Z",
+      "attested": true,
+      "tickSize": 0.5,
+      "tickValue": 1,
+      "quoteToAccount": 1,
+      "minLot": 0.1,
+      "maxLot": 100,
+      "lotStep": 0.1,
+      "spreadTicks": 1,
+      "slippageTicks": 1,
+      "commissionPerLot": 1,
+      "fixedFees": 0,
+      "costsSource": "SYNTHETIC round-trip costs",
+      "marketHours": "Synthetic sparse test windows",
+      "permitted": true
+    }
+  }
+}

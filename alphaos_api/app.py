@@ -19,6 +19,7 @@ from modules.price_structure import nearest_levels
 from modules.forward_distribution import summarize_forward_distribution
 from .contracts import APIError,TradeRequest,CompareRequest,ResearchResponse,ErrorResponse,SCHEMA_VERSION,friction
 from .service import ResearchService,symbol_value,horizon_value
+from .live_options import assess_contracts, scenario, underlying_eligible, ChainResearchRequest
 from .config import load_secret_files
 from modules.research_control import checkpoint
 from .json_encoding import encode_json
@@ -42,6 +43,13 @@ def authenticate(credentials:HTTPAuthorizationCredentials|None=Depends(security)
 
 router=APIRouter(prefix='/v1',dependencies=[Depends(authenticate)],responses={
     status:{'model':ErrorResponse} for status in (400,401,403,404,409,410,422,429,500,503)})
+
+# Uses the existing server-to-server bearer boundary; no browser-accessible login
+# or new backend secret store. Bcrypt runs off the ASGI event loop.
+from .website_auth import verify_website_password
+router.add_api_route('/website-auth/verify', verify_website_password, methods=['POST'], include_in_schema=False)
+from .website_rate_limit import consume_website_login_attempt
+router.add_api_route('/website-auth/rate-limit', consume_website_login_attempt, methods=['POST'], include_in_schema=False)
 
 
 def sanitized(value, *, _state=None, _release=False):
@@ -98,7 +106,12 @@ def sanitized(value, *, _state=None, _release=False):
 def respond(value):
     with stage('response_serialization'):
         from .buffered_research_json import encode_research_response
-        return Response(content=encode_research_response(value, sanitize=sanitized, encode=encode_json),media_type='application/json')
+        content = encode_research_response(value, sanitize=sanitized, encode=encode_json)
+        if isinstance(value, dict) and value.get('response_format') == 'summary-v1':
+            from .research_projection import MAX_SUMMARY_BYTES
+            if len(content) > MAX_SUMMARY_BYTES:
+                raise APIError('research_summary_too_large', 503)
+        return Response(content=content,media_type='application/json')
 
 
 def error_response(code,status):
@@ -127,7 +140,7 @@ async def http_error(request,exc):return error_response('not_found' if exc.statu
 
 @app.middleware('http')
 async def safe_boundary(request,call_next):
-    research = request.url.path in ('/v1/research/market','/v1/research/observation') and request.method == 'POST'
+    research = request.url.path in ('/v1/research/market','/v1/research/market/candidate','/v1/research/observation') and request.method == 'POST'
     correlation = request.headers.get('X-AlphaOS-Request-ID','')
     correlation = correlation if re.fullmatch('[0-9a-f]{32}',correlation) else secrets.token_hex(16)
     started = perf_counter()
@@ -176,8 +189,10 @@ def forward_distribution(symbol:str,horizon:int=3,spot:float|None=Query(None,gt=
 
 
 @router.get('/quote/{symbol}',response_model=ResearchResponse,operation_id='get_live_quote')
-def live_quote(symbol:str):
-    service=app.state.service;symbol=symbol_value(symbol);q=service.quote(symbol)
+def live_quote(symbol:str,refresh:bool=False):
+    service=app.state.service;symbol=symbol_value(symbol)
+    with stage("quote_service"):
+        q=service.quote(symbol,refresh=refresh)
     return respond(service.envelope(dict(**q,timing=service.timing(q['quote'])),symbol=symbol,quote=q['quote']))
 
 
@@ -188,9 +203,31 @@ def option_expirations(symbol:str):
 
 
 @router.get('/options/{symbol}/chain/{expiration}',response_model=ResearchResponse,operation_id='get_option_chain')
-def option_chain(symbol:str,expiration:date):
+def option_chain(symbol:str,expiration:date,explicit:bool=False,refresh:bool=False,
+        buy:str|None=Query(None,min_length=1,max_length=32),sell:str|None=Query(None,min_length=1,max_length=32)):
     service=app.state.service;symbol=symbol_value(symbol)
-    return respond(service.envelope(service.chain(symbol,expiration),symbol=symbol))
+    if (sell and not buy) or (buy and not explicit):
+        raise APIError('invalid_option_selection')
+    result=service.chain(symbol,expiration,refresh,explicit=explicit)
+    if explicit:
+        try:
+            quote=service.quote(symbol,refresh or bool(buy))
+            result['underlying']=quote
+            result['underlying_eligible']=underlying_eligible(quote,service.clock())
+            if buy and not result['underlying_eligible']:
+                result['underlying_error']='underlying_quote_ineligible'
+        except APIError as error:
+            result['underlying_error']=error.code
+        if buy:
+            if 'underlying_error' in result:
+                result['scenario']=dict(status='unavailable',reason='Fresh underlying quote unavailable.')
+            else:
+                chain=result['chain']
+                evaluated_at=service.clock()
+                assess_contracts(chain['calls']+chain['puts'],symbol,expiration.isoformat(),evaluated_at,result['retrieved_at'])
+                result['scenario']={**scenario(chain,buy,sell,quote['quote']['last']),
+                    'evaluated_at':evaluated_at.isoformat()}
+    return respond(service.envelope(result,symbol=symbol))
 
 
 @router.get('/options/{symbol}/vertical',response_model=ResearchResponse,operation_id='research_trade')
@@ -200,6 +237,14 @@ def research_live_vertical(symbol:str,expiration:date,option_type:Literal['put',
     bundle,trade,quote=service.exact_trade(symbol,expiration,option_type,short_strike,long_strike,horizon,refresh)
     result=service.research(bundle,trade)
     return respond(service.envelope(dict(**service.evidence(result,trade),quotes=quote),bundle))
+
+
+@router.post('/options/{symbol}/chain/{expiration}', response_model=ResearchResponse,
+    operation_id='research_contract_scenarios')
+def research_contract_scenarios(symbol: str, expiration: date, request: ChainResearchRequest):
+    service = app.state.service
+    result = service.chain_research(symbol, expiration, request)
+    return respond(service.envelope(result, symbol=symbol_value(symbol)))
 
 
 @router.get('/options/{symbol}/scan',response_model=ResearchResponse,operation_id='scan_credit_spreads')

@@ -8,7 +8,7 @@ import re
 
 import pandas as pd
 import pytest
-from alphaos_api.research2 import MarketRequest
+from alphaos_api.research2 import MarketRequest, MarketTransportRequest
 from modules.supabase_archive import ArchiveUnavailable
 from tests.test_research2_api import boundary, post
 from tests.test_candidate_generation_diagnostics import prepare
@@ -83,6 +83,11 @@ def test_mcp_argument_properties_match_rest_including_historical_mode():
     assert schema['required']==model['required']
     assert schema['properties']['research_mode']['default']=='current'
     assert schema['properties']['research_mode']['enum']==['current','historical']
+    # Representation is an explicit REST-only transport option, not an engine
+    # or MCP research parameter. Shared research inputs retain exact parity.
+    transport = MarketTransportRequest.model_json_schema()['properties']
+    assert {key: value for key, value in transport.items() if key != 'response_format'} == model['properties']
+    assert transport['response_format']['enum'] == ['full', 'summary-v1']
 
 
 @pytest.mark.parametrize('case,status,code', [('archive',503,'archive_unavailable'),('unexpected',500,'internal_error'),('auth',401,'authentication_required')])

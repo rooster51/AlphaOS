@@ -19,4 +19,4 @@ services:
       - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
       - key: ALPHAOS_ARCHIVE_MAX_AGE_SECONDS
-        value: "86400"
+        value: "600"

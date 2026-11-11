@@ -33,7 +33,7 @@ export function candidateViews(session: RecordValue) {
     const position = record(research.position);
     const risk = research.capital_at_risk;
     const knownRisk = typeof risk === "number" && Number.isFinite(risk) && risk >= 0;
-    return { ...entry,
+    return { ...entry, source_bucket: excluded ? "excluded" : "accepted",
       capital_status: entry.reason === "exceeds_available_capital" ? "Capital-ineligible"
         : excluded ? "Excluded" : knownRisk && typeof session.available_capital === "number"
           ? "Capital-eligible (backend max-loss filter)" : "Capital eligibility unavailable",

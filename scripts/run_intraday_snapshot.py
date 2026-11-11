@@ -4,11 +4,15 @@ import traceback
 from datetime import datetime, timezone
 import time
 
-from modules.daily_public import DailyPublicProvider
+from modules.daily_public import DailyPublicProvider, intraday_provider_attempt
 from modules.intraday_archive import collect_symbol, load_config
 from modules.market_session_gate import regular_session_slot
 from modules.public_intraday import fetch_intraday_bars
 from modules.supabase_archive import archive_client, persist_candles, persist_option_snapshot, find_slot_snapshot
+
+
+class IncompleteSlot(RuntimeError):
+    """Immutable evidence already occupies this slot; recollection cannot repair it."""
 
 
 def _safe_failure(symbol, stage, exc):
@@ -60,7 +64,7 @@ def main(clock=lambda: datetime.now(timezone.utc), sleep=time.sleep):
                 prior = find_slot_snapshot(database, provider.name, symbol, slot.isoformat())
                 if prior:
                     if prior.get("quality_status") != "complete":
-                        raise RuntimeError("Existing snapshot is incomplete")
+                        raise IncompleteSlot("Existing snapshot is incomplete")
                     print(f"duplicate {symbol}: slot={slot.isoformat()}; attempt={attempt}")
                     succeeded = True
                     break
@@ -71,7 +75,19 @@ def main(clock=lambda: datetime.now(timezone.utc), sleep=time.sleep):
                 stage = "public_quote_options"
                 if regular_session_slot(clock(), int(config["option_snapshot_minutes"])) != slot:
                     raise RuntimeError("Slot no longer active")
-                payload = collect_symbol(provider, symbol, config)
+                with intraday_provider_attempt(attempt):
+                    payload = collect_symbol(provider, symbol, config)
+                options = payload.get("options", {})
+                if options.get("status") in ("partial", "empty"):
+                    # Counts only: never log provider errors, bodies or credentials.
+                    counts = [options.get(key, 0) for key in
+                              ("received_contract_count", "invalid_expiration_count")]
+                    if all(type(n) is int and n >= 0 for n in counts):
+                        failed = options.get("expiration_failures", [])
+                        if isinstance(failed, list):
+                            print(f"incomplete {symbol}: contracts={counts[0]}; "
+                                  f"failed_expirations={len(failed)}; invalid_expirations={counts[1]}",
+                                  file=sys.stderr)
                 payload["slot_time"] = slot.isoformat()
                 payload["collection_finished_at"] = clock().isoformat()
                 if regular_session_slot(clock(), int(config["option_snapshot_minutes"])) is None:
@@ -79,12 +95,14 @@ def main(clock=lambda: datetime.now(timezone.utc), sleep=time.sleep):
                 stage = "supabase_option_snapshot"
                 snapshot = persist_option_snapshot(database, payload, config)
                 if snapshot.get("quality_status") != "complete":
-                    raise RuntimeError("Partial or empty options snapshot archived")
+                    raise IncompleteSlot("Partial or empty options snapshot archived")
                 print(f"archived {symbol}: candles={candle_count}; slot={slot.isoformat()}; observed_at={snapshot['observed_at']}; attempt={attempt}")
                 succeeded = True
                 break
             except Exception as exc:
                 _safe_failure(symbol, stage, exc)
+                if isinstance(exc, IncompleteSlot):
+                    break
                 if attempt == 1:
                     sleep(10)
         if not succeeded:

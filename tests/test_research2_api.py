@@ -193,6 +193,23 @@ def test_default_production_wiring_uses_existing_reader(boundary, monkeypatch):
     with pytest.raises(APIError):
         service.run(MarketRequest(symbol='QQQ'))
 
+@pytest.mark.parametrize(('configured','effective'), [
+    ('86400', 600), ('600', 600), ('300', 300), ('0', 0),
+])
+def test_current_archive_freshness_setting_cannot_exceed_ten_minutes(
+        monkeypatch, configured, effective):
+    import alphaos_api.research2 as module
+    observed = {}
+    monkeypatch.setenv('ALPHAOS_ARCHIVE_MAX_AGE_SECONDS', configured)
+    monkeypatch.setattr(module, 'archive_client', lambda: object())
+    monkeypatch.setattr(module, 'read_latest_option_snapshot',
+        lambda client, symbol, as_of, **kwargs: observed.update(kwargs) or observed)
+
+    result = ArchiveResearchService._read('QQQ', AS_OF)
+
+    assert result['max_age_seconds'] == effective
+    assert observed['max_age_seconds'] == effective
+
 
 def test_orchestration_parameters_and_zero_time_constructor_preserved(boundary, monkeypatch):
     import alphaos_api.research2 as interface
