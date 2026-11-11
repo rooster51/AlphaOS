@@ -212,7 +212,7 @@ if __name__=='__main__':
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--env-file',help='Existing credential file; read only ALPHAOS_API_TOKEN')
     parser.add_argument('--backend',default='https://alphaos.onrender.com')
-    parser.add_argument('--preview',default='https://codex-cloudflare-workers-alphaos-web.rfroux95.workers.dev')
+    parser.add_argument('--preview',default='https://alphaostrading.netlify.app')
     parser.add_argument('--output',default='diagnostics/spy-qqq-validation.json')
     args=parser.parse_args()
     run(args)

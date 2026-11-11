@@ -1,9 +1,9 @@
 # Verified contract and quote provenance
 
 This focused change builds on PR #66 (`77ef046`) and the October 27 audit in
-PR #67 (`b93c2a2`). It does not include or modify PR #67's Cloudflare deployment
-work. The earlier audit established scenario arithmetic, but the public request
-schema discarded contract identities and therefore could not verify price inputs.
+PR #67 (`b93c2a2`). The earlier audit established scenario arithmetic, but the
+public request schema discarded contract identities and therefore could not
+verify price inputs.
 
 ## Request modes and trust boundary
 
@@ -145,9 +145,9 @@ Remaining limitations and gates:
    legs, fills/slippage, actual fees, assignment, and account margin remain
    unverified. POP/EV calibration and opportunity ranking remain separate gates.
 4. **No deployment performed.** Verify this branch against staged Render and a
-   compatible website before release. PR #67 remains independent/open; its
-   Cloudflare production and Render cold-start gates remain outstanding. The
-   existing 12-second market timeout is unchanged. Live MCP parity also requires
+   compatible website before release. The Render cold-start gate remains
+   outstanding. The existing 12-second market timeout is unchanged. Live MCP
+   parity also requires
    the owner's existing connection to be authenticated; local OAuth parity is not
    a claim that the deployed connector has been updated.
 

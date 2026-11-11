@@ -37,8 +37,5 @@ test("Netlify auth runs before Next assets and rate-limits login by client IP", 
   assert.match(gate, /website-auth\/rate-limit/);
   assert.match(gate, /protectWebsite\(request,\s*bindings/);
   assert.match(nextConfig, /tsconfigPath:\s*process\.env\.ALPHAOS_NETLIFY_BUILD/);
-  assert(tsconfig.exclude.includes("src/worker.ts"));
-  assert(tsconfig.exclude.includes("src/lib/runtime-cloudflare.ts"));
-  assert(tsconfig.exclude.includes("cloudflare.config.ts"));
-  assert(tsconfig.exclude.includes("vite.config.ts"));
+  assert.equal(tsconfig.extends, "./tsconfig.json");
 });

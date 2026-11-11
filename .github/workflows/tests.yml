@@ -14,6 +14,17 @@ permissions:
   contents: read
 
 jobs:
+  deployment-boundary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version-file: '.python-version'
+      - name: Reject active legacy edge deployment configuration
+        run: python scripts/check_deployment_boundary.py
+
   pytest:
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -64,6 +75,23 @@ jobs:
           ALPHAOS_DEMO_MODE: 'false'
           ALPHAOS_API_TOKEN: ''
       - run: npm run test:e2e
+
+  windows-password-input:
+    runs-on: windows-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.20.0'
+      # Offline terminal-reader tests use only Node built-ins: no install,
+      # credentials, generated secrets or deployment commands.
+      - name: Windows hidden input regression (PowerShell)
+        shell: pwsh
+        run: node --test web/tests/hidden-input.test.mjs web/tests/windows-hidden-input.test.mjs
+      - name: Windows hidden input regression (Command Prompt)
+        shell: cmd
+        run: node --test web/tests/hidden-input.test.mjs web/tests/windows-hidden-input.test.mjs
 
   website-login-rate-limit-postgres:
     runs-on: ubuntu-latest

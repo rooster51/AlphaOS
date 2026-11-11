@@ -1,6 +1,10 @@
 # SPY/QQQ validation — October 27, 2026
 
-Production release remains BLOCKED. The warm Cloudflare preview and Render API
+> **Historical record (retired preview).** This validation predates the current
+> Netlify + Render deployment. Its preview URL is retained only as evidence and
+> is not a supported deployment target. See [DEPLOYMENT.md](DEPLOYMENT.md).
+
+Production release remains BLOCKED. The warm preview and Render API
 successfully researched both symbols across all four tested horizons. All 88
 observed-price structure scenarios passed independent expiration-payoff checks
 through both services (176 evaluations). This establishes scenario arithmetic and
@@ -10,7 +14,7 @@ Scope follows the [PR #67 checklist](https://github.com/rooster51/AlphaOS/pull/6
 The deployed preview tested commit `9ca8303b470d0434af8fa2ac091dcb42c2b1c592`,
 deployment `e11c607d-5b01-427a-974d-f0c14c80b5c3`, created 16:14:53 UTC.
 The audit began 16:29:05 UTC / 12:29:05 EDT during the trading session.
-Preview: https://codex-cloudflare-workers-alphaos-web.rfroux95.workers.dev
+Preview: retired historical deployment (URL removed)
 Backend: https://alphaos.onrender.com
 
 No deployment, merge, infrastructure, credential, collector, strategy engine,
@@ -20,7 +24,7 @@ timeout, or MCP implementation change was made during this audit. PR #67 stays o
 
 | Capability | Result | Evidence / remaining limitation |
 | --- | --- | --- |
-| Cloudflare runtime bindings | PASS | Native Cloudflare runtime; URL/token bindings present; configuration ready; demo false. Health alone does not verify backend connectivity. |
+| Retired preview runtime bindings | PASS | Historical preview runtime; URL/token bindings present; configuration ready; demo false. Health alone does not verify backend connectivity. |
 | Authenticated preview → Render | PASS | Actual market, structure and comparison requests returned 200 for both symbols. |
 | Verified Supabase archive | PASS | API snapshot IDs, SHA-256, symbol, observation time and complete status independently matched read-only Supabase queries. API freshness ages 190–276 seconds, below its 600-second policy. |
 | Market research, all four horizons | PASS with limits | Exact requested expirations returned successfully, without replacement dates. Research is not a recommendation. |
@@ -31,7 +35,7 @@ timeout, or MCP implementation change was made during this audit. PR #67 stays o
 | Broker buying power / margin | BLOCKED | `capital_at_risk` matches maximum expiration loss; broker/account-specific margin and available funds are not implemented. |
 | Website / Render consistency | PASS | Live browser submitted SPY/QQQ market requests, SPY weekly debit spread, QQQ long-dated call and saved comparison; no page errors or integrity warnings. |
 | Live MCP consistency | BLOCKED | Both connected `run_market` calls returned connector `UNAUTHORIZED`, requiring reauthentication before execution. Backend parity cannot be inferred from these failures. Local MCP/API parity tests pass. |
-| Cold Render availability within 12 seconds | FAIL release gate | Previously confirmed Free-service startup exceeds the fixed budget; this warm run does not disprove it. See [timeout evidence](CLOUDFLARE_RENDER_TIMEOUT.md). No paid-plan change or timeout increase made. |
+| Cold Render availability within 12 seconds | FAIL release gate | Previously confirmed Free-service startup exceeds the fixed budget; this warm run does not disprove it. No paid-plan change or timeout increase made. |
 | Error handling | PASS | Missing API auth → 401; invalid preview symbol → 400; empty comparison → 400; unavailable archived expiration → API 422 / preview 502 with `archive_expiration_unavailable`, no replacement data. |
 | Navigation | PASS | Market, strategies, structures, session, journal, risk, settings, dashboard and mobile drawer. Foundation pages remain placeholders, not validated account functionality. |
 
@@ -157,6 +161,6 @@ not permission to substitute fixtures. Inspect statuses and checks in the captur
    availability with the owner before production; this sprint authorizes no paid
    infrastructure change. Re-run warm and cold preview checks with the same budget.
 
-No additional Cloudflare secret change is indicated by this run. Existing runtime
+No additional preview secret change is indicated by this run. Existing runtime
 URL/token bindings work and demo is disabled. Keep production and DNS unchanged;
 do not merge PR #67 until the release gates have been reviewed.

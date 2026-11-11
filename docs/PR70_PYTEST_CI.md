@@ -75,5 +75,5 @@ fail-closed and entry-evidence behavior are untouched.
 
 The patch is made in an isolated checkout and shared by a normal fast-forward
 commit on `validation/provenance-entry-integration`; no Freebuff working files
-are edited. Cloudflare configuration, PR #67, website code, production services,
-credentials and infrastructure are unchanged. Nothing is merged or deployed.
+are edited. Website code, production services, credentials and infrastructure are
+unchanged. Nothing is merged or deployed.
