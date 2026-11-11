@@ -16,15 +16,28 @@ export type Setup = {
  * Seed EMA20 with the first 20 closes. As-of excludes future observations; HT/setup
  * evidence is frozen before the confirmation bar opens. No next-open fill is invented.
  */
-export function analyze(input: unknown): Setup {
+export function analyze(
+  input: unknown,
+  historical?: {
+    allowHourlyGap: (from: number, to: number) => boolean;
+    hourlyEma: number;
+    support: Evidence["target"];
+  },
+): Setup {
   try {
-    const e = validateEvidence(input),
+    const e = validateEvidence(input, Boolean(historical)),
       asOf = Date.parse(e.asOf);
     const m5 = completedCandles(e.candles.m5, 5, asOf, 2),
       confirm = m5.at(-1)!,
       prior = m5.at(-2)!;
     const cutoff = Date.parse(confirm.openTime);
-    const h1 = completedCandles(e.candles.h1, 60, cutoff, 23);
+    const h1 = completedCandles(
+      e.candles.h1,
+      60,
+      cutoff,
+      23,
+      historical?.allowHourlyGap,
+    );
     const m15 = completedCandles(e.candles.m15, 15, cutoff, 3);
     const closes = new Map<number, number>();
     for (const candle of [...h1, ...m15, ...m5]) {
@@ -37,8 +50,11 @@ export function analyze(input: unknown): Setup {
         throw Error("Conflicting cross-timeframe closing prices");
       closes.set(at, candle.close);
     }
-    let ema = h1.slice(0, 20).reduce((s, c) => s + c.close, 0) / 20;
-    for (const c of h1.slice(20)) ema = (c.close * 2) / 21 + (ema * 19) / 21;
+    let ema = historical?.hourlyEma;
+    if (ema === undefined) {
+      ema = h1.slice(0, 20).reduce((s, c) => s + c.close, 0) / 20;
+      for (const c of h1.slice(20)) ema = (c.close * 2) / 21 + (ema * 19) / 21;
+    }
     const [a, b, c] = h1.slice(-3);
     const long =
       c.close > ema &&
@@ -89,10 +105,11 @@ export function analyze(input: unknown): Setup {
     const stop = long
       ? Math.min(pullback.low, reclaim.low) - buffer
       : Math.max(pullback.high, reclaim.high) + buffer;
+    const target = !long && historical ? historical.support : e.target;
     const entry = confirm.close,
       risk = Math.abs(entry - stop);
-    const room = long ? e.target.price - entry : entry - e.target.price;
-    if (room < 2 * risk || Date.parse(e.target.observedAt) > cutoff)
+    const room = long ? target.price - entry : entry - target.price;
+    if (room < 2 * risk || Date.parse(target.observedAt) > cutoff)
       return {
         status: "NO SETUP",
         reason: "No pre-existing defensible target with at least 2R of room",
@@ -107,7 +124,7 @@ export function analyze(input: unknown): Setup {
       rewardRisk: 2,
       confirmationTime: confirm.closeTime,
       ema,
-      evidence: e,
+      evidence: { ...e, target },
       reason: `Hypothetical next-candle entry only after ${confirm.closeTime}. Confirmation close is a sizing reference, not a fill. Stop buffer: ${e.bufferTicks} ticks × ${e.tickSize}. Recheck costs and 2R at the actual hypothetical entry.`,
     };
   } catch (err) {

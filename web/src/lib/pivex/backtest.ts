@@ -83,20 +83,37 @@ export function backtestMetrics(
   };
 }
 export type ReplayResult = ReturnType<typeof replayWindow>;
-function replayWindow(
-  d: HistoricalDataset,
-  c: BacktestConfig,
+export function replayWindow(
+  d: Pick<HistoricalDataset, "instrument" | "candles" | "closedPeriods">,
+  c: Pick<BacktestConfig, "startingEquity" | "lots" | "riskBudget"> & {
+    spec: Pick<
+      ContractSpec,
+      | "tickSize"
+      | "tickValue"
+      | "quoteToAccount"
+      | "spreadTicks"
+      | "slippageTicks"
+      | "commissionPerLot"
+      | "fixedFees"
+    >;
+  },
   from: string,
   to: string,
   label: string,
+  evaluate: (bar: HistoricalDataset["candles"]["m5"][number]) => Setup,
+  proxy?: {
+    entrySpreadTicks: (openTime: string) => number;
+    classifyGap?: (from: string, to: string) => ReturnType<typeof gapKind>;
+  },
 ) {
-  const adapter = new HistoricalExportAdapter(d),
-    bars = d.candles.m5.filter(
-      (b) =>
-        Date.parse(b.openTime) >= Date.parse(from) &&
-        Date.parse(b.closeTime) <= Date.parse(to),
-    );
-  if (bars.length > 2000)
+  const bars = d.candles.m5.filter(
+    (b) =>
+      Date.parse(b.openTime) >= Date.parse(from) &&
+      Date.parse(b.closeTime) <= Date.parse(to),
+  );
+  const classifyGap =
+    proxy?.classifyGap ?? ((from, to) => gapKind(d, from, to));
+  if (!proxy && bars.length > 2000)
     throw Error(
       "Replay is limited to 2,000 entry bars per partition; import a smaller research window",
     );
@@ -111,12 +128,14 @@ function replayWindow(
     coverageIncomplete = true;
   } else {
     if (Date.parse(bars[0].openTime) > Date.parse(from)) {
-      count(`Leading ${gapKind(d, from, bars[0].openTime)}`);
-      coverageIncomplete = true;
+      const kind = classifyGap(from, bars[0].openTime);
+      count(`Leading ${kind}`);
+      if (!proxy || kind === "missing bars") coverageIncomplete = true;
     }
     if (Date.parse(bars.at(-1)!.closeTime) < Date.parse(to)) {
-      count(`Trailing ${gapKind(d, bars.at(-1)!.closeTime, to)}`);
-      coverageIncomplete = true;
+      const kind = classifyGap(bars.at(-1)!.closeTime, to);
+      count(`Trailing ${kind}`);
+      if (!proxy || kind === "missing bars") coverageIncomplete = true;
     }
   }
   let pending: Setup | null = null,
@@ -124,12 +143,13 @@ function replayWindow(
     setups = 0,
     equity = c.startingEquity,
     previousClose: string | null = null,
-    terminated = false;
+    terminated = false,
+    evaluated = 0;
   const s = c.spec,
     sign = (t: SimulatedTrade) => (t.direction === "long" ? 1 : -1);
-  const costs =
+  const roundTripCosts = (spreadTicks: number) =>
     c.lots *
-      ((s.spreadTicks + s.slippageTicks) * s.tickValue * s.quoteToAccount +
+      ((spreadTicks + s.slippageTicks) * s.tickValue * s.quoteToAccount +
         s.commissionPerLot) +
     s.fixedFees;
   const pnl = (t: SimulatedTrade, price: number) =>
@@ -137,16 +157,17 @@ function replayWindow(
       s.tickValue *
       s.quoteToAccount *
       c.lots -
-    costs;
+    t.costs;
   for (const bar of bars) {
     if (
       previousClose &&
       Date.parse(bar.openTime) !== Date.parse(previousClose)
     ) {
-      const kind = gapKind(d, previousClose, bar.openTime);
+      const kind = classifyGap(previousClose, bar.openTime);
       count(kind);
-      coverageIncomplete = true;
-      if (open) {
+      const knownProxyClosure = proxy && kind === "declared non-trading period";
+      if (!knownProxyClosure) coverageIncomplete = true;
+      if (open && !knownProxyClosure) {
         open.outcome = "unresolved";
         open.note = `Replay stopped: ${kind} while a position was open. No invented exit or subsequent portfolio results.`;
         trades.push(open);
@@ -165,6 +186,9 @@ function replayWindow(
           entry = bar.open,
           stop = pending.stop!,
           target = pending.target!,
+          costs = roundTripCosts(
+            Math.max(s.spreadTicks, proxy?.entrySpreadTicks(bar.openTime) ?? 0),
+          ),
           loss =
             (Math.abs(entry - stop) / s.tickSize) *
               s.tickValue *
@@ -247,7 +271,8 @@ function replayWindow(
     // Evidence is cut at this completed bar; analyze() independently freezes 1H/15M at its open.
     if (!open) {
       try {
-        const result = analyze(adapter.evidenceAt(d.instrument, bar.closeTime));
+        evaluated++;
+        const result = evaluate(bar);
         if (result.status === "CONFIRMED") {
           setups++;
           pending = result;
@@ -282,6 +307,7 @@ function replayWindow(
     from,
     to,
     bars: bars.length,
+    evaluated,
     setups,
     trades,
     metrics,
@@ -330,6 +356,9 @@ export function runBacktest(value: unknown, config: BacktestConfig) {
     )
   )
     throw Error("Split must lie on an entry-bar boundary");
+  const adapter = new HistoricalExportAdapter(d);
+  const evaluate = (bar: HistoricalDataset["candles"]["m5"][number]) =>
+    analyze(adapter.evidenceAt(d.instrument, bar.closeTime));
   return {
     model: "pivex-replay-v1",
     kind: "hypothetical_backtest" as const,
@@ -338,7 +367,21 @@ export function runBacktest(value: unknown, config: BacktestConfig) {
     config: structuredClone(c),
     executionModel:
       "Single position, fixed declared lots; completed-bar signals; contiguous next-bar observed open; round-trip spread/slippage/commission/fees charged once; net >=2R and risk <=$25 at entry; stop first on ambiguous bars; missing bars during a position terminate the partition; no forced window-end exits. Equity curve is resolved-trade net equity, not continuous mark-to-market compliance.",
-    development: replayWindow(d, c, c.from, c.splitAt, "In-sample development"),
-    validation: replayWindow(d, c, c.splitAt, c.to, "Out-of-sample validation"),
+    development: replayWindow(
+      d,
+      c,
+      c.from,
+      c.splitAt,
+      "In-sample development",
+      evaluate,
+    ),
+    validation: replayWindow(
+      d,
+      c,
+      c.splitAt,
+      c.to,
+      "Out-of-sample validation",
+      evaluate,
+    ),
   };
 }

@@ -170,7 +170,11 @@ export class HistoricalExportAdapter implements MarketDataAdapter {
     return this.evidenceAt(instrument, asOf);
   }
 }
-export function gapKind(d: HistoricalDataset, from: string, to: string) {
+export function gapKind(
+  d: Pick<HistoricalDataset, "closedPeriods">,
+  from: string,
+  to: string,
+) {
   return d.closedPeriods.some(
     (p) =>
       Date.parse(p.from) <= Date.parse(from) &&

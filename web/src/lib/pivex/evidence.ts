@@ -45,7 +45,7 @@ export type Candle = {
 };
 export type Evidence = {
   instrument: string;
-  mode: "manual_historical" | "fixture";
+  mode: "manual_historical" | "fixture" | "external_proxy";
   source: string;
   asOf: string;
   candles: { h1: Candle[]; m15: Candle[]; m5: Candle[] };
@@ -94,6 +94,7 @@ export function completedCandles(
   minutes: number,
   cutoff: number,
   minimum: number,
+  allowGap?: (from: number, to: number) => boolean,
 ): Candle[] {
   if (!Array.isArray(rows) || rows.length > 10000)
     throw Error("Missing or excessive candles");
@@ -117,7 +118,9 @@ export function completedCandles(
       c.low > Math.min(c.open, c.close) ||
       c.high < Math.max(c.open, c.close) ||
       start < previous ||
-      (previous !== -Infinity && start !== previous)
+      (previous !== -Infinity &&
+        start !== previous &&
+        !allowGap?.(previous, start))
     )
       throw Error("Invalid, unfinished, unordered or missing candles");
     previous = end;
@@ -126,13 +129,17 @@ export function completedCandles(
     throw Error("Stale or misaligned timeframe");
   return selected;
 }
-export function validateEvidence(value: unknown): Evidence {
+export function validateEvidence(value: unknown, allowProxy = false): Evidence {
   if (!value || typeof value !== "object")
     throw Error("Evidence must be an object");
   const e = value as Evidence;
   if (
     !instruments.some((i) => i.id === e.instrument) ||
-    !["manual_historical", "fixture"].includes(e.mode) ||
+    ![
+      "manual_historical",
+      "fixture",
+      ...(allowProxy ? ["external_proxy"] : []),
+    ].includes(e.mode) ||
     typeof e.source !== "string" ||
     !e.source.trim() ||
     !timestamp(e.asOf) ||
