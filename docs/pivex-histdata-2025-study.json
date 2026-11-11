@@ -1,0 +1,20 @@
+{
+  "source": {
+    "from": "2025-01-01T05:00:00Z",
+    "to": "2026-01-01T05:00:00Z",
+    "exportedAt": "2026-11-11T16:58:06Z",
+    "exportReference": "HistData 2025 XAUUSD Generic ASCII M1 ZIP, SHA-256 dd0b4dc6983c07fafd89ba83b0c7f514aa16977654eaeb4c9fc8884ed359d98e. https://www.histdata.com/download-free-forex-data/?/ascii/1-minute-bar-quotes/xauusd/2025"
+  },
+  "replay": {
+    "from": "2025-01-01T05:00:00Z",
+    "splitAt": "2025-10-01T05:00:00Z",
+    "to": "2026-01-01T05:00:00Z",
+    "startingEquity": 10000,
+    "units": 1,
+    "riskBudget": 25,
+    "spreadFloor": 1,
+    "roundTripSlippage": 0.5,
+    "roundTripFees": 0.25,
+    "costsReference": "Predeclared proxy assumptions in USD per one modeled ounce: $1 spread, $0.50 total slippage, $0.25 fixed round-trip fees. No observed spread or broker contract assumptions."
+  }
+}
