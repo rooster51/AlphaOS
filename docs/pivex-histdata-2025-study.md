@@ -50,3 +50,35 @@ Neither partition terminated early. Both have incomplete market coverage. Sessio
 ## Other sources
 
 The HistData archive supplied a full calendar year at no charge. GetData offered a public evaluation sample and listed its full archive as purchaser-only. The reviewed Hugging Face mirror listed a Creative Commons license but lacked enough upstream feed and time-zone detail to prefer it over the provider download. [GetData archive](https://getdata.finance/datasets/xauusd) · [Hugging Face dataset card](https://huggingface.co/datasets/Pcitycrypto/xauusd)
+
+## Development entry audit
+
+The diagnostic rerun used the same source CSV and SHA-256, frozen study configuration, entry rules and costs. It evaluated only January–September. The original development metrics matched the previous run. The five October–December setups and zero fills remain the frozen validation result. The diagnostic command excludes that partition from normalization and replay.
+
+```sh
+node web/scripts/pivex-histdata.mjs --development-only /path/to/DAT_ASCII_XAUUSD_M1_2025.csv docs/pivex-histdata-2025-study.json /path/to/development-entry-audit.json
+```
+
+The JSON includes an `entryAudit` row for each of the 16 development setups and the `entryRejections` aggregate. Each row records the confirmation and next-open prices, stop, execution and structural targets, gross and net reward/risk, dollar risk, cost components and rejection reasons. The per-setup output stays outside Git with the source-price data.
+
+| Rejection reason | Applicable | Primary |
+| --- | ---: | ---: |
+| Insufficient net reward/risk | 15 | 15 |
+| Missing contiguous next candle | 1 | 1 |
+| Invalid stop geometry | 0 | 0 |
+| Invalid target geometry | 0 | 0 |
+| Planned risk above $25 | 0 | 0 |
+| Invalid or nonfinite economics | 0 | 0 |
+| Planned risk above configured budget or available equity | 0 | 0 |
+
+Primary priority is missing next candle, invalid economics, invalid stop geometry, invalid target geometry, insufficient net reward/risk, the $25 cap, then a lower budget or equity limit. Applicable counts can overlap. Reward/risk requires valid stop and target geometry. Planned risk requires a valid stop. The June 16 confirmation at 22:00 UTC coincided with the start of a modeled one-hour closure. It had no contiguous next open.
+
+### Ranked explanation
+
+1. **The gross 2R target leaves too little room for costs.** The strategy sets a target at exactly 2R from the confirmation close. At the contiguous next opens, gross reward/risk ranged from 1.903R to 2.173R. Seven of 15 were already below 2R before costs. After the fixed $1.75 round-trip charge at one modeled ounce, every result fell below 2R, ranging from 0.757R to 1.325R.
+2. **Sizing cannot fix the shortfall under the existing assumptions.** One-ounce planned risk ranged from $4.00 to $8.03. For quantity `q`, gross dollar reward and risk per ounce `R` and `L`, proportional cost `c=$1.50` per ounce and fixed fee `F=$0.25`, net 2R requires `q(R−2L−3c) ≥ 3F`. The largest observed `R−2L` was $0.39 per ounce, below the $4.50 needed to cover proportional costs alone. The feasible positive size range is empty for all 15 priced setups, even before imposing `q ≤ (25−F)/(L+c)`. Quantities here are modeled ounces. Pivex lot sizes, increments and permissions were not assumed.
+3. **One setup was unavailable for execution.** The missing next candle accounts for the remaining development rejection. The replay did not substitute the reopening price.
+
+### Separate proposal
+
+Test a target that covers net 2R from the actual hypothetical entry, only when that target fits inside the pre-existing structural level. Preserve confirmation rules, stop placement, costs, fixed size and the $25 limit in that experiment. At one modeled ounce, the required target distance was $4.86–$5.85 per ounce farther than the existing target in the trade direction. The already-observed structural level left that much room for 12 of the 15 priced setups. This is a distance check. It does not establish fills or performance. If the proposal is pursued, treat all 2025 observations as development and use a genuinely new, unseen holdout for independent validation.

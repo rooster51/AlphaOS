@@ -10,6 +10,7 @@ import type { HistoricalDataset } from "./history.ts";
 import { validateSpec } from "./planner.ts";
 import type { ContractSpec } from "./planner.ts";
 import { session } from "./journal.ts";
+import { auditEntry, rejectionPriority } from "./entry-audit.ts";
 
 export type BacktestConfig = {
   from: string;
@@ -118,7 +119,8 @@ export function replayWindow(
       "Replay is limited to 2,000 entry bars per partition; import a smaller research window",
     );
   const trades: SimulatedTrade[] = [],
-    diagnostics: Record<string, number> = {};
+    diagnostics: Record<string, number> = {},
+    entryAudit: ReturnType<typeof auditEntry>[] = [];
   const count = (message: string) => {
     diagnostics[message] = (diagnostics[message] ?? 0) + 1;
   };
@@ -147,11 +149,23 @@ export function replayWindow(
     evaluated = 0;
   const s = c.spec,
     sign = (t: SimulatedTrade) => (t.direction === "long" ? 1 : -1);
-  const roundTripCosts = (spreadTicks: number) =>
-    c.lots *
-      ((spreadTicks + s.slippageTicks) * s.tickValue * s.quoteToAccount +
-        s.commissionPerLot) +
-    s.fixedFees;
+  const audit = (
+    setup: Setup,
+    next: HistoricalDataset["candles"]["m5"][number] | null,
+  ) => {
+    const record = auditEntry(
+      setup,
+      next,
+      s,
+      c.lots,
+      c.riskBudget,
+      equity,
+      next ? proxy?.entrySpreadTicks(next.openTime) : undefined,
+    );
+    entryAudit.push(record);
+    for (const reason of record.rejectionReasons) count(reason);
+    return record;
+  };
   const pnl = (t: SimulatedTrade, price: number) =>
     ((sign(t) * (price - t.entry)) / s.tickSize) *
       s.tickValue *
@@ -159,11 +173,11 @@ export function replayWindow(
       c.lots -
     t.costs;
   for (const bar of bars) {
-    if (
-      previousClose &&
-      Date.parse(bar.openTime) !== Date.parse(previousClose)
-    ) {
-      const kind = classifyGap(previousClose, bar.openTime);
+    const hasGap =
+      previousClose !== null &&
+      Date.parse(bar.openTime) !== Date.parse(previousClose);
+    if (hasGap) {
+      const kind = classifyGap(previousClose!, bar.openTime);
       count(kind);
       const knownProxyClosure = proxy && kind === "declared non-trading period";
       if (!knownProxyClosure) coverageIncomplete = true;
@@ -175,63 +189,40 @@ export function replayWindow(
         terminated = true;
         break;
       }
-      if (pending) count("Confirmation has no contiguous next bar; no entry");
-      pending = null;
     }
     if (pending && !open) {
-      if (Date.parse(bar.openTime) !== Date.parse(pending.confirmationTime!))
-        count("Missing exact next-bar open; no fill");
-      else {
-        const direction = pending.direction!,
-          entry = bar.open,
-          stop = pending.stop!,
-          target = pending.target!,
-          costs = roundTripCosts(
-            Math.max(s.spreadTicks, proxy?.entrySpreadTicks(bar.openTime) ?? 0),
-          ),
-          loss =
-            (Math.abs(entry - stop) / s.tickSize) *
-              s.tickValue *
-              s.quoteToAccount *
-              c.lots +
-            costs,
-          profit =
-            ((direction === "long" ? target - entry : entry - target) /
-              s.tickSize) *
-              s.tickValue *
-              s.quoteToAccount *
-              c.lots -
-            costs;
-        if (
-          (direction === "long"
-            ? entry <= stop || entry >= target
-            : entry >= stop || entry <= target) ||
-          !positive(loss) ||
-          !finite(profit) ||
-          profit / loss < 2 ||
-          loss > Math.min(c.riskBudget, equity)
-        )
-          count("Next-open geometry, costs or risk budget rejects entry");
-        else
-          open = {
-            confirmationTime: pending.confirmationTime!,
-            entryTime: bar.openTime,
-            exitTime: null,
-            direction,
-            instrument: d.instrument,
-            entry,
-            exit: null,
-            stop,
-            target,
-            lots: c.lots,
-            costs,
-            initialRisk: loss,
-            netPnl: null,
-            r: null,
-            outcome: "unresolved",
-            condition: direction === "long" ? "bullish trend" : "bearish trend",
-            note: "Hypothetical observed next-bar open; no liquidity guarantee. Exit timestamp is bar close, not an exact intrabar fill time.",
-          };
+      const next =
+        !hasGap &&
+        Date.parse(bar.openTime) === Date.parse(pending.confirmationTime!)
+          ? bar
+          : null;
+      const record = audit(pending, next);
+      if (record.primaryRejectionReason === null) {
+        const direction = record.direction!;
+        const entry = record.nextOpen!;
+        const stop = record.stop!;
+        const target = record.target!;
+        const costs = record.costs.total!;
+        const loss = record.plannedRisk!;
+        open = {
+          confirmationTime: pending.confirmationTime!,
+          entryTime: bar.openTime,
+          exitTime: null,
+          direction,
+          instrument: d.instrument,
+          entry,
+          exit: null,
+          stop,
+          target,
+          lots: c.lots,
+          costs,
+          initialRisk: loss,
+          netPnl: null,
+          r: null,
+          outcome: "unresolved",
+          condition: direction === "long" ? "bullish trend" : "bearish trend",
+          note: "Hypothetical observed next-bar open; no liquidity guarantee. Exit timestamp is bar close, not an exact intrabar fill time.",
+        };
       }
       pending = null;
     }
@@ -290,7 +281,7 @@ export function replayWindow(
       " Window ended before a resolvable exit. No forced liquidation.";
     trades.push(open);
   }
-  if (pending) count("Window ended before next candle; no fill");
+  if (pending) audit(pending, null);
   const metrics = backtestMetrics(trades, c.startingEquity);
   const group = (key: (t: SimulatedTrade) => string) =>
     Object.fromEntries(
@@ -312,6 +303,13 @@ export function replayWindow(
     trades,
     metrics,
     diagnostics,
+    entryAudit,
+    entryRejections: rejectionPriority.map((reason) => ({
+      reason,
+      applicable: diagnostics[reason] ?? 0,
+      primary: entryAudit.filter((row) => row.primaryRejectionReason === reason)
+        .length,
+    })),
     terminated,
     incomplete:
       coverageIncomplete ||

@@ -1,11 +1,17 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { prepareHistDataGold } from "../src/lib/pivex/histdata-history.ts";
-import { runProxyBacktest } from "../src/lib/pivex/proxy-history.ts";
+import {
+  runProxyBacktest,
+  runProxyDevelopment,
+} from "../src/lib/pivex/proxy-history.ts";
 
-const [csv, config, report, normalized] = process.argv.slice(2);
-if (!csv || !config || !report || process.argv.length > 6) {
+const args = process.argv.slice(2);
+const developmentOnly = args[0] === "--development-only";
+if (developmentOnly) args.shift();
+const [csv, config, report, normalized] = args;
+if (!csv || !config || !report || args.length > 4) {
   console.error(
-    "Usage: node scripts/pivex-histdata.mjs source.csv study.json report.json [normalized.json]",
+    "Usage: node scripts/pivex-histdata.mjs [--development-only] source.csv study.json report.json [normalized.json]",
   );
   process.exitCode = 1;
 } else {
@@ -13,8 +19,13 @@ if (!csv || !config || !report || process.argv.length > 6) {
     readFile(csv),
     readFile(config, "utf8").then(JSON.parse),
   ]);
-  const dataset = prepareHistDataGold(bytes, manifest.source);
-  const result = runProxyBacktest(dataset, manifest.replay);
+  const bounds = developmentOnly
+    ? { ...manifest.source, to: manifest.replay.splitAt }
+    : manifest.source;
+  const dataset = prepareHistDataGold(bytes, bounds);
+  const result = developmentOnly
+    ? runProxyDevelopment(dataset, manifest.replay)
+    : runProxyBacktest(dataset, manifest.replay);
   const save = (path, value) =>
     writeFile(path, JSON.stringify(value, null, 2) + "\n", { flag: "wx" });
   await save(report, result);

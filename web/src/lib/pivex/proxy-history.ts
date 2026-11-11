@@ -141,7 +141,11 @@ const endIndex = (rows: Candle[], cutoff: number) =>
 const gapAt = (gaps: Gap[], start: number) =>
   gaps[upperBound(gaps.length, start, (i) => Date.parse(gaps[i].to))];
 
-export function runProxyBacktest(d: ProxyDataset, c: ProxyReplayConfig) {
+function prepareProxyReplay(
+  d: ProxyDataset,
+  c: ProxyReplayConfig,
+  coverageEnd: string,
+) {
   if (
     (d.schema !== 2 && d.schema !== 3) ||
     d.mode !== "external_proxy" ||
@@ -149,7 +153,7 @@ export function runProxyBacktest(d: ProxyDataset, c: ProxyReplayConfig) {
       (at) => timestamp(at) && Date.parse(at) % five === 0,
     ) ||
     Date.parse(c.from) < Date.parse(d.from) ||
-    Date.parse(c.to) > Date.parse(d.to) ||
+    Date.parse(coverageEnd) > Date.parse(d.to) ||
     Date.parse(c.from) >= Date.parse(c.splitAt) ||
     Date.parse(c.splitAt) >= Date.parse(c.to) ||
     ![
@@ -290,7 +294,10 @@ export function runProxyBacktest(d: ProxyDataset, c: ProxyReplayConfig) {
         : "missing bars";
     },
   };
+  const replay = (from: string, to: string, label: string) =>
+    replayWindow(d, execution, from, to, label, evaluate, proxy);
   return {
+    replay,
     model: "pivex-replay-v1",
     kind: "hypothetical_backtest" as const,
     dataMode: d.mode,
@@ -331,23 +338,22 @@ export function runProxyBacktest(d: ProxyDataset, c: ProxyReplayConfig) {
       d.schema === 3
         ? "Bid OHLC proxy with next contiguous bid open. Fixed modeled round-trip spread, slippage and fees; net 2R minimum and $25 planned cap. Stops take priority on ambiguous bars, adverse observed opens apply to gap stops, and missing open-market bars leave exposure unresolved. No observed ask, midpoint, or intrabar sequence."
         : "Mid OHLC with next observed contiguous open. USD proxy units, larger of entry quote spread and configured spread floor, plus round-trip slippage and fees. Net 2R minimum, $25 planned cap, stop first on ambiguous bars, adverse reopen for stops, unresolved exposure on missing open-market bars. Reported trade lots are modeled units. Closed-trade equity excludes floating P&L.",
-    development: replayWindow(
-      d,
-      execution,
-      c.from,
-      c.splitAt,
-      "In-sample development",
-      evaluate,
-      proxy,
-    ),
-    validation: replayWindow(
-      d,
-      execution,
-      c.splitAt,
-      c.to,
-      "Out-of-sample validation",
-      evaluate,
-      proxy,
-    ),
+  };
+}
+
+export function runProxyDevelopment(d: ProxyDataset, c: ProxyReplayConfig) {
+  const { replay, ...report } = prepareProxyReplay(d, c, c.splitAt);
+  return {
+    ...report,
+    development: replay(c.from, c.splitAt, "In-sample development"),
+  };
+}
+
+export function runProxyBacktest(d: ProxyDataset, c: ProxyReplayConfig) {
+  const { replay, ...report } = prepareProxyReplay(d, c, c.to);
+  return {
+    ...report,
+    development: replay(c.from, c.splitAt, "In-sample development"),
+    validation: replay(c.splitAt, c.to, "Out-of-sample validation"),
   };
 }

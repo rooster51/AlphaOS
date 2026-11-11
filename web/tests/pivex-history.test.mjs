@@ -161,10 +161,7 @@ test("the next open can reject a previously qualified setup", () => {
   const r = runBacktest(dataset, config).development;
   assert.equal(r.setups, 1);
   assert.equal(r.metrics.completed, 0);
-  assert.equal(
-    r.diagnostics["Next-open geometry, costs or risk budget rejects entry"],
-    1,
-  );
+  assert.equal(r.diagnostics["Insufficient net reward/risk"], 1);
 });
 
 test("observed proxy spread can reject a fill that passes declared broker costs", () => {
@@ -193,12 +190,7 @@ test("observed proxy spread can reject a fill that passes declared broker costs"
   assert.equal(baseline.metrics.completed, 1);
   assert.equal(result.setups, 1);
   assert.equal(result.metrics.completed, 0);
-  assert.equal(
-    result.diagnostics[
-      "Next-open geometry, costs or risk budget rejects entry"
-    ],
-    1,
-  );
+  assert.equal(result.diagnostics["Insufficient net reward/risk"], 1);
 });
 
 test("offline CLI emits the input digest, data quality and separate chronological metrics", () => {

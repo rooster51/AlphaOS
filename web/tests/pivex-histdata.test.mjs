@@ -1,7 +1,10 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { prepareHistDataGold } from "../src/lib/pivex/histdata-history.ts";
-import { runProxyBacktest } from "../src/lib/pivex/proxy-history.ts";
+import {
+  runProxyBacktest,
+  runProxyDevelopment,
+} from "../src/lib/pivex/proxy-history.ts";
 import { validateDataset } from "../src/lib/pivex/history.ts";
 
 const bounds = {
@@ -32,7 +35,7 @@ test("HistData bid candles use fixed EST in summer, deduplicate and aggregate on
   assert.equal(dataset.quoteBasis, "bid");
   assert.equal(dataset.quoteBars, undefined);
   assert.throws(() => validateDataset(dataset));
-  const result = runProxyBacktest(dataset, {
+  const config = {
     ...bounds,
     splitAt: "2025-07-07T06:00:00Z",
     startingEquity: 10000,
@@ -42,11 +45,20 @@ test("HistData bid candles use fixed EST in summer, deduplicate and aggregate on
     roundTripSlippage: 0.5,
     roundTripFees: 0.25,
     costsReference: "Synthetic fixed-cost test",
-  });
+  };
+  const result = runProxyBacktest(dataset, config);
   assert.equal(result.observationType, "bid_candles");
   assert.equal(result.development.bars, 12);
   assert.equal(result.validation.bars, 11);
   assert.equal(result.validation.incomplete, true);
+  const developmentData = prepareHistDataGold(input(all), {
+    ...bounds,
+    to: config.splitAt,
+  });
+  const development = runProxyDevelopment(developmentData, config);
+  assert.equal(development.coverage.to, config.splitAt);
+  assert.equal(Object.hasOwn(development, "validation"), false);
+  assert.deepEqual(development.development, result.development);
 });
 
 test("HistData import rejects conflicting duplicates and invalid OHLC", () => {

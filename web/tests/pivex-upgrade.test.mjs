@@ -207,9 +207,7 @@ test("extra commission rejects a nominally attractive entry after costs", () => 
   f.config.spec.commissionPerLot = 3;
   const r = replay(f);
   assert.equal(r.development.metrics.completed, 0);
-  assert(
-    Object.keys(r.development.diagnostics).some((k) => k.includes("costs")),
-  );
+  assert(r.development.diagnostics["Insufficient net reward/risk"] === 1);
 });
 test("FX, ticks and declared lots affect net results exactly once", () => {
   const f = backtestFixture();
@@ -248,6 +246,12 @@ test("no exact next candle means no fabricated entry", () => {
   assert.equal(r.metrics.completed, 0);
   assert.equal(r.trades.length, 0);
   assert(r.diagnostics["missing bars"]);
+  assert.equal(r.entryAudit.length, r.setups);
+  assert.equal(
+    r.entryAudit[0].primaryRejectionReason,
+    "Missing contiguous next candle",
+  );
+  assert.equal(r.entryAudit[0].nextOpen, null);
 });
 function flatEntry(f) {
   Object.assign(f.dataset.candles.m5[2], { high: 150, low: 148, close: 149 });
