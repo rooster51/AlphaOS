@@ -88,6 +88,38 @@ def quote_quality(quote):
         bid_ask_timestamp_verified=False)
 
 
+def _quote_observation(stamp, close, limit):
+    """Classify the observation's own session without claiming ATS coverage.
+
+    The evaluation session answers "is the market open now?"; this helper
+    answers "when was this print observed?". They differ on weekends and
+    overnight: a Sunday 20:56 ET print is a closed-market evaluation but an
+    overnight observation, never a completed-session close.
+    """
+    if stamp is None:
+        return 'unknown', 'unknown'
+    observed = pd.Timestamp(stamp)
+    if close is not None:
+        edge = pd.Timestamp(close)
+        if edge-pd.Timedelta(seconds=limit) <= observed <= edge+pd.Timedelta(seconds=limit):
+            return 'regular_session', 'completed_session_close_observation'
+    quote_session, quote_close = market_state(observed.to_pydatetime())
+    if quote_session == 'regular_open':
+        return 'regular_session', 'regular_session_observation'
+    if quote_session == 'extended_hours':
+        return 'extended_hours', 'extended_hours_observation'
+    boundary = quote_close if quote_close is not None else close
+    if quote_session == 'closed' and boundary is not None:
+        edge = pd.Timestamp(boundary)
+        if observed > edge+pd.Timedelta(seconds=limit):
+            local = observed.tz_convert(NY)
+            if local.hour >= 20 or local.hour < 4:
+                return 'overnight', 'overnight_observation'
+            return 'off_hours', 'off_hours_observation'
+        return 'closed', 'dated_closed_market_observation'
+    return 'unknown', 'unknown'
+
+
 def freshness(quote, now=None, retrieved_at=None):
     now = now or datetime.now(timezone.utc)
     if now.tzinfo is None:
@@ -98,6 +130,8 @@ def freshness(quote, now=None, retrieved_at=None):
     cache_age = (now-pd.Timestamp(retrieval).to_pydatetime()).total_seconds() if retrieval else None
     session, close = market_state(now)
     limit = configured_limit('ALPHAOS_MAX_QUOTE_AGE_SECONDS', 120., 900.)
+    quote_session, observation_context = _quote_observation(
+        pd.Timestamp(stamp) if stamp else None, close, limit)
     status, reason = 'unknown', 'missing_or_ambiguous_timestamp'
     if age is not None:
         if age < -60:
@@ -108,21 +142,29 @@ def freshness(quote, now=None, retrieved_at=None):
         elif session == 'closed' and close is not None:
             recent_close = pd.Timestamp(stamp) >= pd.Timestamp(close)-pd.Timedelta(seconds=limit)
             status = 'latest_available' if recent_close else 'stale'
-            reason = 'latest_completed_session_observation' if recent_close else 'predates_latest_session_close'
+            if status == 'stale':
+                reason = 'predates_latest_session_close'
+            elif observation_context == 'completed_session_close_observation':
+                reason = 'latest_completed_session_observation'
+            elif observation_context == 'overnight_observation':
+                reason = 'overnight_observation'
+            else:
+                reason = 'off_hours_observation'
         else:
             reason = 'market_schedule_unavailable'
     quality = quote_quality(quote)
     live = status == 'fresh' and quality['last_price_valid']
     return dict(quote_as_of=stamp, quote_timezone='UTC' if stamp else None, retrieved_at=retrieval,
         evaluated_at=now.astimezone(timezone.utc).isoformat(), age_seconds=age, cache_age_seconds=cache_age,
-        source='Public', market_state=session,
+        source='Public', market_state=session, quote_session=quote_session,
         market_state_source='NYSE calendar; 04:00-20:00 ET extended policy; overnight ATS status unverified',
         data_status=status, freshness=status, freshness_reason=reason, max_age_seconds=limit,
         usable_for_live_research=live,
         usable_for_contextual_research=status in ('fresh', 'latest_available') and quality['last_price_valid'],
         usable_for_execution_analysis=live and quality['bid_ask_valid'],
         execution_analysis_scope='Underlying quote sanity only; bid/ask timestamps, entitlement and executable fills unverified',
-        observation_context='dated_closed_market_observation' if session == 'closed' else 'active_session_observation' if session != 'unknown' else 'unknown',
+        observation_context=observation_context,
+        overnight_ats_verified=False,
         real_time_entitlement_verified=False, quote_quality=quality)
 
 
