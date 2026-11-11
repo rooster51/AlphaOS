@@ -1,6 +1,73 @@
 import assert from "node:assert/strict";
 import { afterEach, test } from "node:test";
+import { readFileSync } from "node:fs";
 import { POST } from "../src/app/api/research/market/route.ts";
+
+test("validated forwarding preserves full SPY/QQQ research fixtures without serializing the research tree twice",async()=>{
+  setBackendConfig();
+  const fixtures=JSON.parse(readFileSync(new URL('./fixtures/market-parity.json',import.meta.url),'utf8'));
+  for(const item of fixtures) {
+    const expected=structuredClone(item.response);
+    expected.caveats.push('Unicode ? \u2028 and escaped quotes " \\ </script>');
+    const raw=' \n'+JSON.stringify(expected)+'\n ';
+    globalThis.fetch=async()=>new Response(raw,{headers:{'Content-Type':'application/json'}});
+    const input=request({symbol:item.request.symbol,...(item.request.width !== undefined?{width:item.request.width}:{})});
+    const stringify=JSON.stringify;let largeSerializations=0;
+    try {
+      JSON.stringify=function(value,...args){
+        if(value?.research?.schema_version==='alphaos-interface-v2')largeSerializations++;
+        return stringify.call(JSON,value,...args);
+      };
+      const result=await POST(input);
+      assert.equal(result.status,200);
+      assert.equal(result.headers.get('Content-Type'),'application/json');
+      assert.equal(result.headers.get('Cache-Control'),'no-store');
+      assert.deepEqual(await result.json(),{research:expected,verified_for_trading:false,source:'alphaos_research_api'});
+      assert.equal(largeSerializations,0,'The validated research tree must not be serialized again');
+    }finally{JSON.stringify=stringify;}
+  }
+});
+
+test("negative zero keeps the previous decoded response contract",async()=>{
+  setBackendConfig();
+  for(const number of ['-0','-0.0','-1e-999']) {
+    const data=envelope();data.caveats=['negative-zero-placeholder'];
+    const raw=JSON.stringify(data).replace('"negative-zero-placeholder"',number);
+    globalThis.fetch=async()=>new Response(raw,{headers:{'Content-Type':'application/json'}});
+    const result=await POST(request({symbol:'QQQ'}));
+    assert.equal(result.status,200);
+    assert.deepEqual((await result.json()).research,JSON.parse(JSON.stringify(JSON.parse(raw))));
+  }
+});
+
+test("overflow numbers in otherwise parseable upstream JSON fail closed before raw forwarding",async()=>{
+  setBackendConfig();
+  for(const symbol of ['QQQ','SPY']) {
+    const data=envelope(symbol);data.caveats=['numeric-overflow-placeholder'];
+    const raw=JSON.stringify(data).replace('"numeric-overflow-placeholder"','1e999');
+    globalThis.fetch=async()=>new Response(raw,{headers:{'Content-Type':'application/json'}});
+    const result=await POST(request({symbol}));
+    assert.equal(result.status,502);
+    assert.equal((await result.json()).code,'response_schema_mismatch');
+  }
+});
+
+test("no upstream bytes are released before the complete body parses and validates",async()=>{
+  setBackendConfig();let finishBody;
+  let fetched;const started=new Promise(resolve=>{fetched=resolve;});
+  const raw=JSON.stringify(envelope());
+  globalThis.fetch=async()=>new Response(new ReadableStream({start(controller){
+    controller.enqueue(new TextEncoder().encode(raw));
+    finishBody=()=>{controller.enqueue(new TextEncoder().encode(' DO_NOT_LOG_INVALID_TAIL'));controller.close();};
+    fetched();
+  }}),{headers:{'Content-Type':'application/json'}});
+  let settled=false;const pending=POST(request({symbol:'QQQ'})).then(r=>{settled=true;return r;});
+  await started;await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(settled,false);
+  finishBody();const response=await pending;
+  assert.equal(response.status,502);
+  assert.deepEqual(await response.json(),{status:'unavailable',code:'response_schema_mismatch'});
+});
 
 test("browser cancellation reaches only its upstream request with the existing deadline", async () => {
   setBackendConfig();
@@ -498,9 +565,12 @@ for(const status of [200,503]) {
  test(`response-body timeout after HTTP ${status} stays bounded and classified`,async()=>{
   setBackendConfig();const logs=[];const warn=console.warn;console.warn=v=>logs.push(JSON.parse(v));
   try {
-   globalThis.fetch=async()=>({ok:status===200,status,headers:new Headers(),json:async()=>{throw new DOMException("DO_NOT_LOG","TimeoutError");}});
+   const stalled=async()=>{throw new DOMException("DO_NOT_LOG","TimeoutError");};
+   globalThis.fetch=async()=>({ok:status===200,status,headers:new Headers(),json:stalled,text:stalled});
    const r=await POST(request({symbol:"SPY"}));assert.equal(r.status,502);assert.equal((await r.json()).code,"backend_timeout");
    assert.equal(logs[0].stage,"response_body");assert.equal(logs[0].upstream_status,status);
+   assert.equal(logs[0].outcome,"backend_timeout");
+   assert.equal(logs[0].timeout_phase,"response_body");
   }finally{console.warn=warn;}
  });
 }
@@ -516,7 +586,8 @@ test("body AbortError is classified using the original 12000ms timeout signal",a
  setBackendConfig();const original=AbortSignal.timeout;const warn=console.warn;console.warn=()=>{};
  try {
   AbortSignal.timeout=ms=>{assert.equal(ms,12000);return AbortSignal.abort(new DOMException("private","TimeoutError"));};
-  globalThis.fetch=async()=>({ok:true,status:200,headers:new Headers(),json:async()=>{throw new DOMException("private","AbortError");}});
+  const aborted=async()=>{throw new DOMException("private","AbortError");};
+  globalThis.fetch=async()=>({ok:true,status:200,headers:new Headers(),json:aborted,text:aborted});
   const result=await POST(request({symbol:"SPY"}));assert.equal((await result.json()).code,"backend_timeout");
  }finally{AbortSignal.timeout=original;console.warn=warn;}
 });
@@ -535,7 +606,8 @@ test("current bridge rejects unknown backend research modes without breaking leg
  assert.equal((await POST(request({symbol:"QQQ"}))).status,200);
 });
 
-test("concurrent historical timeouts keep the 12000ms deadline, isolated correlation and sanitized diagnostics",async()=>{
+for (const mode of ["current", "historical"]) {
+test(`concurrent ${mode} cold-origin waits keep the 12000ms deadline and recover only on a new request`,async()=>{
  setBackendConfig();const originalTimeout=AbortSignal.timeout;const warn=console.warn;
  const logs=[];const sent=[];console.warn=value=>logs.push(JSON.parse(value));
  try {
@@ -552,18 +624,78 @@ test("concurrent historical timeouts keep the 12000ms deadline, isolated correla
     else options.signal.addEventListener("abort",()=>reject(options.signal.reason),{once:true});
    });
   };
-  const responses=await Promise.all(["SPY","QQQ"].map(symbol=>POST(request({symbol,research_mode:"historical"}))));
+  const responses=await Promise.all(["SPY","QQQ"].map(symbol=>POST(request({symbol,research_mode:mode}))));
   assert.equal(new Set(sent.map(item=>item.id)).size,2);
   for(let index=0;index<responses.length;index++) {
    const response=responses[index];assert.equal(response.status,502);
    assert.deepEqual(await response.json(),{status:"unavailable",code:"backend_timeout"});
    const id=response.headers.get("X-AlphaOS-Request-ID");
    const log=logs.find(row=>row.request_id===id);
-   assert.equal(log.symbol,index===0?"SPY":"QQQ");assert.equal(log.research_mode,"historical");
+   assert.equal(log.symbol,index===0?"SPY":"QQQ");assert.equal(log.research_mode,mode);
    assert.equal(log.stage,"fetch");assert.equal(log.timeout_ms,12000);
-   assert.equal(sent.find(item=>item.id===id).payload.research_mode,"historical");
+   assert.equal(log.outcome,"backend_timeout");assert.equal(log.timeout_phase,"response_headers");
+   assert.ok(log.fetch_wait_ms>=0);
+   assert.equal(log.upstream_status,undefined);assert.equal(log.backend_correlated,undefined);
+   assert.equal(sent.find(item=>item.id===id).payload.research_mode,mode);
   }
   assert.equal(logs.length,2);assert.ok(!JSON.stringify(logs).includes("DO_NOT_LOG"));
   assert.ok(!JSON.stringify(logs).includes("test-token"));
+  assert.equal(sent.length,2); // No hidden retries, preflight waits or budget extension.
+  AbortSignal.timeout=originalTimeout;
+  globalThis.fetch=async()=>Response.json(envelope());
+  const recovered=await POST(request({symbol:"QQQ"}));
+  assert.equal(recovered.status,200);
+  assert.notEqual(recovered.headers.get("X-AlphaOS-Request-ID"),responses[0].headers.get("X-AlphaOS-Request-ID"));
  }finally{AbortSignal.timeout=originalTimeout;console.warn=warn;}
+});
+}
+
+test('current QQQ 150 auto-width waits for complete evidence and rejects truncated slow bodies',async()=>{
+ setBackendConfig();
+ const payload={symbol:'QQQ',research_mode:'current',available_capital:150};
+ const data=envelope('QQQ');data.request=payload;data.research.research_mode='current';
+ const full=JSON.stringify(data);const middle=Math.floor(full.length/2);
+ for(const complete of [true,false]){
+  let release;const ready=new Promise(resolve=>{release=resolve;});
+  let headersSeen;const headers=new Promise(resolve=>{headersSeen=resolve;});
+  globalThis.fetch=async(_,options)=>{
+   assert.deepEqual(JSON.parse(options.body),payload);
+   assert.equal(options.signal.aborted,false);
+   return new Response(new ReadableStream({async start(controller){
+    controller.enqueue(new TextEncoder().encode(full.slice(0,middle)));headersSeen();
+    await ready;
+    if(complete)controller.enqueue(new TextEncoder().encode(full.slice(middle)));
+    controller.close();
+   }}),{headers:{'Content-Type':'application/json','X-AlphaOS-Request-ID':options.headers['X-AlphaOS-Request-ID']}});
+  };
+  let finished=false;const pending=POST(request(payload)).then(response=>{finished=true;return response;});
+  await headers;await new Promise(resolve=>setTimeout(resolve,5));
+  assert.equal(finished,false,'No partial evidence may escape while the response is incomplete');
+  release();const response=await pending;
+  assert.equal(response.status,complete?200:502);
+  const body=await response.json();
+  if(complete)assert.deepEqual(body.research,data);
+  else {assert.equal(body.code,'response_schema_mismatch');assert.equal(body.research,undefined);}
+ }
+});
+
+test('cancelling current QQQ 150 during a slow body preserves the independent SPY request',async()=>{
+ setBackendConfig();const cancel=new AbortController();
+ const payload={symbol:'QQQ',research_mode:'current',available_capital:150};
+ let started;const bodyStarted=new Promise(resolve=>{started=resolve;});
+ globalThis.fetch=async(_,options)=>{
+  const sent=JSON.parse(options.body);
+  if(sent.symbol==='SPY')return Response.json(envelope('SPY'));
+  assert.deepEqual(sent,payload);
+  return new Response(new ReadableStream({start(controller){
+   controller.enqueue(new TextEncoder().encode('{"schema_version":'));
+   options.signal.addEventListener('abort',()=>controller.error(options.signal.reason),{once:true});started();
+  }}),{headers:{'Content-Type':'application/json'}});
+ };
+ const input=new Request('http://localhost/api/research/market',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),signal:cancel.signal});
+ const qqq=POST(input);await bodyStarted;
+ const spy=await POST(request({symbol:'SPY'}));assert.equal(spy.status,200);
+ cancel.abort(new DOMException('private','AbortError'));
+ const response=await qqq;assert.equal(response.status,499);
+ assert.deepEqual(await response.json(),{status:'unavailable',code:'request_cancelled'});
 });

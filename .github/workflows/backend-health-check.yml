@@ -1,0 +1,52 @@
+name: Backend health check
+
+# Dispatch-only verification for the Render keep-warm configuration documented
+# in docs/render_keepwarm.md. The heartbeat itself is a plain public GET from the
+# existing cron-job.org scheduler, so this workflow is never scheduled, spends no
+# runner minutes on a timer, and uses no credential.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Public health endpoint answers
+        shell: bash
+        run: |
+          set -euo pipefail
+          url="https://alphaos.onrender.com/health"
+          # A Free instance takes about a minute to boot, so allow for it while
+          # keeping the request bounded.
+          metrics=$(curl -sS --max-time 60 -o /tmp/health.json \
+            -w '%{http_code} %{time_starttransfer} %{time_total}' "$url") || {
+              echo "::error::request to $url failed (DNS, TLS or timeout)"; exit 1; }
+          read -r code ttfb total <<<"$metrics"
+          echo "HTTP $code · ttfb ${ttfb}s · total ${total}s"
+          if [ "$code" != "200" ]; then
+            echo "::error::expected 200 from $url, got $code (503: suspended or still booting, 404: route changed, 429: throttled)"
+            exit 1
+          fi
+          python3 - <<'PY'
+          import json
+          import sys
+          expected = {
+              "status": "ok",
+              "schema_version": "alphaos-research-v1",
+              "read_only": True,
+          }
+          payload = json.load(open("/tmp/health.json", encoding="utf-8"))
+          print("status={} schema={} read_only={} authentication_configured={}".format(
+              payload.get("status"), payload.get("schema_version"),
+              payload.get("read_only"), payload.get("authentication_configured")))
+          mismatch = [
+              "{}={!r}".format(key, payload.get(key))
+              for key, value in expected.items() if payload.get(key) != value
+          ]
+          if mismatch:
+              sys.exit("::error::unexpected health payload: " + ", ".join(mismatch))
+          PY

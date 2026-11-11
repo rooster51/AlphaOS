@@ -1,10 +1,18 @@
 # Audited deployment and dependency map
 
-Read-only control-plane audit: October 16, 2026. Both user-facing services are
+Current deployment targets are Netlify for the Next.js website, Render for the
+FastAPI backend, and Supabase for the private archive.
+
+## Retired edge deployment
+
+The former edge-hosting path is not part of the current deployment. External
+app, build-integration and credential cleanup that remain after the code removal
+are recorded in [legacy edge decommissioning](LEGACY_EDGE_DECOMMISSION.md).
+
+Read-only control-plane audit: October 16, 2026. The Render services below were
 manually deployed at `d1c9e087a3dbf09490fd113d095c004fecdac738` (main after PR #44).
-Names are service identifiers, not guarantees that a service is unused: the
-website's service is named **alphaos-web-staging** but is the current user-facing
-research website inspected in the Release 1 work.
+Names are service identifiers, not guarantees that a service is unused. The
+**alphaos-web-staging** Render row is historical; the current frontend is Netlify.
 
 > **Currency update (2026-10-24).** Corrections to code and version facts that
 > changed after this audit. The service table, settings and deployment
@@ -82,7 +90,14 @@ Required wiring (names only; this audit did not retrieve or change values):
 | Process | Configuration ownership and effect |
 |---|---|
 | Website | `ALPHAOS_API_URL` and secret `ALPHAOS_API_TOKEN` are server-side. The Release 1 endpoint was observed targeting the AlphaOS backend through paired authenticated responses; stored Render values were not read in this audit. `ALPHAOS_DEMO_MODE=true` affects explicitly labeled dashboard demo context only; normal archive research never uses mock candidates. |
-| API | `ALPHAOS_API_TOKEN` gates REST. `PUBLIC_API_SECRET` and `PUBLIC_ACCOUNT_NUMBER` support daily history and legacy live tools. `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are trusted server-only archive credentials. `ALPHAOS_ARCHIVE_MAX_AGE_SECONDS` configures current-mode freshness (600 default). `ALPHAOS_PUBLIC_URL` sets OAuth public origin (default `https://alphaos.onrender.com`). `PORT` is validated by the entrypoint. |
+| API | `ALPHAOS_API_TOKEN` gates REST. `PUBLIC_API_SECRET` and `PUBLIC_ACCOUNT_NUMBER` support daily history and legacy live tools. `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are trusted server-only archive credentials. `ALPHAOS_ARCHIVE_MAX_AGE_SECONDS` configures current-mode freshness (600-second default and hard maximum; deployments may choose a lower value). `ALPHAOS_PUBLIC_URL` sets OAuth public origin (default `https://alphaos.onrender.com`). `PORT` is validated by the entrypoint. |
+
+Current archive observations use a single 600-second maximum freshness window
+across the API and website. A larger deployment setting is capped at 600 seconds
+by the API; records older than the effective window remain unavailable. The
+website independently rejects a reported maximum above 600 seconds and checks
+the observation age against that maximum. Historical mode is explicitly
+separate and does not label old observations as current.
 | Secret mounts | `alphaos_api/config.py` loads explicitly named API/Public secret files from `/etc/secrets` with environment precedence; Supabase archive wiring reads its environment. No credentials go into research arguments or browser bundles. |
 | Collector | `.github/workflows/intraday-archive.yml` dispatches `scripts.run_intraday_snapshot` with GitHub secret mappings. `config/intraday_archive.json` and the authoritative NYSE session gate determine collection. This is separate from deploying the API or website. |
 | Legacy Streamlit | `requirements.txt`, `streamlit run streamlit_app.py` (or compatible `app.py`), `.streamlit` settings/secrets and pages. Community Cloud or other external Streamlit deployment state was not confirmed by the Render audit. Retain both entrypoints. |

@@ -4,6 +4,7 @@ Comparison is descriptive only: preserve supplied order, expose common evidence,
 and never score, rank, recommend, or choose a winner.
 """
 from math import isfinite
+from copy import deepcopy
 
 
 def _number(value):
@@ -66,7 +67,7 @@ def normalize_comparison_candidate(item, input_index):
         for key in ("bid", "ask", "delta", "gamma", "theta", "vega", "iv", "volume", "open_interest")
     }
 
-    return {
+    result = {
         "input_index": input_index,
         "strategy_family": family,
         "direction": item.get("direction"),
@@ -86,6 +87,9 @@ def normalize_comparison_candidate(item, input_index):
         "pricing_assumption": evidence.get("pricing_assumption"),
         "caveats": list(item.get("caveats") or []),
     }
+    if 'market_data' in evidence:
+        result['market_data'] = deepcopy(evidence['market_data'])
+    return result
 
 
 def compare_strategy_research(candidates, *, thesis=None):

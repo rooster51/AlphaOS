@@ -6,6 +6,7 @@ from functools import lru_cache
 from threading import RLock
 import os
 import pandas as pd
+from requests.exceptions import Timeout
 from datetime import datetime, timezone
 from modules.quote_freshness import normalize_timestamp
 from modules.public_session import _select_account
@@ -23,6 +24,7 @@ class PublicProviderError(RuntimeError):
 
 def provider_error(exc):
     if isinstance(exc,PublicProviderError): return exc
+    if isinstance(exc,(Timeout,TimeoutError)): return PublicProviderError('provider_timeout')
     status=getattr(exc,'status_code',None)
     if status is None: status=getattr(getattr(exc,'response',None),'status_code',None)
     if status is None: status=getattr(exc,'diagnostics',{}).get('http_status')
@@ -83,12 +85,18 @@ def _order_instrument(order_instrument: Any, instrument_type: Any, symbol: str) 
 
 def get_public_quotes(symbols: tuple[str, ...], _context=None) -> list[dict]:
     from public_api_sdk import InstrumentType, OrderInstrument
-    client, account_id = (_context or _public_context)()
+    with stage("quote_provider_context"):
+        client, account_id = (_context or _public_context)()
     instruments = [_order_instrument(OrderInstrument, InstrumentType, symbol) for symbol in symbols]
-    quotes = client.get_quotes(instruments, account_id=account_id)
+    with stage("quote_sdk_request_including_auth_refresh"):
+        quotes = client.get_quotes(instruments, account_id=account_id)
     retrieved_at=datetime.now(timezone.utc).isoformat()
     return [{'symbol': quote.instrument.symbol, 'last': _as_float(quote.last), 'bid': _as_float(quote.bid), 'ask': _as_float(quote.ask), 'previous_close': _as_float(quote.previous_close), 'change': _as_float(quote.one_day_change.change if quote.one_day_change else None), 'change_pct': _as_float(quote.one_day_change.percent_change if quote.one_day_change else None), 'volume': quote.volume,
         'updated_at': normalize_timestamp(quote.last_timestamp), 'retrieved_at': retrieved_at,
+        'bid_timestamp': normalize_timestamp(getattr(quote, 'bid_timestamp', None)),
+        'ask_timestamp': normalize_timestamp(getattr(quote, 'ask_timestamp', None)),
+        'provider_outcome': getattr(getattr(quote, 'outcome', None), 'value', None),
+        'provider_retrieved_at': retrieved_at,
         'provider_timestamp_field':'lastTimestamp',
         'provider_timestamp':str(quote.last_timestamp) if quote.last_timestamp is not None else None,
         'provider_timestamp_representation':'Public SDK datetime; original HTTP spelling not retained',
@@ -107,7 +115,9 @@ def get_public_option_expirations(symbol: str, _context=None) -> list[str]:
     normalized=_normalize_public_symbol(symbol)
     if normalized in REGISTRY and instrument(normalized).asset_type=='index' and response.base_symbol!=instrument(normalized).provider_response_symbol:
         raise PublicProviderError('provider_symbol_mismatch')
-    return sorted((str(expiration)[:10] for expiration in response.expirations))
+    if normalized in ('SPY','QQQ') and getattr(response,'base_symbol',None)!=normalized:
+        raise PublicProviderError('provider_symbol_mismatch')
+    return sorted(str(expiration) for expiration in response.expirations)
 
 def _option_quote_row(quote: Any, option_type: str) -> dict | None:
     """Compatibility wrapper; retain this provider's numeric conversion hook."""
@@ -122,7 +132,7 @@ def get_public_option_chain(symbol: str, expiration: str, _context=None) -> dict
     normalized=_normalize_public_symbol(symbol)
     if normalized in REGISTRY and instrument(normalized).asset_type=='index' and response.base_symbol!=instrument(normalized).provider_response_symbol:
         raise PublicProviderError('provider_symbol_mismatch')
-    return {'symbol': normalized if normalized in REGISTRY and instrument(normalized).asset_type=='index' else getattr(response,'base_symbol',normalized), 'expiration': expiration, 'calls': calls, 'puts': puts}
+    return {'symbol': normalized if normalized in REGISTRY and instrument(normalized).asset_type=='index' else getattr(response,'base_symbol',None), 'expiration': expiration, 'calls': calls, 'puts': puts}
 
 def get_public_research_bars(symbol: str, period: str='FIVE_YEARS', option: bool=False, _context=None) -> pd.DataFrame:
     """Observed Public daily OHLC, with explicit long-history mapping and audit."""

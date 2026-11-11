@@ -1,3 +1,5 @@
+import { getServerConfig } from "../../../lib/server-config.ts";
+
 export async function GET() {
   // Process health only; do not imply verified API credentials or market freshness.
   return Response.json({
@@ -7,5 +9,6 @@ export async function GET() {
     backend_verification: "not_assessed",
     market_freshness: "not_assessed",
     account_access: "disabled",
+    research_configuration: getServerConfig().diagnostics,
   }, { headers: { "Cache-Control": "no-store" } });
 }

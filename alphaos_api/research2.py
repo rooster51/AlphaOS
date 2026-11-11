@@ -1,5 +1,6 @@
 """Read-only interface orchestration; research stays in the AlphaOS modules."""
 from datetime import date, datetime, timezone
+from copy import deepcopy
 from math import isfinite
 import os
 from typing import Literal
@@ -8,7 +9,7 @@ from anyio import to_thread
 from fastapi import Request as HTTPRequest
 from starlette.responses import Response
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 from modules.position_research import research_position
 from modules.market_archive_adapter import ArchiveExpirationUnavailable
 from modules.strategy_compare import compare_strategy_research
@@ -17,8 +18,10 @@ from modules.structure_economics import structure_historical_economics, compare_
 from modules.supabase_archive import research_archive_client as archive_client, read_latest_option_snapshot, ArchiveUnavailable
 from .contracts import APIError
 from modules.research_timing import execution, stage as timing_stage
+from modules.structure_provenance import resolve_structure, hypothetical_evidence, ProvenanceError
 
 VERSION = 'alphaos-interface-v2'
+MAX_CURRENT_ARCHIVE_AGE_SECONDS = 600
 
 
 class Request(BaseModel):
@@ -32,6 +35,22 @@ class MarketRequest(Request):
     available_capital: float | None = Field(default=None, gt=0, strict=True)
     objective: str | None = Field(default=None, max_length=1000)
     width: float | None = Field(default=None, gt=0, le=100, strict=True)
+
+
+class MarketTransportRequest(MarketRequest):
+    """REST-only representation choice; shared research/MCP inputs stay stable."""
+    response_format: Literal['full', 'summary-v1'] = 'full'
+
+
+class CandidateReference(Request):
+    bucket: Literal['candidates', 'excluded']
+    index: int = Field(ge=0, le=10000, strict=True)
+    candidate_sha256: str = Field(pattern=r'^[a-f0-9]{64}$')
+    archive_sha256: str = Field(pattern=r'^[a-f0-9]{64}$')
+
+
+class CandidateDetailRequest(MarketRequest):
+    detail: CandidateReference
 
 
 class ObservationRequest(Request):
@@ -62,6 +81,12 @@ class StructureLeg(Request):
     type: Literal['Call', 'Put']
     strike: float = Field(gt=0)
     qty: int = Field(ge=-100, le=100, strict=True)
+    contract: str | None = Field(default=None, pattern=r'^[A-Z]{1,6}\s*\d{6}[CP]\d{8}$', max_length=32)
+
+
+class ArchiveReference(Request):
+    snapshot_id: str = Field(min_length=1, max_length=128)
+    archive_sha256: str = Field(pattern=r'^[a-f0-9]{64}$')
 
 
 class StructureRequest(Request):
@@ -72,6 +97,17 @@ class StructureRequest(Request):
     credit: float  # signed package cashflow per share, debit negative
     fees: float = Field(default=0, ge=0)
     legs: list[StructureLeg] = Field(min_length=1, max_length=4)
+    market_data: ArchiveReference | None = None
+
+    @model_validator(mode='after')
+    def evidence_mode(self):
+        if self.market_data is None and any(leg.contract is not None for leg in self.legs):
+            raise ValueError('Contract identities require an archive reference.')
+        if self.market_data is not None and any(not leg.contract for leg in self.legs):
+            raise ValueError('Every archive-backed leg requires a contract identity.')
+        if any(leg.qty == 0 for leg in self.legs):
+            raise ValueError('Leg quantities must be nonzero.')
+        return self
 
 
 class StructuresRequest(Request):
@@ -91,7 +127,9 @@ def json_safe(value):
 
 
 def envelope(request, research, source, caveats=(), *, json_ready=True):
-    value = dict(schema_version=VERSION, request=request.model_dump(mode='json'),
+    value = dict(schema_version=VERSION, request=request.model_dump(mode='json',
+        exclude_none=isinstance(request, (StructureRequest, StructuresRequest)),
+        exclude={'response_format'} if isinstance(request, MarketRequest) else set()),
         read_only=True, research=research, provenance=dict(source=source), caveats=list(caveats))
     return json_safe(value) if json_ready else value
 
@@ -107,9 +145,12 @@ class ArchiveResearchService:
         # Lazy trusted server wiring. No connection or secret loading on import.
         # Reader implements ALL selection, checksum, identity and freshness rules.
         try:
-            age = float(os.environ.get('ALPHAOS_ARCHIVE_MAX_AGE_SECONDS', '600'))
-            if not isfinite(age) or age < 0:
+            configured_age = float(os.environ.get('ALPHAOS_ARCHIVE_MAX_AGE_SECONDS', '600'))
+            if not isfinite(configured_age) or configured_age < 0:
                 raise ValueError()
+            # The deployment setting may lower the window, but never relax the
+            # shared 10-minute maximum accepted by the website contract.
+            age = min(configured_age, MAX_CURRENT_ARCHIVE_AGE_SECONDS)
             with timing_stage('archive_client'):
                 client = archive_client()
             return read_latest_option_snapshot(client, symbol, as_of,
@@ -128,9 +169,9 @@ class ArchiveResearchService:
         bars['symbol'] = symbol
         return bars
 
-    def run(self, request, *, json_ready=True):
+    def run(self, request, *, json_ready=True, expected_archive_sha256=None):
         with execution(request.symbol, request.research_mode):
-            return self._run(request, json_ready=json_ready)
+            return self._run(request, json_ready=json_ready, expected_archive_sha256=expected_archive_sha256)
 
     def observe(self, request, *, json_ready=True):
         from modules.archive_observation import archive_observation
@@ -155,7 +196,7 @@ class ArchiveResearchService:
             result['request'] = request.model_dump(mode='json')
             return json_safe(result) if json_ready else result
 
-    def _run(self, request, *, json_ready=True):
+    def _run(self, request, *, json_ready=True, expected_archive_sha256=None):
         history = None
         history_loading = dict(status="unavailable", reason="completed_history_unavailable")
         caveats = ['Archive observations are not executable live quotes.',
@@ -172,6 +213,8 @@ class ArchiveResearchService:
             raise APIError(error.code, 503) from None
         except Exception:
             raise APIError('archive_unavailable', 503) from None
+        if expected_archive_sha256 is not None and record.get('metadata', {}).get('archive_sha256') != expected_archive_sha256:
+            raise APIError('research_evidence_changed', 409)
         try:
             with timing_stage('history_load'):
                 history = self.history_loader(request.symbol)
@@ -218,37 +261,82 @@ class ArchiveResearchService:
             caveats.append('Historical archive research at the observation timestamp; candidates are not current trading opportunities or executable quotes.')
         return envelope(request, result, 'Verified Supabase archive; completed Public daily history when available', caveats, json_ready=json_ready)
 
-    @staticmethod
-    def _structure(request):
-        trade = request.model_dump(mode='json', exclude={'as_of'})
+    def _structure(self, request, *, now=None, records=None):
+        trade = request.model_dump(mode='json', exclude={'as_of', 'market_data'}, exclude_none=True)
         trade.update(shares=0, source='Explicit user-supplied scenario',
             pricing_assumption='Supplied signed package cashflow; not a verified quote or fill')
+        evidence = hypothetical_evidence()
+        if request.market_data is not None:
+            now = now or self.clock()
+            records = {} if records is None else records
+            try:
+                if request.symbol not in records:
+                    records[request.symbol] = self.read_snapshot(request.symbol, now.isoformat())
+                trade['legs'], evidence = resolve_structure(request, records[request.symbol], now)
+            except ArchiveUnavailable as error:
+                raise APIError(error.code, 503) from None
+            except ProvenanceError as error:
+                raise APIError(error.code, 422) from None
+            except ArchiveExpirationUnavailable:
+                raise APIError('archive_expiration_unavailable', 422) from None
+            except Exception:
+                raise APIError('market_data_unavailable', 503) from None
+            trade.update(source='Verified Supabase archive',
+                pricing_assumption='Observed buy ask / sell bid; user-supplied fees; not an executable fill')
         try:
-            return research_position(trade, symbol=request.symbol, spot=request.spot, as_of=request.as_of.isoformat())
+            research = research_position(trade, symbol=request.symbol, spot=request.spot, as_of=request.as_of.isoformat())
         except (ValueError, TypeError, KeyError, OverflowError):
             raise APIError('invalid_structure', 422) from None
+        research['evidence']['market_data'] = evidence
+        research['evidence']['pricing_assumption'] = trade['pricing_assumption']
+        if request.market_data is not None:
+            # The outright-option adapter creates its own payoff trade. Preserve
+            # the canonical quote-bearing identity there too, without repricing.
+            research['payoff']['trade'] = deepcopy(research['trade'])
+        return research
 
     def structure(self, request):
-        research = self._structure(request)
+        now = self.clock()
+        research = self._structure(request, now=now)
         research['historical_economics'] = structure_historical_economics(research,
-            as_of=request.as_of.isoformat(), now=self.clock(),
+            as_of=request.as_of.isoformat(), now=now,
             read_snapshot=self.read_snapshot, history_loader=self.history_loader)
-        return envelope(request, research, 'Explicit user-supplied scenario')
+        return envelope(request, research, 'Verified Supabase archive' if request.market_data else 'Explicit user-supplied scenario')
 
     def compare(self, request):
-        researched = [self._structure(item) for item in request.structures]
+        now, records = self.clock(), {}
+        researched = [self._structure(item, now=now, records=records) for item in request.structures]
         historical = compare_historical_economics(researched,
-            as_of_dates=[item.as_of.isoformat() for item in request.structures], now=self.clock(),
+            as_of_dates=[item.as_of.isoformat() for item in request.structures], now=now,
             read_snapshot=self.read_snapshot, history_loader=self.history_loader)
         return envelope(request, dict(candidates=researched, historical_comparison=historical,
             comparison=compare_strategy_research(researched, thesis=request.thesis)),
-            'Explicit user-supplied scenarios', ['Input order is not preference. Different dates, symbols and spots remain explicit per candidate.'])
+            'Per-candidate verified archive or hypothetical provenance' if any(item.market_data for item in request.structures)
+            else 'Explicit user-supplied scenarios',
+            ['Input order is not preference. Different dates, symbols and spots remain explicit per candidate.'])
 
 
 def register_research2(router, service, respond):
     @router.post('/research/market', operation_id='run_market_v2')
-    async def run_market(request: MarketRequest, http_request: HTTPRequest):
-        return await run_cancellable(lambda: service().run(request,json_ready=False),http_request)
+    async def run_market(request: MarketTransportRequest, http_request: HTTPRequest):
+        def calculate():
+            value = service().run(request,json_ready=False)
+            if request.response_format == 'summary-v1':
+                from .research_projection import summarize
+                with timing_stage('response_projection'):
+                    value = summarize(value)
+            return value
+        return await run_cancellable(calculate,http_request)
+
+    @router.post('/research/market/candidate', operation_id='market_candidate_detail_v1')
+    async def market_candidate(request: CandidateDetailRequest, http_request: HTTPRequest):
+        def calculate():
+            from .research_projection import select_detail
+            base = MarketRequest(**request.model_dump(exclude={'detail', 'response_format'}))
+            value = service().run(base, json_ready=False,
+                expected_archive_sha256=request.detail.archive_sha256)
+            return select_detail(value, request.detail)
+        return await run_cancellable(calculate, http_request)
 
     @router.post('/research/observation', operation_id='get_archive_observation_v1',response_model=ObservationResponse)
     async def observe_market(request: ObservationRequest, http_request: HTTPRequest):

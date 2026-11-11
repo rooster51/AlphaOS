@@ -2,14 +2,18 @@
 
 Current service, backend and dependency ownership is documented in
 [the audited deployment map](../docs/DEPLOYMENT.md) and
-[architecture inventory](../docs/ARCHITECTURE.md). The live website service is
-named `alphaos-web-staging`; its name alone does not identify an unused preview.
-This document describes setup, not authorization to deploy or change settings.
+[architecture inventory](../docs/ARCHITECTURE.md). The current frontend target is
+Netlify; the API runs on Render and archive storage on Supabase. This document
+describes setup, not authorization to deploy or change settings.
 
-Run this app as a Node.js 22 Next.js web service. Do not configure a static
-export: server-rendered pages and the `/api` routes need a server runtime.
-Render is the simplest fit with the existing backend; configure the web service
-to run `npm run build` and `npm start`, preferably in the backend's region.
+Build this app as a Node.js 22 Next.js web service on Netlify. Do not configure a
+static export: server-rendered pages and the `/api` routes need a server runtime.
+
+The AlphaOS API runs on Render as a Free instance, which spins down after 15
+minutes without inbound traffic and takes about a minute to boot again. A public
+`GET https://alphaos.onrender.com/health` keeps it warm without credentials; the
+job specification, monthly Free instance-hour budget and its limits are in
+[`docs/render_keepwarm.md`](../docs/render_keepwarm.md).
 
 Set these server-side environment variables in the hosting provider:
 
@@ -24,6 +28,96 @@ Set these server-side environment variables in the hosting provider:
 foundation. Do not configure them as a substitute for authenticated account
 integration. `/api/health` confirms only that the web process responds; it does
 not verify backend credentials, account access, or current market evidence.
+
+## Netlify Free compatibility
+
+The root `netlify.toml` targets only `web/` as the build base. Netlify therefore
+runs `npm ci` and `npm run build:netlify` from the Next.js project instead of
+detecting the repository-root `.python-version` and `requirements*.txt`. The
+Next.js OpenNext adapter normally installs automatically. The live deploy did
+not include its server runtime (Netlify reported no functions deployed), so
+this repository explicitly installs the adapter as a build plugin to ensure
+SSR, route handlers, and App Router routes are packaged. The base and package
+directories are `web/`; the build command is `npm run build:netlify`, the Next
+build output is `.next`, and the build uses Node.js 22.23.0. Keep the adapter
+package version in `web/package.json` and the plugin declaration in the root
+`netlify.toml` in sync.
+
+The Netlify build uses `tsconfig.netlify.json`, which extends the application's
+TypeScript config. The application uses the Node runtime binding (`process.env`).
+No Python, trading engine, archive, or Supabase code is included in the site
+build.
+
+The Netlify Edge Function `10-auth-gate` applies the existing
+`protectWebsite` checks to every request before assets, pages, and API routes
+are served. It reads secrets from Netlify's Functions environment and keeps
+the HTTPS redirect, signed `__Host-` session cookie, exact-origin CSRF checks,
+remote Render password verification, no-store headers, and protected research
+API. `00-login-rate-limit` runs first for `/auth/login` and applies a 5-request
+per-60-second limit per domain and client IP.
+
+After the per-IP rule, the gate calls the authenticated Render
+`/v1/website-auth/rate-limit` endpoint. Render invokes the
+`consume_website_login_attempt` Supabase RPC with its existing service-role
+secret. The RPC serializes login attempts under a database row lock and
+enforces a shared rolling 5-attempt/60-second window across client IPs.
+Expired attempts are removed during each call. The SQL migration enables RLS,
+denies direct table access, and grants RPC execution only to `service_role`.
+The shared limiter fails closed on missing configuration, transport failures,
+unexpected status, or invalid responses. No client IP or authentication
+credential is stored in the attempt table.
+
+The [migration](../supabase/migrations/20261103000000_website_login_shared_rate_limit.sql)
+is reviewed source only and is **not applied to production** by this change.
+Do not enable the Netlify site until the migration is applied to the intended
+Supabase project and its role grants are verified. The backend uses the
+existing Render `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` environment
+variables; do not copy either secret into Netlify or source control. Render's
+existing bounded bcrypt concurrency remains independent protection.
+
+### Netlify setup (manual; no deploy is performed by this change)
+
+1. Review and approve the SQL migration, then apply it to the intended Supabase
+   project under its normal migration procedure. Verify the `service_role`
+   can execute the RPC and cannot directly read the limiter tables. Do not
+   grant the function to `anon` or `authenticated`. This change does not run
+   migrations or modify production data.
+2. Verify the existing Render API has its current `SUPABASE_URL` and
+   `SUPABASE_SERVICE_ROLE_KEY` environment values and deploy the API change
+   through its separately approved release process. The rate-limit endpoint
+   fails closed until those values and the RPC are available.
+3. Configure the existing Netlify site from `rooster51/AlphaOS` on the
+   release-candidate branch. Set the base and package directories to `web/`;
+   use `npm run build:netlify` and publish `.next`. The checked-in
+   `netlify.toml` selects these settings and installs the Next.js runtime;
+   do not override them with repository-root build commands or disable the
+   adapter.
+4. In the site's environment-variable settings, add the existing server-side
+   values `ALPHAOS_API_URL`, `ALPHAOS_API_TOKEN`, `ALPHAOS_PASSWORD_HASH`,
+   `ALPHAOS_SESSION_KEY`, and `ALPHAOS_DEMO_MODE=false`. Give secret values
+   Functions scope where Netlify offers scopes. Reuse the approved values from
+   the current website/API configuration; do not commit them, put them in
+   `netlify.toml`, or expose them as `NEXT_PUBLIC_*`. No limiter-mode
+   environment variable should be added.
+5. Once explicitly authorized, create a Netlify deploy preview and verify its
+   runtime environment, anonymous denial, login/logout, CSRF rejection, Render
+   connectivity, and shared limit across separate client IPs. Confirm missing
+   or stale research evidence remains unavailable before any production
+   decision. Do not test real password guesses against production.
+
+Local checks from `web/`:
+
+```sh
+npm ci
+npm run build:netlify
+npm run typecheck
+npm test
+npm run test:e2e
+```
+
+The Edge Function rate policy is configured in source and available on all
+Netlify plans. Exceeding any Free-tier included usage limits can affect site
+availability; monitor usage and do not enable paid upgrades or paid add-ons.
 
 ## Release 1 candidate research parity
 

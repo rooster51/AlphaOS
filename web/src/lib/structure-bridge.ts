@@ -6,6 +6,7 @@
  * forwarded when they pass the same contract the renderer uses.
  */
 import { STRUCTURE_SOURCE } from "./structure-contract.ts";
+import { getServerConfig } from "./server-config.ts";
 
 export const SOURCE = STRUCTURE_SOURCE;
 export const STRUCTURE_PATH = "/v1/research/structure";
@@ -35,6 +36,10 @@ function failure(status: number, code: string | null): Outcome {
   if (status === 401) return { status: 502, code: "backend_authentication_required" };
   if (status === 403) return { status: 502, code: "backend_authentication_rejected" };
   if (code === "invalid_structure") return { status: 502, code: "invalid_structure" };
+  if (code && ["archive_snapshot_mismatch", "archive_expiration_unavailable", "archive_stale", "archive_missing",
+    "archive_unavailable", "market_data_integrity_error", "market_data_date_mismatch", "market_data_spot_mismatch",
+    "market_data_cashflow_mismatch", "market_contract_mismatch", "market_quote_invalid", "market_quote_stale",
+    "market_data_unavailable"].includes(code)) return {status:502, code};
   if (status === 422) return { status: 502, code: "backend_rejected_request" };
   if (code === "api_not_configured") return { status: 502, code: "backend_api_not_configured" };
   if (code === "internal_error") return { status: 502, code: "backend_internal_error" };
@@ -66,9 +71,10 @@ export async function postStructure(
     stage: "request_validation",
   };
 
-  const token = process.env.ALPHAOS_API_TOKEN;
-  const base = process.env.ALPHAOS_API_URL;
+  const { token, base, diagnostics } = getServerConfig();
+  trace.configuration = diagnostics;
   if (!token || !base) {
+    console.warn(JSON.stringify({ ...trace, outcome: "backend_not_configured" }));
     return json({ status: "unavailable", code: "backend_not_configured" }, 503, requestId);
   }
 

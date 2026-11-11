@@ -1,11 +1,18 @@
 /** Dashboard presentation policy; research and archive verification stay in the backend. */
-import { validArchiveObservation } from "./archive-observation.ts";
+import { MAX_CURRENT_ARCHIVE_AGE_SECONDS, validArchiveObservation } from "./archive-observation.ts";
 type Symbol = "SPY" | "QQQ";
 type Mode = "current" | "historical";
-type Failure = { code: string; requestId?: string };
+export type PreviewDiagnostic = {
+  requestId: string;
+  upstreamStatus: number | null;
+  categories: string[];
+  rejectedFields: string[];
+};
+type Failure = { code: string; requestId?: string; diagnostic?: PreviewDiagnostic };
 export type DashboardObservation = {
   mode: Mode; spot: number; observedAt: string; sessionDate: string;
-  provider: string; ageSeconds: number; expiration: string; validUntil: number | null;
+  provider: string; optionsStatus: "complete" | "partial" | "empty";
+  ageSeconds: number; expiration: string; validUntil: number | null;
 };
 export type DashboardResult = {
   observation: DashboardObservation | null;
@@ -24,7 +31,7 @@ const messages: Record<string, string> = {
   backend_authentication_required: "Backend authentication is required. Server credentials were not accepted.",
   backend_authentication_rejected: "Backend authentication was rejected.",
   backend_unreachable: "The research backend could not be reached.",
-  backend_timeout: "The research backend request timed out.",
+  backend_timeout: "The research backend request timed out. The service may be starting up. Wait about a minute, then refresh. No research data was substituted.",
   backend_service_unavailable: "The research backend service is unavailable.",
   backend_not_configured: "The website research backend is not configured.",
   invalid_backend_configuration: "The website research backend configuration is invalid.",
@@ -49,6 +56,39 @@ function timestamp(value: unknown): number {
 function correlation(value: string | null): string | undefined {
   return value && /^[a-f0-9]{32}$/.test(value) ? value : undefined;
 }
+const diagnosticCategories = new Set([
+  "invalid_json", "invalid_numeric_encoding", "observation_schema_mismatch",
+  "timestamp_freshness_mismatch", "archive_metadata_quality_mismatch",
+  "multiple_validation_failures", "research_schema_mismatch",
+]);
+const diagnosticFields = new Set([
+  "response.numeric_value", "spot", "schema_version", "read_only", "verified_for_trading",
+  "research_performed", "evidence_scope", "research_session", "candidates", "symbol",
+  "research_mode", "expiration", "caveats", "as_of", "requested_as_of", "as_of_order",
+  "session.open", "session.close", "archive.observation.observed_at", "archive.storage.observed_at",
+  "archive.freshness.as_of", "archive.freshness.age_seconds", "archive.freshness.max_age_seconds",
+  "archive.session_date", "archive.storage.symbol", "archive.provider", "archive.storage.quality_status",
+  "archive.observation.options_status", "archive.storage.contract_count",
+  "archive.diagnostics.total_contract_count", "archive.diagnostics.bucket_counts.valid_contracts",
+  "archive.diagnostics.bucket_counts.questionable_contracts", "archive.diagnostics.bucket_counts.rejected_contracts",
+  "archive.storage.archive_sha256", "archive.storage.archive_path",
+]);
+function previewDiagnostic(value: unknown): PreviewDiagnostic | undefined {
+  const diagnostic = record(record(value).diagnostic);
+  const requestId = correlation(typeof diagnostic.request_id === "string" ? diagnostic.request_id : null);
+  const categories = Array.isArray(diagnostic.validation_categories)
+    ? diagnostic.validation_categories.filter((item): item is string =>
+      typeof item === "string" && diagnosticCategories.has(item)) : [];
+  const rejectedFields = Array.isArray(diagnostic.rejected_fields)
+    ? diagnostic.rejected_fields.filter((item): item is string =>
+      typeof item === "string" && diagnosticFields.has(item)).slice(0, 16) : [];
+  const status = diagnostic.upstream_status;
+  if (!requestId || categories.length === 0 ||
+      !(status === null || (typeof status === "number" && Number.isInteger(status) && status >= 100 && status <= 599))) {
+    return undefined;
+  }
+  return {requestId, upstreamStatus: status, categories: [...new Set(categories)], rejectedFields: [...new Set(rejectedFields)]};
+}
 
 function observation(value: unknown, symbol: Symbol, mode: Mode, now: number): DashboardObservation | string {
   const outer = record(value), envelope = record(outer.research), request = record(envelope.request);
@@ -61,8 +101,10 @@ function observation(value: unknown, symbol: Symbol, mode: Mode, now: number): D
     if (mode === "historical" && (close > now || close > asked)) return "historical_session_incomplete";
     const validUntil=mode === "current" ? at+(fresh.max_age_seconds as number)*1000 : null;
     if (validUntil !== null && validUntil < now) return "response_schema_mismatch";
+    const observation=record(archive.observation);
     return {mode,spot:envelope.spot as number,observedAt:envelope.as_of as string,sessionDate:archive.session_date as string,
-      provider:archive.provider as string,ageSeconds:fresh.age_seconds as number,expiration:envelope.expiration as string,validUntil};
+      provider:archive.provider as string,optionsStatus:observation.options_status as DashboardObservation["optionsStatus"],
+      ageSeconds:fresh.age_seconds as number,expiration:envelope.expiration as string,validUntil};
   }
   const research = record(envelope.research), archive = record(research.archive);
   const storage = record(archive.storage), observed = record(archive.observation), freshness = record(archive.freshness);
@@ -103,13 +145,15 @@ function observation(value: unknown, symbol: Symbol, mode: Mode, now: number): D
     if (close > now || close > requested) return "historical_session_incomplete";
   } else {
     const limit = freshness.max_age_seconds;
-    if (typeof limit !== "number" || !Number.isFinite(limit) || limit < 0 || limit > 600 ||
+    if (typeof limit !== "number" || !Number.isFinite(limit) || limit < 0 ||
+        limit > MAX_CURRENT_ARCHIVE_AGE_SECONDS ||
         age > limit || (now - at) / 1000 > limit) return "response_schema_mismatch";
     validUntil = Math.min(at + limit * 1000, requested + (limit - age) * 1000);
     if (validUntil < now) return "response_schema_mismatch";
   }
   return {mode, spot, observedAt: observed.observed_at as string, sessionDate: date,
-    provider: archive.provider, ageSeconds: age, expiration: research.expiration, validUntil};
+    provider: archive.provider, optionsStatus: observed.options_status as DashboardObservation["optionsStatus"],
+    ageSeconds: age, expiration: research.expiration, validUntil};
 }
 
 /** Only explicit stale-current failures may initiate a separately labeled historical request. */
@@ -127,7 +171,7 @@ export async function loadDashboardResearch(symbol: Symbol, request: typeof fetc
       if (!response.ok) {
         const code = record(body).code;
         return {failure:{code: typeof code === "string" && Object.hasOwn(messages, code)
-          ? code : "research_unavailable", requestId}};
+          ? code : "research_unavailable", requestId, diagnostic:previewDiagnostic(body)}};
       }
       const parsed = observation(body, symbol, mode, now());
       return typeof parsed === "string" ? {failure:{code:parsed, requestId}} : {data:parsed};

@@ -158,10 +158,61 @@ def persist_candles(client, rows):
     return len(payload)
 
 
+def _snapshot_quality(payload):
+    options = payload.get("options")
+    if not isinstance(options, dict) or not isinstance(payload.get("underlying"), dict):
+        raise ArchiveUnavailable("Invalid option snapshot envelope.")
+    status = options.get("status")
+    count = options.get("received_contract_count")
+    if (status not in ("complete", "partial", "empty") or type(count) is not int or count < 0
+            or (status == "complete" and (count == 0 or options.get("expiration_failures")
+                                          or options.get("invalid_expiration_count", 0)))):
+        raise ArchiveUnavailable("Invalid option snapshot quality.")
+    return status
+
+
+def _verify_snapshot_row(row, payload, path, digest):
+    from modules.options_archive import timestamp
+    try:
+        if (row["archive_path"] != path or row["archive_sha256"] != digest
+                or row["provider"] != payload["provider"] or row["symbol"] != payload["symbol"]
+                or row["session_date"] != payload["session"]
+                or timestamp(row["observed_at"]) != timestamp(payload["observed_at"])
+                or row["quality_status"] != _snapshot_quality(payload)
+                or row["contract_count"] != payload["options"]["received_contract_count"]):
+            raise ValueError("Archive metadata mismatch")
+        if (row.get("slot_time") is None) != (payload.get("slot_time") is None):
+            raise ValueError("Archive slot mismatch")
+        if payload.get("slot_time") and timestamp(row["slot_time"]) != timestamp(payload["slot_time"]):
+            raise ValueError("Archive slot mismatch")
+    except Exception:
+        raise ArchiveUnavailable("Option snapshot metadata verification failed.") from None
+    return row
+
+
 def find_slot_snapshot(client, provider, symbol, slot):
-    rows = (client.table("option_snapshots").select("id,archive_path,observed_at,quality_status")
+    from modules.options_archive import timestamp
+    rows = (client.table("option_snapshots").select("*")
             .eq("provider", provider).eq("symbol", symbol).eq("slot_time", slot).execute()).data
-    return rows[0] if rows else None
+    if not isinstance(rows, list):
+        raise ArchiveUnavailable("Invalid slot metadata response.")
+    if not rows:
+        return None
+    try:
+        if len(rows) != 1:
+            raise ValueError("Ambiguous slot")
+        row = rows[0]
+        path = row["archive_path"]
+        if not path.startswith(f'options/symbol={symbol}/date={row["session_date"]}/') or '..' in path:
+            raise ValueError("Invalid archive path")
+        saved = client.storage.from_("market-archive").download(path)
+        payload = json.loads(gzip.decompress(saved))
+        if (payload["provider"] != provider or payload["symbol"] != symbol
+                or timestamp(payload["slot_time"]) != timestamp(slot)):
+            raise ValueError("Archive slot identity mismatch")
+        return _verify_snapshot_row(row, payload, path, hashlib.sha256(saved).hexdigest())
+    except Exception:
+        raise ArchiveUnavailable("Existing slot verification failed.") from None
 
 
 def read_latest_option_snapshot(client, symbol, as_of, *, max_age_seconds, provider='Public', research_mode='current'):
@@ -241,6 +292,7 @@ def read_latest_option_snapshot(client, symbol, as_of, *, max_age_seconds, provi
 
 
 def persist_option_snapshot(client, payload, archive_config=None):
+    _snapshot_quality(payload)
     raw = json.dumps(payload, separators=(",", ":"), sort_keys=True).encode()
     compressed = gzip.compress(raw, mtime=0)
     digest = hashlib.sha256(compressed).hexdigest()
@@ -279,6 +331,7 @@ def persist_option_snapshot(client, payload, archive_config=None):
             canonical = json.loads(gzip.decompress(saved))
             if any(canonical.get(k) != payload.get(k) for k in ("provider", "symbol", "session", "slot_time")):
                 raise ValueError("Archive identity mismatch")
+            _snapshot_quality(canonical)
             payload = canonical
             observed = payload["observed_at"]
             digest = hashlib.sha256(saved).hexdigest()
@@ -313,7 +366,7 @@ def persist_option_snapshot(client, payload, archive_config=None):
         raise ArchiveStageError("option_snapshot_insert", exc) from None
     verify = (
         client.table("option_snapshots")
-        .select("id,archive_path,observed_at,quality_status")
+        .select("*")
         .eq("provider", payload["provider"])
         .eq("symbol", symbol)
         .eq("observed_at", observed)
@@ -322,4 +375,6 @@ def persist_option_snapshot(client, payload, archive_config=None):
     verified = getattr(verify, "data", None)
     if not isinstance(verified, list) or not verified:
         raise ArchiveUnavailable(f"Option snapshot persistence verification failed for {symbol}.")
-    return verified[0]
+    if len(verified) != 1:
+        raise ArchiveUnavailable("Ambiguous option snapshot metadata.")
+    return _verify_snapshot_row(verified[0], payload, path, digest)

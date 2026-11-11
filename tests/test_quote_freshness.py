@@ -172,3 +172,16 @@ def test_saved_trade_research_explicitly_non_live(monkeypatch):
     assert any('non-live historical scenario research' in w.value for w in app.warning)
     assert any('not a verified live price' in c.value for c in app.caption)
     assert any(b.label=='Run integrated trade research' for b in app.button)
+
+def test_refresh_quote_preserves_independent_provider_timestamps(env):
+    client, provider, _, _ = env
+    stamp = '2026-09-25T14:00:00+00:00'
+    provider.quote.return_value = [q(symbol='SPY', bid_timestamp=stamp, ask_timestamp=stamp,
+        provider_outcome='SUCCESS', provider_retrieved_at=stamp)]
+    assert client.get('/v1/quote/SPY').status_code == 200
+    result = client.get('/v1/quote/SPY?refresh=true').json()['evidence']
+    assert provider.quote.call_count == 2
+    assert result['cache']['hit'] is False
+    for field in ('bid_timestamp', 'ask_timestamp', 'provider_retrieved_at'):
+        assert result['quote'][field] == stamp
+    assert result['quote']['provider_outcome'] == 'SUCCESS'

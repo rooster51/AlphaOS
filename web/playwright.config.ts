@@ -14,10 +14,11 @@ export default defineConfig({
   webServer: {
     command: "npm run start -- --hostname 127.0.0.1",
     url: "http://127.0.0.1:3000",
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: false,
     timeout: 30_000,
     env: {
       ALPHAOS_API_TOKEN: "",
+      ALPHAOS_API_URL: "",
       ALPHAOS_DEMO_MODE: "false",
     },
   },

@@ -21,6 +21,8 @@ const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/market", label: "Market Research", icon: LineChart },
   { href: "/strategies", label: "Strategy Explorer", icon: Compass },
+  { href: "/options", label: "Options Chain", icon: Compass },
+  { href: "/pivex", label: "Pivex Challenge", icon: ShieldAlert },
   { href: "/structures", label: "Structure Lab", icon: Layers },
   { href: "/session", label: "Session Review", icon: History },
   { href: "/journal", label: "Trade Journal", icon: BookOpen, badge: "Foundation" },
@@ -50,6 +52,7 @@ export function Sidebar() {
 
         return (
           <Link
+            prefetch={false}
             key={item.href}
             href={item.href}
             aria-current={isActive ? "page" : undefined}

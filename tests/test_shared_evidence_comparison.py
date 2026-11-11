@@ -42,7 +42,8 @@ def test_shared_sample_all_payoffs_and_order(trusted, monkeypatch):
     terminal = {s.observation_id: spot*(1+s.terminal_return) for s in bundle['evidence'].scenarios}
     fingerprints = set()
     for candidate, item in zip(result['candidates'], items):
-        assert candidate['trade']['legs'] == [leg.model_dump() for leg in item.legs]
+        # Optional contract identities are absent on legacy hypothetical legs.
+        assert candidate['trade']['legs'] == [leg.model_dump(exclude_none=True) for leg in item.legs]
         e = candidate['historical_economics']
         fingerprints.add(e['evidence']['fingerprint'])
         values = []

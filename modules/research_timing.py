@@ -93,7 +93,13 @@ class ResearchTimingMiddleware:
         self.app = app
 
     async def __call__(self, scope, receive, send):
-        if scope['type'] != 'http' or scope.get('method') != 'POST' or scope.get('path') not in ('/v1/research/market','/v1/research/observation'):
+        method, path = scope.get('method'), scope.get('path')
+        quote_symbol = path.rsplit('/', 1)[-1] if method == 'GET' and path in ('/v1/quote/SPY', '/v1/quote/QQQ') else None
+        option_route = re.fullmatch(r'/v1/options/(SPY|QQQ)/(?:expirations|chain/[0-9-]+)', path or '')
+        if method in ('GET', 'POST') and option_route:
+            quote_symbol = option_route[1]
+        research = method == 'POST' and path in ('/v1/research/market', '/v1/research/market/candidate', '/v1/research/observation')
+        if scope['type'] != 'http' or not (research or quote_symbol):
             return await self.app(scope, receive, send)
         supplied = next((v.decode('latin1') for k,v in scope.get('headers', [])
             if k.lower() == b'x-alphaos-request-id'), '')
@@ -101,7 +107,7 @@ class ResearchTimingMiddleware:
         # Share the sanitized ID with the existing response/error boundary.
         scope = dict(scope, headers=[(k,v) for k,v in scope.get('headers', [])
             if k.lower() != b'x-alphaos-request-id'] + [(b'x-alphaos-request-id', request_id.encode())])
-        token = _trace.set(Trace(request_id, perf_counter()))
+        token = _trace.set(Trace(request_id, perf_counter(), symbol=quote_symbol))
         with _lock:
             _counts['request'] += 1
         disconnected = False

@@ -30,6 +30,16 @@ export function DashboardResearch({symbol}: {symbol: "SPY" | "QQQ"}) {
         {result?.currentFailure && <div className="text-warning text-sm">
           <p>{dashboardMessage(result.currentFailure.code)}</p>
           {result.currentFailure.requestId && <p className="text-xs">Current request ID: {result.currentFailure.requestId}</p>}
+          {result.currentFailure.diagnostic && <details className="rounded border border-terminal-700 p-3 text-xs">
+            <summary className="cursor-pointer font-mono">Preview validation diagnostics</summary>
+            <dl className="mt-2 space-y-2 font-mono">
+              <div><dt>Request ID</dt><dd>{result.currentFailure.diagnostic.requestId}</dd></div>
+              <div><dt>Upstream HTTP status</dt><dd>{result.currentFailure.diagnostic.upstreamStatus ?? "Unavailable"}</dd></div>
+              <div><dt>Validation categories</dt><dd>{result.currentFailure.diagnostic.categories.join(", ")}</dd></div>
+              <div><dt>Rejected field paths</dt><dd>{result.currentFailure.diagnostic.rejectedFields.length
+                ? result.currentFailure.diagnostic.rejectedFields.join(", ") : "No field-level rule recorded."}</dd></div>
+            </dl>
+          </details>}
         </div>}
         {data && <>
           <p className="font-mono font-bold text-warning border border-warning rounded p-3">
@@ -43,9 +53,13 @@ export function DashboardResearch({symbol}: {symbol: "SPY" | "QQQ"}) {
             <div><dt>Source</dt><dd>{data.provider} · verified Supabase archive</dd></div>
             <div><dt>Source timestamp</dt><dd>{data.observedAt}</dd></div>
             <div><dt>Session date (New York)</dt><dd>{data.sessionDate}</dd></div>
+            <div><dt>Options archive status</dt><dd>{data.optionsStatus}</dd></div>
             <div><dt>Archive age at request</dt><dd>{data.ageSeconds} seconds</dd></div>
             <div><dt>Archived expiration</dt><dd>{data.expiration}</dd></div>
           </dl>
+          {data.optionsStatus === "empty" && <p className="text-warning text-sm">
+            No option contracts were archived; options research is unavailable for this snapshot.
+          </p>}
         </>}
         {result?.historicalFailure && <div className="text-warning text-sm">
           <p>Historical context unavailable: {dashboardMessage(result.historicalFailure.code)}</p>
@@ -56,7 +70,7 @@ export function DashboardResearch({symbol}: {symbol: "SPY" | "QQQ"}) {
       <p className="text-xs text-terminal-400">Live-only signals, probability estimates, expected value, and actionable trade recommendations are unavailable. No candidates are presented as trades.</p>
       <div className="flex gap-4 text-xs">
         <button className="text-accent underline" onClick={() => setAttempt(value => value + 1)}>Refresh {symbol} evidence</button>
-        <Link href={`/market?symbol=${symbol}`} className="text-accent underline">Open {symbol} market research</Link>
+        <Link prefetch={false} href={`/market?symbol=${symbol}`} className="text-accent underline">Open {symbol} market research</Link>
       </div>
     </section>
   );

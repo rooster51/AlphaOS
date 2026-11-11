@@ -1,8 +1,7 @@
 """Small shared representation for existing same-expiration option research."""
-from copy import deepcopy
 
 from modules.long_option_research import research_long_option
-from modules.options_payoff import validate_trade
+from modules.options_payoff import validate_trade, copy_trade_input
 from modules.structure_research import research_structure
 
 OBSERVATIONS = ('contract', 'bid', 'ask', 'mid', 'delta', 'gamma', 'theta',
@@ -21,7 +20,7 @@ def research_position(candidate, *, symbol, spot, as_of, expected_move=None, pay
     if candidate.get('symbol', symbol) != symbol or candidate.get('spot', spot) != spot:
         raise ValueError('Candidate context mismatch.')
     if len(legs) == 1:
-        candidate = deepcopy(candidate)
+        candidate = copy_trade_input(candidate)
         trade = validate_trade(dict(candidate, symbol=symbol, spot=spot,
                                     shares=candidate.get('shares', 0), fees=candidate.get('fees', 0)))
         leg = trade['legs'][0]
@@ -43,7 +42,8 @@ def research_position(candidate, *, symbol, spot, as_of, expected_move=None, pay
         normalized.append(dict(type=leg['type'], strike=leg['strike'],
             expiration=result['trade']['expiration'], qty=leg['qty'],
             quantity=abs(leg['qty']), action='Buy' if leg['qty'] > 0 else 'Sell',
-            **{key: leg.get(key) for key in OBSERVATIONS}))
+            **{key: leg.get(key) for key in OBSERVATIONS},
+            **{key: leg[key] for key in ('snapshot_id','freshness','entry_side','entry_price') if key in leg}))
     result['position'] = dict(symbol=symbol, expiration=result['trade']['expiration'],
         strategy_family=result['strategy_family'], legs=normalized,
         credit=result['trade']['credit'], fees=result['trade']['fees'])

@@ -13,6 +13,7 @@ export interface StructureLegInput {
   type: StructureLegType;
   strike: number;
   qty: number;
+  contract?: string;
 }
 
 export interface StructureRequestInput {
@@ -23,6 +24,7 @@ export interface StructureRequestInput {
   credit: number;
   fees: number;
   legs: StructureLegInput[];
+  market_data?: { snapshot_id: string; archive_sha256: string };
 }
 
 export interface CompareRequestInput {
@@ -40,8 +42,8 @@ export const MAX_THESIS_LENGTH = 1000;
 
 const SYMBOLS = new Set<string>(["SPY", "QQQ"]);
 const LEG_TYPES = new Set<string>(["Call", "Put"]);
-const STRUCTURE_KEYS = new Set(["symbol", "expiration", "as_of", "spot", "credit", "fees", "legs"]);
-const LEG_KEYS = new Set(["type", "strike", "qty"]);
+const STRUCTURE_KEYS = new Set(["symbol", "expiration", "as_of", "spot", "credit", "fees", "legs", "market_data"]);
+const LEG_KEYS = new Set(["type", "strike", "qty", "contract"]);
 const COMPARE_KEYS = new Set(["structures", "thesis"]);
 
 export function record(value: unknown): Record<string, unknown> | null {
@@ -101,6 +103,14 @@ export function parseStructureRequest(value: unknown): StructureRequestInput | n
     return null;
   }
   const legs: StructureLegInput[] = [];
+  let reference: StructureRequestInput["market_data"];
+  if (input.market_data !== undefined && input.market_data !== null) {
+    const ref = record(input.market_data);
+    if (!ref || Object.keys(ref).some(k=>!["snapshot_id","archive_sha256"].includes(k)) ||
+        typeof ref.snapshot_id !== "string" || ref.snapshot_id.length < 1 || ref.snapshot_id.length > 128 ||
+        typeof ref.archive_sha256 !== "string" || !/^[a-f0-9]{64}$/.test(ref.archive_sha256)) return null;
+    reference = { snapshot_id: ref.snapshot_id, archive_sha256: ref.archive_sha256 };
+  }
   for (const raw of input.legs) {
     const leg = record(raw);
     if (!leg) return null;
@@ -111,7 +121,11 @@ export function parseStructureRequest(value: unknown): StructureRequestInput | n
     if (strike === null || qty === null || qty === 0 || Math.abs(qty) > MAX_LEG_QUANTITY) {
       return null;
     }
-    legs.push({ type: leg.type as StructureLegType, strike, qty });
+    const contract = leg.contract;
+    if (reference ? typeof contract !== "string" || contract.length > 32 || !/^[A-Z]{1,6}\s*\d{6}[CP]\d{8}$/.test(contract)
+        : contract !== undefined && contract !== null) return null;
+    legs.push({ type: leg.type as StructureLegType, strike, qty,
+      ...(reference ? { contract: contract as string } : {}) });
   }
 
   return {
@@ -122,6 +136,7 @@ export function parseStructureRequest(value: unknown): StructureRequestInput | n
     credit,
     fees,
     legs,
+    ...(reference ? { market_data: reference } : {}),
   };
 }
 
@@ -151,6 +166,7 @@ export function parseCompareRequest(value: unknown): CompareRequestInput | null 
 }
 
 export interface LegDraft {
+  contract?: string;
   type: string;
   action: "Buy" | "Sell";
   strike: string;

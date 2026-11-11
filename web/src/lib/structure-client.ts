@@ -11,9 +11,9 @@ import {
   type StructureRequestInput,
 } from "./structure-contract.ts";
 import {
-  compareView,
   observationSeed,
-  structureView,
+  structureViewFor,
+  compareViewFor,
   type CompareView,
   type ObservationSeed,
   type StructureView,
@@ -88,7 +88,7 @@ export async function requestStructure(
   if (!called.ok) return called;
   const outer = await readEnvelope(called.response);
   if (!outer.ok) return outer;
-  const view = structureView(outer.envelope.research);
+  const view = structureViewFor(outer.envelope.research, payload);
   return view ? { ok: true, view } : { ok: false, code: "response_schema_mismatch" };
 }
 
@@ -102,7 +102,7 @@ export async function requestComparison(
   if (!called.ok) return called;
   const outer = await readEnvelope(called.response);
   if (!outer.ok) return outer;
-  const view = compareView(outer.envelope.research);
+  const view = compareViewFor(outer.envelope.research, payload);
   return view ? { ok: true, view } : { ok: false, code: "response_schema_mismatch" };
 }
 
