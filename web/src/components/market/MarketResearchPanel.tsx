@@ -340,6 +340,14 @@ export function MarketResearchPanel({
               {item}
             </Link>
           ))}
+          <span className="mx-1 h-4 w-px bg-terminal-800" aria-hidden="true" />
+          <Link
+            prefetch={false}
+            href={`/market/chart?symbol=${symbol}`}
+            className="rounded border border-terminal-800 bg-terminal-900 px-3 py-1.5 font-mono text-xs text-terminal-400 hover:border-terminal-600 hover:text-terminal-200"
+          >
+            Native candles
+          </Link>
         </nav>
 
         <form className="flex flex-wrap items-end gap-4" onSubmit={(event) => {

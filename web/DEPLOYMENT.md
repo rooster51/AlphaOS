@@ -22,6 +22,7 @@ Set these server-side environment variables in the hosting provider:
 | `ALPHAOS_API_URL` | HTTPS base URL of the AlphaOS API. |
 | `ALPHAOS_API_TOKEN` | Required secret bearer token; never expose it as `NEXT_PUBLIC_*`. |
 | `ALPHAOS_DEMO_MODE` | Optional; set to `true` only when intentionally showing labeled synthetic fixtures. Leave unset or `false` for normal read-only use. |
+| `ALPHAOS_CANDLE_CHART_ENABLED` | Native Public candle display is **disabled by default**. Leave unset or `false` to serve the legacy external TradingView fallback at `/market/chart`. Set to `true` only after Public grants explicit written authorization for authenticated website display and the entitlement reference is recorded. |
 
 `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` are present in
 `.env.example` for a future integration but are not used by the current web

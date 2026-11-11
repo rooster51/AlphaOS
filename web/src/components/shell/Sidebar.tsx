@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   LineChart,
+  CandlestickChart,
   Compass,
   Layers,
   History,
@@ -20,6 +21,7 @@ import {
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/market", label: "Market Research", icon: LineChart },
+  { href: "/market/chart", label: "Candles", icon: CandlestickChart },
   { href: "/strategies", label: "Strategy Explorer", icon: Compass },
   { href: "/options", label: "Options Chain", icon: Compass },
   { href: "/pivex", label: "Pivex Challenge", icon: ShieldAlert },

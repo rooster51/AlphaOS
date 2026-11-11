@@ -20,6 +20,7 @@ export default defineConfig({
       ALPHAOS_API_TOKEN: "",
       ALPHAOS_API_URL: "",
       ALPHAOS_DEMO_MODE: "false",
+      ALPHAOS_CANDLE_CHART_ENABLED: "true",
     },
   },
 });

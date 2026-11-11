@@ -3,6 +3,11 @@
 `GET /v1/candles/{symbol}` is the authenticated, read-only candle surface. It
 returns normalized AlphaOS data rather than Public SDK objects.
 
+> **Display gate:** the private-research entitlement below does not authorize
+> browser display of Public market data. The website bridge and native chart are
+> disabled by default pending written Public approval. See
+> [candle display entitlement and probe](CANDLE_DISPLAY_ENTITLEMENT_PROBE.md).
+
 ## Request
 
 ```text
