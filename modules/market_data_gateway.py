@@ -119,6 +119,13 @@ def _validate_request(interval: str, session: str, limit: int) -> None:
         raise MarketDataError("invalid_limit", 400)
 
 
+def validate_candle_request(symbol: str, interval: str, session: str, limit: int) -> str:
+    """Fail closed before any provider or cache access."""
+    value = _validate_symbol(symbol)
+    _validate_request(interval, session, limit)
+    return value
+
+
 def _regular_bar(timestamp: datetime) -> bool:
     bounds = regular_session_bounds(timestamp)
     if bounds is None:
@@ -349,8 +356,7 @@ class PublicMarketDataProvider:
 
     def candles(self, symbol: str, interval: str, session: str = "regular",
                 limit: int = 390) -> CandleBatch:
-        symbol = _validate_symbol(symbol)
-        _validate_request(interval, session, limit)
+        symbol = validate_candle_request(symbol, interval, session, limit)
         now = _clock(self.clock())
         try:
             client, _ = self._context()

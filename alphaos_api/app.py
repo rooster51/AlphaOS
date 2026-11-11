@@ -291,6 +291,10 @@ register_phase9(router,lambda:app.state.service,respond)
 from .research2 import ArchiveResearchService, register_research2
 app.state.archive_research = ArchiveResearchService()
 register_research2(router, lambda: app.state.archive_research, respond)
+from modules.candle_service import CandleService
+from .candles import register_candles
+app.state.candles = CandleService()
+register_candles(router, lambda: app.state.candles, respond)
 app.include_router(router)
 
 from .mcp_server import build_mcp
