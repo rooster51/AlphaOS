@@ -112,6 +112,23 @@ def research_archive_client():
 def persist_candles(client, rows):
     if not rows:
         return 0
+    from modules.data_entitlements import archive_write_allowed
+
+    # Validate the whole batch before constructing or writing any payload. A
+    # single archive batch has one provenance identity; accepting mixed rows
+    # would let one entitled provider authorize another provider's data.
+    providers = set()
+    for row in rows:
+        if not isinstance(row, dict):
+            raise ValueError("Candle rows must be objects.")
+        provider = row.get("provider")
+        if not isinstance(provider, str) or not provider.strip():
+            raise ValueError("Candle provider is required for every row.")
+        providers.add(provider)
+    if len(providers) != 1:
+        raise ValueError("Candle batches must contain exactly one provider.")
+    provider = providers.pop()
+    archive_write_allowed(provider)
     payload = [{
         "provider": r["provider"],
         "symbol": r["symbol"],
