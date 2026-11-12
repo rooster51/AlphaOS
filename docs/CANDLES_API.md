@@ -171,8 +171,10 @@ cross-process or persistent candle cache.
 Stale and incomplete data are successful snapshots with `freshness`,
 `completeness`, `last_bar_status`, and `warnings` populated. They are not
 silently repaired. Public's final closing-auction bar is outside the regular
-session and is excluded with `provider_closing_bar_excluded`; other
-off-session bars fail with `candle_outside_regular_session`.
+session and is excluded with `provider_closing_bar_excluded`; the expected
+count is reduced only for that known boundary bar with
+`provider_expected_bars_adjusted_for_closing_bar`. Other off-session bars fail
+with `candle_outside_regular_session`.
 
 ## Archive schema review
 

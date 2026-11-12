@@ -41,8 +41,10 @@ The gateway rejects provider responses with:
 
 Public returns a native closing-auction bar stamped exactly at the regular
 session close. That final boundary bar is outside the half-open regular-session
-range and is excluded with `provider_closing_bar_excluded`; any other
-out-of-session bar still fails closed. No bar is fabricated or repaired.
+range and is excluded with `provider_closing_bar_excluded`; the provider's
+expected count is reduced by one and reported with
+`provider_expected_bars_adjusted_for_closing_bar`. Any other out-of-session bar
+still fails closed. No bar is fabricated or repaired.
 
 Missing internal bars are reported as warnings, not filled. When the provider
 supplies an expected count, a completed session is `complete` or `incomplete`.
@@ -59,8 +61,10 @@ response-shape codes and timestamp-shape codes. Gateway codes include
 `candle_symbol_mismatch`, `candle_aggregation_mismatch`, `candle_timestamp_*`,
 `candle_outside_regular_session`, `candle_interval_misaligned`,
 `candle_timestamp_out_of_order`, `duplicate_candle_timestamp`,
-`candle_ohlc_*`, `candle_expected_bars_conflict` and
-`provider_closing_bar_excluded`. These codes never include credentials, headers,
+`candle_ohlc_*`, `candle_expected_bars_conflict`,
+`provider_closing_bar_excluded` and
+`provider_expected_bars_adjusted_for_closing_bar`. These codes never include
+credentials, headers,
 account identifiers or raw provider payloads.
 
 The newest bar is never called complete or partial merely because it is the last

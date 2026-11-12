@@ -333,17 +333,20 @@ def test_public_closing_bar_is_excluded_without_weakening_other_session_checks(m
     import modules.market_data_gateway as gateway
     rows = [dict(symbol="SPY", aggregation="ONE_MINUTE",
                  timestamp="2026-10-02T19:59:00+00:00", open=500, high=501, low=499,
-                 close=500.5, volume=10, provider_expected_bars=1),
+                 close=500.5, volume=10, provider_expected_bars=2),
             dict(symbol="SPY", aggregation="ONE_MINUTE",
                  timestamp="2026-10-02T20:00:00+00:00", open=500, high=501, low=499,
-                 close=500.5, volume=10, provider_expected_bars=1)]
+                 close=500.5, volume=10, provider_expected_bars=2)]
     monkeypatch.setattr(gateway, "fetch_intraday_bars", lambda *args, **kwargs: (rows, {}))
     provider = PublicMarketDataProvider(context=lambda: (object(), "synthetic-account"),
                                         clock=lambda: CLOSED)
     result = provider.candles("SPY", "1m", "regular", 390)
     assert len(result.bars) == 1
     assert result.bars[0].time == "2026-10-02T19:59:00+00:00"
+    assert result.expected_bars == 1
+    assert result.received_bars == 1
     assert "provider_closing_bar_excluded" in result.warnings
+    assert "provider_expected_bars_adjusted_for_closing_bar" in result.warnings
     snapshot = build_snapshot(result, now=CLOSED)
     assert snapshot.completeness == "complete"
     assert "provider_closing_bar_excluded" in snapshot.warnings

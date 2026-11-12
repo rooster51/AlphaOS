@@ -164,6 +164,7 @@ def _validate_bars(symbol: str, interval: str, rows, *, now: datetime) -> tuple[
     previous: datetime | None = None
     expected: int | None = None
     previous_session_date = None
+    closing_bar_excluded = False
     for index, row in enumerate(rows):
         if not isinstance(row, dict):
             raise MarketDataError("candle_row_malformed")
@@ -184,6 +185,10 @@ def _validate_bars(symbol: str, interval: str, rows, *, now: datetime) -> tuple[
             if (relation == "after_close" and closing is not None
                     and stamp == closing and index == len(rows) - 1):
                 warnings.append("provider_closing_bar_excluded")
+                closing_bar_excluded = True
+                closing_expected = _count(row.get("provider_expected_bars"))
+                if closing_expected is not None:
+                    expected = closing_expected
                 continue
             detail = {"bar_index": index, "bar_count": len(rows), "relation": relation}
             if relation == "before_open" and opening is not None:
@@ -223,6 +228,9 @@ def _validate_bars(symbol: str, interval: str, rows, *, now: datetime) -> tuple[
         bars.append(CandleBar(stamp.isoformat(), opening, high, low, close, volume))
     if not bars:
         raise MarketDataError("no_candles")
+    if closing_bar_excluded and expected is not None:
+        expected -= 1
+        warnings.append("provider_expected_bars_adjusted_for_closing_bar")
     # Do not classify completeness here. The same count is normal while a
     # session is still open; build_snapshot owns that clock-aware decision.
     return tuple(bars), expected, tuple(dict.fromkeys(warnings))
