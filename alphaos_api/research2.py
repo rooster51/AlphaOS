@@ -39,7 +39,7 @@ class MarketRequest(Request):
 
 class MarketTransportRequest(MarketRequest):
     """REST-only representation choice; shared research/MCP inputs stay stable."""
-    response_format: Literal['full', 'summary-v1'] = 'full'
+    response_format: Literal['full', 'summary-v1', 'summary-v2'] = 'full'
 
 
 class CandidateReference(Request):
@@ -321,10 +321,10 @@ def register_research2(router, service, respond):
     async def run_market(request: MarketTransportRequest, http_request: HTTPRequest):
         def calculate():
             value = service().run(request,json_ready=False)
-            if request.response_format == 'summary-v1':
+            if request.response_format != 'full':
                 from .research_projection import summarize
                 with timing_stage('response_projection'):
-                    value = summarize(value)
+                    value = summarize(value, request.response_format)
             return value
         return await run_cancellable(calculate,http_request)
 

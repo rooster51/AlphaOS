@@ -1,12 +1,80 @@
 """Real authenticated REST projection over fixture archives; no hosted claims."""
 from copy import deepcopy
 import json
+from pathlib import Path
 import pytest
 
-from alphaos_api.research_projection import candidate_summary, candidate_digest, summarize
+from alphaos_api.research_projection import (
+    COMPACT_FORMAT, FORMAT, MAX_SUMMARY_BYTES, SUMMARY_LEG_FIELDS,
+    candidate_summary, candidate_digest, summarize,
+)
 from alphaos_api.contracts import APIError
 from tests.test_research2_api import boundary, post
 from tests.test_website_mcp_parity import prepare_storage
+
+
+@pytest.mark.parametrize('symbol,expiration,count', [
+    ('QQQ', '2026-11-16', 540),
+    ('SPY', '2026-11-20', 565),
+])
+def test_large_exact_expiration_wire_summary(boundary, monkeypatch, symbol, expiration, count):
+    """Replay a deterministic, synthetic large candidate set through the real REST boundary."""
+    from alphaos_api import research_projection
+    client, _, service, _ = boundary
+    fixtures = json.loads((Path(__file__).parents[1] / 'web/tests/fixtures/market-parity.json').read_text())
+    seed = next(item['response'] for item in fixtures if item['request']['symbol'] == symbol)
+    expiry_code = expiration[2:].replace('-', '')
+    seed = json.loads(json.dumps(seed)
+                      .replace('"expiration": "2030-01-02"', f'"expiration": "{expiration}"')
+                      .replace('2030-01-02', '2026-11-12').replace('300102', expiry_code))
+    seed['request']['expiration'] = expiration
+    research = seed['research']
+    session = research['research_session']
+    template = session['candidates'][0]
+    comparison = session['comparison']['candidates'][0]
+    session['candidates'] = [dict(template, input_index=index) for index in range(count)]
+    session['comparison']['candidates'] = [dict(comparison, input_index=index) for index in range(count)]
+    session['excluded'] = [dict(stage='chain', input_index=index, reason='invalid_or_ambiguous_contract',
+                                details=['missing_bid']) for index in range(count, count + 12)]
+    monkeypatch.setattr(service, 'run', lambda request, **kwargs: seed)
+    request = dict(symbol=symbol, expiration=expiration)
+
+    old = post(client, 'market', dict(request, response_format=FORMAT))
+    assert old.status_code == 503
+    assert old.json()['error']['code'] == 'research_summary_too_large'
+    compact = post(client, 'market', dict(request, response_format=COMPACT_FORMAT))
+    assert compact.status_code == 200, compact.text[:400]
+    with monkeypatch.context() as measurement:
+        measurement.setattr(research_projection, 'MAX_SUMMARY_BYTES', 16 * 1024 * 1024)
+        baseline = post(client, 'market', dict(request, response_format=FORMAT))
+    assert baseline.status_code == 200
+    assert len(compact.content) <= MAX_SUMMARY_BYTES < len(baseline.content)
+    print(f'{symbol} {expiration}: {len(baseline.content)} -> {len(compact.content)} bytes; '
+          f'{count} candidates, {len(session["excluded"])} exclusions')
+
+    before, after = (r.json()['research']['research_session'] for r in (baseline, compact))
+    assert after['transport']['candidate_count'] == count
+    assert after['transport']['excluded_count'] == 12
+    assert after['transport']['complete'] is True
+    assert after['transport']['exclusion_counts'] == before['transport']['exclusion_counts']
+    assert after['diagnostics'] == before['diagnostics']
+    assert after['excluded'] == before['excluded']
+    for index, (old_row, new_row) in enumerate(zip(before['candidates'], after['candidates'], strict=True)):
+        assert new_row['input_index'] == old_row['input_index'] == index
+        assert new_row['detail'] == old_row['detail']
+        for key in ('entry_debit', 'entry_credit', 'max_loss', 'max_profit', 'capital_at_risk',
+                    'breakevens', 'evidence', 'strategy_family', 'expiration'):
+            assert new_row['research'][key] == old_row['research'][key]
+        for old_leg, new_leg in zip(old_row['research']['legs'], new_row['research']['legs'], strict=True):
+            assert new_leg == {key: old_leg[key] for key in SUMMARY_LEG_FIELDS if key in old_leg}
+        old_budget = old_row['research']['historical_economics']['capital_eligibility']
+        new_budget = new_row['research']['historical_economics']['capital_eligibility']
+        assert new_budget == {key: old_budget[key] for key in ('status', 'available_capital')}
+    ref = after['candidates'][-1]['detail']
+    detail = post(client, 'market/candidate', dict(request, detail=ref))
+    assert detail.status_code == 200
+    assert detail.json()['candidate'] == session['candidates'][-1]
+    assert post(client, 'market/candidate', dict(request, detail=dict(ref, archive_sha256='0' * 64))).status_code == 409
 
 
 @pytest.mark.parametrize('symbol', ['QQQ', 'SPY'])
