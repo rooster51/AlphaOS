@@ -1,14 +1,15 @@
 # Phase C — First-party chart implementation specification
 
-Status: implementation complete, **native display disabled by default** pending
-written Public authorization for authenticated website display. The chart route,
-typed client, chart adapter, presentation state, and route-level fallback are in
+Status: implementation complete, **owner-private display available only behind an
+owner-role server check and disabled by default**. Public display, commercial use,
+redistribution and access by other users remain disabled. The chart route, typed
+client, chart adapter, presentation state, and route-level fallback are in
 `web/`. With the feature switch off, `/market/chart` serves the legacy external
 TradingView fallback and `/api/candles/{symbol}` fails closed with
 `feature_disabled`.
 
-See [candle display entitlement and probe](CANDLE_DISPLAY_ENTITLEMENT_PROBE.md)
-for the exact licensing blocker, approval requirements, and private
+See [owner-private candle display and probe](CANDLE_DISPLAY_ENTITLEMENT_PROBE.md)
+for the exact evidence, unresolved authorization questions, and private
 end-to-end probe.
 
 ## Goal
@@ -116,12 +117,13 @@ the provider request with the server-side bearer token, validates the complete
   `web/src/components/market/chart/LightweightCandleChart.tsx`.
 - Fail-closed switch: `ALPHAOS_CANDLE_CHART_ENABLED` defaults to off. The route
   serves the external TradingView fallback and the bridge returns
-  `feature_disabled`. Even with the switch on, the bridge requires a
-  `public_display` entitlement decision, a present authorization reference, and
-  the provider `public_display` capability; a `private_research` snapshot is
-  rejected as `data_use_denied`. Use `/market/chart?symbol=SPY&view=legacy` for
-  the rollback path while the switch is on. The archive research page is
-  unchanged and links to the chart.
+  `feature_disabled`. Even with the switch on, the bridge requires a signed
+  session with `role=owner` and an `owner_private_display` entitlement decision
+  plus the matching provider capability; `private_research` and `public_display`
+  snapshots are rejected. The chart's quote route applies the same owner-role
+  check. Use `/market/chart?symbol=SPY&view=legacy` for the rollback path while
+  the switch is on. The archive research page is unchanged and links to the
+  chart.
 - Attribution and the Apache-2.0 license are shown on the chart route and
   served from `/licenses/lightweight-charts.txt`.
 

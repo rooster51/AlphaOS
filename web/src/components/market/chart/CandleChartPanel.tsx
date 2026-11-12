@@ -28,6 +28,7 @@ const MAX_BACKOFF_MS = 160_000;
 
 const ERROR_MESSAGES: Record<string, string> = {
   authentication_required: "Your website session is no longer valid. Sign in again to load authenticated candles.",
+  owner_only: "Only the authenticated repository owner may view these candles. No data was returned to this account.",
   data_use_denied: "This account is not entitled to display this provider's candles. No substitute data was shown.",
   provider_rate_limited: "The provider is rate limiting candle requests. Retrying has been backed off; no tight retry loop is running.",
   provider_unavailable: "Native candles are temporarily unavailable from the provider. No bars were synthesized.",
@@ -215,7 +216,7 @@ export function CandleChartPanel({
     <div className="min-w-0">
       <Header
         title={`Candle Chart — ${symbol}`}
-        subtitle="Authenticated provider-native candles · regular session · UTC time scale"
+        subtitle="Owner-authenticated provider-native candles · regular session · UTC time scale"
         badge={{ label: "ALPHAOS CANDLES", variant: "live" }}
       />
 

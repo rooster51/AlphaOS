@@ -14,7 +14,7 @@ import {
   type CandleSymbol,
 } from "../../../../lib/candles.ts";
 import { getServerConfig } from "../../../../lib/server-config.ts";
-import { validSessionCookie } from "../../../../lib/website-auth.ts";
+import { sessionRole } from "../../../../lib/website-auth.ts";
 
 const UPSTREAM_TIMEOUT_MS = 12_000;
 const SAFE_UPSTREAM_CODES = new Set([
@@ -36,6 +36,8 @@ function failure(status: number, code: string): Response {
         "Cache-Control": "private, no-store",
         Vary: "Cookie",
         "X-Content-Type-Options": "nosniff",
+        "X-Robots-Tag": "noindex, nofollow",
+        "Referrer-Policy": "same-origin",
       },
     },
   );
@@ -63,6 +65,13 @@ function mapUpstream(status: number, code: string | null): Failure {
   return { status: 502, code: "backend_http_error" };
 }
 
+function entitlementDenied(value: unknown): boolean {
+  if (value === null || typeof value !== "object" || Array.isArray(value)) return false;
+  const entitlement = (value as Record<string, unknown>).entitlement;
+  return entitlement !== null && typeof entitlement === "object" && !Array.isArray(entitlement) &&
+    (entitlement as Record<string, unknown>).allowed === false;
+}
+
 function isSymbol(value: string): value is CandleSymbol {
   return (CANDLE_SYMBOLS as readonly string[]).includes(value);
 }
@@ -76,13 +85,17 @@ export async function GET(
   context: { params: Promise<{ symbol: string }> },
 ): Promise<Response> {
   const { bindings } = readRuntimeBindings();
-  if (!await validSessionCookie(request, {
+  const role = await sessionRole(request, {
     ALPHAOS_PASSWORD_HASH: bindings.ALPHAOS_PASSWORD_HASH,
     ALPHAOS_SESSION_KEY: bindings.ALPHAOS_SESSION_KEY,
-  })) return failure(401, "authentication_required");
+  });
+  if (!role) return failure(401, "authentication_required");
+  // The signed session must carry the owner role. A valid viewer session is
+  // not enough, and the check happens before any backend request.
+  if (role !== "owner") return failure(403, "owner_only");
 
-  // Fail closed: browser display is not private-research permission. Keep the
-  // native route unavailable until Public grants an explicit display right.
+  // Fail closed: this deployment switch is not the authorization. The owner
+  // session above and the provider owner_private_display decision below are.
   if (process.env.ALPHAOS_CANDLE_CHART_ENABLED !== "true") {
     return failure(503, "feature_disabled");
   }
@@ -119,6 +132,7 @@ export async function GET(
       headers: {
         Authorization: `Bearer ${token}`,
         Accept: "application/json",
+        "X-AlphaOS-Data-Use": "owner_private_display",
         "X-AlphaOS-Request-ID": requestId,
       },
       cache: "no-store",
@@ -163,19 +177,23 @@ export async function GET(
     return failure(mapped.status, mapped.code);
   }
 
+  // A denied entitlement is a policy result, not a malformed snapshot. Keep the
+  // safe 403 distinct from provider schema failures.
+  if (entitlementDenied(payload)) return failure(403, "data_use_denied");
+
   const snapshot = parseCandleSnapshot(payload, { symbol, interval });
   if (!snapshot) return failure(502, "provider_schema_error");
 
-  // Private-research entitlement is not display authorization. The provider
-  // capability and the per-response decision must both grant public display,
-  // and the decision must carry an authorization reference.
+  // The bridge requested owner-private display, not public display. Both the
+  // per-response decision and the provider capability must confirm that exact
+  // use. Private research is never relabelled, and public display stays denied.
   const capabilityEntitlement = snapshot.provider_capabilities.entitlement;
-  const publicDisplayCapability = capabilityEntitlement !== null &&
+  const ownerPrivateCapability = capabilityEntitlement !== null &&
     typeof capabilityEntitlement === "object" && !Array.isArray(capabilityEntitlement) &&
-    (capabilityEntitlement as Record<string, unknown>).public_display === true;
-  if (snapshot.entitlement.use_context !== "public_display" ||
-      snapshot.entitlement.authorization_reference_present !== true ||
-      !publicDisplayCapability) {
+    (capabilityEntitlement as Record<string, unknown>).owner_private_display === true;
+  if (snapshot.entitlement.allowed !== true ||
+      snapshot.entitlement.use_context !== "owner_private_display" ||
+      !ownerPrivateCapability) {
     console.warn(JSON.stringify({
       event: "candles_bridge",
       request_id: requestId,
@@ -207,6 +225,8 @@ export async function GET(
         "Cache-Control": "private, no-store",
         Vary: "Cookie",
         "X-Content-Type-Options": "nosniff",
+        "X-Robots-Tag": "noindex, nofollow",
+        "Referrer-Policy": "same-origin",
       },
     },
   );

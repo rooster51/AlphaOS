@@ -4,8 +4,23 @@ import { GET } from "../src/app/api/current-quote/route.ts";
 import { authBindings, cookie } from "./auth-fixture.mjs";
 
 const origin = "https://preview.test";
-const request = (symbol, authenticated = true) => new Request(`${origin}/api/current-quote?symbol=${symbol}`, {
-  headers: authenticated ? { Cookie: `__Host-alphaos_session=${cookie(origin)}` } : {},
+const request = (symbol, authenticated = true, role = "owner") => new Request(`${origin}/api/current-quote?symbol=${symbol}`, {
+  headers: authenticated ? { Cookie: `__Host-alphaos_session=${cookie(origin, Date.now(), role)}` } : {},
+});
+
+test("quote bridge denies non-owner accounts before contacting the backend", async () => {
+  for (const [key, value] of Object.entries({
+    ...authBindings, ALPHAOS_API_URL: "https://backend.test", ALPHAOS_API_TOKEN: "fixture-token",
+  })) process.env[key] = value;
+  const original = globalThis.fetch;
+  let calls = 0;
+  globalThis.fetch = async () => { calls += 1; return Response.json({}); };
+  try {
+    const response = await GET(request("SPY", true, "viewer"));
+    assert.equal(response.status, 403);
+    assert.equal((await response.json()).code, "owner_only");
+    assert.equal(calls, 0);
+  } finally { globalThis.fetch = original; }
 });
 
 test("quote bridge authenticates, classifies slow requests and keeps symbols separate", async t => {

@@ -21,9 +21,9 @@ function configure(token = "fixture-token", url = "https://backend.test") {
   })) process.env[name] = value;
 }
 
-function request(query = "", authenticated = true) {
+function request(query = "", { authenticated = true, role = "owner" } = {}) {
   return new Request(`${origin}/api/candles/SPY${query}`, {
-    headers: authenticated ? { Cookie: `__Host-alphaos_session=${cookie(origin)}` } : {},
+    headers: authenticated ? { Cookie: `__Host-alphaos_session=${cookie(origin, Date.now(), role)}` } : {},
   });
 }
 
@@ -43,17 +43,39 @@ afterEach(() => {
   }
 });
 
-test("the bridge requires a website session before contacting the backend", async () => {
+test("anonymous and shared-link requests are rejected before contacting the backend", async () => {
   let calls = 0;
   globalThis.fetch = async () => { calls += 1; return Response.json({ status: "ok" }); };
-  const response = await GET(request("", false), context());
-  assert.equal(response.status, 401);
-  assert.deepEqual(await response.json(), { status: "unavailable", code: "authentication_required" });
+  for (const target of [request("", { authenticated: false }), new Request(`${origin}/api/candles/SPY`)]) {
+    const response = await GET(target, context());
+    assert.equal(response.status, 401);
+    assert.deepEqual(await response.json(), { status: "unavailable", code: "authentication_required" });
+    assert.match(response.headers.get("cache-control"), /private, no-store/);
+    assert.equal(response.headers.get("x-robots-tag"), "noindex, nofollow");
+  }
+  assert.equal(calls, 0);
+});
+
+test("a valid non-owner account is denied the owner-only chart before the backend", async () => {
+  let calls = 0;
+  globalThis.fetch = async () => { calls += 1; return Response.json(candleSnapshot()); };
+  const response = await GET(request("", { role: "viewer" }), context());
+  assert.equal(response.status, 403);
+  assert.deepEqual(await response.json(), { status: "unavailable", code: "owner_only" });
   assert.match(response.headers.get("cache-control"), /private, no-store/);
   assert.equal(calls, 0);
 });
 
-test("the bridge fails closed while native display is not authorized", async () => {
+test("a session without a recognized role is not an authenticated owner session", async () => {
+  let calls = 0;
+  globalThis.fetch = async () => { calls += 1; return Response.json(candleSnapshot()); };
+  const response = await GET(request("", { role: null }), context());
+  assert.equal(response.status, 401);
+  assert.deepEqual(await response.json(), { status: "unavailable", code: "authentication_required" });
+  assert.equal(calls, 0);
+});
+
+test("owner access still fails closed while the deployment switch is off", async () => {
   process.env.ALPHAOS_CANDLE_CHART_ENABLED = "false";
   let calls = 0;
   globalThis.fetch = async () => { calls += 1; return Response.json(candleSnapshot()); };
@@ -64,7 +86,7 @@ test("the bridge fails closed while native display is not authorized", async () 
   assert.equal(calls, 0);
 });
 
-test("the bridge forwards the exact native request with server-side auth", async () => {
+test("the owner bridge forwards the exact native request with server-side auth and owner-private use", async () => {
   let captured;
   globalThis.fetch = async (url, options) => {
     captured = { url: new URL(url), options };
@@ -74,17 +96,20 @@ test("the bridge forwards the exact native request with server-side auth", async
   assert.equal(response.status, 200);
   assert.equal(captured.url.toString(), "https://backend.test/v1/candles/SPY?interval=5m&session=regular&limit=390");
   assert.equal(captured.options.headers.Authorization, "Bearer fixture-token");
+  assert.equal(captured.options.headers["X-AlphaOS-Data-Use"], "owner_private_display");
   assert.equal(captured.options.cache, "no-store");
   assert.match(captured.options.headers["X-AlphaOS-Request-ID"], /^[a-f0-9]{32}$/);
   const body = await response.json();
   assert.equal(body.status, "ok");
   assert.equal(body.snapshot.snapshot_id, "a".repeat(64));
+  assert.equal(body.snapshot.entitlement.use_context, "owner_private_display");
   assert.equal(body.snapshot.returned_bars, 2);
   assert.equal(response.headers.get("Vary"), "Cookie");
   assert.match(response.headers.get("cache-control"), /private, no-store/);
+  assert.equal(response.headers.get("x-robots-tag"), "noindex, nofollow");
 });
 
-test("private-research entitlement is not browser-display authorization", async () => {
+test("private-research entitlement is not owner-private display authorization", async () => {
   let calls = 0;
   globalThis.fetch = async () => {
     calls += 1;
@@ -102,6 +127,50 @@ test("private-research entitlement is not browser-display authorization", async 
   assert.equal(response.status, 403);
   assert.deepEqual(await response.json(), { status: "unavailable", code: "data_use_denied" });
   assert.equal(calls, 1);
+});
+
+test("public-display entitlement is not accepted by the owner-private route", async () => {
+  globalThis.fetch = async () => {
+    const snapshot = candleSnapshot();
+    snapshot.entitlement = {
+      ...snapshot.entitlement,
+      use_context: "public_display",
+      authorization_reference_present: true,
+    };
+    snapshot.provider_capabilities.entitlement = {
+      ...snapshot.provider_capabilities.entitlement,
+      owner_private_display: false,
+      public_display: true,
+    };
+    return Response.json(snapshot);
+  };
+  const response = await GET(request(), context());
+  assert.equal(response.status, 403);
+  assert.deepEqual(await response.json(), { status: "unavailable", code: "data_use_denied" });
+});
+
+test("the provider capability must grant owner-private display", async () => {
+  globalThis.fetch = async () => {
+    const snapshot = candleSnapshot();
+    snapshot.provider_capabilities.entitlement = {
+      ...snapshot.provider_capabilities.entitlement,
+      owner_private_display: false,
+    };
+    return Response.json(snapshot);
+  };
+  const response = await GET(request(), context());
+  assert.equal(response.status, 403);
+  assert.deepEqual(await response.json(), { status: "unavailable", code: "data_use_denied" });
+});
+
+test("a denied owner-private decision is rejected even with the capability set", async () => {
+  globalThis.fetch = async () => {
+    const snapshot = candleSnapshot();
+    return Response.json({ ...snapshot, entitlement: { ...snapshot.entitlement, allowed: false } });
+  };
+  const response = await GET(request(), context());
+  assert.equal(response.status, 403);
+  assert.deepEqual(await response.json(), { status: "unavailable", code: "data_use_denied" });
 });
 
 test("invalid symbol, interval, session or limit fails before any backend call", async () => {

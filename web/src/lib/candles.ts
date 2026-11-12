@@ -55,6 +55,7 @@ export type CandleSnapshot = {
 
 export type CandleClientCode =
   | "authentication_required"
+  | "owner_only"
   | "data_use_denied"
   | "invalid_request"
   | "provider_rate_limited"
@@ -214,7 +215,10 @@ function httpError(status: number, body: Record<string, unknown>, response: Resp
     return { code: "authentication_required", message: "Sign in again to view authenticated candles." };
   }
   if (status === 503 && code === "feature_disabled") {
-    return { code: "feature_disabled", message: "Candle display is disabled pending provider authorization." };
+    return { code: "feature_disabled", message: "Owner-private candle display is disabled in this deployment." };
+  }
+  if (status === 403 && code === "owner_only") {
+    return { code: "owner_only", message: "Only the authenticated repository owner may view these candles." };
   }
   if (status === 403 || code === "data_use_denied") {
     return { code: "data_use_denied", message: "This account is not entitled to display this provider's candles." };

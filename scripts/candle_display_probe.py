@@ -24,6 +24,7 @@ from urllib.request import HTTPRedirectHandler, Request, build_opener
 
 SCHEMA_VERSION = "alphaos-candle-display-probe-v1"
 COOKIE_NAME = "__Host-alphaos_session"
+ENTITLEMENT_CONTEXT = "owner_private_display"
 SYMBOLS = ("SPY", "QQQ")
 INTERVALS = ("1m", "5m", "15m")
 INTERVAL_SECONDS = {"1m": 60, "5m": 300, "15m": 900}
@@ -181,6 +182,7 @@ def analyze_snapshot(snapshot: object, *, symbol: str, interval: str, now: datet
         and retrieved_after_latest
         and counts_valid
         and entitlement_allowed
+        and entitlement_context == ENTITLEMENT_CONTEXT
     )
 
     return {

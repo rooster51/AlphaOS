@@ -57,16 +57,20 @@ explicit completion evidence; otherwise it is `unknown` with
 ## Data-use policy
 
 `modules/data_entitlements.py` defaults to deny. The registered Public entitlement
-allows authenticated, private research only. It does not grant:
+allows authenticated private research and the separate `owner_private_display`
+context for a single-owner Application. It does not grant:
 
 - public display
 - commercial use
 - redistribution
+- access by other users
 - AI analysis
 
 Public's Individual API is documented for personal, non-commercial use and says
-third-party dissemination requires prior written approval. The policy therefore
-also blocks Public data from future public exports and AI evidence paths until a
+third-party dissemination requires prior written approval. The owner-private
+context is not relabelled as public display; it is available only through the
+server-side owner session boundary. The policy therefore also blocks Public data
+from future public exports, other-user access and AI evidence paths until a
 documented authorization is added. The archive write path validates the provider
 identity on every row and rejects a mixed-provider batch before touching
 Supabase; a single provider batch is then checked against its entitlement. A

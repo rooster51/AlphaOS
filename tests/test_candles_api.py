@@ -8,7 +8,12 @@ from fastapi.testclient import TestClient
 
 import alphaos_api.app as api
 from modules.candle_service import CandleService
-from modules.data_entitlements import PUBLIC_DISPLAY, PRIVATE_RESEARCH, DataUseDenied
+from modules.data_entitlements import (
+    OWNER_PRIVATE_DISPLAY,
+    PUBLIC_DISPLAY,
+    PRIVATE_RESEARCH,
+    DataUseDenied,
+)
 from modules.market_data_contracts import (
     INTERVAL_SECONDS,
     SUPPORTED_INTERVALS,
@@ -82,8 +87,11 @@ def install(monkeypatch, service):
     monkeypatch.setitem(api.app.state._state, "candles", service)
 
 
-def get(client, path="/v1/candles/SPY", **kwargs):
-    return client.get(path, headers={"Authorization": f"Bearer {TOKEN}"}, **kwargs)
+def get(client, path="/v1/candles/SPY", headers=None, **kwargs):
+    request_headers = {"Authorization": f"Bearer {TOKEN}"}
+    if headers:
+        request_headers.update(headers)
+    return client.get(path, headers=request_headers, **kwargs)
 
 
 def test_all_symbols_and_native_intervals_use_normalized_contract_during_session():
@@ -170,6 +178,37 @@ def test_api_returns_typed_snapshot(client, monkeypatch):
     assert payload["entitlement"]["use_context"] == PRIVATE_RESEARCH
     assert payload["entitlement"]["allowed"] is True
     assert "account_id" not in response.text
+
+
+def test_owner_private_display_is_a_separate_server_side_entitlement(client, monkeypatch):
+    provider = FakeProvider(at_close=True)
+    install(monkeypatch, CandleService(provider=provider, clock=lambda: SESSION_CLOSE))
+    response = get(client, headers={"X-AlphaOS-Data-Use": OWNER_PRIVATE_DISPLAY})
+    assert response.status_code == 200, response.text
+    payload = response.json()
+    assert payload["entitlement"]["use_context"] == OWNER_PRIVATE_DISPLAY
+    assert payload["entitlement"]["allowed"] is True
+    assert payload["entitlement"]["authorization_required"] is False
+    assert payload["entitlement"]["authorization_reference_present"] is False
+    capability = payload["provider_capabilities"]["entitlement"]
+    assert capability["owner_private_display"] is True
+    assert capability["public_display"] is False
+    assert capability["commercial_use"] is False
+    assert capability["redistribution"] is False
+    assert capability["ai_analysis"] is False
+    assert provider.calls == [("SPY", "1m", "regular", 390)]
+
+
+@pytest.mark.parametrize("use_context", [PUBLIC_DISPLAY, "commercial_use", "redistribution", "ai_analysis", "unknown"])
+def test_non_owner_private_display_contexts_are_rejected_before_provider_access(
+    client, monkeypatch, use_context,
+):
+    provider = FakeProvider()
+    install(monkeypatch, CandleService(provider=provider, clock=lambda: NOW))
+    response = get(client, headers={"X-AlphaOS-Data-Use": use_context})
+    assert response.status_code == 400
+    assert response.json()["error"]["code"] == "invalid_data_use"
+    assert provider.calls == []
 
 
 def test_limit_narrows_returned_bars_not_provider_counts(client, monkeypatch):

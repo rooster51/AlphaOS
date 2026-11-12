@@ -60,7 +60,7 @@ def snapshot(*, interval="1m", times=None, retrieved_at="2026-11-10T15:04:00Z"):
         },
         "entitlement": {
             "provider": "Public",
-            "use_context": "private_research",
+            "use_context": "owner_private_display",
             "allowed": True,
             "code": "allowed",
             "reason": "Synthetic test fixture.",
@@ -90,6 +90,14 @@ def test_snapshot_measurements_include_age_gap_and_timestamp_consistency():
         "bars_valid": True,
         "counts_valid": True,
     }
+
+
+def test_probe_requires_owner_private_display_not_private_research():
+    value = snapshot()
+    value["entitlement"]["use_context"] = "private_research"
+    result = analyze_snapshot(value, symbol="SPY", interval="1m", now=NOW)
+    assert result["status"] == "invalid"
+    assert result["entitlement"]["use_context"] == "private_research"
 
 
 def test_misaligned_or_retrieved_before_latest_is_invalid():

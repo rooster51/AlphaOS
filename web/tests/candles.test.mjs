@@ -107,6 +107,7 @@ test("client calls only the same-origin bridge and never carries a backend token
 test("client maps auth, policy, throttling, provider and timeout states distinctly", async () => {
   const cases = [
     [401, { status: "unavailable", code: "authentication_required" }, "authentication_required"],
+    [403, { status: "unavailable", code: "owner_only" }, "owner_only"],
     [403, { status: "unavailable", code: "data_use_denied" }, "data_use_denied"],
     [429, { status: "unavailable", code: "provider_rate_limited" }, "provider_rate_limited"],
     [503, { status: "unavailable", code: "public_not_configured" }, "provider_unavailable"],

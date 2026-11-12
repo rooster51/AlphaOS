@@ -31,7 +31,7 @@ export default async function CandleChartPage({
       <div>
         <Header
           title="Candle Chart"
-          subtitle="Authenticated provider-native candles"
+          subtitle="Owner-authenticated provider-native candles"
           badge={{ label: "UNAVAILABLE", variant: "warning" }}
         />
         <section className="p-8" aria-live="polite">

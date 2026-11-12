@@ -3,16 +3,18 @@
 `GET /v1/candles/{symbol}` is the authenticated, read-only candle surface. It
 returns normalized AlphaOS data rather than Public SDK objects.
 
-> **Display gate:** the private-research entitlement below does not authorize
-> browser display of Public market data. The website bridge and native chart are
-> disabled by default pending written Public approval. See
-> [candle display entitlement and probe](CANDLE_DISPLAY_ENTITLEMENT_PROBE.md).
+> **Display gate:** public display, commercial use, redistribution and AI use are
+> not authorized. A separate `owner_private_display` entitlement exists only for
+> the authenticated repository owner; it is not public display. The website
+> bridge and native chart remain disabled by default. See
+> [owner-private candle display and probe](CANDLE_DISPLAY_ENTITLEMENT_PROBE.md).
 
 ## Request
 
 ```text
 GET /v1/candles/SPY?interval=1m&session=regular&limit=390
 Authorization: Bearer <ALPHAOS_API_TOKEN>
+X-AlphaOS-Data-Use: private_research
 ```
 
 | Parameter | Values | Default | Notes |
@@ -21,10 +23,16 @@ Authorization: Bearer <ALPHAOS_API_TOKEN>
 | `interval` | `1m`, `5m`, `15m` | `1m` | Native provider intervals only; no resampling. |
 | `session` | `regular` | `regular` | Extended-hours data is not converted into regular-session data. |
 | `limit` | 1–390 | `390` | Returns the newest N native bars from the provider response. |
+| `X-AlphaOS-Data-Use` | `private_research`, `owner_private_display` | `private_research` | Server-to-server only. The owner website bridge sends `owner_private_display` after verifying the signed owner session. Other values are rejected with `400 invalid_data_use`. |
 
 Authentication uses the existing `/v1` bearer dependency. Every response is
 `Cache-Control: no-store` at the HTTP boundary; the server-side snapshot cache is
 separate and private to the process.
+
+The website bridge is the only caller that sets `owner_private_display`. It does
+so after a server-side owner-role check, and it requires the response decision
+and provider capability to confirm that exact context. It never accepts a
+`public_display` snapshot.
 
 ## Response contract
 
@@ -116,6 +124,7 @@ measurement.
     "entitlement": {
       "provider": "Public",
       "private_research": true,
+      "owner_private_display": true,
       "public_display": false,
       "commercial_use": false,
       "redistribution": false,
@@ -152,7 +161,7 @@ cross-process or persistent candle cache.
 
 | HTTP | Code examples | Meaning |
 | --- | --- | --- |
-| 400 | `unsupported_symbol` | Symbol is outside the v1 surface. |
+| 400 | `unsupported_symbol`, `invalid_data_use` | Symbol or requested data-use context is outside the v1 surface. |
 | 401/403 | `authentication_required`, `forbidden`, `data_use_denied` | Authentication or policy failure. |
 | 422 | `invalid_request` | Query validation failure for `interval`, `session`, or `limit`. |
 | 429 | `public_rate_limit` | Provider throttling; do not retry aggressively. |
@@ -182,6 +191,7 @@ provider's entitlement to persist another provider's observations.
 
 No quote-to-candle synthesis, gap filling, extended-hours relabeling, provider
 resampling, public display, commercial redistribution, or AI evidence path is
-implemented here. Public observations remain private-research-only. See
+implemented here. Public observations remain private research or the separate
+owner-private display path; neither is public display. See
 `docs/PHASE_C_CHART_SPEC.md` and `docs/PHASE_D_GEMINI_CONTRACT.md` for the
 separate frontend and assistant contracts.

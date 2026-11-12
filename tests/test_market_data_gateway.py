@@ -8,6 +8,7 @@ import pytest
 from modules.data_entitlements import (
     AI_ANALYSIS,
     COMMERCIAL_USE,
+    OWNER_PRIVATE_DISPLAY,
     PRIVATE_RESEARCH,
     PUBLIC_DISPLAY,
     REDISTRIBUTION,
@@ -84,8 +85,12 @@ def batch(*bars, expected=3, last_complete=None, provider="SyntheticFeed", warni
     )
 
 
-def test_private_research_is_allowed_but_other_public_uses_are_denied():
+def test_private_and_owner_private_display_are_allowed_but_public_uses_are_denied():
     assert check_data_use(PRIVATE_RESEARCH, "Public").allowed
+    owner_private = check_data_use(OWNER_PRIVATE_DISPLAY, "Public")
+    assert owner_private.allowed
+    assert owner_private.authorization_required is False
+    assert owner_private.authorization_reference_present is False
     for use in (PUBLIC_DISPLAY, COMMERCIAL_USE, REDISTRIBUTION, AI_ANALYSIS):
         decision = check_data_use(use, "Public")
         assert not decision.allowed
@@ -97,6 +102,7 @@ def test_private_research_is_allowed_but_other_public_uses_are_denied():
         ai_evidence_allowed("Public")
     assert not check_data_use("unknown_use", "Public").allowed
     assert not check_data_use(PRIVATE_RESEARCH, "UnknownFeed").allowed
+    assert not check_data_use(OWNER_PRIVATE_DISPLAY, "UnknownFeed").allowed
 
 
 class RecordingArchiveClient:
