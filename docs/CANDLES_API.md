@@ -165,12 +165,14 @@ cross-process or persistent candle cache.
 | 401/403 | `authentication_required`, `forbidden`, `data_use_denied` | Authentication or policy failure. |
 | 422 | `invalid_request` | Query validation failure for `interval`, `session`, or `limit`. |
 | 429 | `public_rate_limit` | Provider throttling; do not retry aggressively. |
-| 503 | `public_not_configured`, `provider_unavailable`, `no_candles`, `invalid_provider_response` | Provider is unavailable or returned unusable data. |
+| 503 | `public_not_configured`, `provider_unavailable`, `no_candles`, `provider_bars_*`, `candle_*` | Provider is unavailable or returned unusable data. `provider_bars_*` identifies retrieval/response/timestamp shape; `candle_*` identifies symbol, aggregation, session, alignment, ordering, duplicate, OHLC or expected-count rejection. |
 | 504 | `provider_timeout` | Provider timed out. |
 
 Stale and incomplete data are successful snapshots with `freshness`,
 `completeness`, `last_bar_status`, and `warnings` populated. They are not
-silently repaired.
+silently repaired. Public's final closing-auction bar is outside the regular
+session and is excluded with `provider_closing_bar_excluded`; other
+off-session bars fail with `candle_outside_regular_session`.
 
 ## Archive schema review
 

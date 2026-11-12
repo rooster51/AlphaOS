@@ -329,6 +329,33 @@ def test_out_of_session_error_reports_safe_relation_not_payload(monkeypatch):
     assert "2026-10-02T13:29:00" not in str(error.value.detail)
 
 
+def test_public_closing_bar_is_excluded_without_weakening_other_session_checks(monkeypatch):
+    import modules.market_data_gateway as gateway
+    rows = [dict(symbol="SPY", aggregation="ONE_MINUTE",
+                 timestamp="2026-10-02T19:59:00+00:00", open=500, high=501, low=499,
+                 close=500.5, volume=10, provider_expected_bars=1),
+            dict(symbol="SPY", aggregation="ONE_MINUTE",
+                 timestamp="2026-10-02T20:00:00+00:00", open=500, high=501, low=499,
+                 close=500.5, volume=10, provider_expected_bars=1)]
+    monkeypatch.setattr(gateway, "fetch_intraday_bars", lambda *args, **kwargs: (rows, {}))
+    provider = PublicMarketDataProvider(context=lambda: (object(), "synthetic-account"),
+                                        clock=lambda: CLOSED)
+    result = provider.candles("SPY", "1m", "regular", 390)
+    assert len(result.bars) == 1
+    assert result.bars[0].time == "2026-10-02T19:59:00+00:00"
+    assert "provider_closing_bar_excluded" in result.warnings
+    snapshot = build_snapshot(result, now=CLOSED)
+    assert snapshot.completeness == "complete"
+    assert "provider_closing_bar_excluded" in snapshot.warnings
+
+    rows[-1]["timestamp"] = "2026-10-02T20:01:00+00:00"
+    with pytest.raises(MarketDataError) as error:
+        provider.candles("SPY", "1m", "regular", 390)
+    assert error.value.code == "candle_outside_regular_session"
+    assert error.value.detail["relation"] == "after_close"
+    assert error.value.detail["minutes_after_close"] == 1
+
+
 def test_provider_intraday_diagnostic_is_preserved(monkeypatch):
     import modules.market_data_gateway as gateway
     from modules.public_intraday import PublicIntradayError

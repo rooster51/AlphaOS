@@ -176,6 +176,15 @@ def _validate_bars(symbol: str, interval: str, rows, *, now: datetime) -> tuple[
             raise MarketDataError("candle_timestamp_future")
         relation, opening, closing = _session_relation(stamp)
         if relation != "inside":
+            # Public includes a native closing-auction bar stamped at the exact
+            # session close. It is outside the half-open regular-session range
+            # and is not part of the provider's expected regular-bar count.
+            # Exclude only that final boundary bar; any other out-of-session bar
+            # still fails closed below.
+            if (relation == "after_close" and closing is not None
+                    and stamp == closing and index == len(rows) - 1):
+                warnings.append("provider_closing_bar_excluded")
+                continue
             detail = {"bar_index": index, "bar_count": len(rows), "relation": relation}
             if relation == "before_open" and opening is not None:
                 detail["minutes_before_open"] = int((opening - stamp).total_seconds() // 60)
