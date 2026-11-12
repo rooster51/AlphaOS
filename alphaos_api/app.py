@@ -32,6 +32,7 @@ app.state.service=ResearchService()
 from modules.research_timing import ResearchTimingMiddleware
 from modules.research_timing import stage
 security=HTTPBearer(auto_error=False)
+_SAFE_ENTITLEMENT_BOOLEANS={'authorization_required','authorization_reference_present'}
 
 
 def authenticate(credentials:HTTPAuthorizationCredentials|None=Depends(security)):
@@ -81,7 +82,11 @@ def sanitized(value, *, _state=None, _release=False):
             for key, value in item.items():
                 key = str(key)
                 if key not in key_policy:
-                    key_policy[key] = not any(word in key.lower() for word in ('account_id','account_number','secret','token','authorization','password'))
+                    # These two entitlement fields are booleans, not credentials.
+                    # Keep them in the candle contract while redacting every
+                    # other authorization-bearing value.
+                    key_policy[key] = (key in _SAFE_ENTITLEMENT_BOOLEANS and isinstance(value, bool)) or not any(
+                        word in key.lower() for word in ('account_id','account_number','secret','token','authorization','password'))
                 if key_policy[key]:
                     result[key] = clean(value)
             return result

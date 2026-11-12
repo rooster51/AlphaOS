@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
-import {createHash} from 'node:crypto';
-import {protectWebsite,issueSession,validSession,SESSION_COOKIE,SESSION_SECONDS} from '../src/lib/website-auth.ts';
+import {createHash,createHmac} from 'node:crypto';
+import {protectWebsite,issueSession,sessionRole,validOwnerSessionCookie,validSession,SESSION_COOKIE,SESSION_SECONDS} from '../src/lib/website-auth.ts';
 import {authBindings,password,cookie} from './auth-fixture.mjs';
 import bcrypt from 'bcryptjs';
 const serviceEnv={ALPHAOS_API_URL:'https://auth-backend.test',ALPHAOS_API_TOKEN:'synthetic-service-token'};
@@ -62,6 +62,28 @@ test('all pages, API aliases, RSC requests and missing configuration fail closed
   }
   assert.equal((await gate(post('/auth/login'),{},downstream)).status,503);
   for(const name of Object.keys(env))assert(!await sessionValid(request('/',{headers:{cookie:`${SESSION_COOKIE}=${cookie()}`}}),{...env,[name]:undefined}));
+});
+test('sessions carry an owner role and v1 sessions cannot become owner-private access',async()=>{
+  const issued=await issueSession(env,origin);
+  const owner=request('/',{headers:{cookie:`${SESSION_COOKIE}=${issued}`}});
+  assert.equal(await sessionRole(owner,env),'owner');
+  assert(await validOwnerSessionCookie(owner,env));
+
+  const viewer=request('/',{headers:{cookie:`${SESSION_COOKIE}=${cookie(origin,Date.now(),'viewer')}`}});
+  assert.equal(await sessionRole(viewer,env),'viewer');
+  assert(await sessionValid(viewer,env));
+  assert.equal(await validOwnerSessionCookie(viewer,env),false);
+
+  const noRole=request('/',{headers:{cookie:`${SESSION_COOKIE}=${cookie(origin,Date.now(),null)}`}});
+  assert.equal(await sessionRole(noRole,env),null);
+  assert.equal(await sessionValid(noRole,env),false);
+
+  const iat=Math.floor(Date.now()/1000);
+  const payload=Buffer.from(JSON.stringify({v:1,iat,exp:iat+SESSION_SECONDS,aud:origin,nonce:'a'.repeat(43)})).toString('base64url');
+  const signature=createHmac('sha256',`${authBindings.ALPHAOS_SESSION_KEY}:${authBindings.ALPHAOS_PASSWORD_HASH}`).update(payload).digest('base64url');
+  const legacy=request('/',{headers:{cookie:`${SESSION_COOKIE}=${payload}.${signature}`}});
+  assert.equal(await sessionRole(legacy,env),null);
+  assert.equal(await sessionValid(legacy,env),false);
 });
 test('forged, malformed, duplicate, future, expired, wrong-origin and rotated sessions are denied',async()=>{
   const token=await issueSession(env,origin),now=Date.now();

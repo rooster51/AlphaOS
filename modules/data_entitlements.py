@@ -15,6 +15,7 @@ from dataclasses import asdict, dataclass
 from typing import Literal
 
 PRIVATE_RESEARCH = "private_research"
+OWNER_PRIVATE_DISPLAY = "owner_private_display"
 PUBLIC_DISPLAY = "public_display"
 COMMERCIAL_USE = "commercial_use"
 REDISTRIBUTION = "redistribution"
@@ -22,6 +23,7 @@ AI_ANALYSIS = "ai_analysis"
 
 USE_CONTEXTS = (
     PRIVATE_RESEARCH,
+    OWNER_PRIVATE_DISPLAY,
     PUBLIC_DISPLAY,
     COMMERCIAL_USE,
     REDISTRIBUTION,
@@ -29,6 +31,7 @@ USE_CONTEXTS = (
 )
 UseContext = Literal[
     "private_research",
+    "owner_private_display",
     "public_display",
     "commercial_use",
     "redistribution",
@@ -38,8 +41,10 @@ UseContext = Literal[
 POLICY_VERSION = "alphaos-data-use-v1"
 _AUTHORIZATION_REQUIRED = {PUBLIC_DISPLAY, COMMERCIAL_USE, REDISTRIBUTION}
 _PUBLIC_TERMS = (
-    "Public Individual API terms: personal, non-commercial use; dissemination "
-    "of market data to third parties requires prior written approval."
+    "Public Individual API terms: the Developer may use Data only through the "
+    "Developer's own Application for personal, non-commercial use. Third-party "
+    "access, public display, commercial use and dissemination require separate "
+    "authorization."
 )
 
 
@@ -54,6 +59,7 @@ class ProviderEntitlement:
 
     provider: str
     private_research: bool = False
+    owner_private_display: bool = False
     public_display: bool = False
     commercial_use: bool = False
     redistribution: bool = False
@@ -74,6 +80,9 @@ class ProviderEntitlement:
 PUBLIC_ENTITLEMENT = ProviderEntitlement(
     provider="Public",
     private_research=True,
+    # A single-owner, authenticated Application is the documented personal-use
+    # case. It is not a public-display or third-party entitlement.
+    owner_private_display=True,
     public_display=False,
     commercial_use=False,
     redistribution=False,

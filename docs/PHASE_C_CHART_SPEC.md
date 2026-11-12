@@ -1,8 +1,16 @@
 # Phase C — First-party chart implementation specification
 
-Status: specification only. This run does not add a renderer, frontend state,
-dependencies, or a chart route. The existing TradingView widget remains the
-fallback until this implementation is reviewed and validated.
+Status: implementation complete, **owner-private display available only behind an
+owner-role server check and disabled by default**. Public display, commercial use,
+redistribution and access by other users remain disabled. The chart route, typed
+client, chart adapter, presentation state, and route-level fallback are in
+`web/`. With the feature switch off, `/market/chart` serves the legacy external
+TradingView fallback and `/api/candles/{symbol}` fails closed with
+`feature_disabled`.
+
+See [owner-private candle display and probe](CANDLE_DISPLAY_ENTITLEMENT_PROBE.md)
+for the exact evidence, unresolved authorization questions, and private
+end-to-end probe.
 
 ## Goal
 
@@ -93,3 +101,40 @@ the existing widget. It must:
 
 Server-side indicator calculation, Gemini synchronization, extended-hours
 rendering, order execution, and any public redistribution of Public data.
+
+## Implementation
+
+- Route: `/market/chart?symbol=SPY|QQQ&interval=1m|5m|15m`.
+- Browser bridge: `/api/candles/{symbol}` verifies the website session, forwards
+the provider request with the server-side bearer token, validates the complete
+`alphaos-candles-v1` body, and never returns partial or malformed snapshots.
+- Typed client and contract: `web/src/lib/candles.ts`.
+- Chart adapter, EMA calculation and native gap preservation:
+  `web/src/lib/candle-chart.ts`.
+- Presentation, polling/backoff, warning chips, status row and independent quote
+  marker: `web/src/components/market/chart/CandleChartPanel.tsx`.
+- Lightweight Charts renderer with UTC scale, volume pane and quote price line:
+  `web/src/components/market/chart/LightweightCandleChart.tsx`.
+- Fail-closed switch: `ALPHAOS_CANDLE_CHART_ENABLED` defaults to off. The route
+  serves the external TradingView fallback and the bridge returns
+  `feature_disabled`. Even with the switch on, the bridge requires a signed
+  session with `role=owner` and an `owner_private_display` entitlement decision
+  plus the matching provider capability; `private_research` and `public_display`
+  snapshots are rejected. The chart's quote route applies the same owner-role
+  check. Use `/market/chart?symbol=SPY&view=legacy` for the rollback path while
+  the switch is on. The archive research page is unchanged and links to the
+  chart.
+- Attribution and the Apache-2.0 license are shown on the chart route and
+  served from `/licenses/lightweight-charts.txt`.
+
+Validation for this implementation:
+
+- Web typecheck and production build pass.
+- The full web unit suite passes, including new candle contract, gap, EMA,
+  client-error and authenticated-route tests.
+- The Chromium browser tests pass with the switch enabled only in the isolated
+  test server and mocked capabilities. They cover native candles, volume,
+  warnings, interval switching, snapshot identity, the independent quote marker,
+  mobile overflow and the feature-flagged fallback. CI installs Playwright's
+  browser dependencies before the web job. These tests do not establish provider
+  display rights or live availability.

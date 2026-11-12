@@ -1,6 +1,6 @@
 import { readRuntimeBindings } from "#alphaos-runtime";
 import { getServerConfig } from "../../../lib/server-config.ts";
-import { validSessionCookie } from "../../../lib/website-auth.ts";
+import { sessionRole } from "../../../lib/website-auth.ts";
 import { currentQuote, quoteAgeLimit, quoteHttpFailure, unavailable } from "../../../lib/current-quotes.ts";
 
 const timeoutMs = 5000;
@@ -10,11 +10,15 @@ export async function GET(request: Request) {
   const reply = (result: ReturnType<typeof currentQuote>, status = 200) =>
     Response.json(result, { status, headers: { "Cache-Control": "private, no-store", Vary: "Cookie" } });
   const { bindings } = readRuntimeBindings();
-  if (!await validSessionCookie(request, {
+  const role = await sessionRole(request, {
     ALPHAOS_PASSWORD_HASH: bindings.ALPHAOS_PASSWORD_HASH,
     ALPHAOS_SESSION_KEY: bindings.ALPHAOS_SESSION_KEY,
-  })) {
+  });
+  if (!role) {
     return reply(unavailable("authentication_failure", "Preview session expired."), 401);
+  }
+  if (role !== "owner") {
+    return reply(unavailable("owner_only", "Only the authenticated repository owner may view this quote."), 403);
   }
   if (symbol !== "SPY" && symbol !== "QQQ") {
     return reply(unavailable("invalid_quote", "Invalid quote symbol."), 400);

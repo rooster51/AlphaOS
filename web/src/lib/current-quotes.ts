@@ -21,7 +21,7 @@ export function quoteAgeLimit(setting?: string): number {
 }
 
 export type UnavailableCode = "request_timeout" | "backend_unreachable" | "provider_unavailable" |
-  "authentication_failure" | "invalid_quote" | "missing_timestamp" | "stale_quote";
+  "authentication_failure" | "owner_only" | "invalid_quote" | "missing_timestamp" | "stale_quote";
 
 export function unavailable(code: UnavailableCode, reason: string, ageSeconds?: number) {
   return { status: "unavailable" as const, code, reason, ageSeconds };

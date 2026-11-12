@@ -3,10 +3,14 @@ from __future__ import annotations
 
 from typing import Literal
 
-from fastapi import Query
+from fastapi import Header, Query
 from pydantic import BaseModel, ConfigDict
 
-from modules.data_entitlements import DataUseDenied
+from modules.data_entitlements import (
+    OWNER_PRIVATE_DISPLAY,
+    PRIVATE_RESEARCH,
+    DataUseDenied,
+)
 from modules.market_data_gateway import MarketDataError
 from .contracts import APIError
 
@@ -25,6 +29,7 @@ class ProviderEntitlementResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
     provider: str
     private_research: bool
+    owner_private_display: bool
     public_display: bool
     commercial_use: bool
     redistribution: bool
@@ -86,7 +91,7 @@ def register_candles(router, service, respond):
         "/candles/{symbol}",
         response_model=CandleResponse,
         operation_id="get_candles",
-        responses={400: {"description": "Unsupported symbol"},
+        responses={400: {"description": "Unsupported symbol or data use"},
                    403: {"description": "Data use is not entitled"},
                    429: {"description": "Provider throttled the request"},
                    503: {"description": "Provider unavailable"},
@@ -97,9 +102,14 @@ def register_candles(router, service, respond):
         interval: Literal["1m", "5m", "15m"] = "1m",
         session: Literal["regular"] = "regular",
         limit: int = Query(390, ge=1, le=390),
+        data_use: str | None = Header(default=None, alias="X-AlphaOS-Data-Use"),
     ):
+        use_context = data_use or PRIVATE_RESEARCH
+        if use_context not in (PRIVATE_RESEARCH, OWNER_PRIVATE_DISPLAY):
+            raise APIError("invalid_data_use", 400)
         try:
-            snapshot = service().get(symbol, interval, session, limit)
+            snapshot = service().get(
+                symbol, interval, session, limit, use_context=use_context)
         except DataUseDenied:
             # Never expose provider details or the underlying decision reason.
             raise APIError("data_use_denied", 403) from None

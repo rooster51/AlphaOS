@@ -57,33 +57,54 @@ async function key(env: AuthBindings) {
   return crypto.subtle.importKey("raw", utf8.encode(`${env.ALPHAOS_SESSION_KEY}:${env.ALPHAOS_PASSWORD_HASH}`),
     { name: "HMAC", hash: "SHA-256" }, false, ["sign", "verify"]);
 }
+export type SessionRole = "owner" | "viewer";
+export type SessionData = {
+  v: 2;
+  iat: number;
+  exp: number;
+  aud: string;
+  nonce: string;
+  role: SessionRole;
+};
 export async function issueSession(env: AuthBindings, origin: string, now = Date.now()) {
   const iat = Math.floor(now / 1000);
-  const payload = encode(utf8.encode(JSON.stringify({ v: 1, iat, exp: iat + SESSION_SECONDS,
-    aud: origin, nonce: encode(crypto.getRandomValues(new Uint8Array(32))) })));
+  const payload = encode(utf8.encode(JSON.stringify({ v: 2, iat, exp: iat + SESSION_SECONDS,
+    aud: origin, role: "owner", nonce: encode(crypto.getRandomValues(new Uint8Array(32))) })));
   return `${payload}.${encode(new Uint8Array(await crypto.subtle.sign("HMAC", await key(env), utf8.encode(payload))))}`;
 }
 export async function validSession(request: Request, env: AuthBindings, now = Date.now(), options: AuthOptions = {}) {
   return authConfigured(env, options) && validSessionCookie(request, env, now);
 }
 /** Verify an existing signed session without requiring a login limiter binding. */
-export async function validSessionCookie(request: Request, env: AuthBindings, now = Date.now()) {
+async function readSession(request: Request, env: AuthBindings, now = Date.now()): Promise<SessionData | null> {
   if (!/^\$2[aby]\$12\$[./A-Za-z0-9]{53}$/.test(env.ALPHAOS_PASSWORD_HASH ?? "") ||
-      !/^[A-Za-z0-9_-]{43}$/.test(env.ALPHAOS_SESSION_KEY ?? "")) return false;
+      !/^[A-Za-z0-9_-]{43}$/.test(env.ALPHAOS_SESSION_KEY ?? "")) return null;
   try {
     const matches = (request.headers.get("cookie") ?? "").split(";").map(c => c.trim()).filter(c => c.startsWith(`${SESSION_COOKIE}=`));
-    if (matches.length !== 1) return false;
+    if (matches.length !== 1) return null;
     const token = matches[0].slice(SESSION_COOKIE.length + 1);
-    if (token.length > 1024) return false;
+    if (token.length > 1024) return null;
     const [payload, signature, extra] = token.split(".");
-    if (!payload || !signature || extra !== undefined) return false;
-    if (!await crypto.subtle.verify("HMAC", await key(env), decode(signature), utf8.encode(payload))) return false;
-    const data = JSON.parse(new TextDecoder().decode(decode(payload))), seconds = Math.floor(now / 1000);
-    return data.v === 1 && data.aud === new URL(request.url).origin
-      && Number.isSafeInteger(data.iat) && Number.isSafeInteger(data.exp)
-      && data.iat <= seconds && data.exp > seconds && data.exp - data.iat === SESSION_SECONDS
-      && typeof data.nonce === "string" && /^[A-Za-z0-9_-]{43}$/.test(data.nonce);
-  } catch { return false; }
+    if (!payload || !signature || extra !== undefined) return null;
+    if (!await crypto.subtle.verify("HMAC", await key(env), decode(signature), utf8.encode(payload))) return null;
+    const data = JSON.parse(new TextDecoder().decode(decode(payload))) as Partial<SessionData>;
+    const seconds = Math.floor(now / 1000);
+    if (data.v !== 2 || data.aud !== new URL(request.url).origin
+      || !Number.isSafeInteger(data.iat) || !Number.isSafeInteger(data.exp)
+      || data.iat! > seconds || data.exp! <= seconds || data.exp! - data.iat! !== SESSION_SECONDS
+      || typeof data.nonce !== "string" || !/^[A-Za-z0-9_-]{43}$/.test(data.nonce)
+      || (data.role !== "owner" && data.role !== "viewer")) return null;
+    return data as SessionData;
+  } catch { return null; }
+}
+export async function sessionRole(request: Request, env: AuthBindings, now = Date.now()): Promise<SessionRole | null> {
+  return (await readSession(request, env, now))?.role ?? null;
+}
+export async function validSessionCookie(request: Request, env: AuthBindings, now = Date.now()) {
+  return (await readSession(request, env, now)) !== null;
+}
+export async function validOwnerSessionCookie(request: Request, env: AuthBindings, now = Date.now()) {
+  return (await sessionRole(request, env, now)) === "owner";
 }
 export function sessionCookie(token: string, now = Date.now()) {
   return `${SESSION_COOKIE}=${token}; Path=/; Secure; HttpOnly; SameSite=Strict; Max-Age=${SESSION_SECONDS}; Expires=${new Date(now + SESSION_SECONDS * 1000).toUTCString()}`;
