@@ -11,7 +11,7 @@ from modules.market_data_contracts import (
     CandleBatch,
     ProviderCapabilities,
 )
-from modules.market_data_gateway import build_snapshot
+from modules.market_data_gateway import MarketDataError, build_snapshot
 from modules.data_entitlements import PRIVATE_RESEARCH, EntitlementDecision
 from scripts.market_data_probe import main, probe_once, summarize
 
@@ -55,6 +55,25 @@ class FakeProvider:
             received_bars=2, last_bar_complete=None, warnings=("missing_bars",),
             capabilities=self.capabilities,
         )
+
+
+class FailingProvider(FakeProvider):
+    def candles(self, symbol, interval, session="regular", limit=390):
+        raise MarketDataError(
+            "candle_outside_regular_session",
+            detail={"bar_index": 0, "bar_count": 1, "relation": "after_close",
+                    "minutes_after_close": 1},
+        )
+
+
+def test_probe_surfaces_safe_error_context():
+    result = probe_once(FailingProvider(), "SPY", "1m", clock=lambda: CLOSED)
+    assert result["available"] is False
+    assert result["error"] == "candle_outside_regular_session"
+    assert result["error_detail"] == {
+        "bar_index": 0, "bar_count": 1, "relation": "after_close",
+        "minutes_after_close": 1,
+    }
 
 
 def test_probe_reports_normalized_measurements_and_quality():

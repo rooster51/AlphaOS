@@ -311,6 +311,24 @@ def test_public_candle_validation_fails_closed(monkeypatch, mutation, code):
     assert error.value.code == code
 
 
+def test_out_of_session_error_reports_safe_relation_not_payload(monkeypatch):
+    import modules.market_data_gateway as gateway
+    rows = [dict(symbol="SPY", aggregation="ONE_MINUTE",
+                 timestamp="2026-10-02T13:29:00+00:00", open=500, high=501, low=499,
+                 close=500.5, volume=10, provider_expected_bars=2)]
+    monkeypatch.setattr(gateway, "fetch_intraday_bars", lambda *args, **kwargs: (rows, {}))
+    provider = PublicMarketDataProvider(context=lambda: (object(), "synthetic-account"),
+                                        clock=lambda: NOW)
+    with pytest.raises(MarketDataError) as error:
+        provider.candles("SPY", "1m")
+    assert error.value.code == "candle_outside_regular_session"
+    assert error.value.detail == {
+        "bar_index": 0, "bar_count": 1, "relation": "before_open",
+        "minutes_before_open": 1,
+    }
+    assert "2026-10-02T13:29:00" not in str(error.value.detail)
+
+
 def test_provider_intraday_diagnostic_is_preserved(monkeypatch):
     import modules.market_data_gateway as gateway
     from modules.public_intraday import PublicIntradayError

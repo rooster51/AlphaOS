@@ -59,9 +59,10 @@ PUBLIC_CAPABILITIES = ProviderCapabilities(
 class MarketDataError(RuntimeError):
     """A safe provider-independent market-data failure."""
 
-    def __init__(self, code: str, status: int = 503):
+    def __init__(self, code: str, status: int = 503, *, detail: dict | None = None):
         self.code = code
         self.status = status
+        self.detail = detail
         super().__init__(code)
 
 
@@ -126,12 +127,20 @@ def validate_candle_request(symbol: str, interval: str, session: str, limit: int
     return value
 
 
-def _regular_bar(timestamp: datetime) -> bool:
+def _session_relation(timestamp: datetime) -> tuple[str, datetime | None, datetime | None]:
     bounds = regular_session_bounds(timestamp)
     if bounds is None:
-        return False
+        return "non_session_day", None, None
     opening, closing = bounds
-    return opening <= timestamp < closing
+    if timestamp < opening:
+        return "before_open", opening, closing
+    if timestamp >= closing:
+        return "after_close", opening, closing
+    return "inside", opening, closing
+
+
+def _regular_bar(timestamp: datetime) -> bool:
+    return _session_relation(timestamp)[0] == "inside"
 
 
 def _session_in_progress(latest: datetime, now: datetime) -> bool:
@@ -155,7 +164,7 @@ def _validate_bars(symbol: str, interval: str, rows, *, now: datetime) -> tuple[
     previous: datetime | None = None
     expected: int | None = None
     previous_session_date = None
-    for row in rows:
+    for index, row in enumerate(rows):
         if not isinstance(row, dict):
             raise MarketDataError("candle_row_malformed")
         if str(row.get("symbol", "")).strip().upper() != symbol:
@@ -165,8 +174,14 @@ def _validate_bars(symbol: str, interval: str, rows, *, now: datetime) -> tuple[
         stamp = _timestamp(row.get("timestamp"))
         if stamp > now:
             raise MarketDataError("candle_timestamp_future")
-        if not _regular_bar(stamp):
-            raise MarketDataError("candle_outside_regular_session")
+        relation, opening, closing = _session_relation(stamp)
+        if relation != "inside":
+            detail = {"bar_index": index, "bar_count": len(rows), "relation": relation}
+            if relation == "before_open" and opening is not None:
+                detail["minutes_before_open"] = int((opening - stamp).total_seconds() // 60)
+            elif relation == "after_close" and closing is not None:
+                detail["minutes_after_close"] = int((stamp - closing).total_seconds() // 60)
+            raise MarketDataError("candle_outside_regular_session", detail=detail)
         if not _aligned(stamp, interval):
             raise MarketDataError("candle_interval_misaligned")
         if previous is not None and stamp <= previous:
