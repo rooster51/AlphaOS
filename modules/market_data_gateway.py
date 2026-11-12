@@ -33,7 +33,7 @@ from modules.market_data_contracts import (
     QuoteObservation,
 )
 from modules.market_session_gate import regular_session_bounds
-from modules.public_intraday import fetch_intraday_bars
+from modules.public_intraday import PublicIntradayError, fetch_intraday_bars
 from modules.public_provider import (
     PublicProviderError,
     _public_context,
@@ -85,7 +85,7 @@ def _clock(value=None) -> datetime:
 def _timestamp(value):
     normalized = normalize_timestamp(value)
     if normalized is None:
-        raise MarketDataError("invalid_provider_response")
+        raise MarketDataError("candle_timestamp_invalid")
     return datetime.fromisoformat(normalized)
 
 
@@ -156,29 +156,36 @@ def _validate_bars(symbol: str, interval: str, rows, *, now: datetime) -> tuple[
     expected: int | None = None
     previous_session_date = None
     for row in rows:
-        if not isinstance(row, dict) or str(row.get("symbol", "")).strip().upper() != symbol:
-            raise MarketDataError("invalid_provider_response")
+        if not isinstance(row, dict):
+            raise MarketDataError("candle_row_malformed")
+        if str(row.get("symbol", "")).strip().upper() != symbol:
+            raise MarketDataError("candle_symbol_mismatch")
         if row.get("aggregation") != AGGREGATION_BY_INTERVAL[interval]:
-            raise MarketDataError("invalid_provider_response")
+            raise MarketDataError("candle_aggregation_mismatch")
         stamp = _timestamp(row.get("timestamp"))
         if stamp > now:
-            raise MarketDataError("invalid_provider_response")
-        if not _regular_bar(stamp) or not _aligned(stamp, interval):
-            raise MarketDataError("invalid_provider_response")
+            raise MarketDataError("candle_timestamp_future")
+        if not _regular_bar(stamp):
+            raise MarketDataError("candle_outside_regular_session")
+        if not _aligned(stamp, interval):
+            raise MarketDataError("candle_interval_misaligned")
         if previous is not None and stamp <= previous:
-            raise MarketDataError("duplicate_candle_timestamp" if stamp == previous else "invalid_provider_response")
-        values = [_number(row.get(key)) for key in ("open", "high", "low", "close", "volume")]
+            raise MarketDataError("duplicate_candle_timestamp" if stamp == previous else "candle_timestamp_out_of_order")
+        raw_values = [row.get(key) for key in ("open", "high", "low", "close", "volume")]
+        if any(value is None for value in raw_values):
+            raise MarketDataError("candle_ohlc_missing")
+        values = [_number(value) for value in raw_values]
         if any(value is None for value in values):
-            raise MarketDataError("invalid_provider_response")
+            raise MarketDataError("candle_ohlc_invalid")
         opening, high, low, close, volume = values
         if min(opening, high, low, close) <= 0 or volume < 0:
-            raise MarketDataError("invalid_provider_response")
+            raise MarketDataError("candle_ohlc_invalid")
         if high < max(opening, close) or low > min(opening, close) or high < low:
-            raise MarketDataError("invalid_provider_response")
+            raise MarketDataError("candle_ohlc_invalid")
         expected_count = _count(row.get("provider_expected_bars"))
         if expected_count is not None:
             if expected is not None and expected_count != expected:
-                raise MarketDataError("invalid_provider_response")
+                raise MarketDataError("candle_expected_bars_conflict")
             expected = expected_count
         # Detect an internal gap only within one session. The overnight break
         # between sessions is expected and must not be reported as missing bars.
@@ -367,6 +374,8 @@ class PublicMarketDataProvider:
             )
         except PublicProviderError as exc:
             raise MarketDataError(exc.code, 429 if exc.code == "public_rate_limit" else 503) from None
+        except PublicIntradayError as exc:
+            raise MarketDataError(exc.code, 503) from None
         except MarketDataError:
             raise
         except Exception:

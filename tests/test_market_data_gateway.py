@@ -268,9 +268,14 @@ def test_public_candle_adapter_normalizes_each_interval(monkeypatch, interval):
 
 @pytest.mark.parametrize("mutation,code", [
     ("duplicate", "duplicate_candle_timestamp"),
-    ("ohlc", "invalid_provider_response"),
-    ("session", "invalid_provider_response"),
-    ("symbol", "invalid_provider_response"),
+    ("order", "candle_timestamp_out_of_order"),
+    ("ohlc", "candle_ohlc_invalid"),
+    ("ohlc_missing", "candle_ohlc_missing"),
+    ("session", "candle_outside_regular_session"),
+    ("interval", "candle_interval_misaligned"),
+    ("timestamp", "candle_timestamp_invalid"),
+    ("symbol", "candle_symbol_mismatch"),
+    ("aggregation", "candle_aggregation_mismatch"),
 ])
 def test_public_candle_validation_fails_closed(monkeypatch, mutation, code):
     import modules.market_data_gateway as gateway
@@ -282,18 +287,41 @@ def test_public_candle_validation_fails_closed(monkeypatch, mutation, code):
                  provider_expected_bars=2)]
     if mutation == "duplicate":
         rows[1]["timestamp"] = rows[0]["timestamp"]
+    elif mutation == "order":
+        rows[0]["timestamp"], rows[1]["timestamp"] = rows[1]["timestamp"], rows[0]["timestamp"]
     elif mutation == "ohlc":
         rows[1]["high"] = 499.5
+    elif mutation == "ohlc_missing":
+        rows[0]["volume"] = None
     elif mutation == "session":
         rows[0]["timestamp"] = "2026-10-02T12:00:00+00:00"
+    elif mutation == "interval":
+        rows[0]["timestamp"] = "2026-10-02T13:30:30+00:00"
+    elif mutation == "timestamp":
+        rows[0]["timestamp"] = "not-a-timestamp"
     elif mutation == "symbol":
         rows[0]["symbol"] = "QQQ"
+    elif mutation == "aggregation":
+        rows[0]["aggregation"] = "FIVE_MINUTES"
     monkeypatch.setattr(gateway, "fetch_intraday_bars", lambda *args, **kwargs: (rows, {}))
     provider = PublicMarketDataProvider(context=lambda: (object(), "synthetic-account"),
                                         clock=lambda: NOW)
     with pytest.raises(MarketDataError) as error:
         provider.candles("SPY", "1m")
     assert error.value.code == code
+
+
+def test_provider_intraday_diagnostic_is_preserved(monkeypatch):
+    import modules.market_data_gateway as gateway
+    from modules.public_intraday import PublicIntradayError
+    def fail(*args, **kwargs):
+        raise PublicIntradayError("provider_bars_timestamp_naive")
+    monkeypatch.setattr(gateway, "fetch_intraday_bars", fail)
+    provider = PublicMarketDataProvider(context=lambda: (object(), "synthetic-account"),
+                                        clock=lambda: NOW)
+    with pytest.raises(MarketDataError) as error:
+        provider.candles("SPY", "1m")
+    assert error.value.code == "provider_bars_timestamp_naive"
 
 
 def test_public_candle_limit_narrows_returned_bars_not_provider_counts(monkeypatch):
@@ -367,3 +395,19 @@ def test_unknown_or_unsupported_requests_are_rejected_without_provider_calls():
     with pytest.raises(MarketDataError) as error:
         provider.candles("SPY", "30m")
     assert error.value.code == "unsupported_interval"
+
+
+def test_expected_bar_count_conflict_is_distinct(monkeypatch):
+    import modules.market_data_gateway as gateway
+    rows = [dict(symbol="SPY", aggregation="ONE_MINUTE",
+                 timestamp="2026-10-02T13:30:00+00:00", open=500, high=501, low=499,
+                 close=500.5, volume=10, provider_expected_bars=2),
+            dict(symbol="SPY", aggregation="ONE_MINUTE",
+                 timestamp="2026-10-02T13:31:00+00:00", open=500, high=501, low=499,
+                 close=500.5, volume=10, provider_expected_bars=3)]
+    monkeypatch.setattr(gateway, "fetch_intraday_bars", lambda *args, **kwargs: (rows, {}))
+    provider = PublicMarketDataProvider(context=lambda: (object(), "synthetic-account"),
+                                        clock=lambda: NOW)
+    with pytest.raises(MarketDataError) as error:
+        provider.candles("SPY", "1m")
+    assert error.value.code == "candle_expected_bars_conflict"
