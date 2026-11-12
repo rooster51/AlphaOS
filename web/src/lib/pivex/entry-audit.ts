@@ -1,4 +1,4 @@
-import { finite, positive } from "./evidence.ts";
+import { finite, positive, timestamp } from "./evidence.ts";
 import type { Candle } from "./evidence.ts";
 import type { ContractSpec } from "./planner.ts";
 import type { Setup } from "./strategy.ts";
@@ -9,12 +9,14 @@ export const rejectionPriority = [
   "Invalid or nonfinite economics",
   "Invalid stop geometry",
   "Invalid target geometry",
+  "Net 2R target exceeds available structure",
   "Insufficient net reward/risk",
   "Planned risk above $25",
   "Planned risk above configured budget or available equity",
 ] as const;
 
 type RejectionReason = (typeof rejectionPriority)[number];
+export type TargetMode = "baseline" | "net_2r_structure";
 type CostSpec = Pick<
   ContractSpec,
   | "tickSize"
@@ -34,8 +36,10 @@ export function auditEntry(
   budget: number,
   equity: number,
   observedSpreadTicks?: number,
+  targetMode: TargetMode = "baseline",
 ) {
-  const { direction, stop, target } = setup;
+  const { direction, stop } = setup;
+  let target = setup.target;
   const entry = next?.open;
   const spreadTicks = Math.max(spec.spreadTicks, observedSpreadTicks ?? 0);
   const spread = quantity * spreadTicks * spec.tickValue * spec.quoteToAccount;
@@ -70,18 +74,51 @@ export function auditEntry(
   else {
     const sign = direction === "long" ? 1 : -1;
     const stopValid = sign * (entry - stop) > 0;
-    const targetValid = sign * (target - entry) > 0;
     if (!stopValid) reasons.add("Invalid stop geometry");
-    if (!targetValid) reasons.add("Invalid target geometry");
     const unitRisk =
       (Math.abs(entry - stop) / spec.tickSize) *
       spec.tickValue *
       spec.quoteToAccount;
-    const unitReward =
-      ((sign * (target - entry)) / spec.tickSize) *
+    const loss = unitRisk * quantity + total;
+    const rewardAt = (price: number) =>
+      ((sign * (price - entry)) / spec.tickSize) *
       spec.tickValue *
       spec.quoteToAccount;
-    const loss = unitRisk * quantity + total;
+    if (targetMode === "net_2r_structure" && stopValid) {
+      const level = setup.evidence?.target;
+      const dollarsPerTick = spec.tickValue * spec.quoteToAccount * quantity;
+      const distance = ((2 * loss + total) / dollarsPerTick) * spec.tickSize;
+      const grid = (sign * (entry + sign * distance)) / spec.tickSize;
+      if (
+        !positive(dollarsPerTick) ||
+        !positive(distance) ||
+        !Number.isSafeInteger(Math.ceil(grid))
+      ) {
+        reasons.add("Invalid or nonfinite economics");
+      } else {
+        // Use the same arithmetic as the entry gate at the adjacent price ticks.
+        let ticks = Math.floor(grid);
+        const price = () => sign * ticks * spec.tickSize;
+        if ((rewardAt(price()) * quantity - total) / loss < 2) ticks++;
+        if ((rewardAt(price()) * quantity - total) / loss < 2) ticks++;
+        target = price();
+        if (
+          !positive(target) ||
+          !level ||
+          !positive(level.price) ||
+          !timestamp(level.observedAt) ||
+          !timestamp(setup.confirmationTime) ||
+          Date.parse(level.observedAt) >
+            Date.parse(setup.confirmationTime) - 300_000 ||
+          sign * target > sign * level.price
+        ) {
+          reasons.add("Net 2R target exceeds available structure");
+        }
+      }
+    }
+    const targetValid = sign * (target - entry) > 0;
+    if (!targetValid) reasons.add("Invalid target geometry");
+    const unitReward = rewardAt(target);
     const profit = unitReward * quantity - total;
     const net = profit / loss;
     const validEconomics =
@@ -130,6 +167,9 @@ export function auditEntry(
     nextOpen: numberOrNull(entry),
     stop: numberOrNull(stop),
     target: numberOrNull(target),
+    ...(targetMode === "net_2r_structure"
+      ? { baselineTarget: numberOrNull(setup.target) }
+      : {}),
     structuralTarget: numberOrNull(setup.evidence?.target.price),
     quantity,
     grossRisk,

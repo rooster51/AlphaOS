@@ -78,3 +78,51 @@ test("hypothetical size range reflects minimum fixed-fee economics and maximum r
     "Insufficient net reward/risk",
   ]);
 });
+
+test("experimental target uses the next open and the nearest executable tick meeting net 2R", () => {
+  const attempt = (
+    direction,
+    open,
+    stop,
+    price,
+    observedAt = "2025-01-02T12:55:00Z",
+  ) =>
+    auditEntry(
+      {
+        ...setup,
+        direction,
+        stop,
+        evidence: { target: { price, observedAt } },
+      },
+      bar(open),
+      spec,
+      1,
+      25,
+      10000,
+      undefined,
+      "net_2r_structure",
+    );
+
+  for (const [direction, open, stop, boundary] of [
+    ["long", 101, 95, 119],
+    ["short", 99, 105, 81],
+  ]) {
+    const accepted = attempt(direction, open, stop, boundary);
+    assert.equal(accepted.target, boundary);
+    assert.equal(accepted.plannedRisk, 7.75);
+    assert(accepted.netRewardRisk >= 2);
+    assert.deepEqual(accepted.rejectionReasons, []);
+    const tighter = boundary + (direction === "long" ? -1 : 1);
+    assert.deepEqual(attempt(direction, open, stop, tighter).rejectionReasons, [
+      "Net 2R target exceeds available structure",
+    ]);
+    assert.deepEqual(
+      attempt(direction, open, stop, boundary, "2025-01-02T12:56:00Z")
+        .rejectionReasons,
+      ["Net 2R target exceeds available structure"],
+    );
+  }
+  assert.deepEqual(attempt("long", 100, 75, 200).rejectionReasons, [
+    "Planned risk above $25",
+  ]);
+});

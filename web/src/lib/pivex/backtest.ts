@@ -11,6 +11,7 @@ import { validateSpec } from "./planner.ts";
 import type { ContractSpec } from "./planner.ts";
 import { session } from "./journal.ts";
 import { auditEntry, rejectionPriority } from "./entry-audit.ts";
+import type { TargetMode } from "./entry-audit.ts";
 
 export type BacktestConfig = {
   from: string;
@@ -103,6 +104,7 @@ export function replayWindow(
   label: string,
   evaluate: (bar: HistoricalDataset["candles"]["m5"][number]) => Setup,
   proxy?: {
+    targetMode?: TargetMode;
     entrySpreadTicks: (openTime: string) => number;
     classifyGap?: (from: string, to: string) => ReturnType<typeof gapKind>;
   },
@@ -161,6 +163,7 @@ export function replayWindow(
       c.riskBudget,
       equity,
       next ? proxy?.entrySpreadTicks(next.openTime) : undefined,
+      proxy?.targetMode,
     );
     entryAudit.push(record);
     for (const reason of record.rejectionReasons) count(reason);

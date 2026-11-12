@@ -2,6 +2,7 @@ import { finite, positive, timestamp } from "./evidence.ts";
 import type { Candle, Evidence } from "./evidence.ts";
 import type { gapKind, HistoricalDataset } from "./history.ts";
 import { replayWindow } from "./backtest.ts";
+import type { TargetMode } from "./entry-audit.ts";
 import { analyze } from "./strategy.ts";
 
 const five = 300_000;
@@ -109,6 +110,7 @@ type ProxyDataset = {
     }
 );
 export type ProxyReplayConfig = {
+  targetMode?: TargetMode;
   from: string;
   splitAt: string;
   to: string;
@@ -148,6 +150,9 @@ function prepareProxyReplay(
 ) {
   if (
     (d.schema !== 2 && d.schema !== 3) ||
+    (c.targetMode !== undefined &&
+      c.targetMode !== "baseline" &&
+      c.targetMode !== "net_2r_structure") ||
     d.mode !== "external_proxy" ||
     ![c.from, c.splitAt, c.to].every(
       (at) => timestamp(at) && Date.parse(at) % five === 0,
@@ -284,6 +289,7 @@ function prepareProxyReplay(
     },
   };
   const proxy = {
+    targetMode: c.targetMode,
     entrySpreadTicks: (at: string) => entrySpreads?.get(at) ?? 0,
     classifyGap(from: string, to: string): Gap["kind"] {
       const gap = gapAt(d.quality.gaps, Date.parse(from));
@@ -323,6 +329,7 @@ function prepareProxyReplay(
     },
     coverage: { from: d.from, to: d.to, ...d.quality },
     config: {
+      targetMode: c.targetMode ?? "baseline",
       from: c.from,
       splitAt: c.splitAt,
       to: c.to,
@@ -346,6 +353,14 @@ export function runProxyDevelopment(d: ProxyDataset, c: ProxyReplayConfig) {
   return {
     ...report,
     development: replay(c.from, c.splitAt, "In-sample development"),
+  };
+}
+
+export function runProxyHoldout(d: ProxyDataset, c: ProxyReplayConfig) {
+  const { replay, ...report } = prepareProxyReplay(d, c, c.to);
+  return {
+    ...report,
+    holdout: replay(c.splitAt, c.to, "Independent historical holdout"),
   };
 }
 

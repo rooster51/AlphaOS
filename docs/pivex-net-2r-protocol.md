@@ -1,0 +1,7 @@
+# XAUUSD net 2R experiment protocol
+
+The baseline uses the existing confirmation-based target. The opt-in experiment computes the nearest executable tick that meets net 2R from the contiguous next open. It rejects entries whose required target lies beyond the support or resistance observed by the opening of the confirmation candle. It retains the existing one-ounce quantity, $25 planned-risk limit, signal rules, stops and fill conventions.
+
+The runner uses the existing $1.00 spread, $0.50 round-trip slippage and $0.25 fixed fee as its base assumptions. The fixed adverse scenario doubles each cost. The scenario recalculates targets at those costs and repeats the same structural gate. These scenarios are fixed for both periods.
+
+Development uses the existing January–September 2025 window. October–December 2025 has already been inspected and is excluded. The independent test uses the previously unused HistData 2024 XAUUSD Generic ASCII M1 archive. Normalize from 2024-01-01 05:00 UTC. The first seven days provide warm-up only. Replay both modes and the adverse scenario from 2024-01-08 05:00 UTC through 2025-01-01 05:00 UTC. Treat the test as a data holdout from an earlier market regime. Start each replay flat with the baseline starting equity. Preserve data-gap handling even if an open position ends the replay early. Report completed-trade metrics and unresolved exposure separately.
