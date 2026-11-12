@@ -1,0 +1,13 @@
+{
+  "source": {
+    "exportedAt": "2026-11-12T16:27:17Z",
+    "exportReference": "HistData 2024 XAUUSD Generic ASCII M1 ZIP SHA-256 6d47f5cb269e0c4f35c63c7532713aae7dcf98901f605458b00dd6a69e7105de. https://www.histdata.com/download-free-forex-data/?/ascii/1-minute-bar-quotes/xauusd/2024",
+    "from": "2024-01-01T05:00:00Z",
+    "to": "2025-01-01T05:00:00Z"
+  },
+  "replay": {
+    "splitAt": "2024-01-08T05:00:00Z",
+    "from": "2024-01-01T05:00:00Z",
+    "to": "2025-01-01T05:00:00Z"
+  }
+}
