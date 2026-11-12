@@ -1001,6 +1001,7 @@ function ResearchResults({
   const unaffordable = assessments.filter((item) => item.status === "unaffordable");
   const unavailable = assessments.filter((item) => item.status === "unavailable");
   const spot = record(bundle.session.market).spot;
+  const incompleteDecision = Boolean(archiveReason) || unavailable.length > 0;
 
   return (
     <section className="space-y-4" aria-live="polite">
@@ -1071,8 +1072,14 @@ function ResearchResults({
           <div className="flex items-start gap-3">
             <CircleAlert className="mt-0.5 h-5 w-5 shrink-0 text-warning" aria-hidden="true" />
             <div>
-              <h2 className="font-mono text-lg font-bold tracking-wide text-warning">NO TRADE</h2>
-              <p className="mt-1 text-sm text-terminal-200">No opportunity satisfies the backend max-loss limit and all current archive, contract-quote, and research-evidence checks.</p>
+              <h2 className="font-mono text-lg font-bold tracking-wide text-warning">
+                {incompleteDecision ? "Insufficient evidence" : "NO TRADE"}
+              </h2>
+              <p className="mt-1 text-sm text-terminal-200">
+                {incompleteDecision
+                  ? "No opportunity qualified, and one or more archive, contract-quote, or research-evidence checks remain unresolved."
+                  : "The completed research found no eligible opportunity under the current constraints."}
+              </p>
               {(aboveBudget > 0 || unavailable.length > 0) && (
                 <p className="mt-2 text-xs text-terminal-500">
                   {aboveBudget} above budget · {unavailable.length} unavailable or unsupported. Expand the research details below for backend-provided reasons.

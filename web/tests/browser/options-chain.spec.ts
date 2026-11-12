@@ -31,7 +31,7 @@ for (const width of [390, 1440]) {
     await expect(page.getByRole("cell", { name: id })).toBeVisible();
     await page.getByLabel("Buy contract", { exact: true }).selectOption(id);
     await page.getByRole("button", { name: "Evaluate scenario" }).click();
-    await expect(page.getByText("NO TRADE · Fresh underlying quote unavailable.")).toBeVisible();
+    await expect(page.getByText("Insufficient evidence · Fresh underlying quote unavailable.")).toBeVisible();
     expect(requests.map(url => url.searchParams.get("expiration"))).toEqual([null, expiration, expiration]);
     await page.getByLabel("Symbol", { exact: true }).selectOption("QQQ");
     await expect(page.getByRole("table")).toHaveCount(0);
