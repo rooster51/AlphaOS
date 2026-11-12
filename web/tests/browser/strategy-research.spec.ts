@@ -52,7 +52,7 @@ test("Strategy Research renders verified SPY contracts and reruns the backend fi
     available_capital: 500,
     research_mode: "current",
     expiration: "2030-01-02",
-    response_format: "summary-v1",
+    response_format: "summary-v2",
   });
   await expect(page.getByRole("link", { name: "Full market research" }).first()).toHaveAttribute("href", "/market?symbol=SPY");
 });
@@ -141,8 +141,16 @@ for (const changed of [false, true]) {
         }
       } else {
         initialRequests++;
-        expect(input.response_format).toBe('summary-v1');
+        expect(input.response_format).toBe('summary-v2');
         const body=structuredClone(golden.response); body.request.expiration=input.expiration??null;
+        body.response_format = body.research.research_session.transport.format = 'summary-v2';
+        for (const row of body.research.research_session.candidates) {
+          for (const leg of row.research.legs) {
+            delete leg.delta;
+            delete leg.observation_timestamp;
+          }
+          delete row.research.historical_economics.capital_requirement;
+        }
         await route.fulfill({status:200,json:{verified_for_trading:false,research:body}});
       }
     });

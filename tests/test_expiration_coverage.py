@@ -126,9 +126,17 @@ def test_actual_collector_verified_archive_rest_and_mcp_exact_expiration(boundar
     assert result['archive']['expiration_coverage']['horizons']['long_dated']['expirations'] == ['2031-01-17']
     _, tokens = login(client)
     assert call(client,tokens['access_token'],'run_market',request)['structuredContent'] == response.json()
-    absent = post(client,'market',dict(symbol=symbol,expiration='2030-02-15'))
-    assert absent.status_code == 422
-    assert absent.json()['error']['code'] == 'archive_expiration_unavailable'
+    compact = post(client, 'market', dict(request, response_format='summary-v2'))
+    assert compact.status_code == 200
+    compact_research = compact.json()['research']
+    assert compact_research['expiration'] == expiry
+    assert compact_research['archive'] == result['archive']
+    assert compact_research['research_session']['transport']['complete'] is True
+    assert len(compact_research['research_session']['candidates']) == len(result['research_session']['candidates'])
+    for missing_expiry in ('2030-02-15', '2033-01-21'):
+        absent = post(client, 'market', dict(symbol=symbol, expiration=missing_expiry, response_format='summary-v2'))
+        assert absent.status_code == 422
+        assert absent.json()['error']['code'] == 'archive_expiration_unavailable'
 
 
 def test_failed_long_chain_remains_missing_and_never_promotes_candidates():

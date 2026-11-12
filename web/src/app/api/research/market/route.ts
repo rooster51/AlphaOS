@@ -2,11 +2,11 @@ import { validateArchiveObservation } from "../../../../lib/archive-observation.
 import { getServerConfig } from "../../../../lib/server-config.ts";
 import { readRuntimeBindings } from "#alphaos-runtime";
 import { validSessionCookie } from "../../../../lib/website-auth.ts";
-import { validCandidateReference, validResearchSummary } from "../../../../lib/research-summary.ts";
+import { isResearchSummaryFormat, validCandidateReference, validResearchSummary, type ResearchSummaryFormat } from "../../../../lib/research-summary.ts";
 
 type MarketPayload = {
   view?: "observation" | "candidate";
-  response_format?: "summary-v1";
+  response_format?: ResearchSummaryFormat;
   detail?: Record<string, unknown>;
   symbol: "SPY" | "QQQ";
   research_mode?: "current" | "historical";
@@ -28,8 +28,8 @@ function parseMarketPayload(value: unknown): MarketPayload | null {
 
   const payload: MarketPayload = { symbol };
   if (input.response_format !== undefined) {
-    if (input.response_format !== 'summary-v1' || input.view !== undefined) return null;
-    payload.response_format = 'summary-v1';
+    if (!isResearchSummaryFormat(input.response_format) || input.view !== undefined) return null;
+    payload.response_format = input.response_format;
   }
   if (input.detail !== undefined) {
     if (input.view !== 'candidate' || !validCandidateReference(input.detail)) return null;
@@ -445,7 +445,7 @@ async function marketRequest(request: Request, trace: BridgeTrace, timeout: () =
     if (!valid) trace.validation_category = 'research_schema_mismatch';
   } else {
     valid = validResearchEnvelope(responsePayload, payload.symbol, payload.research_mode, payload.expiration, payload.width);
-    if (payload.response_format === 'summary-v1') valid = valid && validResearchSummary(responsePayload);
+    if (payload.response_format) valid = valid && validResearchSummary(responsePayload, payload.response_format);
     if (!valid) trace.validation_category = "research_schema_mismatch";
   }
   trace.schema_validation_ms = Math.round(performance.now() - validationStarted);

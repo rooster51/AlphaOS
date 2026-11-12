@@ -69,6 +69,36 @@ test('summary bridge validates completeness and counts before returning any evid
   }
 });
 
+test('compact summary bridge requires the requested version and preserves quote qualification', async () => {
+  setup();
+  const fixture = summaries[0];
+  const original = fixture.response;
+  const compact = structuredClone(original);
+  compact.response_format = compact.research.research_session.transport.format = 'summary-v2';
+  for (const row of compact.research.research_session.candidates) {
+    for (const leg of row.research.legs) {
+      delete leg.mid;
+      delete leg.quote_timestamp;
+      delete leg.observation_timestamp;
+    }
+    delete row.research.historical_economics.capital_requirement;
+    delete row.research.historical_economics.capital_eligibility.basis;
+  }
+  const assess = envelope => assessStrategyCandidates(envelope.research.research_session,
+    envelope.research.archive, envelope.request.symbol, envelope.request.available_capital,
+    envelope.request.research_mode, envelope.research.as_of).map(({status, reasons}) => ({status, reasons}));
+  assert.deepEqual(assess(compact), assess(original));
+
+  const payload = {...input(full[fixture.fixture_index]), response_format:'summary-v2'};
+  globalThis.fetch = async (_url, options) => {
+    assert.equal(JSON.parse(options.body).response_format, 'summary-v2');
+    return Response.json(compact);
+  };
+  assert.equal((await POST(request(payload))).status, 200);
+  globalThis.fetch = async () => Response.json(original);
+  assert.equal((await POST(request(payload))).status, 502);
+});
+
 test('detail bridge binds authenticated request, archive and whole-candidate reference', async () => {
   setup();
   const fixture = summaries.find(row=>row.response.research.research_session.candidates.length);

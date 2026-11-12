@@ -112,8 +112,8 @@ def respond(value):
     with stage('response_serialization'):
         from .buffered_research_json import encode_research_response
         content = encode_research_response(value, sanitize=sanitized, encode=encode_json)
-        if isinstance(value, dict) and value.get('response_format') == 'summary-v1':
-            from .research_projection import MAX_SUMMARY_BYTES
+        from .research_projection import MAX_SUMMARY_BYTES, SUMMARY_FORMATS
+        if isinstance(value, dict) and value.get('response_format') in SUMMARY_FORMATS:
             if len(content) > MAX_SUMMARY_BYTES:
                 raise APIError('research_summary_too_large', 503)
         return Response(content=content,media_type='application/json')

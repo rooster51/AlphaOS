@@ -764,7 +764,7 @@ export function StrategyResearchDashboard({
         const response = await fetch("/api/research/market", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({...submitted, response_format: 'summary-v1'}),
+          body: JSON.stringify({...submitted, response_format: 'summary-v2'}),
           cache: "no-store",
           signal: controller.signal,
         });

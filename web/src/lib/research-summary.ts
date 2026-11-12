@@ -1,6 +1,10 @@
 import { record } from './market-candidates.ts';
 
 const digest = (value: unknown) => typeof value === 'string' && /^[a-f0-9]{64}$/.test(value);
+export type ResearchSummaryFormat = 'summary-v1' | 'summary-v2';
+export function isResearchSummaryFormat(value: unknown): value is ResearchSummaryFormat {
+  return value === 'summary-v1' || value === 'summary-v2';
+}
 export function validCandidateReference(value: unknown): boolean {
   const ref = record(value);
   return Object.keys(ref).length === 4 && ['candidates','excluded'].includes(String(ref.bucket)) &&
@@ -8,11 +12,12 @@ export function validCandidateReference(value: unknown): boolean {
     digest(ref.archive_sha256) && digest(ref.candidate_sha256);
 }
 
-export function validResearchSummary(value: unknown): boolean {
+export function validResearchSummary(value: unknown, expectedFormat?: ResearchSummaryFormat): boolean {
   const envelope = record(value), research = record(envelope.research);
   const session = record(research.research_session), transport = record(session.transport);
   const checksum = record(record(research.archive).storage).archive_sha256;
-  if (envelope.response_format !== 'summary-v1' || transport.format !== 'summary-v1' ||
+  if (!isResearchSummaryFormat(envelope.response_format) || transport.format !== envelope.response_format ||
+      (expectedFormat !== undefined && expectedFormat !== envelope.response_format) ||
       transport.complete !== true || !digest(checksum)) return false;
   const reasons: Record<string, number> = {};
   for (const bucket of ['candidates','excluded'] as const) {
