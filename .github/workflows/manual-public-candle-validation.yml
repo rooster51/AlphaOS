@@ -1,0 +1,45 @@
+name: Manual Public candle validation
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  candle-probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Install API dependencies
+        run: python -m pip install -r requirements-api.txt
+      - name: Check secret availability without printing it
+        env:
+          PUBLIC_API_SECRET: ${{ secrets.PUBLIC_API_SECRET }}
+        run: |
+          if [ -z "$PUBLIC_API_SECRET" ]; then
+            echo "::error::PUBLIC_API_SECRET is not configured in GitHub Actions secrets."
+            exit 2
+          fi
+      - name: Probe SPY and QQQ private-research candles
+        env:
+          PUBLIC_API_SECRET: ${{ secrets.PUBLIC_API_SECRET }}
+        run: |
+          python -m scripts.market_data_probe \
+            --symbols SPY QQQ \
+            --intervals 1m 5m 15m \
+            --samples 1 \
+            --output candle-probe-result.json
+      - name: Upload safe probe observations
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: candle-probe-results
+          path: candle-probe-result.json
+          if-no-files-found: ignore
+          retention-days: 7
