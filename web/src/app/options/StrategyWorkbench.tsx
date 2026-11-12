@@ -8,6 +8,17 @@ const control = "rounded border border-terminal-700 bg-terminal-900 px-3 py-2 di
 const money = (value: number | null | undefined) => value == null ? "Unavailable" :
   value.toLocaleString("en-US", { style: "currency", currency: "USD" });
 const words = (text: string) => text.replaceAll("_", " ");
+const rejectedScenarios = new Set([
+  "expired_contract", "duplicate_contracts", "nonpositive_entry_price", "unsupported_strategy_geometry",
+  "entry_cashflow_conflicts_with_geometry", "entry_has_no_positive_risk_reward", "risk_limits_exceeded",
+]);
+
+function outcome(result: ResearchResult) {
+  if (result.eligible_for_analysis) return "Eligible for analysis";
+  const reason = result.reason ?? "research_unavailable";
+  const label = rejectedScenarios.has(reason) ? "NO TRADE" : "Insufficient evidence";
+  return `${label} · ${words(reason)}`;
+}
 const roles: Record<string, [string, string, number][]> = {
   long_call: [["Buy call", "Call", 1]], long_put: [["Buy put", "Put", 1]],
   call_debit_spread: [["Buy lower call", "Call", 1], ["Sell upper call", "Call", -1]],
@@ -69,9 +80,9 @@ export function StrategyWorkbench({ symbol, expiration, contracts }: {
         signal: AbortSignal.timeout(10000),
       });
       const body = await response.json() as { code?: string; scenarios?: ResearchResult[] };
-      if (!response.ok || !body.scenarios) setMessage(`NO TRADE · ${words(body.code ?? "research_unavailable")}`);
+      if (!response.ok || !body.scenarios) setMessage(`Comparison unavailable · ${words(body.code ?? "research_unavailable")}`);
       else setResults(body.scenarios);
-    } catch { setMessage("NO TRADE · Request unavailable. Refresh the chain and retry."); }
+    } catch { setMessage("Comparison unavailable. Refresh the chain and retry."); }
     finally { setBusy(false); }
   }
 
@@ -136,7 +147,7 @@ export function StrategyWorkbench({ symbol, expiration, contracts }: {
           <thead><tr>{["Scenario", "Expiration / DTE", "Eligibility", "Net entry cash", "Max profit", "Max loss / capital at risk", "Return on max risk", "Breakevens", "Direction", "Oldest quote age"].map(name => <th key={name} className="px-3 py-2">{name}</th>)}</tr></thead>
           <tbody>{ordered.map(({ result, index }) => <tr key={index} className="border-t border-terminal-800">
             {[`${index + 1}. ${strategyNames[result.strategy as keyof typeof strategyNames]}`, `${result.expiration ?? expiration} / ${result.dte ?? "—"}`,
-              result.eligible_for_analysis ? "Eligible for analysis" : `NO TRADE · ${words(result.reason ?? "unavailable")}`,
+              outcome(result),
               money(result.net_cash), result.profit_unbounded ? "Unlimited" : money(result.max_profit), result.loss_unbounded ? "Unlimited" : money(result.max_loss),
               result.return_on_max_risk == null ? "Unavailable" : `${(result.return_on_max_risk * 100).toFixed(1)}%`, result.breakevens?.map(money).join(", ") || "Unavailable", words(result.direction ?? "unavailable"), result.oldest_quote_age_seconds == null ? "Unavailable" : `${result.oldest_quote_age_seconds.toFixed(1)}s at evaluation`]
               .map((value, column) => <td key={column} className="px-3 py-2">{value}</td>)}

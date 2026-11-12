@@ -7,10 +7,19 @@ for(const width of [390,1440]){
     const requests:Record<string,unknown>[]=[];
     const calls=fixtures[0].chain.calls;
     const puts=fixtures[1].chain.puts;
+    let checkRejectedAndUnavailable = false;
     await page.route('**/api/options?*',async route=>{
       if(route.request().method()==='GET')return route.fulfill({json:{source:'Public',retrieved_at:'2026-11-05T15:00:00Z',max_quote_age_seconds:30,
         chain:{calls:calls.map((row:any)=>({...row,status:'fresh'})),puts:puts.map((row:any)=>({...row,status:'fresh'}))}}});
       const payload=route.request().postDataJSON();requests.push(payload);
+      if (checkRejectedAndUnavailable) {
+        return route.fulfill({ json: { scenarios: [
+          { ...fixtures[0].result, status: "unavailable", eligible_for_analysis: false,
+            reason: "risk_limits_exceeded", limit_breaches: ["maximum_loss_exceeded"] },
+          { strategy: "long_put", status: "unavailable", eligible_for_analysis: false,
+            reason: "insufficient_contract_evidence" },
+        ] } });
+      }
       return route.fulfill({json:{scenarios:payload.scenarios.map((selection:any)=>fixtures.find((item:any)=>item.request.strategy===selection.strategy).result)}});
     });
     await page.goto('/options');await page.waitForLoadState('networkidle');
@@ -37,8 +46,12 @@ for(const width of [390,1440]){
     await expect(page.getByRole('table',{name:'Scenario 1 terminal payoff',exact:true})).toBeVisible();
     await page.getByLabel('max loss',{exact:true}).fill('100');
     await expect(table).toHaveCount(0);
+    checkRejectedAndUnavailable = true;
+    await page.getByRole('button',{name:'Evaluate comparison'}).click();
+    await expect(table).toContainText("NO TRADE · risk limits exceeded");
+    await expect(table).toContainText("Insufficient evidence · insufficient contract evidence");
     await page.getByLabel('Symbol',{exact:true}).selectOption('QQQ');
     await expect(workbench).toHaveCount(0);
-    expect(requests).toHaveLength(1);
+    expect(requests).toHaveLength(2);
   });
 }

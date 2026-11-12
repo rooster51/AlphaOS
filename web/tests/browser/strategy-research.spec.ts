@@ -92,7 +92,8 @@ test("Strategy Research keeps QQQ responsive, expands technical evidence, and fa
   });
 
   await page.goto("/strategies?symbol=QQQ");
-  await expect(page.getByRole("heading", { name: "NO TRADE" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Insufficient evidence" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "NO TRADE" })).toHaveCount(0);
   await expect(page.getByText("0", { exact: true }).first()).toBeVisible();
   await expect(page.getByText("Unavailable, unaffordable & rejected research")).toBeVisible();
   await page.getByText("Technical analysis & market structure").click();
@@ -105,7 +106,7 @@ test("Strategy Research keeps QQQ responsive, expands technical evidence, and fa
   expect(horizontalOverflow).toBe(false);
 });
 
-test("Strategy Research keeps API failures distinct from a successful NO TRADE result", async ({ page }) => {
+test("Strategy Research keeps an API failure distinct from a completed evaluation", async ({ page }) => {
   await page.route("**/api/research/market", (route) => route.fulfill({
     status: 502,
     json: { status: "unavailable", code: "archive_stale" },

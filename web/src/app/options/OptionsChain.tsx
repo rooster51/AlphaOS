@@ -70,7 +70,7 @@ export function OptionsChain() {
         const code = (result as { code?: string } | null)?.code ?? "request_failed";
         setMessage(action === "discover"
           ? `Expiration discovery unavailable (${label(code)}). Enter a known expiration below.`
-          : `NO TRADE · ${label(code)}.`);
+          : `Research unavailable · ${label(code)}.`);
         return;
       }
       if (action === "discover") {
@@ -138,7 +138,7 @@ export function OptionsChain() {
             </label>)}
           <button className={control} disabled={!buy} onClick={() => void load("scenario")}>Evaluate scenario</button>
         </fieldset>
-        {!selectable.length && <p>NO TRADE · No contract has verified fresh pricing evidence.</p>}
+        {!selectable.length && <p>Insufficient evidence · No contract has verified fresh pricing evidence.</p>}
         {scenario && (scenario.status === "available" ? <div className="space-y-1">
           <p>Net {scenario.net_cash < 0 ? "debit" : "credit"} {dollars(Math.abs(scenario.net_cash))} per position</p>
           <p>Maximum theoretical gain {scenario.max_profit === null ? "unlimited" : dollars(scenario.max_profit)}</p>
@@ -146,7 +146,8 @@ export function OptionsChain() {
           <p>Expiration breakeven {scenario.breakevens.map(dollars).join(", ") || "unavailable"}</p>
           {scenario.width !== null && <p>Spread width {dollars(scenario.width)}</p>}
           {scenario.legs.map(leg => <p key={leg.contract}>{leg.qty > 0 ? "Buy at ask" : "Sell at bid"} · {leg.contract} · {dollars(leg.price)} per share</p>)}
-        </div> : <p>NO TRADE · {scenario.reason}</p>)}
+        </div> : <p>{scenario.reason === "Fresh underlying quote unavailable." || scenario.reason === "Selected contract has insufficient pricing evidence."
+          ? "Insufficient evidence" : "Scenario unavailable"} · {scenario.reason}</p>)}
       </section>
       <StrategyWorkbench key={`${symbol}-${date}-${data.retrieved_at}`} symbol={symbol} expiration={date} contracts={legs} />
       <div className="overflow-x-auto rounded border border-terminal-800" tabIndex={0} aria-label="Scrollable options table">
