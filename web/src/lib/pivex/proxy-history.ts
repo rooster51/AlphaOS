@@ -4,6 +4,7 @@ import type { gapKind, HistoricalDataset } from "./history.ts";
 import { replayWindow } from "./backtest.ts";
 import type { TargetMode } from "./entry-audit.ts";
 import { analyze } from "./strategy.ts";
+import type { Setup } from "./strategy.ts";
 
 const five = 300_000;
 const iso = (at: number) => new Date(at).toISOString();
@@ -143,40 +144,97 @@ const endIndex = (rows: Candle[], cutoff: number) =>
 const gapAt = (gaps: Gap[], start: number) =>
   gaps[upperBound(gaps.length, start, (i) => Date.parse(gaps[i].to))];
 
-function prepareProxyReplay(
-  d: ProxyDataset,
-  c: ProxyReplayConfig,
-  coverageEnd: string,
-) {
-  if (
-    (d.schema !== 2 && d.schema !== 3) ||
-    (c.targetMode !== undefined &&
-      c.targetMode !== "baseline" &&
-      c.targetMode !== "net_2r_structure") ||
-    d.mode !== "external_proxy" ||
-    ![c.from, c.splitAt, c.to].every(
-      (at) => timestamp(at) && Date.parse(at) % five === 0,
-    ) ||
-    Date.parse(c.from) < Date.parse(d.from) ||
-    Date.parse(coverageEnd) > Date.parse(d.to) ||
-    Date.parse(c.from) >= Date.parse(c.splitAt) ||
-    Date.parse(c.splitAt) >= Date.parse(c.to) ||
-    ![
-      c.units,
-      c.startingEquity,
-      c.riskBudget,
-      c.spreadFloor,
-      c.roundTripSlippage,
-    ].every(positive) ||
-    c.riskBudget > 25 ||
-    !finite(c.roundTripFees) ||
-    c.roundTripFees < 0 ||
-    !hasText(c.costsReference)
-  )
-    throw Error(
-      "Proxy replay requires aligned development/validation windows and explicit proxy costs and sizing",
-    );
+export type ResearchStrategy = {
+  id: string;
+  createEvaluator(): (context: {
+    confirmation: Readonly<Candle>;
+    tickSize: number;
+    lastAcceptedEntry: string | null;
+    gapsSince: (from: string) => readonly Readonly<Gap>[];
+    recent: (
+      timeframe: keyof Evidence["candles"],
+      count: number,
+    ) => readonly Readonly<Candle>[];
+  }) =>
+    | { status: "NO SETUP" | "CHOP" | "UNAVAILABLE"; reason: string }
+    | {
+        status: "CONFIRMED";
+        reason: string;
+        direction: "long" | "short";
+        stop: number;
+        target: number;
+        structure?: Evidence["target"];
+      };
+};
 
+function researchEvaluator(d: ProxyDataset, strategy: ResearchStrategy) {
+  const evaluate = strategy.createEvaluator();
+  return (bar: Candle, lastAcceptedEntry: string | null): Setup => {
+    const decision = evaluate({
+      confirmation: { ...bar },
+      tickSize: d.tickSize,
+      lastAcceptedEntry,
+      gapsSince(from) {
+        const start = Date.parse(from);
+        const cutoff = Date.parse(bar.closeTime);
+        if (!timestamp(from) || start > cutoff || start % five !== 0)
+          throw Error(
+            "Research gap window must start on an elapsed five-minute boundary",
+          );
+        return d.quality.gaps.flatMap((gap) => {
+          const left = Math.max(start, Date.parse(gap.from));
+          const right = Math.min(cutoff, Date.parse(gap.to));
+          return left < right
+            ? [
+                {
+                  from: iso(left),
+                  to: iso(right),
+                  kind: gap.kind,
+                  slots: (right - left) / five,
+                },
+              ]
+            : [];
+        });
+      },
+      recent(timeframe, count) {
+        if (!Number.isSafeInteger(count) || count < 1 || count > 10_000)
+          throw Error("Research history count must be between 1 and 10,000");
+        const rows = d.candles[timeframe];
+        const cutoff = Date.parse(
+          timeframe === "m5" ? bar.closeTime : bar.openTime,
+        );
+        const end = endIndex(rows, cutoff);
+        return rows
+          .slice(Math.max(0, end - count), end)
+          .map((row) => ({ ...row }));
+      },
+    });
+    if (decision.status !== "CONFIRMED") return decision;
+    const structure = decision.structure;
+    if (
+      structure &&
+      (!positive(structure.price) ||
+        !timestamp(structure.observedAt) ||
+        Date.parse(structure.observedAt) > Date.parse(bar.openTime))
+    )
+      return {
+        status: "UNAVAILABLE",
+        reason: "Structure was unavailable at confirmation open",
+      };
+    return {
+      status: decision.status,
+      reason: decision.reason,
+      direction: decision.direction,
+      stop: decision.stop,
+      target: decision.target,
+      structuralTarget: structure,
+      confirmationTime: bar.closeTime,
+      entryReference: bar.close,
+    };
+  };
+}
+
+function trendPullbackEvaluator(d: ProxyDataset) {
   const { h1, m15, m5 } = d.candles;
   const unknownGaps = d.quality.gaps.filter((g) => g.kind === "missing bars");
   const allowedHourlyGaps = new Map<number, number>();
@@ -211,17 +269,7 @@ function prepareProxyReplay(
     }
     hourlyEma.push(ema);
   }
-  const entrySpreads =
-    d.schema === 2
-      ? new Map(
-          m5.map((bar, i) => [
-            bar.openTime,
-            (d.quoteBars.ask.m5[i].open - d.quoteBars.bid.m5[i].open) /
-              d.tickSize,
-          ]),
-        )
-      : null;
-  const evaluate = (bar: Candle) => {
+  return (bar: Candle) => {
     const cutoff = Date.parse(bar.openTime);
     const end = endIndex(h1, cutoff);
     const trend = h1.slice(Math.max(trendStarts[end - 1] ?? 0, end - 120), end);
@@ -274,6 +322,54 @@ function prepareProxyReplay(
       },
     );
   };
+}
+
+function prepareProxyReplay(
+  d: ProxyDataset,
+  c: ProxyReplayConfig,
+  coverageEnd: string,
+  strategy?: ResearchStrategy,
+) {
+  if (
+    (d.schema !== 2 && d.schema !== 3) ||
+    (c.targetMode !== undefined &&
+      c.targetMode !== "baseline" &&
+      c.targetMode !== "net_2r_structure") ||
+    d.mode !== "external_proxy" ||
+    ![c.from, c.splitAt, c.to].every(
+      (at) => timestamp(at) && Date.parse(at) % five === 0,
+    ) ||
+    Date.parse(c.from) < Date.parse(d.from) ||
+    Date.parse(coverageEnd) > Date.parse(d.to) ||
+    Date.parse(c.from) >= Date.parse(c.splitAt) ||
+    Date.parse(c.splitAt) >= Date.parse(c.to) ||
+    ![
+      c.units,
+      c.startingEquity,
+      c.riskBudget,
+      c.spreadFloor,
+      c.roundTripSlippage,
+    ].every(positive) ||
+    c.riskBudget > 25 ||
+    !finite(c.roundTripFees) ||
+    c.roundTripFees < 0 ||
+    !hasText(c.costsReference)
+  )
+    throw Error(
+      "Proxy replay requires aligned development/validation windows and explicit proxy costs and sizing",
+    );
+
+  const { m5 } = d.candles;
+  const entrySpreads =
+    d.schema === 2
+      ? new Map(
+          m5.map((bar, i) => [
+            bar.openTime,
+            (d.quoteBars.ask.m5[i].open - d.quoteBars.bid.m5[i].open) /
+              d.tickSize,
+          ]),
+        )
+      : null;
   const execution = {
     startingEquity: c.startingEquity,
     lots: c.units,
@@ -300,11 +396,21 @@ function prepareProxyReplay(
         : "missing bars";
     },
   };
-  const replay = (from: string, to: string, label: string) =>
-    replayWindow(d, execution, from, to, label, evaluate, proxy);
+  const replay = (from: string, to: string, label: string) => {
+    const evaluate = strategy
+      ? researchEvaluator(d, strategy)
+      : trendPullbackEvaluator(d);
+    return replayWindow(d, execution, from, to, label, evaluate, proxy);
+  };
   return {
     replay,
     model: "pivex-replay-v1",
+    strategy: strategy?.id ?? "trend_pullback_v1",
+    ...(c.targetMode === "net_2r_structure"
+      ? {
+          researchLabel: "Research only — no demonstrated positive expectancy.",
+        }
+      : {}),
     kind: "hypothetical_backtest" as const,
     dataMode: d.mode,
     observationType: d.schema === 3 ? "bid_candles" : "paired_ticks",
@@ -348,24 +454,36 @@ function prepareProxyReplay(
   };
 }
 
-export function runProxyDevelopment(d: ProxyDataset, c: ProxyReplayConfig) {
-  const { replay, ...report } = prepareProxyReplay(d, c, c.splitAt);
+export function runProxyDevelopment(
+  d: ProxyDataset,
+  c: ProxyReplayConfig,
+  strategy?: ResearchStrategy,
+) {
+  const { replay, ...report } = prepareProxyReplay(d, c, c.splitAt, strategy);
   return {
     ...report,
     development: replay(c.from, c.splitAt, "In-sample development"),
   };
 }
 
-export function runProxyHoldout(d: ProxyDataset, c: ProxyReplayConfig) {
-  const { replay, ...report } = prepareProxyReplay(d, c, c.to);
+export function runProxyHoldout(
+  d: ProxyDataset,
+  c: ProxyReplayConfig,
+  strategy?: ResearchStrategy,
+) {
+  const { replay, ...report } = prepareProxyReplay(d, c, c.to, strategy);
   return {
     ...report,
     holdout: replay(c.splitAt, c.to, "Independent historical holdout"),
   };
 }
 
-export function runProxyBacktest(d: ProxyDataset, c: ProxyReplayConfig) {
-  const { replay, ...report } = prepareProxyReplay(d, c, c.to);
+export function runProxyBacktest(
+  d: ProxyDataset,
+  c: ProxyReplayConfig,
+  strategy?: ResearchStrategy,
+) {
+  const { replay, ...report } = prepareProxyReplay(d, c, c.to, strategy);
   return {
     ...report,
     development: replay(c.from, c.splitAt, "In-sample development"),

@@ -10,6 +10,7 @@ export type Setup = {
   rewardRisk?: number;
   confirmationTime?: string;
   evidence?: Evidence;
+  structuralTarget?: Evidence["target"];
   ema?: number;
 };
 /** v1: strict three-bar HT structure, two-bar pullback/reclaim, close-through breakout.

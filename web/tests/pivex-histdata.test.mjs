@@ -83,3 +83,54 @@ test("HistData import rejects conflicting duplicates and invalid OHLC", () => {
     /Invalid HistData/,
   );
 });
+
+test("research strategy sees only elapsed observations and resets for each partition", () => {
+  const dataset = prepareHistDataGold(input(all), bounds);
+  const seen = [];
+  const strategy = {
+    id: "test-family-v1",
+    createEvaluator() {
+      let count = 0;
+      return ({ confirmation, recent }) => {
+        const m5 = recent("m5", 2);
+        assert.equal(m5.at(-1).closeTime, confirmation.closeTime);
+        assert(
+          recent("m15", 8).every(
+            (bar) => bar.closeTime <= confirmation.openTime,
+          ),
+        );
+        assert(
+          recent("h1", 8).every(
+            (bar) => bar.closeTime <= confirmation.openTime,
+          ),
+        );
+        if (++count === 1) seen.push(confirmation.openTime);
+        return { status: "NO SETUP", reason: "test" };
+      };
+    },
+  };
+  const result = runProxyBacktest(
+    dataset,
+    {
+      ...bounds,
+      splitAt: "2025-07-07T06:00:00Z",
+      startingEquity: 10000,
+      units: 1,
+      riskBudget: 25,
+      spreadFloor: 1,
+      roundTripSlippage: 0.5,
+      roundTripFees: 0.25,
+      costsReference: "Synthetic fixed-cost test",
+    },
+    strategy,
+  );
+  assert.equal(result.strategy, strategy.id);
+  assert.equal(result.config.targetMode, "baseline");
+  assert.equal(result.researchLabel, undefined);
+  assert.deepEqual(seen, [
+    "2025-07-07T05:00:00.000Z",
+    "2025-07-07T06:00:00.000Z",
+  ]);
+  assert.equal(result.development.diagnostics["NO SETUP: test"], 12);
+  assert.equal(result.validation.diagnostics["NO SETUP: test"], 12);
+});

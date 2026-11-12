@@ -102,7 +102,10 @@ export function replayWindow(
   from: string,
   to: string,
   label: string,
-  evaluate: (bar: HistoricalDataset["candles"]["m5"][number]) => Setup,
+  evaluate: (
+    bar: HistoricalDataset["candles"]["m5"][number],
+    lastAcceptedEntry: string | null,
+  ) => Setup,
   proxy?: {
     targetMode?: TargetMode;
     entrySpreadTicks: (openTime: string) => number;
@@ -266,7 +269,7 @@ export function replayWindow(
     if (!open) {
       try {
         evaluated++;
-        const result = evaluate(bar);
+        const result = evaluate(bar, trades.at(-1)?.entryTime ?? null);
         if (result.status === "CONFIRMED") {
           setups++;
           pending = result;

@@ -2,6 +2,7 @@ import { finite, positive, timestamp } from "./evidence.ts";
 import type { Candle } from "./evidence.ts";
 import type { ContractSpec } from "./planner.ts";
 import type { Setup } from "./strategy.ts";
+import { netTwoRTarget } from "./net-2r-target.ts";
 
 // Order is also the reporting priority. Count each applicable reason once per setup.
 export const rejectionPriority = [
@@ -40,6 +41,7 @@ export function auditEntry(
 ) {
   const { direction, stop } = setup;
   let target = setup.target;
+  const structure = setup.structuralTarget ?? setup.evidence?.target;
   const entry = next?.open;
   const spreadTicks = Math.max(spec.spreadTicks, observedSpreadTicks ?? 0);
   const spread = quantity * spreadTicks * spec.tickValue * spec.quoteToAccount;
@@ -85,23 +87,21 @@ export function auditEntry(
       spec.tickValue *
       spec.quoteToAccount;
     if (targetMode === "net_2r_structure" && stopValid) {
-      const level = setup.evidence?.target;
-      const dollarsPerTick = spec.tickValue * spec.quoteToAccount * quantity;
-      const distance = ((2 * loss + total) / dollarsPerTick) * spec.tickSize;
-      const grid = (sign * (entry + sign * distance)) / spec.tickSize;
-      if (
-        !positive(dollarsPerTick) ||
-        !positive(distance) ||
-        !Number.isSafeInteger(Math.ceil(grid))
-      ) {
+      const candidate = netTwoRTarget(
+        entry,
+        sign,
+        spec.tickSize,
+        spec.tickValue * spec.quoteToAccount * quantity,
+        loss,
+        total,
+        rewardAt,
+        quantity,
+      );
+      if (candidate === null) {
         reasons.add("Invalid or nonfinite economics");
       } else {
-        // Use the same arithmetic as the entry gate at the adjacent price ticks.
-        let ticks = Math.floor(grid);
-        const price = () => sign * ticks * spec.tickSize;
-        if ((rewardAt(price()) * quantity - total) / loss < 2) ticks++;
-        if ((rewardAt(price()) * quantity - total) / loss < 2) ticks++;
-        target = price();
+        target = candidate;
+        const level = structure;
         if (
           !positive(target) ||
           !level ||
@@ -170,7 +170,7 @@ export function auditEntry(
     ...(targetMode === "net_2r_structure"
       ? { baselineTarget: numberOrNull(setup.target) }
       : {}),
-    structuralTarget: numberOrNull(setup.evidence?.target.price),
+    structuralTarget: numberOrNull(structure?.price),
     quantity,
     grossRisk,
     grossReward,

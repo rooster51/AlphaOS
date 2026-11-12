@@ -1,5 +1,7 @@
 # XAUUSD net 2R target experiment
 
+**Research only — no demonstrated positive expectancy.** This target mode is opt-in and disabled by default.
+
 The experiment converted qualifying confirmations into modeled entries, but the completed trades lost money in development and in the evaluated portion of the independent holdout. The holdout stopped early with unresolved exposure. These results provide no evidence of historical profitability.
 
 The [protocol](pivex-net-2r-protocol.md) and implementation were frozen at commit `7c2caa1c3991b3cce91c8a11ea9d231950187d44` before downloading or examining the 2024 holdout. This was a previously unused data sample from an earlier market regime. October–December 2025 was excluded because it had already been inspected.
