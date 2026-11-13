@@ -111,3 +111,21 @@ def test_probe_without_credentials_does_not_invent_measurements(monkeypatch, cap
     assert "public_not_configured" in text
     assert '"measured": false' in text
     assert '"quote_latency_ms"' not in text
+
+
+def test_probe_reports_alignment_components_without_provider_timestamp():
+    class MisalignedProvider(FakeProvider):
+        def candles(self, symbol, interval, session="regular", limit=390):
+            raise MarketDataError("candle_interval_misaligned", detail={
+                "bar_index": 8, "bar_count": 50, "interval": interval,
+                "utc_minute": 31, "utc_second": 30,
+                "utc_microsecond": 0, "minute_modulo": 1,
+            })
+
+    observation = probe_once(MisalignedProvider(), "SPY", "5m", clock=lambda: CLOSED)
+    assert observation["available"] is False
+    assert observation["error"] == "candle_interval_misaligned"
+    assert observation["error_detail"]["bar_index"] == 8
+    assert observation["error_detail"]["utc_second"] == 30
+    assert observation["latest_candle_at"] is None
+    assert observation["received_bars"] is None
