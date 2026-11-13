@@ -23,6 +23,7 @@ import {
   normalizeMarketResponse,
   type WorkspaceDirection,
   type WorkspaceLevel,
+  type WorkspaceSetup,
   type WorkspaceSnapshot,
   type WorkspaceSymbol,
 } from "@/lib/workspace-evidence";
@@ -35,11 +36,12 @@ type LoadState =
 type Message = { role: "assistant" | "user"; text: string };
 
 const SUGGESTED_QUESTIONS = [
-  "What is the trend?",
-  "Where is support?",
-  "Where is resistance?",
-  "Is this a BUY?",
-  "How fresh is the data?",
+  "What would confirm a bullish entry?",
+  "Is this breaking out or reversing?",
+  "Where is the nearest invalidation?",
+  "Why is AlphaOS saying WAIT?",
+  "Which setup is closest?",
+  "What changed since the previous confirmed candle?",
 ];
 
 function formatPrice(value: number): string {
@@ -49,7 +51,8 @@ function formatPrice(value: number): string {
   });
 }
 
-function formatAsOf(value: string): string {
+function formatAsOf(value: string | null): string {
+  if (!value) return "Unavailable";
   const timestamp = Date.parse(value);
   if (!Number.isFinite(timestamp)) return "Unavailable";
   return new Intl.DateTimeFormat("en-US", {
@@ -72,6 +75,90 @@ function directionStyle(direction: WorkspaceDirection): string {
   if (direction === "bearish") return "text-loss";
   if (direction === "neutral") return "text-terminal-200";
   return "text-warning";
+}
+
+function setupVariant(state: WorkspaceSetup["state"]): "live" | "warning" | "neutral" {
+  if (state === "BUY") return "live";
+  if (state === "SELL") return "warning";
+  return "neutral";
+}
+
+function priceOrUnavailable(value: number | null): string {
+  return value === null ? "Unavailable" : `$${formatPrice(value)}`;
+}
+
+function SetupCard({ setup }: { setup: WorkspaceSetup }) {
+  return (
+    <article className={`min-w-0 rounded-lg border p-3 ${
+      setup.state === "BUY"
+        ? "border-profit/30 bg-profit-bg/10"
+        : setup.state === "SELL"
+          ? "border-loss/30 bg-loss-bg/10"
+          : "border-terminal-800 bg-terminal-950/60"
+    }`}>
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div className="min-w-0">
+          <h3 className="break-words text-xs font-semibold text-terminal-100">{setup.name}</h3>
+          <p className="mt-0.5 text-[10px] uppercase tracking-[0.1em] text-terminal-500">
+            {setup.direction} · {setup.freshness}
+          </p>
+        </div>
+        <StatusPill label={setup.state} variant={setupVariant(setup.state)} />
+      </div>
+      {setup.waitReason && (
+        <p className="mt-2 break-words text-[11px] leading-relaxed text-terminal-300">
+          {setup.waitReason}
+        </p>
+      )}
+      <dl className="mt-2 grid grid-cols-2 gap-2">
+        <Metric
+          label="Entry trigger"
+          value={setup.entry ? priceOrUnavailable(setup.entry.price) : "Not supplied"}
+          detail={setup.entry?.condition}
+        />
+        <Metric
+          label="Invalidation"
+          value={setup.invalidation ? priceOrUnavailable(setup.invalidation.price) : "Not supplied"}
+          detail={setup.invalidation?.condition}
+        />
+        <Metric
+          label="Stop reference"
+          value={setup.stop ? priceOrUnavailable(setup.stop.price) : "Not supplied"}
+          detail={setup.stop?.basis}
+        />
+        <Metric
+          label="Target reference"
+          value={setup.target ? priceOrUnavailable(setup.target.price) : "Not supplied"}
+          detail={setup.target?.basis}
+        />
+      </dl>
+      {setup.risk && (
+        <p className="mt-2 break-words font-mono text-[10px] text-terminal-500">
+          Risk {priceOrUnavailable(setup.risk.underlyingRiskDistance)} · Target distance{" "}
+          {setup.risk.targetDistance === null ? "unavailable" : priceOrUnavailable(setup.risk.targetDistance)} · R:R{" "}
+          {setup.risk.rewardToRisk === null ? "unavailable" : setup.risk.rewardToRisk.toFixed(2)}
+        </p>
+      )}
+      {setup.missingConditions.length > 0 && (
+        <div className="mt-2 rounded border border-warning/20 bg-warning-bg/10 p-2">
+          <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-warning">Missing</p>
+          <ul className="mt-1 list-disc space-y-1 pl-4 text-[10px] leading-relaxed text-terminal-300">
+            {setup.missingConditions.map((condition) => <li key={condition}>{condition}</li>)}
+          </ul>
+        </div>
+      )}
+      {setup.evidence.length > 0 && (
+        <details className="mt-2 border-t border-terminal-800 pt-2">
+          <summary className="cursor-pointer list-none text-[10px] text-terminal-400 hover:text-profit">
+            Evidence
+          </summary>
+          <ul className="mt-1 list-disc space-y-1 pl-4 text-[10px] leading-relaxed text-terminal-500">
+            {setup.evidence.map((item) => <li key={item}>{item}</li>)}
+          </ul>
+        </details>
+      )}
+    </article>
+  );
 }
 
 function DirectionIcon({ direction }: { direction: WorkspaceDirection }) {
@@ -148,8 +235,8 @@ function EvidenceAssistant({
   snapshot: WorkspaceSnapshot | null;
 }) {
   const opening = snapshot
-    ? `I’m grounded in the ${snapshot.isLive ? "live" : "archive"} ${symbol} snapshot observed ${formatAsOf(snapshot.asOf)}. Ask about price, trend, support, resistance, ATR, or freshness. I will not invent pivots, entries, stops, or targets that the verified payload does not contain.`
-    : `No verified ${symbol} market snapshot is loaded. I can explain market concepts, but I cannot provide symbol-specific price, trend, or level analysis. No quote or signal is substituted.`;
+    ? `I’m grounded in the ${snapshot.isLive ? "live" : "archive"} ${symbol} snapshot observed ${formatAsOf(snapshot.asOf)}. Ask why the state is WAIT, what would confirm a bullish or bearish entry, where the nearest invalidation is, which setup is closest, what changed since the previous confirmed candle, or about pivots, opening range, VWAP, EMA 9, and freshness. I will not invent missing fields or a confidence score.`
+    : `No verified ${symbol} market snapshot is loaded. I can explain market concepts, but I cannot provide symbol-specific price, trend, or setup analysis. No quote, signal, or setup state is substituted.`;
   const [messages, setMessages] = useState<Message[]>([{ role: "assistant", text: opening }]);
   const [question, setQuestion] = useState("");
 
@@ -311,9 +398,6 @@ export function TradingWorkspace({ initialSymbol }: { initialSymbol: WorkspaceSy
   const snapshot = state.kind === "result" ? state.snapshot : null;
   const assessment = buildWorkspaceAssessment(snapshot);
   const otherLevels = snapshot?.levels.filter((level) => level.kind === "atr" || level.kind === "mid") ?? [];
-  const unsupplied = assessment.evidenceGaps.filter((gap) =>
-    ["Pivot points", "Previous-day high and low", "Opening range"].includes(gap),
-  );
 
   function chooseSymbol(next: WorkspaceSymbol) {
     if (next === symbol) return;
@@ -378,6 +462,12 @@ export function TradingWorkspace({ initialSymbol }: { initialSymbol: WorkspaceSy
               <p className="mt-1 break-words text-xs text-terminal-400">
                 {snapshot ? `${sourceLabel(snapshot)} · ${formatAsOf(snapshot.asOf)}` : "No verified observation is displayed."}
               </p>
+              {snapshot?.tradeIntelligence && (
+                <p className="mt-1 break-words text-[10px] text-terminal-500">
+                  Session {snapshot.tradeIntelligence.sessionState} · data {snapshot.tradeIntelligence.dataStatus} · confirmed through{" "}
+                  {formatAsOf(snapshot.tradeIntelligence.latestConfirmedAt)}
+                </p>
+              )}
             </div>
             <div className="flex flex-wrap items-center gap-2">
               {snapshot ? (
@@ -394,7 +484,20 @@ export function TradingWorkspace({ initialSymbol }: { initialSymbol: WorkspaceSy
               ) : (
                 <StatusPill label="NO VERIFIED DATA" variant="warning" />
               )}
-              <StatusPill label="WAIT / NO TRADE" variant="neutral" />
+              <StatusPill
+                label={
+                  assessment.stance === "UNAVAILABLE"
+                    ? "NO VERIFIED STATE"
+                    : `${assessment.stance} / RESEARCH STATE`
+                }
+                variant={
+                  assessment.stance === "BUY"
+                    ? "live"
+                    : assessment.stance === "SELL"
+                      ? "warning"
+                      : "neutral"
+                }
+              />
             </div>
           </div>
         </section>
@@ -491,25 +594,83 @@ export function TradingWorkspace({ initialSymbol }: { initialSymbol: WorkspaceSy
                     />
                   </dl>
 
-                  <div className="mt-3 rounded-lg border border-terminal-800 bg-terminal-950/60 p-3">
-                    <h3 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-terminal-500">
-                      Not supplied by this verified payload
-                    </h3>
-                    {unsupplied.length ? (
-                      <ul className="mt-2 flex flex-wrap gap-1.5">
-                        {unsupplied.map((gap) => (
-                          <li key={gap} className="rounded-full border border-warning/25 bg-warning-bg/20 px-2.5 py-1 text-[10px] text-warning">
-                            {gap}
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p className="mt-2 text-xs text-terminal-400">All listed structure fields were present in the snapshot.</p>
-                    )}
-                    <p className="mt-2 text-[10px] leading-relaxed text-terminal-500">
-                      Pivots, previous-day high/low, and opening range are not calculated here because the payload does not contain the required prior-session evidence.
-                    </p>
-                  </div>
+                  {snapshot.tradeIntelligence ? (
+                    <>
+                      <div className="mt-3 rounded-lg border border-terminal-800 bg-terminal-950/60 p-3">
+                        <div className="flex flex-wrap items-start justify-between gap-2">
+                          <div>
+                            <h3 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-terminal-500">
+                              Session, pivots &amp; opening range
+                            </h3>
+                            <p className="mt-1 text-[10px] text-terminal-500">
+                              Calculated only from completed prior-session OHLC and confirmed regular-session bars.
+                            </p>
+                          </div>
+                          <StatusPill
+                            label={`${snapshot.tradeIntelligence.dataStatus.toUpperCase()} · ${snapshot.tradeIntelligence.confirmedBars} BARS`}
+                            variant={snapshot.tradeIntelligence.dataStatus === "verified" ? "archive" : "warning"}
+                          />
+                        </div>
+                        <dl className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                          <Metric
+                            label="Prior session"
+                            value={`H ${formatPrice(snapshot.tradeIntelligence.previousSession.high)} / L ${formatPrice(snapshot.tradeIntelligence.previousSession.low)}`}
+                            detail={`${snapshot.tradeIntelligence.previousSession.date} · C $${formatPrice(snapshot.tradeIntelligence.previousSession.close)}`}
+                          />
+                          <Metric
+                            label="Current session"
+                            value={snapshot.tradeIntelligence.currentSession.high === null
+                              ? "Unavailable"
+                              : `H ${formatPrice(snapshot.tradeIntelligence.currentSession.high)} / L ${formatPrice(snapshot.tradeIntelligence.currentSession.low ?? snapshot.tradeIntelligence.currentSession.high)}`}
+                            detail="Confirmed regular-session bars."
+                          />
+                          <Metric
+                            label="Opening range"
+                            value={snapshot.tradeIntelligence.openingRange
+                              ? `H ${formatPrice(snapshot.tradeIntelligence.openingRange.high)} / L ${formatPrice(snapshot.tradeIntelligence.openingRange.low)}`
+                              : "Forming / unavailable"}
+                            detail="First three confirmed five-minute bars."
+                          />
+                          <Metric
+                            label="VWAP / EMA 9"
+                            value={`${priceOrUnavailable(snapshot.tradeIntelligence.vwap)} / ${priceOrUnavailable(snapshot.tradeIntelligence.ema9)}`}
+                            detail="Confirmed regular-session bars only."
+                          />
+                        </dl>
+                        <dl className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-5">
+                          {([
+                            ["R2", snapshot.tradeIntelligence.pivots.r2],
+                            ["R1", snapshot.tradeIntelligence.pivots.r1],
+                            ["Pivot", snapshot.tradeIntelligence.pivots.pivot],
+                            ["S1", snapshot.tradeIntelligence.pivots.s1],
+                            ["S2", snapshot.tradeIntelligence.pivots.s2],
+                          ] as const).map(([label, value]) => (
+                            <div key={label} className="min-w-0 rounded border border-terminal-800 bg-terminal-900/60 p-2 text-center">
+                              <dt className="text-[9px] uppercase tracking-[0.1em] text-terminal-500">{label}</dt>
+                              <dd className="mt-1 font-mono text-xs tabular-nums text-terminal-200">${formatPrice(value)}</dd>
+                            </div>
+                          ))}
+                        </dl>
+                      </div>
+                      {snapshot.tradeIntelligence.warnings.length > 0 && (
+                        <div className="mt-3 rounded-lg border border-warning/25 bg-warning-bg/10 p-3">
+                          <h3 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-warning">Session warnings</h3>
+                          <ul className="mt-1 list-disc space-y-1 pl-4 text-[10px] leading-relaxed text-terminal-300">
+                            {snapshot.tradeIntelligence.warnings.map((warning) => <li key={warning}>{warning}</li>)}
+                          </ul>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="mt-3 rounded-lg border border-warning/20 bg-terminal-950/60 p-4">
+                      <p className="text-sm text-terminal-300">
+                        The verified session/pivot contract is unavailable. No pivot, opening-range, VWAP, or EMA value is inferred.
+                      </p>
+                      {snapshot.tradeIntelligenceWarning && (
+                        <p className="mt-1 text-[10px] text-terminal-500">{snapshot.tradeIntelligenceWarning}</p>
+                      )}
+                    </div>
+                  )}
 
                   {snapshot.levels.length > 0 && (
                     <details className="group mt-3 border-t border-terminal-800 pt-3">
@@ -555,7 +716,13 @@ export function TradingWorkspace({ initialSymbol }: { initialSymbol: WorkspaceSy
                 </div>
                 <StatusPill
                   label={assessment.stance}
-                  variant={assessment.stance === "WAIT" ? "neutral" : "warning"}
+                  variant={
+                    assessment.stance === "BUY"
+                      ? "live"
+                      : assessment.stance === "SELL"
+                        ? "warning"
+                        : "neutral"
+                  }
                 />
               </div>
 
@@ -575,18 +742,49 @@ export function TradingWorkspace({ initialSymbol }: { initialSymbol: WorkspaceSy
                 <Metric label="Data state" value={snapshot ? (snapshot.isLive ? "Live observation" : "Archive") : "Unavailable"} detail={snapshot ? formatAsOf(snapshot.asOf) : "No verified snapshot."} />
               </dl>
 
+              <div className="mt-3 space-y-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h3 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-terminal-500">
+                    Setup candidates
+                  </h3>
+                  <span className="font-mono text-[10px] text-terminal-500">
+                    {assessment.sessionState} session
+                  </span>
+                </div>
+                {assessment.setups.length ? (
+                  assessment.setups.map((setup) => <SetupCard key={setup.id} setup={setup} />)
+                ) : (
+                  <div className="rounded-lg border border-warning/20 bg-terminal-950/60 p-3">
+                    <p className="text-xs leading-relaxed text-terminal-300">
+                      No validated setup candidates were returned. Nothing is inferred from the descriptive bias.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {assessment.evidenceGaps.length > 0 && (
+                <div className="mt-3 rounded-lg border border-warning/25 bg-warning-bg/10 p-3">
+                  <h3 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-warning">
+                    Missing evidence / conditions
+                  </h3>
+                  <ul className="mt-1 list-disc space-y-1 pl-4 text-[10px] leading-relaxed text-terminal-300">
+                    {assessment.evidenceGaps.map((gap) => <li key={gap}>{gap}</li>)}
+                  </ul>
+                </div>
+              )}
+
               <div className="mt-3 rounded-lg border border-terminal-800 bg-terminal-950/60 p-3">
                 <h3 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-terminal-500">
-                  Not connected to this workspace
+                  Early exit
                 </h3>
-                <ul className="mt-2 space-y-1.5 text-xs text-terminal-400">
-                  <li>Verified entry and invalidation levels</li>
-                  <li>Stop-loss and target research</li>
-                  <li>Early-exit warnings</li>
-                  <li>Executable options quotes and risk/reward</li>
-                </ul>
-                <p className="mt-2 text-[10px] leading-relaxed text-terminal-500">
-                  Those outputs are not in the market snapshot, so no value or confidence score is invented.
+                <p className="mt-1 text-xs leading-relaxed text-terminal-300">
+                  {assessment.exitEarly
+                    ? `${assessment.exitEarly.state}. ${assessment.exitEarly.reason}`
+                    : "UNAVAILABLE. No modeled position is connected to this workspace."}
+                </p>
+                <p className="mt-1 text-[10px] leading-relaxed text-terminal-500">
+                  EXIT EARLY is generated only for a specific modeled position with verified exit evidence.
+                  An underlying setup never creates an exit state.
                 </p>
               </div>
 
