@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { CandleSymbol } from "@/lib/candles";
+import { tradingViewEmbedUrl, tradingViewSymbol } from "@/lib/tradingview";
 
 /**
  * Route-level rollback. The archive page never used an embedded TradingView
@@ -7,7 +8,7 @@ import type { CandleSymbol } from "@/lib/candles";
  * ALPHAOS_CANDLE_CHART_ENABLED=false or ?view=legacy is requested.
  */
 export function TradingViewFallback({ symbol }: { symbol: CandleSymbol }) {
-  const src = `https://s.tradingview.com/widgetembed/?symbol=AMEX%3A${symbol}&interval=5&hidesidetoolbar=1&symboledit=0&saveimage=0&toolbarbg=080b10&theme=dark&style=1&timezone=Etc%2FUTC&locale=en`;
+  const src = tradingViewEmbedUrl(symbol);
   return (
     <div className="space-y-4">
       <p className="rounded border border-warning/30 bg-warning-bg/20 p-4 font-mono text-xs text-terminal-300">
@@ -17,9 +18,9 @@ export function TradingViewFallback({ symbol }: { symbol: CandleSymbol }) {
       </p>
       <div className="overflow-hidden rounded-lg border border-terminal-800 bg-terminal-950">
         <iframe
-          title={`TradingView ${symbol} legacy chart`}
+          title={`TradingView ${tradingViewSymbol(symbol)} legacy chart`}
           src={src}
-          className="h-[520px] w-full"
+          className="block h-[420px] w-full sm:h-[560px]"
           loading="lazy"
           referrerPolicy="strict-origin-when-cross-origin"
         />
@@ -29,7 +30,7 @@ export function TradingViewFallback({ symbol }: { symbol: CandleSymbol }) {
         prefetch={false}
         className="inline-flex rounded border border-terminal-700 px-3 py-2 font-mono text-xs text-terminal-200 hover:border-profit/50 hover:text-profit focus-visible:outline focus-visible:outline-2 focus-visible:outline-profit"
       >
-        Return to AlphaOS candles
+        Open full candle route
       </Link>
     </div>
   );
