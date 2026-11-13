@@ -459,3 +459,30 @@ def test_expected_bar_count_conflict_is_distinct(monkeypatch):
     with pytest.raises(MarketDataError) as error:
         provider.candles("SPY", "1m")
     assert error.value.code == "candle_expected_bars_conflict"
+
+
+
+@pytest.mark.parametrize("interval,timestamp,minute,second,microsecond,modulo", [
+    ("1m", "2026-10-02T13:30:30+00:00", 30, 30, 0, 0),
+    ("1m", "2026-10-02T13:30:00.500000+00:00", 30, 0, 500000, 0),
+    ("5m", "2026-10-02T13:31:00+00:00", 31, 0, 0, 1),
+    ("15m", "2026-10-02T13:31:00+00:00", 31, 0, 0, 1),
+])
+def test_misalignment_diagnostics_keep_precise_clock_components_not_raw_rows(
+        monkeypatch, interval, timestamp, minute, second, microsecond, modulo):
+    import modules.market_data_gateway as gateway
+    rows = [dict(symbol="SPY", aggregation=gateway.AGGREGATION_BY_INTERVAL[interval],
+                 timestamp=timestamp, open=500, high=501, low=499, close=500.5,
+                 volume=10, provider_expected_bars=1)]
+    monkeypatch.setattr(gateway, "fetch_intraday_bars", lambda *args, **kwargs: (rows, {}))
+    provider = PublicMarketDataProvider(context=lambda: (object(), "synthetic-account"),
+                                        clock=lambda: NOW)
+    with pytest.raises(MarketDataError) as error:
+        provider.candles("SPY", interval)
+    assert error.value.code == "candle_interval_misaligned"
+    assert error.value.detail == {
+        "bar_index": 0, "bar_count": 1, "interval": interval,
+        "utc_minute": minute, "utc_second": second,
+        "utc_microsecond": microsecond, "minute_modulo": modulo,
+    }
+    assert timestamp not in str(error.value.detail)
