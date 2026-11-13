@@ -27,8 +27,8 @@ const fields = ["last", "bid", "ask", "bid_size", "ask_size", "iv", "delta", "ga
 const label = (value: string) => value.replaceAll("_", " ");
 const dollars = (value: number) => value.toLocaleString("en-US", { style: "currency", currency: "USD" });
 
-export function OptionsChain() {
-  const [symbol, setSymbol] = useState("SPY");
+export function OptionsChain({ initialSymbol = "SPY" }: { initialSymbol?: "SPY" | "QQQ" }) {
+  const [symbol, setSymbol] = useState(initialSymbol);
   const [date, setDate] = useState("");
   const [expirations, setExpirations] = useState<string[]>([]);
   const [side, setSide] = useState<"Both" | Right>("Both");
