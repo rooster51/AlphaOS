@@ -28,7 +28,7 @@ const label = (value: string) => value.replaceAll("_", " ");
 const dollars = (value: number) => value.toLocaleString("en-US", { style: "currency", currency: "USD" });
 
 export function OptionsChain({ initialSymbol = "SPY" }: { initialSymbol?: "SPY" | "QQQ" }) {
-  const [symbol, setSymbol] = useState(initialSymbol);
+  const [symbol, setSymbol] = useState<string>(initialSymbol);
   const [date, setDate] = useState("");
   const [expirations, setExpirations] = useState<string[]>([]);
   const [side, setSide] = useState<"Both" | Right>("Both");
