@@ -38,3 +38,24 @@ for (const width of [390, 1440]) {
     expect(requests).toHaveLength(3);
   });
 }
+
+
+test("workspace QQQ link preselects QQQ without a background options request", async ({ page }) => {
+  const requests: URL[] = [];
+  await page.route("**/api/options?*", async route => {
+    requests.push(new URL(route.request().url()));
+    return route.fulfill({ json: { expirations: [] } });
+  });
+  await page.goto("/options?symbol=QQQ");
+  await expect(page.getByRole("heading", { name: "Options Chain" })).toBeVisible();
+  await expect(page.getByLabel("Symbol", { exact: true })).toHaveValue("QQQ");
+  expect(requests).toHaveLength(0);
+  await page.getByRole("button", { name: "Discover expirations" }).click();
+  await expect.poll(() => requests.length).toBe(1);
+  expect(requests[0].searchParams.get("symbol")).toBe("QQQ");
+});
+
+test("invalid symbol query falls back to SPY", async ({ page }) => {
+  await page.goto("/options?symbol=INVALID");
+  await expect(page.getByLabel("Symbol", { exact: true })).toHaveValue("SPY");
+});
