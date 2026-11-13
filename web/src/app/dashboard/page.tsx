@@ -37,7 +37,15 @@ export default function DashboardPage() {
           <DashboardResearch symbol="SPY" />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 font-mono text-sm">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 font-mono text-sm">
+          <Link
+            prefetch={false}
+            className="bg-terminal-900 rounded border border-profit/30 p-4 text-profit"
+            href="/workspace"
+          >
+            Trading workspace — chart, structure &amp; assistant
+          </Link>
+
           <Link
             prefetch={false}
             className="bg-terminal-900 rounded border border-terminal-800 p-4"

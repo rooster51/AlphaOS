@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
+  LayoutGrid,
   LineChart,
   CandlestickChart,
   Compass,
@@ -19,6 +20,7 @@ import {
 } from "lucide-react";
 
 const NAV_ITEMS = [
+  { href: "/workspace", label: "Trading Workspace", icon: LayoutGrid },
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/market", label: "Market Research", icon: LineChart },
   { href: "/market/chart", label: "Candles", icon: CandlestickChart },
