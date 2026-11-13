@@ -70,6 +70,7 @@ SPY/QQQ switching and the existing mobile layout are preserved. No Public data i
 
 - `python -m pytest -q tests/test_trade_intelligence.py tests/test_trade_intelligence_api.py` — **21 passed**
 - Backend regression slice (`test_trade_intelligence*`, `test_research_api`, `test_candles_api`, `test_structure_research`) — **77 passed**
+- Expanded backend slice after merging `main` #104 (`+ test_market_data_gateway`, `test_public_intraday`) — **123 passed**
 - `cd web && npm test` — **276 passed**, including the authenticated bridge validation and graceful setup-contract failure tests
 - `cd web && npm run typecheck` — passed
 - `cd web && npm run build` — passed
