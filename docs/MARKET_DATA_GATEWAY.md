@@ -39,6 +39,13 @@ The gateway rejects provider responses with:
 - no usable bars
 - unparseable or future timestamps
 
+Public returns a native closing-auction bar stamped exactly at the regular
+session close. That final boundary bar is outside the half-open regular-session
+range and is excluded with `provider_closing_bar_excluded`; the provider's
+expected count is reduced by one and reported with
+`provider_expected_bars_adjusted_for_closing_bar`. Any other out-of-session bar
+still fails closed. No bar is fabricated or repaired.
+
 Missing internal bars are reported as warnings, not filled. When the provider
 supplies an expected count, a completed session is `complete` or `incomplete`.
 A session that is still open has `completeness: unknown` and a
@@ -46,6 +53,19 @@ A session that is still open has `completeness: unknown` and a
 while bars are still accumulating. A narrowed `limit` changes `returned_bars`,
 not `received_bars` or completeness. Provider-skipped rows add
 `provider_incomplete_bars_skipped` and make a completed session incomplete.
+
+Validation failures carry stable, payload-free codes. Provider retrieval codes
+include `provider_bars_authentication_failed`, `provider_bars_rate_limited`,
+`provider_bars_timeout`, `provider_bars_fetch_failed`, the `provider_bars_*`
+response-shape codes and timestamp-shape codes. Gateway codes include
+`candle_symbol_mismatch`, `candle_aggregation_mismatch`, `candle_timestamp_*`,
+`candle_outside_regular_session`, `candle_interval_misaligned`,
+`candle_timestamp_out_of_order`, `duplicate_candle_timestamp`,
+`candle_ohlc_*`, `candle_expected_bars_conflict`,
+`provider_closing_bar_excluded` and
+`provider_expected_bars_adjusted_for_closing_bar`. These codes never include
+credentials, headers,
+account identifiers or raw provider payloads.
 
 The newest bar is never called complete or partial merely because it is the last
 bar returned or because the local clock says its interval is open.

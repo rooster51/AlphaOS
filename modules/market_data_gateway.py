@@ -33,7 +33,7 @@ from modules.market_data_contracts import (
     QuoteObservation,
 )
 from modules.market_session_gate import regular_session_bounds
-from modules.public_intraday import fetch_intraday_bars
+from modules.public_intraday import PublicIntradayError, fetch_intraday_bars
 from modules.public_provider import (
     PublicProviderError,
     _public_context,
@@ -59,9 +59,10 @@ PUBLIC_CAPABILITIES = ProviderCapabilities(
 class MarketDataError(RuntimeError):
     """A safe provider-independent market-data failure."""
 
-    def __init__(self, code: str, status: int = 503):
+    def __init__(self, code: str, status: int = 503, *, detail: dict | None = None):
         self.code = code
         self.status = status
+        self.detail = detail
         super().__init__(code)
 
 
@@ -85,7 +86,7 @@ def _clock(value=None) -> datetime:
 def _timestamp(value):
     normalized = normalize_timestamp(value)
     if normalized is None:
-        raise MarketDataError("invalid_provider_response")
+        raise MarketDataError("candle_timestamp_invalid")
     return datetime.fromisoformat(normalized)
 
 
@@ -126,12 +127,20 @@ def validate_candle_request(symbol: str, interval: str, session: str, limit: int
     return value
 
 
-def _regular_bar(timestamp: datetime) -> bool:
+def _session_relation(timestamp: datetime) -> tuple[str, datetime | None, datetime | None]:
     bounds = regular_session_bounds(timestamp)
     if bounds is None:
-        return False
+        return "non_session_day", None, None
     opening, closing = bounds
-    return opening <= timestamp < closing
+    if timestamp < opening:
+        return "before_open", opening, closing
+    if timestamp >= closing:
+        return "after_close", opening, closing
+    return "inside", opening, closing
+
+
+def _regular_bar(timestamp: datetime) -> bool:
+    return _session_relation(timestamp)[0] == "inside"
 
 
 def _session_in_progress(latest: datetime, now: datetime) -> bool:
@@ -155,30 +164,57 @@ def _validate_bars(symbol: str, interval: str, rows, *, now: datetime) -> tuple[
     previous: datetime | None = None
     expected: int | None = None
     previous_session_date = None
-    for row in rows:
-        if not isinstance(row, dict) or str(row.get("symbol", "")).strip().upper() != symbol:
-            raise MarketDataError("invalid_provider_response")
+    closing_bar_excluded = False
+    for index, row in enumerate(rows):
+        if not isinstance(row, dict):
+            raise MarketDataError("candle_row_malformed")
+        if str(row.get("symbol", "")).strip().upper() != symbol:
+            raise MarketDataError("candle_symbol_mismatch")
         if row.get("aggregation") != AGGREGATION_BY_INTERVAL[interval]:
-            raise MarketDataError("invalid_provider_response")
+            raise MarketDataError("candle_aggregation_mismatch")
         stamp = _timestamp(row.get("timestamp"))
         if stamp > now:
-            raise MarketDataError("invalid_provider_response")
-        if not _regular_bar(stamp) or not _aligned(stamp, interval):
-            raise MarketDataError("invalid_provider_response")
+            raise MarketDataError("candle_timestamp_future")
+        relation, opening, closing = _session_relation(stamp)
+        if relation != "inside":
+            # Public includes a native closing-auction bar stamped at the exact
+            # session close. It is outside the half-open regular-session range
+            # and is not part of the provider's expected regular-bar count.
+            # Exclude only that final boundary bar; any other out-of-session bar
+            # still fails closed below.
+            if (relation == "after_close" and closing is not None
+                    and stamp == closing and index == len(rows) - 1):
+                warnings.append("provider_closing_bar_excluded")
+                closing_bar_excluded = True
+                closing_expected = _count(row.get("provider_expected_bars"))
+                if closing_expected is not None:
+                    expected = closing_expected
+                continue
+            detail = {"bar_index": index, "bar_count": len(rows), "relation": relation}
+            if relation == "before_open" and opening is not None:
+                detail["minutes_before_open"] = int((opening - stamp).total_seconds() // 60)
+            elif relation == "after_close" and closing is not None:
+                detail["minutes_after_close"] = int((stamp - closing).total_seconds() // 60)
+            raise MarketDataError("candle_outside_regular_session", detail=detail)
+        if not _aligned(stamp, interval):
+            raise MarketDataError("candle_interval_misaligned")
         if previous is not None and stamp <= previous:
-            raise MarketDataError("duplicate_candle_timestamp" if stamp == previous else "invalid_provider_response")
-        values = [_number(row.get(key)) for key in ("open", "high", "low", "close", "volume")]
+            raise MarketDataError("duplicate_candle_timestamp" if stamp == previous else "candle_timestamp_out_of_order")
+        raw_values = [row.get(key) for key in ("open", "high", "low", "close", "volume")]
+        if any(value is None for value in raw_values):
+            raise MarketDataError("candle_ohlc_missing")
+        values = [_number(value) for value in raw_values]
         if any(value is None for value in values):
-            raise MarketDataError("invalid_provider_response")
+            raise MarketDataError("candle_ohlc_invalid")
         opening, high, low, close, volume = values
         if min(opening, high, low, close) <= 0 or volume < 0:
-            raise MarketDataError("invalid_provider_response")
+            raise MarketDataError("candle_ohlc_invalid")
         if high < max(opening, close) or low > min(opening, close) or high < low:
-            raise MarketDataError("invalid_provider_response")
+            raise MarketDataError("candle_ohlc_invalid")
         expected_count = _count(row.get("provider_expected_bars"))
         if expected_count is not None:
             if expected is not None and expected_count != expected:
-                raise MarketDataError("invalid_provider_response")
+                raise MarketDataError("candle_expected_bars_conflict")
             expected = expected_count
         # Detect an internal gap only within one session. The overnight break
         # between sessions is expected and must not be reported as missing bars.
@@ -192,6 +228,9 @@ def _validate_bars(symbol: str, interval: str, rows, *, now: datetime) -> tuple[
         bars.append(CandleBar(stamp.isoformat(), opening, high, low, close, volume))
     if not bars:
         raise MarketDataError("no_candles")
+    if closing_bar_excluded and expected is not None:
+        expected -= 1
+        warnings.append("provider_expected_bars_adjusted_for_closing_bar")
     # Do not classify completeness here. The same count is normal while a
     # session is still open; build_snapshot owns that clock-aware decision.
     return tuple(bars), expected, tuple(dict.fromkeys(warnings))
@@ -367,6 +406,8 @@ class PublicMarketDataProvider:
             )
         except PublicProviderError as exc:
             raise MarketDataError(exc.code, 429 if exc.code == "public_rate_limit" else 503) from None
+        except PublicIntradayError as exc:
+            raise MarketDataError(exc.code, 503) from None
         except MarketDataError:
             raise
         except Exception:

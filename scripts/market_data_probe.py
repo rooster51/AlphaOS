@@ -46,6 +46,7 @@ def probe_once(provider, symbol, interval, *, clock, limit=390):
         "requested_at": now.isoformat(),
         "available": False,
         "error": None,
+        "error_detail": None,
         "quote_latency_ms": None,
         "candle_latency_ms": None,
         "quote_to_candle_lag_seconds": None,
@@ -85,6 +86,7 @@ def probe_once(provider, symbol, interval, *, clock, limit=390):
             result["quote_to_candle_lag_seconds"] = (quote_time - candle_time).total_seconds()
     except MarketDataError as exc:
         result["error"] = exc.code
+        result["error_detail"] = exc.detail
     except Exception:
         result["error"] = "probe_failure"
     return result
