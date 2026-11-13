@@ -197,7 +197,16 @@ def _validate_bars(symbol: str, interval: str, rows, *, now: datetime) -> tuple[
                 detail["minutes_after_close"] = int((stamp - closing).total_seconds() // 60)
             raise MarketDataError("candle_outside_regular_session", detail=detail)
         if not _aligned(stamp, interval):
-            raise MarketDataError("candle_interval_misaligned")
+            # Bounded clock components only; no raw provider rows or prices.
+            raise MarketDataError("candle_interval_misaligned", detail={
+                "bar_index": index,
+                "bar_count": len(rows),
+                "interval": interval,
+                "utc_minute": stamp.minute,
+                "utc_second": stamp.second,
+                "utc_microsecond": stamp.microsecond,
+                "minute_modulo": stamp.minute % (INTERVAL_SECONDS[interval] // 60),
+            })
         if previous is not None and stamp <= previous:
             raise MarketDataError("duplicate_candle_timestamp" if stamp == previous else "candle_timestamp_out_of_order")
         raw_values = [row.get(key) for key in ("open", "high", "low", "close", "volume")]

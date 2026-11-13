@@ -123,6 +123,6 @@ test("route-level fallback keeps a legacy TradingView path available", async ({ 
   });
   await page.goto("/market/chart?symbol=SPY&view=legacy", { waitUntil: "domcontentloaded" });
   await expect(page.getByText(/legacy fallback/)).toBeVisible();
-  await expect(page.getByTitle("TradingView SPY legacy chart")).toBeVisible();
-  await expect(page.getByRole("link", { name: "Return to AlphaOS candles" })).toBeVisible();
+  await expect(page.getByTitle("TradingView AMEX:SPY legacy chart")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Open full candle route" })).toBeVisible();
 });
