@@ -1,14 +1,32 @@
 export type ResearchEnvelope = { meta: Record<string, unknown>; evidence: Record<string, unknown> };
 
+export type ResearchFailureCode =
+  | "backend_not_configured"
+  | "backend_auth_failed"
+  | "backend_route_unavailable"
+  | "backend_timeout"
+  | "backend_unreachable"
+  | "backend_schema_invalid"
+  | "backend_http_error"
+  | "market_closed"
+  | "market_snapshot_unavailable"
+  | "market_evidence_unavailable";
+
 const RESEARCH_SCHEMA = "alphaos-research-v1";
 
 export class ResearchUnavailableError extends Error {
   readonly status: number | null;
+  readonly code: ResearchFailureCode | null;
 
-  constructor(message: string, status: number | null = null) {
+  constructor(
+    message: string,
+    status: number | null = null,
+    code: ResearchFailureCode | null = null,
+  ) {
     super(message);
     this.name = "ResearchUnavailableError";
     this.status = status;
+    this.code = code;
   }
 }
 
@@ -44,7 +62,11 @@ export async function fetchResearchEnvelope(
   request: typeof fetch = fetch,
   timeoutMs = 10_000,
 ): Promise<ResearchEnvelope> {
-  if (!token) throw new ResearchUnavailableError("Research backend not configured");
+  if (!token) {
+    throw new ResearchUnavailableError(
+      "Research backend not configured", null, "backend_not_configured",
+    );
+  }
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
@@ -55,9 +77,15 @@ export async function fetchResearchEnvelope(
       signal: controller.signal,
     });
     if (!response.ok) {
+      const code = response.status === 401 || response.status === 403
+        ? "backend_auth_failed"
+        : response.status === 404 || response.status === 405
+          ? "backend_route_unavailable"
+          : "backend_http_error";
       throw new ResearchUnavailableError(
         `Research API unavailable (HTTP ${response.status})`,
         response.status,
+        code,
       );
     }
 
@@ -67,20 +95,28 @@ export async function fetchResearchEnvelope(
       body = JSON.parse(text);
     } catch (error) {
       if (error instanceof SyntaxError) {
-        throw new ResearchUnavailableError("Research response schema is unavailable");
+        throw new ResearchUnavailableError(
+          "Research response schema is unavailable", null, "backend_schema_invalid",
+        );
       }
       throw error;
     }
     if (!validEnvelope(body)) {
-      throw new ResearchUnavailableError("Research response schema is unavailable");
+      throw new ResearchUnavailableError(
+        "Research response schema is unavailable", null, "backend_schema_invalid",
+      );
     }
     return body;
   } catch (error) {
     if (controller.signal.aborted) {
-      throw new ResearchUnavailableError("Research API request timed out");
+      throw new ResearchUnavailableError(
+        "Research API request timed out", null, "backend_timeout",
+      );
     }
     if (error instanceof TypeError) {
-      throw new ResearchUnavailableError("Research API network request failed");
+      throw new ResearchUnavailableError(
+        "Research API network request failed", null, "backend_unreachable",
+      );
     }
     throw error;
   } finally {
