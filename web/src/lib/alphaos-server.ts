@@ -4,6 +4,12 @@ import { MOCK_MARKET_SNAPSHOTS } from "./mock-data.ts";
 import { getServerConfig } from "./server-config.ts";
 
 type JsonObject = Record<string, unknown>;
+type TradeIntelligenceStatus =
+  | "available"
+  | "endpoint_not_deployed"
+  | "contract_invalid"
+  | "backend_rejected_request"
+  | "provider_unavailable";
 
 function record(value: unknown): JsonObject {
   return value !== null && typeof value === "object" && !Array.isArray(value)
@@ -14,6 +20,52 @@ function finitePositive(value: unknown): value is number {
 }
 function symbolValue(symbol: string): "QQQ" | "SPY" {
   return supportedMarketSymbol(symbol);
+}
+
+function percentPoints(value: unknown): number | null {
+  // /v1/structure reports price_structure.distance_pct as a decimal fraction
+  // (for example -0.0197). The browser contract stores percentage points.
+  return typeof value === "number" && Number.isFinite(value) ? value * 100 : null;
+}
+
+function classifyTradeIntelligenceError(
+  error: ResearchUnavailableError,
+): { status: TradeIntelligenceStatus; warning: string } {
+  if (error.status === 404 || error.status === 405) {
+    return {
+      status: "endpoint_not_deployed",
+      warning:
+        `Verified setup evidence is unavailable: the research backend does not expose the ` +
+        `Phase 2 trade-intelligence route (HTTP ${error.status}). This is a backend-version ` +
+        `mismatch, not a market-data failure. Market and structure evidence remain available; ` +
+        `no setup state was inferred.`,
+    };
+  }
+  if (error.status === 401 || error.status === 403) {
+    return {
+      status: "backend_rejected_request",
+      warning:
+        `Verified setup evidence is unavailable: the research backend rejected the authenticated ` +
+        `request (HTTP ${error.status}). This is a bridge authorization/configuration failure, ` +
+        `not missing market evidence; no setup state was inferred.`,
+    };
+  }
+  if (error.status === 400 || error.status === 422) {
+    return {
+      status: "backend_rejected_request",
+      warning:
+        `Verified setup evidence is unavailable: the research backend rejected the request ` +
+        `parameters (HTTP ${error.status}). This is a frontend/backend contract incompatibility, ` +
+        `not a validated market state; no setup state was inferred.`,
+    };
+  }
+  return {
+    status: "provider_unavailable",
+    warning:
+      `Verified setup evidence is unavailable because the research backend request failed` +
+      `${error.status ? ` (HTTP ${error.status})` : ""}. No BUY, SELL, entry, or invalidation ` +
+      `was inferred; this is not a substitute for verified market evidence.`,
+  };
 }
 
 function priceReference(value: unknown): boolean {
@@ -78,6 +130,7 @@ export async function getMarketSnapshotServer(symbol: string): Promise<{
   isLive: boolean;
   warning?: string;
   trade_intelligence?: JsonObject | null;
+  trade_intelligence_status?: TradeIntelligenceStatus;
   trade_intelligence_warning?: string;
 }> {
   const normSymbol = symbolValue(symbol);
@@ -99,19 +152,24 @@ export async function getMarketSnapshotServer(symbol: string): Promise<{
     `/v1/structure/${normSymbol}?horizon=3&snapshot_id=${encodeURIComponent(marketMeta.snapshot_id)}`
   );
   let tradeIntelligence: JsonObject | null = null;
+  let tradeIntelligenceStatus: TradeIntelligenceStatus = "provider_unavailable";
   let tradeIntelligenceWarning: string | undefined;
   try {
     const candidate = await research(`/v1/research/trade-intelligence/${normSymbol}?horizon=3`);
     if (validTradeIntelligence(candidate, normSymbol)) {
       tradeIntelligence = record(candidate.evidence);
+      tradeIntelligenceStatus = "available";
     } else {
+      tradeIntelligenceStatus = "contract_invalid";
       tradeIntelligenceWarning =
-        "The verified setup contract did not pass validation, so no setup state was inferred.";
+        "Verified setup evidence is unavailable: the backend responded, but the setup contract " +
+        "did not pass validation. This is a contract/version mismatch, not a market-data failure; " +
+        "no setup state was inferred.";
     }
   } catch (error) {
     if (!(error instanceof ResearchUnavailableError)) throw error;
-    tradeIntelligenceWarning =
-      "Verified setup evidence is unavailable. No BUY, SELL, entry, or invalidation was inferred.";
+    ({ status: tradeIntelligenceStatus, warning: tradeIntelligenceWarning } =
+      classifyTradeIntelligenceError(error));
   }
   const meta = record(market.meta);
   const marketEvidence = record(market.evidence);
@@ -142,8 +200,8 @@ export async function getMarketSnapshotServer(symbol: string): Promise<{
       ? value.label : `${kind}${source}`;
     const rawDistance = typeof value.distance === "number" && Number.isFinite(value.distance)
       ? value.distance : rawPrice - quotedSpot;
-    const rawDistancePct = typeof value.distance_pct === "number" && Number.isFinite(value.distance_pct)
-      ? value.distance_pct : (rawPrice - quotedSpot) / quotedSpot * 100;
+    const rawDistancePct = percentPoints(value.distance_pct)
+      ?? (rawPrice - quotedSpot) / quotedSpot * 100;
     return [{ label, price: rawPrice, distance: rawDistance, distance_pct: rawDistancePct, kind }];
   }) : [];
   return {
@@ -163,6 +221,7 @@ export async function getMarketSnapshotServer(symbol: string): Promise<{
     isLive: true,
     warning: "Live underlying observation only. Unverified regime dimensions remain unknown.",
     trade_intelligence: tradeIntelligence,
+    trade_intelligence_status: tradeIntelligenceStatus,
     trade_intelligence_warning: tradeIntelligenceWarning,
   };
 }

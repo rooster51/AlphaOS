@@ -11,6 +11,7 @@ from modules.market_data_gateway import PUBLIC_CAPABILITIES, build_snapshot
 from modules.trade_intelligence import (
     ConfirmedSession,
     VERSION,
+    _reversal_setup,
     _vwap_setup,
     build_trade_intelligence,
     evaluate_exit_early,
@@ -256,6 +257,63 @@ def test_vwap_ema9_continuation_requires_alignment_pullback_and_follow_through()
     assert result["state"] == "BUY"
     assert result["entry_trigger"]["price"] == pytest.approx(101.0)
     assert result["invalidation"]["price"] == pytest.approx(100.4)
+    assert result["risk"]["reward_to_risk"] > 0
+
+
+def test_vwap_ema9_bearish_continuation_is_deterministic():
+    bars = tuple(
+        CandleBar((OPEN + index * STEP).isoformat(), open_price, high, low, close, 1000.0)
+        for index, (open_price, high, low, close) in enumerate([
+            (101.1, 101.2, 100.9, 101.0),
+            (101.0, 101.1, 100.7, 100.9),
+            (100.9, 101.0, 100.6, 100.8),
+            (100.7, 100.7, 100.3, 100.4),
+        ])
+    )
+    session = ConfirmedSession(
+        bars=bars, status="verified", reasons=(), session_state="open",
+        session_date="2026-11-13", open_time=OPEN, close_time=OPEN + timedelta(hours=6),
+        latest_confirmed_at=OPEN + 4 * STEP, opening_range={"high": 101.2, "low": 100.9},
+        vwap=100.6, ema9=100.8, current_high=101.2, current_low=100.3,
+        last_change=None,
+    )
+    levels = [{"id": "s1", "label": "S1", "price": 99.0, "kind": "support", "source": "test"}]
+    result = _vwap_setup(session, levels, 1.0)
+    assert result["state"] == "SELL"
+    assert result["direction"] == "bearish"
+    assert result["entry_trigger"]["price"] == pytest.approx(100.4)
+    assert result["invalidation"]["price"] == pytest.approx(100.6)
+    assert result["stop_reference"]["price"] > result["entry_trigger"]["price"]
+    assert result["target_reference"]["price"] < result["entry_trigger"]["price"]
+    assert result["risk"]["reward_to_risk"] > 0
+
+
+def test_resistance_rejection_produces_sell_after_follow_through():
+    bars = tuple(
+        CandleBar((OPEN + index * STEP).isoformat(), open_price, high, low, close, 1000.0)
+        for index, (open_price, high, low, close) in enumerate([
+            (99.7, 99.9, 99.5, 99.8),
+            (99.8, 100.0, 99.6, 99.9),
+            (99.9, 100.3, 99.8, 100.2),
+            (100.2, 100.5, 100.1, 100.4),
+            (100.4, 100.4, 99.7, 99.8),
+            (99.8, 99.9, 99.6, 99.7),
+            (99.7, 99.8, 99.4, 99.5),
+        ])
+    )
+    session = ConfirmedSession(
+        bars=bars, status="verified", reasons=(), session_state="open",
+        session_date="2026-11-13", open_time=OPEN, close_time=OPEN + timedelta(hours=6),
+        latest_confirmed_at=OPEN + 7 * STEP, opening_range={"high": 100.3, "low": 99.5},
+        vwap=99.9, ema9=99.8, current_high=100.5, current_low=99.4,
+        last_change=None,
+    )
+    levels = [{"id": "r1", "label": "Verified resistance", "price": 100.0, "kind": "resistance", "source": "test"}]
+    result = _reversal_setup(session, levels, 1.0)
+    assert result["state"] == "SELL"
+    assert result["direction"] == "bearish"
+    assert result["invalidation"]["price"] == pytest.approx(100.0)
+    assert result["stop_reference"]["price"] > 100.0
     assert result["risk"]["reward_to_risk"] > 0
 
 

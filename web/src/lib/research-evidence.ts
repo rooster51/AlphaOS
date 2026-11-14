@@ -3,9 +3,12 @@ export type ResearchEnvelope = { meta: Record<string, unknown>; evidence: Record
 const RESEARCH_SCHEMA = "alphaos-research-v1";
 
 export class ResearchUnavailableError extends Error {
-  constructor(message: string) {
+  readonly status: number | null;
+
+  constructor(message: string, status: number | null = null) {
     super(message);
     this.name = "ResearchUnavailableError";
+    this.status = status;
   }
 }
 
@@ -52,7 +55,10 @@ export async function fetchResearchEnvelope(
       signal: controller.signal,
     });
     if (!response.ok) {
-      throw new ResearchUnavailableError(`Research API unavailable (HTTP ${response.status})`);
+      throw new ResearchUnavailableError(
+        `Research API unavailable (HTTP ${response.status})`,
+        response.status,
+      );
     }
 
     const text = await response.text();

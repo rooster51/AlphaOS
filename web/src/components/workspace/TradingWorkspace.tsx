@@ -20,6 +20,7 @@ import { TradingViewFallback } from "@/components/market/chart/TradingViewFallba
 import {
   answerWorkspaceQuestion,
   buildWorkspaceAssessment,
+  formatDistancePct,
   normalizeMarketResponse,
   type WorkspaceDirection,
   type WorkspaceLevel,
@@ -213,9 +214,7 @@ function LevelList({
                 </span>
               </div>
               <p className="font-mono text-[10px] text-terminal-500">
-                {level.distancePct === null
-                  ? "Distance unavailable"
-                  : `${level.distancePct > 0 ? "+" : ""}${level.distancePct.toFixed(2)}% from spot`}
+                {formatDistancePct(level.distancePct)}
               </p>
             </li>
           ))}
@@ -554,7 +553,7 @@ export function TradingWorkspace({ initialSymbol }: { initialSymbol: WorkspaceSy
                     Structure &amp; levels
                   </h2>
                   <p className="mt-1 text-[11px] leading-relaxed text-terminal-500">
-                    Backend structure levels only. Nothing is recalculated or extended in the browser.
+                    Backend structure levels only. Backend fraction distances are converted to percentage points once at the bridge; nothing is re-derived in the browser.
                   </p>
                 </div>
                 <StatusPill label={snapshot ? `${snapshot.levels.length} LEVELS` : "UNAVAILABLE"} variant={snapshot ? "archive" : "warning"} />

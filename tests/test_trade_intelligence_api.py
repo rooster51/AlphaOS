@@ -21,7 +21,7 @@ OPEN = NOW.replace(hour=14, minute=30)
 TOKEN = "trade-intelligence-test-token"
 
 
-def candles(*closes):
+def candles(*closes, complete=True):
     bars = []
     for index, close in enumerate(closes):
         bars.append(CandleBar(
@@ -32,8 +32,8 @@ def candles(*closes):
     batch = CandleBatch(
         provider="Public", symbol="SPY", interval="5m", session="regular",
         retrieved_at=NOW.isoformat(), bars=tuple(bars), expected_bars=len(bars),
-        received_bars=len(bars), last_bar_complete=True, warnings=(),
-        capabilities=PUBLIC_CAPABILITIES,
+        received_bars=len(bars), last_bar_complete=True if complete else None,
+        warnings=(), capabilities=PUBLIC_CAPABILITIES,
     )
     return build_snapshot(batch, now=NOW, entitlement=check_data_use(
         PRIVATE_RESEARCH, "Public"))
@@ -110,11 +110,61 @@ def test_endpoint_returns_derived_contract_without_raw_candles(token):
     assert response.headers["cache-control"] == "no-store"
 
 
+def test_qqq_route_returns_the_same_versioned_contract(token):
+    response = get(token, "/v1/research/trade-intelligence/QQQ")
+    assert response.status_code == 200
+    evidence = response.json()["evidence"]
+    assert evidence["schema_version"] == "alphaos-trade-intelligence-v1"
+    assert evidence["symbol"] == "QQQ"
+    assert [item["id"] for item in evidence["setups"]] == [
+        "opening_range_breakout",
+        "vwap_ema9_continuation",
+        "support_resistance_reversal",
+    ]
+    assert response.headers["cache-control"] == "no-store"
+
+
+def test_contract_contains_no_raw_candle_arrays_or_provider_credentials(token):
+    body = get(token).json()
+    forbidden_keys = {
+        "candles", "bars", "ohlcv", "authorization", "token", "secret",
+        "account_id", "account_number", "password",
+    }
+
+    def walk(value):
+        if isinstance(value, dict):
+            assert not (set(value) & forbidden_keys)
+            for child in value.values():
+                walk(child)
+        elif isinstance(value, list):
+            for child in value:
+                walk(child)
+
+    walk(body)
+    assert "confirmed_bars" in body["evidence"]["data"]
+
+
 def test_authentication_and_symbol_validation_fail_before_any_provider_work(token):
     assert token.get("/v1/research/trade-intelligence/SPY").status_code == 401
     unsupported = get(token, "/v1/research/trade-intelligence/IWM")
     assert unsupported.status_code == 400
     assert unsupported.json()["error"]["code"] == "unsupported_symbol"
+
+
+def test_unconfirmed_final_bar_is_excluded_by_the_endpoint(token, monkeypatch):
+    monkeypatch.setitem(
+        api.app.state._state, "candles",
+        FakeCandles(candles(100.0, 100.2, 100.1, 101.2, complete=False)),
+    )
+    evidence = get(token).json()["evidence"]
+    assert evidence["data"]["confirmed_bars"] == 3
+    assert "last_bar_excluded_unconfirmed" in evidence["data"]["reasons"]
+    breakout = next(
+        item for item in evidence["setups"] if item["id"] == "opening_range_breakout"
+    )
+    assert breakout["state"] == "WAIT"
+    assert "later confirmed close" in breakout["wait_reason"]
+    assert any("did not confirm" in warning for warning in evidence["warnings"])
 
 
 def test_intraday_provider_failure_degrades_to_prior_session_levels(token, monkeypatch):

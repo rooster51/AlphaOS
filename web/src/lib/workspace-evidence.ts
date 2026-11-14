@@ -184,6 +184,13 @@ function percent(value: number | null): string {
   return `${sign}${value.toFixed(2)}%`;
 }
 
+export function formatDistancePct(value: number | null): string {
+  if (value === null) return "Distance unavailable";
+  const rounded = Math.abs(value) < 0.005 ? 0 : value;
+  const sign = rounded > 0 ? "+" : "";
+  return `${sign}${rounded.toFixed(2)}% from spot`;
+}
+
 function directionLabel(value: WorkspaceDirection): string {
   if (value === "bullish") return "UP / bullish";
   if (value === "bearish") return "DOWN / bearish";

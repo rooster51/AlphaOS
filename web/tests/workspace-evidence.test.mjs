@@ -3,6 +3,7 @@ import { test } from "node:test";
 import {
   answerWorkspaceQuestion,
   buildWorkspaceAssessment,
+  formatDistancePct,
   normalizeMarketResponse,
 } from "../src/lib/workspace-evidence.ts";
 import { tradingViewEmbedUrl, tradingViewSymbol } from "../src/lib/tradingview.ts";
@@ -155,6 +156,13 @@ function response(overrides = {}) {
     },
   };
 }
+
+test("distance percentages are formatted once with the correct sign and precision", () => {
+  assert.equal(formatDistancePct(1.97), "+1.97% from spot");
+  assert.equal(formatDistancePct(-1.97), "-1.97% from spot");
+  assert.equal(formatDistancePct(0), "0.00% from spot");
+  assert.equal(formatDistancePct(null), "Distance unavailable");
+});
 
 test("TradingView maps SPY and QQQ to their real listing exchanges", () => {
   assert.equal(tradingViewSymbol("SPY"), "AMEX:SPY");

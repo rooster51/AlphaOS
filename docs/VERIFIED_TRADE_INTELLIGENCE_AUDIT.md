@@ -1,6 +1,6 @@
 # Verified trade intelligence — Phase 2 audit
 
-**Base:** `main` at `d932427` (PR #103, “Restore unified SPY/QQQ trading workspace”).
+**Base:** `main` at `1919361` (PR #104, after merging it into the Phase 2 branch).
 **Branch:** `feat/verified-trade-intelligence`.
 **Scope:** SPY and QQQ, authenticated private research, read-only.
 
@@ -54,6 +54,28 @@ The module is `modules/trade_intelligence.py`; the route is `alphaos_api/trade_i
 - `EXIT EARLY` requires a modelled position, an invalidation, a maximum modelled loss, a verified exit quote, and confirmed underlying evidence.
 - Options candidates require a contract-level quote, maximum modelled loss, and a positive small-account budget. Without those, the status is `unavailable`.
 
+## Percentage-distance normalization
+
+`price_structure.price_structure` defines `distance_pct` as a signed decimal fraction (`level / spot - 1`). The structure API therefore returns values such as `-0.0197`, not percentage points. The server bridge now converts that field once:
+
+```text
+-0.0197 (backend fraction) -> -1.97 (percentage points) -> "-1.97% from spot" (display)
+```
+
+The browser normalizer and formatter never multiply the value again. Regression tests cover positive, negative, zero, unavailable, and the reported QQQ example (`674.46` spot, `661.14` support). The UI no longer displays `-0.02%` for that level.
+
+## Backend-version and data-failure diagnostics
+
+The `/api/market` bridge returns `trade_intelligence_status` alongside the optional contract:
+
+- `available` — contract passed schema, symbol, and shape validation.
+- `endpoint_not_deployed` — Render returned `404`/`405`; this is a backend/frontend version mismatch, not a market-data failure.
+- `contract_invalid` — the backend answered but the version, symbol, or contract shape did not validate.
+- `backend_rejected_request` — authentication/authorization or request-parameter rejection (`400`, `401`, `403`, `422`).
+- `provider_unavailable` — network, timeout, or other upstream failure.
+
+Market and structure evidence remains visible when trade intelligence is unavailable. No token, URL credential, provider payload, or raw candle is included in the diagnostic.
+
 ## Website integration
 
 `/workspace` now renders:
@@ -68,18 +90,19 @@ SPY/QQQ switching and the existing mobile layout are preserved. No Public data i
 
 ## Validation performed
 
-- `python -m pytest -q tests/test_trade_intelligence.py tests/test_trade_intelligence_api.py` — **21 passed**
-- Backend regression slice (`test_trade_intelligence*`, `test_research_api`, `test_candles_api`, `test_structure_research`) — **77 passed**
-- Expanded backend slice after merging `main` #104 (`+ test_market_data_gateway`, `test_public_intraday`) — **123 passed**
-- `cd web && npm test` — **276 passed**, including the authenticated bridge validation and graceful setup-contract failure tests
+- `python -m pytest -q tests/test_trade_intelligence.py tests/test_trade_intelligence_api.py` — **24 passed**
+- Full backend suite (`python -m pytest -q`) — **1,609 passed, 1 skipped, 64 subtests passed**
+- Backend regression slice (`test_trade_intelligence*`, `test_phase6_research`, `test_research_api`, `test_candles_api`, `test_structure_research`, `test_market_data_gateway`, `test_public_intraday`) — **135 passed**
+- `cd web && npm test` — **281 passed**, including the authenticated bridge validation, QQQ percentage regression, deployment-mismatch diagnostics, and graceful setup-contract failure tests
 - `cd web && npm run typecheck` — passed
 - `cd web && npm run build` — passed
-- Browser checks at 390px and 1440px with a mocked authenticated market response — rendered, no horizontal overflow; session/pivot cards, setup cards, and assistant visible
+- Browser checks at 390px and 1440px with a mocked authenticated market response: QQQ showed `-1.97% from spot`, SPY showed `-1.37% from spot`, all three setup cards rendered, and horizontal overflow was zero
 - The browser mock is a UI contract check, not a live market observation or a performance test.
 
 ## Limitations and blocked items
 
 - Public’s adapter currently reports final-bar completion as unknown. Live finality is therefore not claimed; the newest bar is excluded and setups may remain WAIT with an explicit `unconfirmed_close`/`last_bar_excluded_unconfirmed` reason.
+- The live Render backend is still on `1919361`; that commit does not contain the route or module. Until Render deploys this branch, the preview correctly reports `endpoint_not_deployed` rather than treating the missing route as market evidence.
 - The trade-intelligence endpoint does not request an options chain. It cannot state that a BUY/SELL setup is an executable or profitable options trade.
 - No modelled position or exit quote is connected to the workspace, so EXIT EARLY is unavailable there by design.
 - No historical replay or out-of-sample performance claim is made. Fixture tests validate decision mechanics, not profitability, win rate, or edge.
