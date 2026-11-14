@@ -20,6 +20,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       {
         status: "unavailable",
+        code: error.code ?? "market_evidence_unavailable",
         error: "Market research is unavailable; no market data was substituted.",
       },
       { status: 503, headers: { "Cache-Control": "no-store" } },
