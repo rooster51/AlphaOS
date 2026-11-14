@@ -34,6 +34,16 @@ class Phase6ResearchTests(unittest.TestCase):
             self.assertTrue((levels[levels.side=='support'].level < r['spot']).all())
             self.assertTrue((levels[levels.side=='resistance'].level > r['spot']).all())
 
+    def test_distance_pct_remains_a_signed_decimal_fraction(self):
+        r=price_structure(self.history(),lookback=120)
+        levels=nearest_levels(r,3)
+        self.assertFalse(levels.empty)
+        for _, level in levels.iterrows():
+            self.assertAlmostEqual(level.distance_pct, level.level/r['spot']-1)
+            self.assertLess(abs(level.distance_pct), 1)
+        self.assertTrue((levels[levels.side=='support'].distance_pct < 0).all())
+        self.assertTrue((levels[levels.side=='resistance'].distance_pct > 0).all())
+
     def test_forward_distribution_is_anchored_to_current_spot(self):
         r=summarize_forward_distribution(self.analogs(),3,200.)
         self.assertEqual(r['n'],5)

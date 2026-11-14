@@ -1,9 +1,9 @@
-import {
+import type {
   MarketSnapshot,
   ResearchCandidate,
   JournalPosition,
   RiskGuardrails,
-} from "@/types/research";
+} from "../types/research.ts";
 
 export const MOCK_GUARDRAILS: RiskGuardrails = {
   max_trades_per_day: 3,
