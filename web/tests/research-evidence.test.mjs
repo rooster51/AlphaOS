@@ -113,3 +113,23 @@ test("backend request timeout and network failure are reported", async () => {
   await assert.rejects(fetchResearchEnvelope(url, "test-token",
     async () => { throw new TypeError("connection failed"); }), /network request failed/);
 });
+
+test("bridge failures carry stable codes for the workspace diagnostics", async () => {
+  const url = "https://api.example.test/v1/market/QQQ";
+  const hangsUntilAborted = async (_url, options) => new Promise((_resolve, reject) => {
+    options.signal.addEventListener("abort", () => reject(new DOMException("aborted", "AbortError")));
+  });
+  const timeout = await fetchResearchEnvelope(url, "test-token", hangsUntilAborted, 5)
+    .catch((error) => error);
+  assert.equal(timeout.code, "backend_timeout");
+
+  const unauthorized = await fetchResearchEnvelope(url, "test-token",
+    async () => Response.json({ error: { code: "authentication_required" } }, { status: 401 }))
+    .catch((error) => error);
+  assert.equal(unauthorized.code, "backend_auth_failed");
+
+  const schema = await fetchResearchEnvelope(url, "test-token",
+    async () => Response.json({ error: { code: "provider_unavailable" } }))
+    .catch((error) => error);
+  assert.equal(schema.code, "backend_schema_invalid");
+});

@@ -10,6 +10,15 @@ type TradeIntelligenceStatus =
   | "contract_invalid"
   | "backend_rejected_request"
   | "provider_unavailable";
+type OptionalTradeIntelligence = {
+  data: JsonObject | null;
+  status: TradeIntelligenceStatus;
+  warning?: string;
+};
+
+const MARKET_REQUEST_TIMEOUT_MS = 10_000;
+// The optional contract must not consume the bridge's whole response budget.
+const TRADE_INTELLIGENCE_TIMEOUT_MS = 3_500;
 
 function record(value: unknown): JsonObject {
   return value !== null && typeof value === "object" && !Array.isArray(value)
@@ -116,12 +125,50 @@ function validTradeIntelligence(value: unknown, symbol: string): boolean {
       && (setup.risk === null || (typeof record(setup.risk).underlying_risk_distance === "number"));
   });
 }
-async function research(path: string): Promise<JsonObject> {
+async function research(
+  path: string,
+  timeoutMs = MARKET_REQUEST_TIMEOUT_MS,
+): Promise<JsonObject> {
   const { base, token, diagnostics } = getServerConfig();
   if (!base || !token || diagnostics.configuration !== "ready") {
-    throw new ResearchUnavailableError("Research backend not configured");
+    throw new ResearchUnavailableError(
+      "Research backend not configured", null, "backend_not_configured",
+    );
   }
-  return await fetchResearchEnvelope(`${base}${path}`, token);
+  return await fetchResearchEnvelope(`${base}${path}`, token, fetch, timeoutMs);
+}
+
+/** Optional evidence: every failure is contained so market/structure survive. */
+async function loadTradeIntelligence(symbol: "QQQ" | "SPY"): Promise<OptionalTradeIntelligence> {
+  try {
+    const candidate = await research(
+      `/v1/research/trade-intelligence/${symbol}?horizon=3`,
+      TRADE_INTELLIGENCE_TIMEOUT_MS,
+    );
+    if (validTradeIntelligence(candidate, symbol)) {
+      return { data: record(candidate.evidence), status: "available" };
+    }
+    return {
+      data: null,
+      status: "contract_invalid",
+      warning:
+        "Verified setup evidence is unavailable: the backend responded, but the setup contract " +
+        "did not pass validation. This is a contract/version mismatch, not a market-data failure; " +
+        "no setup state was inferred.",
+    };
+  } catch (error) {
+    if (error instanceof ResearchUnavailableError) {
+      const classified = classifyTradeIntelligenceError(error);
+      return { data: null, ...classified };
+    }
+    return {
+      data: null,
+      status: "provider_unavailable",
+      warning:
+        "Verified setup evidence is unavailable because the optional trade-intelligence request " +
+        "failed unexpectedly. Market and structure evidence remain available; no setup state was inferred.",
+    };
+  }
 }
 
 /** Only actual, explicitly verified provider observations can be displayed as live. */
@@ -146,41 +193,47 @@ export async function getMarketSnapshotServer(symbol: string): Promise<{
   const market = await research(`/v1/market/${normSymbol}?horizon=3`);
   const marketMeta = record(market.meta);
   if (typeof marketMeta.snapshot_id !== "string" || !marketMeta.snapshot_id) {
-    throw new Error("No verified market snapshot identifier available");
+    throw new ResearchUnavailableError(
+      "No verified market snapshot identifier available",
+      503,
+      "market_snapshot_unavailable",
+    );
   }
-  const structure = await research(
+  // Structure depends on the market snapshot; the optional trade contract does
+  // not, so run it alongside structure rather than adding its latency afterward.
+  const structurePromise = research(
     `/v1/structure/${normSymbol}?horizon=3&snapshot_id=${encodeURIComponent(marketMeta.snapshot_id)}`
   );
-  let tradeIntelligence: JsonObject | null = null;
-  let tradeIntelligenceStatus: TradeIntelligenceStatus = "provider_unavailable";
-  let tradeIntelligenceWarning: string | undefined;
-  try {
-    const candidate = await research(`/v1/research/trade-intelligence/${normSymbol}?horizon=3`);
-    if (validTradeIntelligence(candidate, normSymbol)) {
-      tradeIntelligence = record(candidate.evidence);
-      tradeIntelligenceStatus = "available";
-    } else {
-      tradeIntelligenceStatus = "contract_invalid";
-      tradeIntelligenceWarning =
-        "Verified setup evidence is unavailable: the backend responded, but the setup contract " +
-        "did not pass validation. This is a contract/version mismatch, not a market-data failure; " +
-        "no setup state was inferred.";
-    }
-  } catch (error) {
-    if (!(error instanceof ResearchUnavailableError)) throw error;
-    ({ status: tradeIntelligenceStatus, warning: tradeIntelligenceWarning } =
-      classifyTradeIntelligenceError(error));
-  }
+  const tradePromise = loadTradeIntelligence(normSymbol);
+  const [structure, trade] = await Promise.all([structurePromise, tradePromise]);
+  const {
+    data: tradeIntelligence,
+    status: tradeIntelligenceStatus,
+    warning: tradeIntelligenceWarning,
+  } = trade;
   const meta = record(market.meta);
   const marketEvidence = record(market.evidence);
   const structureEvidence = record(structure.evidence);
   const quotedSpot = meta.current_spot;
   const atr = structureEvidence.atr;
   const observedAt = meta.quote_as_of;
-  if (!verifiedMarketPair(market, structure, normSymbol) ||
-      !finitePositive(quotedSpot) || !finitePositive(atr) ||
+  if (!verifiedMarketPair(market, structure, normSymbol)) {
+    const quality = record(meta.quote_freshness);
+    const code = quality.market_state === "closed" || quality.data_status === "latest_available"
+      ? "market_closed" : "market_evidence_unavailable";
+    throw new ResearchUnavailableError(
+      "No verified, fresh, matching market/structure evidence available",
+      503,
+      code,
+    );
+  }
+  if (!finitePositive(quotedSpot) || !finitePositive(atr) ||
       typeof observedAt !== "string") {
-    throw new Error("No verified, fresh, matching market/structure evidence available");
+    throw new ResearchUnavailableError(
+      "No verified, fresh, matching market/structure evidence available",
+      503,
+      "market_evidence_unavailable",
+    );
   }
   const state = record(marketEvidence.market_state);
   const allowedDirection = ["bullish", "bearish", "neutral"];

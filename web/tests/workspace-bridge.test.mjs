@@ -61,6 +61,7 @@ function mockBackend({
   level = 498.2,
   distancePct = -0.0137,
   tradeFailure = null,
+  closed = false,
 } = {}) {
   globalThis.fetch = async (input) => {
     const url = new URL(String(input));
@@ -72,8 +73,12 @@ function mockBackend({
         snapshot_id: "snapshot-1", source: "Public", current_spot: spot,
         quote_as_of: "2026-11-13T15:45:00+00:00",
         quote_freshness: {
-          freshness: "fresh", data_status: "fresh", market_state: "regular_open",
-          usable_for_live_research: true, quote_as_of: "2026-11-13T15:45:00+00:00",
+          freshness: closed ? "latest_available" : "fresh",
+          data_status: closed ? "latest_available" : "fresh",
+          market_state: closed ? "closed" : "regular_open",
+          usable_for_live_research: !closed,
+          usable_for_contextual_research: true,
+          quote_as_of: "2026-11-13T15:45:00+00:00",
         },
       }));
     }
@@ -85,6 +90,7 @@ function mockBackend({
     }
     if (url.pathname === `/v1/research/trade-intelligence/${symbol}`) {
       if (tradeFailure === "network") throw new TypeError("network down");
+      if (tradeFailure === "throws") throw new Error("unexpected trade failure");
       if (tradeFailure === "not_deployed") {
         return Response.json({ error: { code: "not_found" } }, { status: 404 });
       }
@@ -198,4 +204,30 @@ test("a network failure is reported as provider unavailability", async () => {
   assert.equal(result.trade_intelligence, null);
   assert.equal(result.trade_intelligence_status, "provider_unavailable");
   assert.match(result.trade_intelligence_warning, /request failed/);
+});
+
+test("an unexpected optional trade exception cannot discard a valid market snapshot", async () => {
+  configure();
+  mockBackend({ tradeFailure: "throws" });
+  const result = await getMarketSnapshotServer("SPY");
+  assert.equal(result.isLive, true);
+  assert.equal(result.data.current_spot, 505.1);
+  assert.equal(result.data.levels.length, 1);
+  assert.equal(result.trade_intelligence, null);
+  assert.equal(result.trade_intelligence_status, "provider_unavailable");
+  assert.match(result.trade_intelligence_warning, /failed unexpectedly/);
+});
+
+test("a closed market is diagnosed explicitly and fails independently of trade intelligence", async () => {
+  configure();
+  mockBackend({ closed: true });
+  await assert.rejects(
+    () => getMarketSnapshotServer("SPY"),
+    (error) => {
+      assert.equal(error.name, "ResearchUnavailableError");
+      assert.equal(error.status, 503);
+      assert.equal(error.code, "market_closed");
+      return true;
+    },
+  );
 });
