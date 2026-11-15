@@ -55,17 +55,27 @@ function tradeEvidence(symbol = "SPY") {
   };
 }
 
+function failureResponse({ status, code }) {
+  return Response.json({
+    error: code ? { code, message: "Sanitized upstream failure" } : { message: "Sanitized upstream failure" },
+    schema_version: "alphaos-research-v1",
+  }, { status });
+}
+
 function mockBackend({
   symbol = "SPY",
   spot = 505.1,
   level = 498.2,
   distancePct = -0.0137,
+  marketFailure = null,
+  structureFailure = null,
   tradeFailure = null,
   closed = false,
 } = {}) {
   globalThis.fetch = async (input) => {
     const url = new URL(String(input));
     if (url.pathname === `/v1/market/${symbol}`) {
+      if (marketFailure) return failureResponse(marketFailure);
       return Response.json(envelope(symbol, {
         market_state: { direction: "bullish" },
         timing: {},
@@ -83,12 +93,14 @@ function mockBackend({
       }));
     }
     if (url.pathname === `/v1/structure/${symbol}`) {
+      if (structureFailure) return failureResponse(structureFailure);
       return Response.json(envelope(symbol, {
         atr: 4.5,
         levels: [{ side: "support", level, distance_pct: distancePct, sources: "20d_low" }],
       }, { snapshot_id: "snapshot-1", source: "Public" }));
     }
     if (url.pathname === `/v1/research/trade-intelligence/${symbol}`) {
+      if (tradeFailure && typeof tradeFailure === "object") return failureResponse(tradeFailure);
       if (tradeFailure === "network") throw new TypeError("network down");
       if (tradeFailure === "throws") throw new Error("unexpected trade failure");
       if (tradeFailure === "not_deployed") {
@@ -227,7 +239,96 @@ test("a closed market is diagnosed explicitly and fails independently of trade i
       assert.equal(error.name, "ResearchUnavailableError");
       assert.equal(error.status, 503);
       assert.equal(error.code, "market_closed");
+      assert.equal(error.stage, "market_validation");
       return true;
     },
   );
+});
+
+test("an upstream market_closed_quote 503 keeps the market-closed code and source", async () => {
+  configure();
+  mockBackend({ marketFailure: { status: 503, code: "market_closed_quote" } });
+  await assert.rejects(
+    () => getMarketSnapshotServer("SPY"),
+    (error) => {
+      assert.equal(error.status, 503);
+      assert.equal(error.code, "market_closed");
+      assert.equal(error.upstreamCode, "market_closed_quote");
+      assert.equal(error.stage, "market");
+      return true;
+    },
+  );
+});
+
+test("a stale Render quote is distinct from market closure", async () => {
+  configure();
+  mockBackend({ marketFailure: { status: 503, code: "stale_quote" } });
+  await assert.rejects(
+    () => getMarketSnapshotServer("SPY"),
+    (error) => {
+      assert.equal(error.status, 503);
+      assert.equal(error.code, "market_stale");
+      assert.equal(error.upstreamCode, "stale_quote");
+      assert.equal(error.stage, "market");
+      return true;
+    },
+  );
+});
+
+test("a history-provider failure is distinct from closure and authentication", async () => {
+  configure();
+  mockBackend({ marketFailure: { status: 503, code: "insufficient_historical_data" } });
+  await assert.rejects(
+    () => getMarketSnapshotServer("SPY"),
+    (error) => {
+      assert.equal(error.status, 503);
+      assert.equal(error.code, "market_history_unavailable");
+      assert.equal(error.upstreamCode, "insufficient_historical_data");
+      assert.equal(error.stage, "market");
+      return true;
+    },
+  );
+});
+
+test("an unexpected upstream status is not collapsed into backend_http_error", async () => {
+  configure();
+  mockBackend({ marketFailure: { status: 502, code: null } });
+  await assert.rejects(
+    () => getMarketSnapshotServer("SPY"),
+    (error) => {
+      assert.equal(error.status, 502);
+      assert.equal(error.code, "backend_service_error");
+      assert.equal(error.upstreamCode, null);
+      assert.equal(error.stage, "market");
+      return true;
+    },
+  );
+});
+
+test("a structure failure identifies the structure stage", async () => {
+  configure();
+  mockBackend({ structureFailure: { status: 503, code: "provider_unavailable" } });
+  await assert.rejects(
+    () => getMarketSnapshotServer("SPY"),
+    (error) => {
+      assert.equal(error.status, 503);
+      assert.equal(error.code, "provider_unavailable");
+      assert.equal(error.upstreamCode, "provider_unavailable");
+      assert.equal(error.stage, "structure");
+      return true;
+    },
+  );
+});
+
+test("a trade-intelligence 503 cannot invalidate valid market and structure evidence", async () => {
+  configure();
+  mockBackend({ tradeFailure: { status: 503, code: "provider_unavailable" } });
+  const result = await getMarketSnapshotServer("SPY");
+  assert.equal(result.isLive, true);
+  assert.equal(result.data.current_spot, 505.1);
+  assert.equal(result.data.levels.length, 1);
+  assert.equal(result.trade_intelligence, null);
+  assert.equal(result.trade_intelligence_status, "provider_unavailable");
+  assert.match(result.trade_intelligence_warning, /HTTP 503/);
+  assert.match(result.trade_intelligence_warning, /provider_unavailable/);
 });

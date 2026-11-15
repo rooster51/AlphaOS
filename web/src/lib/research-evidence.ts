@@ -8,25 +8,101 @@ export type ResearchFailureCode =
   | "backend_unreachable"
   | "backend_schema_invalid"
   | "backend_http_error"
+  | "backend_service_error"
+  | "backend_gateway_timeout"
+  | "backend_rejected_request"
   | "market_closed"
+  | "market_stale"
+  | "market_freshness_unknown"
+  | "market_history_unavailable"
+  | "market_data_unavailable"
+  | "market_snapshot_expired"
+  | "market_snapshot_mismatch"
   | "market_snapshot_unavailable"
-  | "market_evidence_unavailable";
+  | "market_evidence_unavailable"
+  | "provider_unavailable"
+  | "provider_auth_failed"
+  | "provider_not_configured"
+  | "provider_timeout"
+  | "provider_rate_limited"
+  | "provider_contract_invalid";
+
+export type ResearchStage =
+  | "market"
+  | "structure"
+  | "market_validation"
+  | "trade_intelligence";
 
 const RESEARCH_SCHEMA = "alphaos-research-v1";
+
+// Render's authenticated error contract uses stable codes. Only allowlisted
+// values are retained so an upstream body can never become a free-text field.
+const UPSTREAM_FAILURE_CODES: Record<string, ResearchFailureCode> = {
+  market_closed_quote: "market_closed",
+  stale_quote: "market_stale",
+  quote_freshness_unknown: "market_freshness_unknown",
+  insufficient_historical_data: "market_history_unavailable",
+  market_data_unavailable: "market_data_unavailable",
+  stale_snapshot: "market_snapshot_expired",
+  snapshot_mismatch: "market_snapshot_mismatch",
+  provider_unavailable: "provider_unavailable",
+  public_authentication_failure: "provider_auth_failed",
+  public_not_configured: "provider_not_configured",
+  provider_timeout: "provider_timeout",
+  public_rate_limit: "provider_rate_limited",
+  provider_schema_error: "provider_contract_invalid",
+  provider_symbol_mismatch: "provider_contract_invalid",
+  missing_quote: "provider_unavailable",
+  authentication_required: "backend_auth_failed",
+  forbidden: "backend_auth_failed",
+  not_found: "backend_route_unavailable",
+  api_not_configured: "backend_not_configured",
+  internal_error: "backend_service_error",
+};
+
+function fallbackFailureCode(status: number): ResearchFailureCode {
+  if (status === 401 || status === 403) return "backend_auth_failed";
+  if (status === 404 || status === 405) return "backend_route_unavailable";
+  if (status === 408 || status === 504) return "backend_gateway_timeout";
+  if (status === 429) return "provider_rate_limited";
+  if (status === 409) return "market_snapshot_mismatch";
+  if (status === 410) return "market_snapshot_expired";
+  if (status >= 400 && status < 500) return "backend_rejected_request";
+  if (status >= 500) return "backend_service_error";
+  return "backend_http_error";
+}
+
+function upstreamFailure(status: number, body: unknown): {
+  code: ResearchFailureCode;
+  upstreamCode: string | null;
+} {
+  const error = object(body)?.error;
+  const candidate = object(error)?.code;
+  if (typeof candidate === "string" && Object.hasOwn(UPSTREAM_FAILURE_CODES, candidate)) {
+    return { code: UPSTREAM_FAILURE_CODES[candidate], upstreamCode: candidate };
+  }
+  return { code: fallbackFailureCode(status), upstreamCode: null };
+}
 
 export class ResearchUnavailableError extends Error {
   readonly status: number | null;
   readonly code: ResearchFailureCode | null;
+  readonly upstreamCode: string | null;
+  readonly stage: ResearchStage | null;
 
   constructor(
     message: string,
     status: number | null = null,
     code: ResearchFailureCode | null = null,
+    upstreamCode: string | null = null,
+    stage: ResearchStage | null = null,
   ) {
     super(message);
     this.name = "ResearchUnavailableError";
     this.status = status;
     this.code = code;
+    this.upstreamCode = upstreamCode;
+    this.stage = stage;
   }
 }
 
@@ -77,15 +153,18 @@ export async function fetchResearchEnvelope(
       signal: controller.signal,
     });
     if (!response.ok) {
-      const code = response.status === 401 || response.status === 403
-        ? "backend_auth_failed"
-        : response.status === 404 || response.status === 405
-          ? "backend_route_unavailable"
-          : "backend_http_error";
+      let body: unknown = null;
+      try {
+        body = await response.json();
+      } catch {
+        // A proxy/HTML error page has no stable code; the status fallback applies.
+      }
+      const failure = upstreamFailure(response.status, body);
       throw new ResearchUnavailableError(
         `Research API unavailable (HTTP ${response.status})`,
         response.status,
-        code,
+        failure.code,
+        failure.upstreamCode,
       );
     }
 

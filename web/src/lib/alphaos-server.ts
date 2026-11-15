@@ -68,11 +68,14 @@ function classifyTradeIntelligenceError(
         `not a validated market state; no setup state was inferred.`,
     };
   }
+  const detail = error.status
+    ? ` (HTTP ${error.status}${error.upstreamCode ? `, ${error.upstreamCode}` : ""})`
+    : "";
   return {
     status: "provider_unavailable",
     warning:
       `Verified setup evidence is unavailable because the research backend request failed` +
-      `${error.status ? ` (HTTP ${error.status})` : ""}. No BUY, SELL, entry, or invalidation ` +
+      `${detail}. No BUY, SELL, entry, or invalidation ` +
       `was inferred; this is not a substitute for verified market evidence.`,
   };
 }
@@ -127,15 +130,29 @@ function validTradeIntelligence(value: unknown, symbol: string): boolean {
 }
 async function research(
   path: string,
-  timeoutMs = MARKET_REQUEST_TIMEOUT_MS,
+  timeoutMs: number,
+  stage: "market" | "structure" | "trade_intelligence",
 ): Promise<JsonObject> {
   const { base, token, diagnostics } = getServerConfig();
   if (!base || !token || diagnostics.configuration !== "ready") {
     throw new ResearchUnavailableError(
-      "Research backend not configured", null, "backend_not_configured",
+      "Research backend not configured", null, "backend_not_configured", null, stage,
     );
   }
-  return await fetchResearchEnvelope(`${base}${path}`, token, fetch, timeoutMs);
+  try {
+    return await fetchResearchEnvelope(`${base}${path}`, token, fetch, timeoutMs);
+  } catch (error) {
+    if (error instanceof ResearchUnavailableError) {
+      throw new ResearchUnavailableError(
+        error.message,
+        error.status,
+        error.code,
+        error.upstreamCode,
+        stage,
+      );
+    }
+    throw error;
+  }
 }
 
 /** Optional evidence: every failure is contained so market/structure survive. */
@@ -144,6 +161,7 @@ async function loadTradeIntelligence(symbol: "QQQ" | "SPY"): Promise<OptionalTra
     const candidate = await research(
       `/v1/research/trade-intelligence/${symbol}?horizon=3`,
       TRADE_INTELLIGENCE_TIMEOUT_MS,
+      "trade_intelligence",
     );
     if (validTradeIntelligence(candidate, symbol)) {
       return { data: record(candidate.evidence), status: "available" };
@@ -190,19 +208,27 @@ export async function getMarketSnapshotServer(symbol: string): Promise<{
   }
   // The original frontend expected context/structure fields that are not part
   // of the real API. Query both documented endpoints and validate the envelope.
-  const market = await research(`/v1/market/${normSymbol}?horizon=3`);
+  const market = await research(
+    `/v1/market/${normSymbol}?horizon=3`,
+    MARKET_REQUEST_TIMEOUT_MS,
+    "market",
+  );
   const marketMeta = record(market.meta);
   if (typeof marketMeta.snapshot_id !== "string" || !marketMeta.snapshot_id) {
     throw new ResearchUnavailableError(
       "No verified market snapshot identifier available",
       503,
       "market_snapshot_unavailable",
+      null,
+      "market_validation",
     );
   }
   // Structure depends on the market snapshot; the optional trade contract does
   // not, so run it alongside structure rather than adding its latency afterward.
   const structurePromise = research(
-    `/v1/structure/${normSymbol}?horizon=3&snapshot_id=${encodeURIComponent(marketMeta.snapshot_id)}`
+    `/v1/structure/${normSymbol}?horizon=3&snapshot_id=${encodeURIComponent(marketMeta.snapshot_id)}`,
+    MARKET_REQUEST_TIMEOUT_MS,
+    "structure",
   );
   const tradePromise = loadTradeIntelligence(normSymbol);
   const [structure, trade] = await Promise.all([structurePromise, tradePromise]);
@@ -225,6 +251,8 @@ export async function getMarketSnapshotServer(symbol: string): Promise<{
       "No verified, fresh, matching market/structure evidence available",
       503,
       code,
+      null,
+      "market_validation",
     );
   }
   if (!finitePositive(quotedSpot) || !finitePositive(atr) ||
@@ -233,6 +261,8 @@ export async function getMarketSnapshotServer(symbol: string): Promise<{
       "No verified, fresh, matching market/structure evidence available",
       503,
       "market_evidence_unavailable",
+      null,
+      "market_validation",
     );
   }
   const state = record(marketEvidence.market_state);
