@@ -40,10 +40,14 @@ def candles(*closes, complete=True):
 
 
 class FakeService:
+    def __init__(self):
+        self.requested_snapshot_id = None
+
     def clock(self):
         return NOW
 
-    def snapshot(self, symbol, horizon=3):
+    def snapshot(self, symbol, horizon=3, snapshot_id=None):
+        self.requested_snapshot_id = snapshot_id
         return {
             "prepared": {
                 "dataset": {"features": pd.DataFrame([{
@@ -110,6 +114,16 @@ def test_endpoint_returns_derived_contract_without_raw_candles(token):
     assert response.headers["cache-control"] == "no-store"
 
 
+def test_trade_request_reuses_the_verified_market_snapshot(token):
+    service = api.app.state.service
+    response = get(
+        token,
+        "/v1/research/trade-intelligence/SPY?snapshot_id=verified-market-snapshot",
+    )
+    assert response.status_code == 200
+    assert service.requested_snapshot_id == "verified-market-snapshot"
+
+
 def test_qqq_route_returns_the_same_versioned_contract(token):
     response = get(token, "/v1/research/trade-intelligence/QQQ")
     assert response.status_code == 200
@@ -142,6 +156,26 @@ def test_contract_contains_no_raw_candle_arrays_or_provider_credentials(token):
 
     walk(body)
     assert "confirmed_bars" in body["evidence"]["data"]
+
+
+def test_all_three_setups_wait_when_no_signal_is_confirmed(token, monkeypatch):
+    monkeypatch.setitem(
+        api.app.state._state, "candles",
+        FakeCandles(candles(101.0, 101.2, 101.1, 102.2, complete=False)),
+    )
+    evidence = get(token).json()["evidence"]
+    assert evidence["state"] == "WAIT"
+    assert [item["id"] for item in evidence["setups"]] == [
+        "opening_range_breakout",
+        "vwap_ema9_continuation",
+        "support_resistance_reversal",
+    ]
+    assert all(item["state"] == "WAIT" for item in evidence["setups"])
+    assert all(item["wait_reason"] for item in evidence["setups"])
+    assert all(item["options"]["status"] == "not_evaluated" for item in evidence["setups"])
+    assert all(item["options"]["max_modeled_loss"] is None for item in evidence["setups"])
+    assert all(item["options"]["strategy_families"] == [] for item in evidence["setups"])
+    assert evidence["exit_early"]["state"] == "UNAVAILABLE"
 
 
 def test_authentication_and_symbol_validation_fail_before_any_provider_work(token):
