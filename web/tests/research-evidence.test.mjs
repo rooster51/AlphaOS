@@ -133,3 +133,50 @@ test("bridge failures carry stable codes for the workspace diagnostics", async (
     .catch((error) => error);
   assert.equal(schema.code, "backend_schema_invalid");
 });
+
+test("Render market-data error bodies retain specific safe codes", async () => {
+  const url = "https://api.example.test/v1/market/SPY";
+  const cases = [
+    [503, "market_closed_quote", "market_closed"],
+    [503, "stale_quote", "market_stale"],
+    [503, "quote_freshness_unknown", "market_freshness_unknown"],
+    [503, "insufficient_historical_data", "market_history_unavailable"],
+    [503, "public_authentication_failure", "provider_auth_failed"],
+    [503, "public_not_configured", "provider_not_configured"],
+    [503, "provider_timeout", "provider_timeout"],
+    [503, "public_rate_limit", "provider_rate_limited"],
+    [503, "provider_schema_error", "provider_contract_invalid"],
+    [401, "authentication_required", "backend_auth_failed"],
+    [403, "forbidden", "backend_auth_failed"],
+    [404, "not_found", "backend_route_unavailable"],
+  ];
+  for (const [status, upstreamCode, expected] of cases) {
+    const error = await fetchResearchEnvelope(url, "test-token",
+      async () => Response.json({ error: { code: upstreamCode, message: "ignored" } }, { status }))
+      .catch((failure) => failure);
+    assert.equal(error.code, expected, upstreamCode);
+    assert.equal(error.status, status, upstreamCode);
+    assert.equal(error.upstreamCode, upstreamCode, upstreamCode);
+  }
+});
+
+test("unexpected statuses and unknown upstream codes stay safely classified", async () => {
+  const url = "https://api.example.test/v1/market/SPY";
+  const server = await fetchResearchEnvelope(url, "test-token",
+    async () => Response.json({ error: { code: "not_a_real_code", message: "private" } }, { status: 502 }))
+    .catch((error) => error);
+  assert.equal(server.code, "backend_service_error");
+  assert.equal(server.upstreamCode, null);
+
+  const rejected = await fetchResearchEnvelope(url, "test-token",
+    async () => Response.json({ error: { code: "teapot" } }, { status: 418 }))
+    .catch((error) => error);
+  assert.equal(rejected.code, "backend_rejected_request");
+  assert.equal(rejected.upstreamCode, null);
+
+  const html = await fetchResearchEnvelope(url, "test-token",
+    async () => new Response("<html>Bad gateway</html>", { status: 504 }))
+    .catch((error) => error);
+  assert.equal(html.code, "backend_gateway_timeout");
+  assert.equal(html.upstreamCode, null);
+});

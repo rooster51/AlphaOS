@@ -21,6 +21,8 @@ export async function GET(request: NextRequest) {
       {
         status: "unavailable",
         code: error.code ?? "market_evidence_unavailable",
+        stage: error.stage,
+        upstream_code: error.upstreamCode,
         error: "Market research is unavailable; no market data was substituted.",
       },
       { status: 503, headers: { "Cache-Control": "no-store" } },
