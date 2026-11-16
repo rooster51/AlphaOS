@@ -1,7 +1,7 @@
 import { fetchResearchEnvelope, supportedMarketSymbol, verifiedMarketPair, ResearchUnavailableError } from "./research-evidence.ts";
 import type { MarketSnapshot } from "../types/research.ts";
 import { MOCK_MARKET_SNAPSHOTS } from "./mock-data.ts";
-import { getServerConfig } from "./server-config.ts";
+import { getServerConfig, type BackendTarget } from "./server-config.ts";
 
 type JsonObject = Record<string, unknown>;
 type TradeIntelligenceStatus =
@@ -39,15 +39,21 @@ function percentPoints(value: unknown): number | null {
 
 function classifyTradeIntelligenceError(
   error: ResearchUnavailableError,
+  backendTarget: BackendTarget,
 ): { status: TradeIntelligenceStatus; warning: string } {
   if (error.status === 404 || error.status === 405) {
+    const target = backendTarget === "staging"
+      ? "The bridge is configured for the staging backend, which does not expose the " +
+        "Phase 2 route; the production backend does. This is a staging/production " +
+        "configuration mismatch."
+      : "This is a backend-version or backend-target mismatch.";
     return {
       status: "endpoint_not_deployed",
       warning:
         `Verified setup evidence is unavailable: the research backend does not expose the ` +
-        `Phase 2 trade-intelligence route (HTTP ${error.status}). This is a backend-version ` +
-        `mismatch, not a market-data failure. Market and structure evidence remain available; ` +
-        `no setup state was inferred.`,
+        `Phase 2 trade-intelligence route (HTTP ${error.status}; target: ${backendTarget}). ` +
+        `${target} This is not a market-data failure. Market and structure evidence remain ` +
+        `available; no setup state was inferred.`,
     };
   }
   if (error.status === 401 || error.status === 403) {
@@ -156,10 +162,14 @@ async function research(
 }
 
 /** Optional evidence: every failure is contained so market/structure survive. */
-async function loadTradeIntelligence(symbol: "QQQ" | "SPY"): Promise<OptionalTradeIntelligence> {
+async function loadTradeIntelligence(
+  symbol: "QQQ" | "SPY",
+  snapshotId: string,
+): Promise<OptionalTradeIntelligence> {
   try {
+    const query = new URLSearchParams({ horizon: "3", snapshot_id: snapshotId });
     const candidate = await research(
-      `/v1/research/trade-intelligence/${symbol}?horizon=3`,
+      `/v1/research/trade-intelligence/${symbol}?${query.toString()}`,
       TRADE_INTELLIGENCE_TIMEOUT_MS,
       "trade_intelligence",
     );
@@ -176,7 +186,10 @@ async function loadTradeIntelligence(symbol: "QQQ" | "SPY"): Promise<OptionalTra
     };
   } catch (error) {
     if (error instanceof ResearchUnavailableError) {
-      const classified = classifyTradeIntelligenceError(error);
+      const classified = classifyTradeIntelligenceError(
+        error,
+        getServerConfig().diagnostics.backend_target,
+      );
       return { data: null, ...classified };
     }
     return {
@@ -214,7 +227,8 @@ export async function getMarketSnapshotServer(symbol: string): Promise<{
     "market",
   );
   const marketMeta = record(market.meta);
-  if (typeof marketMeta.snapshot_id !== "string" || !marketMeta.snapshot_id) {
+  const snapshotId = marketMeta.snapshot_id;
+  if (typeof snapshotId !== "string" || !snapshotId) {
     throw new ResearchUnavailableError(
       "No verified market snapshot identifier available",
       503,
@@ -226,11 +240,11 @@ export async function getMarketSnapshotServer(symbol: string): Promise<{
   // Structure depends on the market snapshot; the optional trade contract does
   // not, so run it alongside structure rather than adding its latency afterward.
   const structurePromise = research(
-    `/v1/structure/${normSymbol}?horizon=3&snapshot_id=${encodeURIComponent(marketMeta.snapshot_id)}`,
+    `/v1/structure/${normSymbol}?horizon=3&snapshot_id=${encodeURIComponent(snapshotId)}`,
     MARKET_REQUEST_TIMEOUT_MS,
     "structure",
   );
-  const tradePromise = loadTradeIntelligence(normSymbol);
+  const tradePromise = loadTradeIntelligence(normSymbol, snapshotId);
   const [structure, trade] = await Promise.all([structurePromise, tradePromise]);
   const {
     data: tradeIntelligence,

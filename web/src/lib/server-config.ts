@@ -1,5 +1,20 @@
 import { readRuntimeBindings } from "#alphaos-runtime";
 
+export type BackendTarget = "production" | "staging" | "other" | "unconfigured";
+
+/** Classify the configured host without exposing the URL or a credential. */
+function backendTarget(base: string | undefined): BackendTarget {
+  if (!base) return "unconfigured";
+  try {
+    const hostname = new URL(base).hostname;
+    if (hostname === "alphaos.onrender.com") return "production";
+    if (hostname === "alphaos-api-staging.onrender.com") return "staging";
+    return "other";
+  } catch {
+    return "other";
+  }
+}
+
 export function getServerConfig() {
   const { runtime, bindings } = readRuntimeBindings();
   const values = bindings as Record<string, unknown>;
@@ -19,6 +34,7 @@ export function getServerConfig() {
   }
   const diagnostics = {
     runtime,
+    backend_target: backendTarget(base),
     bindings_present: {
       ALPHAOS_API_URL: Boolean(base),
       ALPHAOS_API_TOKEN: Boolean(token),

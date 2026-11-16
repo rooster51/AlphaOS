@@ -6,6 +6,7 @@ import { formatDistancePct, normalizeMarketResponse } from "../src/lib/workspace
 const originalFetch = globalThis.fetch;
 const originalUrl = process.env.ALPHAOS_API_URL;
 const originalToken = process.env.ALPHAOS_API_TOKEN;
+let requested = [];
 
 function envelope(symbol, evidence, meta = {}) {
   return {
@@ -72,8 +73,10 @@ function mockBackend({
   tradeFailure = null,
   closed = false,
 } = {}) {
-  globalThis.fetch = async (input) => {
+  requested = [];
+  globalThis.fetch = async (input, options) => {
     const url = new URL(String(input));
+    requested.push(url);
     if (url.pathname === `/v1/market/${symbol}`) {
       if (marketFailure) return failureResponse(marketFailure);
       return Response.json(envelope(symbol, {
@@ -101,6 +104,12 @@ function mockBackend({
     }
     if (url.pathname === `/v1/research/trade-intelligence/${symbol}`) {
       if (tradeFailure && typeof tradeFailure === "object") return failureResponse(tradeFailure);
+      if (tradeFailure === "timeout") {
+        return await new Promise((_resolve, reject) => {
+          options.signal.addEventListener("abort", () =>
+            reject(new DOMException("aborted", "AbortError")));
+        });
+      }
       if (tradeFailure === "network") throw new TypeError("network down");
       if (tradeFailure === "throws") throw new Error("unexpected trade failure");
       if (tradeFailure === "not_deployed") {
@@ -148,6 +157,11 @@ test("the market bridge validates the trade contract and maps existing level/sid
   assert.equal(result.trade_intelligence.setups.length, 3);
   assert.equal(result.trade_intelligence_status, "available");
   assert.equal(result.trade_intelligence_warning, undefined);
+  const structure = requested.find((url) => url.pathname === "/v1/structure/SPY");
+  const trade = requested.find((url) => url.pathname === "/v1/research/trade-intelligence/SPY");
+  assert.equal(structure?.searchParams.get("snapshot_id"), "snapshot-1");
+  assert.equal(trade?.searchParams.get("snapshot_id"), "snapshot-1");
+  assert.equal(trade?.searchParams.get("horizon"), "3");
 });
 
 test("QQQ fraction distance is normalized once and formats as -1.97%, not -0.02%", async () => {
@@ -183,8 +197,31 @@ test("a 404/405 trade route is diagnosed as a backend-version mismatch, not prov
   assert.equal(result.data.current_spot, 505.1);
   assert.equal(result.trade_intelligence, null);
   assert.equal(result.trade_intelligence_status, "endpoint_not_deployed");
-  assert.match(result.trade_intelligence_warning, /backend-version mismatch/);
+  assert.match(result.trade_intelligence_warning, /backend-version or backend-target mismatch/);
   assert.match(result.trade_intelligence_warning, /not a market-data failure/);
+});
+
+test("a staging target missing the Phase 2 route is named explicitly", async () => {
+  process.env.ALPHAOS_API_URL = "https://alphaos-api-staging.onrender.com";
+  process.env.ALPHAOS_API_TOKEN = "test-token";
+  mockBackend({ tradeFailure: "not_deployed" });
+  const result = await getMarketSnapshotServer("SPY");
+  assert.equal(result.trade_intelligence_status, "endpoint_not_deployed");
+  assert.match(result.trade_intelligence_warning, /target: staging/);
+  assert.match(result.trade_intelligence_warning, /staging\/production configuration mismatch/);
+  assert.match(result.trade_intelligence_warning, /Market and structure evidence remain/);
+});
+
+test("a timed-out trade request preserves verified market and structure evidence", async () => {
+  configure();
+  mockBackend({ tradeFailure: "timeout" });
+  const result = await getMarketSnapshotServer("SPY");
+  assert.equal(result.isLive, true);
+  assert.equal(result.data.current_spot, 505.1);
+  assert.equal(result.data.levels.length, 1);
+  assert.equal(result.trade_intelligence, null);
+  assert.equal(result.trade_intelligence_status, "provider_unavailable");
+  assert.match(result.trade_intelligence_warning, /request failed/);
 });
 
 test("a backend failure is distinguished from a missing deployment and preserves market evidence", async () => {

@@ -17,6 +17,8 @@ def register_trade_intelligence(router, service, candles, respond):
         operation_id="get_trade_intelligence",
         responses={
             400: {"description": "Unsupported symbol"},
+            409: {"description": "Snapshot does not match the requested symbol/horizon"},
+            410: {"description": "Snapshot has expired"},
             503: {"description": "Validated market history is unavailable"},
         },
     )
@@ -24,13 +26,16 @@ def register_trade_intelligence(router, service, candles, respond):
         symbol: str,
         horizon: int = 3,
         levels: int = Query(5, ge=1, le=10),
+        snapshot_id: str | None = None,
     ):
         try:
             normalized = symbol_value(symbol)
         except APIError:
             raise
         research = service()
-        bundle = research.snapshot(normalized, horizon)
+        # Reuse the market/structure snapshot when the bridge supplies one. The
+        # existing service enforces expiry and symbol/horizon consistency.
+        bundle = research.snapshot(normalized, horizon, snapshot_id=snapshot_id)
         prepared = bundle["prepared"]
         daily = prepared["dataset"]["features"].tail(2).to_dict("records")
         structure_rows = nearest_levels(prepared["structure"], levels).to_dict("records")

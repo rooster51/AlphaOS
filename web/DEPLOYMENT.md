@@ -24,6 +24,34 @@ Set these server-side environment variables in the hosting provider:
 | `ALPHAOS_DEMO_MODE` | Optional; set to `true` only when intentionally showing labeled synthetic fixtures. Leave unset or `false` for normal read-only use. |
 | `ALPHAOS_CANDLE_CHART_ENABLED` | Owner-private candle display is **disabled by default**. Leave unset or `false` to serve the legacy external TradingView fallback at `/market/chart`. When `true`, `/api/candles/{symbol}` and `/api/current-quote` still require a signed session with `role=owner` and the provider `owner_private_display` decision. Viewer and anonymous sessions are denied. Public display, commercial use, redistribution and other-user access remain disabled. |
 
+### Phase 2 backend target
+
+The production website must use `ALPHAOS_API_URL=https://alphaos.onrender.com`
+and the production API bearer token. The retained
+`https://alphaos-api-staging.onrender.com` service is not a production
+substitute: it serves `/v1/market` and `/v1/structure` but does not expose the
+Phase 2 `/v1/research/trade-intelligence/{symbol}` route. Pointing the
+production site at staging therefore produces a real HTTP 404 for verified
+setup evidence while market and structure continue to work.
+
+Before a production deploy, check route capability without a credential:
+
+```sh
+curl -s -o /dev/null -w '%{http_code}\n' \
+  https://alphaos.onrender.com/v1/research/trade-intelligence/SPY
+```
+
+`401` means the route is registered and the bearer boundary is active. `404`
+means the configured host is the wrong backend or an older deployment; fix the
+host/deployment, do not add a parallel route. The website exposes only a
+classified target (`production`, `staging`, `other`, `unconfigured`) through
+`/api/health`; it never exposes the backend URL or token.
+
+The trade bridge passes the verified market `snapshot_id` to both structure and
+trade-intelligence. The backend rejects an expired snapshot with `410` and a
+symbol/horizon mismatch with `409`; those remain optional trade failures and do
+not invalidate the successful market/structure pair.
+
 `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` are present in
 `.env.example` for a future integration but are not used by the current web
 foundation. Do not configure them as a substitute for authenticated account

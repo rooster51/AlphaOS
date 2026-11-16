@@ -188,7 +188,11 @@ test("verified live and archive snapshots normalize without inventing fields", (
   assert.equal(live.tradeIntelligence?.state, "WAIT");
   assert.equal(live.tradeIntelligence?.setups.length, 3);
   assert.equal(live.tradeIntelligence?.pivots.pivot, 501);
+  assert.equal(live.tradeIntelligence?.pivots.s1, 497);
   assert.equal(live.tradeIntelligence?.openingRange?.high, 504.75);
+  assert.equal(live.tradeIntelligence?.openingRange?.low, 498.2);
+  assert.equal(live.tradeIntelligence?.vwap, 501.4);
+  assert.equal(live.tradeIntelligence?.ema9, 500.9);
   assert.deepEqual(live.caveats, ["Direction is descriptive.", "No executable options quote is present."]);
 
   const archive = normalizeMarketResponse({
@@ -238,16 +242,37 @@ test("workspace assessment reports the validated WAIT and its missing setup cond
   assert.match(assessment.reason, /Closest setup/);
   assert.match(assessment.reason, /Opening-range breakout/);
   assert.equal(assessment.setups.length, 3);
+  assert.deepEqual(assessment.setups.map((item) => item.state), ["WAIT", "WAIT", "WAIT"]);
   assert.equal(assessment.closestSetup?.id, "opening_range_breakout");
+  assert.equal(assessment.exitEarly?.state, "UNAVAILABLE");
+  assert.ok(assessment.setups.every((item) => item.strategyFamilies.length === 0));
   assert.deepEqual(assessment.support.map((level) => level.price), [498.2, 497, 495]);
   assert.deepEqual(assessment.resistance.map((level) => level.price), [504.75, 505, 507]);
   assert.ok(assessment.evidenceGaps.includes("A confirmed five-minute close above the opening-range high."));
-  assert.equal(assessment.exitEarly?.state, "UNAVAILABLE");
-
   const unavailable = buildWorkspaceAssessment(null);
   assert.equal(unavailable.stance, "UNAVAILABLE");
   assert.equal(unavailable.bias, "unknown");
   assert.match(unavailable.reason, /No BUY, SELL/);
+});
+
+test("six verified structure levels keep their order and normalized distances", () => {
+  const six = response({
+    levels: [
+      { label: "R1", price: 504.75, distance: 4.5, distance_pct: 0.9, kind: "resistance" },
+      { label: "R2", price: 503.1, distance: 2.85, distance_pct: 0.57, kind: "resistance" },
+      { label: "R3", price: 507.0, distance: 6.75, distance_pct: 1.35, kind: "resistance" },
+      { label: "S1", price: 498.2, distance: -2.05, distance_pct: -0.41, kind: "support" },
+      { label: "S2", price: 495.75, distance: -4.5, distance_pct: -0.9, kind: "support" },
+      { label: "S3", price: 493.0, distance: -7.25, distance_pct: -1.45, kind: "support" },
+    ],
+  });
+  const snapshot = normalizeMarketResponse(six);
+  assert.ok(snapshot);
+  assert.equal(snapshot.levels.length, 6);
+  assert.deepEqual(snapshot.levels.map((level) => level.kind), [
+    "resistance", "resistance", "resistance", "support", "support", "support",
+  ]);
+  assert.ok(Math.abs(snapshot.levels[3].distancePct - -0.41) < 0.0001);
 });
 
 test("a confirmed setup produces a BUY research state with entry and invalidation", () => {
