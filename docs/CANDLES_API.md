@@ -176,6 +176,17 @@ count is reduced only for that known boundary bar with
 `provider_expected_bars_adjusted_for_closing_bar`. Other off-session bars fail
 with `candle_outside_regular_session`.
 
+Public's native DAY response uses interval starts for regular OHLCV bars.
+During the open session it can append a separate off-grid observation stamped
+near response time. AlphaOS excludes that row only when the response already
+contains every regular interval start from the open through the active window
+and the final observation is inside that same window. The returned bars retain
+their original instants. `provider_live_tail_excluded` records the exclusion,
+counts describe the retained grid, and the active bar's finality remains
+`unknown` with `last_bar_window_open`. Trade intelligence returns `WAIT` for
+this snapshot. Other off-grid timestamps retain the sanitized 503
+`candle_interval_misaligned` response.
+
 ## Archive schema review
 
 `public.market_candles` currently stores provider, symbol, aggregation, bar time,

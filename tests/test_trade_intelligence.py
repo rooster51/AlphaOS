@@ -43,6 +43,7 @@ def snapshot(
     highs=None,
     lows=None,
     now=None,
+    warnings=(),
 ):
     bars = []
     for index, close in enumerate(closes):
@@ -63,7 +64,7 @@ def snapshot(
         retrieved_at=at.isoformat(), bars=tuple(bars),
         expected_bars=len(bars), received_bars=len(bars),
         last_bar_complete=True if complete else None,
-        warnings=(), capabilities=PUBLIC_CAPABILITIES,
+        warnings=warnings, capabilities=PUBLIC_CAPABILITIES,
     )
     return build_snapshot(batch, now=now or at, entitlement=check_data_use(
         PRIVATE_RESEARCH, "Public"))
@@ -370,3 +371,11 @@ def test_exit_early_is_unavailable_without_a_modeled_position_or_exit_quote():
         position=position, current_spot=99, confirmed_at=OPEN.isoformat(),
         exit_quote_available=True,
     )["state"] == "EXIT EARLY"
+
+@pytest.mark.parametrize("warning", ["provider_live_tail_excluded", "provider_incomplete_bars_skipped"])
+def test_excluded_public_rows_keep_setups_waiting(warning):
+    result = contract([100.0, 100.2, 100.1, 101.0, 102.0, 103.0],
+                      warnings=(warning,))
+    assert all(setup["state"] == "WAIT" for setup in result["setups"])
+    assert result["state"] == "WAIT"
+    assert warning in result["data"]["reasons"]
