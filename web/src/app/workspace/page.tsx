@@ -10,5 +10,5 @@ export default async function WorkspacePage({
 }) {
   const params = await searchParams;
   const symbol: WorkspaceSymbol = params.symbol?.toUpperCase() === "QQQ" ? "QQQ" : "SPY";
-  return <TradingWorkspace initialSymbol={symbol} />;
+  return <TradingWorkspace key={symbol} initialSymbol={symbol} />;
 }

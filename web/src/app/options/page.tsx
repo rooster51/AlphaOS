@@ -10,6 +10,6 @@ export default async function OptionsPage({
   const initialSymbol = params.symbol?.toUpperCase() === "QQQ" ? "QQQ" : "SPY";
   return <>
     <Header title="Options Chain" subtitle="Public market data · SPY and QQQ" />
-    <OptionsChain initialSymbol={initialSymbol} />
+    <OptionsChain key={initialSymbol} initialSymbol={initialSymbol} />
   </>;
 }

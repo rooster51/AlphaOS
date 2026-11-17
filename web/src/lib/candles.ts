@@ -97,6 +97,7 @@ export type CandleQuote =
     };
 
 export const CANDLE_WARNING_LABELS: Record<string, string> = {
+  provider_live_tail_excluded: "Provider live observation excluded",
   missing_bars: "Missing bars",
   incomplete_session: "Incomplete session",
   provider_incomplete_bars_skipped: "Provider skipped incomplete bars",
@@ -177,8 +178,13 @@ export function parseCandleSnapshot(
       entitlement.provider !== body.provider) return null;
   if (!body.candles.every(validBar)) return null;
   const candles = body.candles as CandleBar[];
-  for (let index = 1; index < candles.length; index += 1) {
-    if (Date.parse(candles[index].time) <= Date.parse(candles[index - 1].time)) return null;
+  const intervalMs = Number.parseInt(expected.interval, 10) * 60_000;
+  let previous = -Infinity;
+  for (const candle of candles) {
+    const time = Date.parse(candle.time);
+    // Date.parse discards sub-millisecond precision, so check the fraction as well.
+    if (time <= previous || time % intervalMs !== 0 || /:\d{2}\.\d*[1-9]\d*(?:Z|[+-])/.test(candle.time)) return null;
+    previous = time;
   }
   if (candles.length > 0 && Date.parse(candles.at(-1)!.time) !== Date.parse(body.latest_candle_at)) return null;
   return {

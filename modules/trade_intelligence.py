@@ -149,6 +149,11 @@ def confirmed_session(
                 state, warning,
                 session_date=session_date, open_time=session_open, close_time=session_close,
             )
+    if snapshot.entitlement.get("allowed") is not True or snapshot.entitlement.get("provider") != snapshot.provider:
+        return _empty_session(
+            state, "candle_entitlement_unverified",
+            session_date=session_date, open_time=session_open, close_time=session_close,
+        )
     if not snapshot.candles:
         return _empty_session(
             state, "no_candles",
@@ -257,14 +262,14 @@ def confirmed_session(
         reasons.append("ema9_insufficient_confirmed_bars")
 
     status = "verified"
-    if not contiguous:
+    if not contiguous or snapshot.completeness == "incomplete":
         status = "incomplete"
     latest_confirmed = starts[-1] + BAR_STEP
     if state == "open":
         if snapshot.freshness == "stale":
             status = "stale"
             reasons.append("stale_candles")
-        elif snapshot.freshness not in ("fresh", "unknown"):
+        elif snapshot.freshness != "fresh":
             status = "stale"
             reasons.append("candle_freshness_not_live")
         elif now - latest_confirmed > timedelta(minutes=15):
@@ -479,7 +484,10 @@ def _setup(
 
 
 def _data_wait(session: ConfirmedSession, setup_name: str, setup_id: str) -> dict | None:
-    if session.status == "verified" and session.session_state == "open":
+    finality_unverified = any(reason in session.reasons for reason in (
+        "last_bar_excluded_unconfirmed", "last_bar_window_open", "candle_not_closed",
+    ))
+    if session.status == "verified" and session.session_state == "open" and not finality_unverified:
         return None
     if session.session_state == "closed":
         reason = "The regular session is closed; verified levels are shown but no new entry can trigger."
@@ -489,6 +497,8 @@ def _data_wait(session: ConfirmedSession, setup_name: str, setup_id: str) -> dic
         reason = "The confirmed 5-minute session grid is incomplete, so this setup cannot be evaluated."
     elif session.status == "stale":
         reason = "Confirmed intraday evidence is stale for the current session."
+    elif finality_unverified:
+        reason = "The latest candle has unverified finality."
     else:
         reason = "Confirmed intraday evidence is unavailable."
     return {
