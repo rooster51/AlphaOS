@@ -4,6 +4,7 @@ from __future__ import annotations
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 import json
+import logging
 from threading import Barrier, Event
 from time import perf_counter
 
@@ -225,7 +226,11 @@ def test_openapi_exposes_the_trade_intelligence_route(token):
     assert "get_trade_intelligence" == paths[
         "/v1/research/trade-intelligence/{symbol}"]["get"]["operationId"]
 
-def test_stage_timings_are_correlated_and_sanitized(token, caplog):
+def test_stage_timings_are_correlated_and_sanitized(token, caplog, monkeypatch):
+    logger = logging.getLogger("alphaos_api.research.timing")
+    monkeypatch.setattr(logger, "disabled", False)
+    monkeypatch.setattr(logger, "propagate", True)
+    caplog.set_level(logging.WARNING, logger=logger.name)
     request_id = "a" * 32
     response = token.get("/v1/research/trade-intelligence/SPY", headers={
         "Authorization": f"Bearer {TOKEN}", "X-AlphaOS-Request-ID": request_id,
