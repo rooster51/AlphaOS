@@ -508,11 +508,7 @@ export function TradingWorkspace({ initialSymbol }: { initialSymbol: WorkspaceSy
                 <StatusPill label="NO VERIFIED DATA" variant="warning" />
               )}
               <StatusPill
-                label={
-                  assessment.stance === "UNAVAILABLE"
-                    ? "NO VERIFIED STATE"
-                    : `${assessment.stance} / RESEARCH STATE`
-                }
+                label={`${assessment.stance} / RESEARCH STATE`}
                 variant={
                   assessment.stance === "BUY"
                     ? "live"

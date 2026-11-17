@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { StrategyWorkbench } from "./StrategyWorkbench";
 
@@ -90,6 +91,10 @@ export function OptionsChain({ initialSymbol = "SPY" }: { initialSymbol?: "SPY" 
   }
 
   return <main className="space-y-5 p-4 md:p-8 font-mono text-sm">
+    <nav aria-label="Related research" className="flex flex-wrap gap-3">
+      <Link prefetch={false} href={`/market/chart?symbol=${symbol}`} className={control}>Candle chart</Link>
+      <Link prefetch={false} href={`/workspace?symbol=${symbol}`} className={control}>Trade research</Link>
+    </nav>
     <p>Choose a symbol and discover expirations, or enter a known expiration to request its chain directly.</p>
     <fieldset disabled={busy} className="flex flex-wrap items-end gap-3">
       <label className="grid gap-1">Symbol

@@ -1,17 +1,32 @@
 """Authenticated read-only projection for verified trade intelligence."""
 from __future__ import annotations
 
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
+from contextvars import copy_context
+from threading import BoundedSemaphore
+
 from fastapi import Query
 
 from modules.data_entitlements import DataUseDenied
 from modules.market_data_gateway import MarketDataError
 from modules.price_structure import nearest_levels
+from modules.research_control import cancellable_research
+from modules.research_timing import emit, execution, stage
 from modules.trade_intelligence import build_trade_intelligence
 from .contracts import APIError
 from .service import symbol_value
 
 
+# Leave time for the website's existing 3.5-second request deadline.
+TRADE_INTELLIGENCE_BUDGET_SECONDS = 3.0
+TRADE_INTELLIGENCE_WORKERS = 2
+
+
 def register_trade_intelligence(router, service, candles, respond):
+    pool = ThreadPoolExecutor(max_workers=TRADE_INTELLIGENCE_WORKERS, thread_name_prefix="trade-intelligence")
+    available = BoundedSemaphore(TRADE_INTELLIGENCE_WORKERS)
+
     @router.get(
         "/research/trade-intelligence/{symbol}",
         operation_id="get_trade_intelligence",
@@ -19,43 +34,72 @@ def register_trade_intelligence(router, service, candles, respond):
             400: {"description": "Unsupported symbol"},
             409: {"description": "Snapshot does not match the requested symbol/horizon"},
             410: {"description": "Snapshot has expired"},
-            503: {"description": "Validated market history is unavailable"},
+            503: {"description": "Validated market history is unavailable or research capacity is exhausted"},
+            504: {"description": "Trade-intelligence request exceeded its processing deadline"},
         },
     )
-    def trade_intelligence(
+    async def trade_intelligence(
         symbol: str,
         horizon: int = 3,
         levels: int = Query(5, ge=1, le=10),
         snapshot_id: str | None = None,
     ):
-        try:
-            normalized = symbol_value(symbol)
-        except APIError:
-            raise
+        normalized = symbol_value(symbol)
+        if not available.acquire(blocking=False):
+            emit("trade_intelligence_admission", "rejected", outcome="busy")
+            raise APIError("trade_intelligence_busy", 503)
+
+        with cancellable_research() as cancelled:
+            try:
+                work = pool.submit(copy_context().run, calculate, normalized, horizon, levels, snapshot_id)
+            except BaseException:
+                available.release()
+                raise
+            # A timed-out network call can still be running. Keep its slot
+            # reserved until it exits, so stalled calls cannot build a queue.
+            work.add_done_callback(lambda _: available.release())
+            try:
+                return await asyncio.wait_for(
+                    asyncio.wrap_future(work), timeout=TRADE_INTELLIGENCE_BUDGET_SECONDS)
+            except TimeoutError:
+                emit("trade_intelligence_deadline", "exceeded", outcome="timeout")
+                raise APIError("trade_intelligence_timeout", 504) from None
+            finally:
+                cancelled.set()
+
+    def calculate(normalized, horizon, levels, snapshot_id):
+        with execution(normalized, "current"):
+            return build_response(normalized, horizon, levels, snapshot_id)
+
+    def build_response(normalized, horizon, levels, snapshot_id):
         research = service()
         # Reuse the market/structure snapshot when the bridge supplies one. The
         # existing service enforces expiry and symbol/horizon consistency.
-        bundle = research.snapshot(normalized, horizon, snapshot_id=snapshot_id)
-        prepared = bundle["prepared"]
-        daily = prepared["dataset"]["features"].tail(2).to_dict("records")
-        structure_rows = nearest_levels(prepared["structure"], levels).to_dict("records")
+        with stage("trade_research_snapshot"):
+            bundle = research.snapshot(normalized, horizon, snapshot_id=snapshot_id)
+        with stage("trade_structure_projection"):
+            prepared = bundle["prepared"]
+            daily = prepared["dataset"]["features"].tail(2).to_dict("records")
+            structure_rows = nearest_levels(prepared["structure"], levels).to_dict("records")
 
         candle_snapshot = None
         candle_error = None
         try:
-            candle_snapshot = candles().get(normalized, "5m", "regular", 78)
+            with stage("trade_5m_candles"):
+                candle_snapshot = candles().get(normalized, "5m", "regular", 78)
         except (MarketDataError, DataUseDenied):
             candle_error = "intraday_candles_unavailable"
 
         try:
-            result = build_trade_intelligence(
-                symbol=normalized,
-                now=research.clock(),
-                daily_bars=daily,
-                intraday_snapshot=candle_snapshot,
-                atr=prepared["structure"]["atr"],
-                structure_levels=structure_rows,
-            )
+            with stage("trade_intelligence_calculation"):
+                result = build_trade_intelligence(
+                    symbol=normalized,
+                    now=research.clock(),
+                    daily_bars=daily,
+                    intraday_snapshot=candle_snapshot,
+                    atr=prepared["structure"]["atr"],
+                    structure_levels=structure_rows,
+                )
         except (ValueError, KeyError, TypeError):
             raise APIError("insufficient_historical_data", 503) from None
         if candle_error:
@@ -63,4 +107,6 @@ def register_trade_intelligence(router, service, candles, respond):
                 "The validated intraday candle request failed; only completed daily "
                 "session levels are shown and all setups remain WAIT."
             )
-        return respond(research.envelope(result, bundle))
+        with stage("trade_response_envelope"):
+            envelope = research.envelope(result, bundle)
+        return respond(envelope)

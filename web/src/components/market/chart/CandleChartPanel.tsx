@@ -21,6 +21,7 @@ import {
   type CandleSymbol,
 } from "@/lib/candles";
 import { EMA_PERIODS, toChartSeries, type EmaPeriod } from "@/lib/candle-chart";
+import { ChartResearchNavigation } from "./ChartResearchNavigation";
 import { LightweightCandleChart } from "./LightweightCandleChart";
 
 const QUOTE_REFRESH_MS = 15_000;
@@ -144,6 +145,7 @@ export function CandleChartPanel({
         setRetryAt(Date.now() + delay);
         schedule(delay);
       } else {
+        setSnapshot(null);
         setRetryAt(null);
       }
     }
@@ -221,31 +223,7 @@ export function CandleChartPanel({
       />
 
       <div className="mx-auto w-full max-w-[1440px] min-w-0 space-y-5 px-4 py-5 sm:px-6 sm:py-7 lg:px-8">
-        <nav aria-label="Candle symbol and related research" className="flex flex-wrap items-center gap-2">
-          {(["SPY", "QQQ"] as const).map((item) => (
-            <Link
-              prefetch={false}
-              key={item}
-              href={`/market/chart?symbol=${item}&interval=${interval}`}
-              aria-current={item === symbol ? "page" : undefined}
-              className={`rounded border px-3 py-1.5 font-mono text-xs focus-visible:outline focus-visible:outline-2 focus-visible:outline-profit ${
-                item === symbol
-                  ? "border-profit/40 bg-profit-bg text-profit"
-                  : "border-terminal-800 bg-terminal-900 text-terminal-400 hover:text-terminal-200"
-              }`}
-            >
-              {item}
-            </Link>
-          ))}
-          <span className="mx-1 h-4 w-px bg-terminal-800" aria-hidden="true" />
-          <Link
-            prefetch={false}
-            href={`/market?symbol=${symbol}`}
-            className="rounded border border-terminal-800 px-3 py-1.5 font-mono text-xs text-terminal-400 hover:border-terminal-600 hover:text-terminal-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-profit"
-          >
-            Archive research
-          </Link>
-        </nav>
+        <ChartResearchNavigation symbol={symbol} interval={interval} />
 
         <section aria-label="Chart controls" className="flex flex-wrap items-end gap-3 rounded-lg border border-terminal-800 bg-terminal-900/60 p-3 sm:p-4">
           <div>
@@ -394,8 +372,8 @@ export function CandleChartPanel({
             <div className="flex flex-wrap items-center gap-2">
               <h2 className="font-mono text-sm font-bold text-terminal-100">Snapshot status</h2>
               <StatusPill
-                label={`${(activeSnapshot.freshness === "latest_available" ? "latest available" : activeSnapshot.freshness).toUpperCase()} SNAPSHOT`}
-                variant={severe ? "warning" : activeSnapshot.freshness === "fresh" ? "live" : "neutral"}
+                label={error ? "LAST SUCCESSFUL SNAPSHOT" : `${(activeSnapshot.freshness === "latest_available" ? "latest available" : activeSnapshot.freshness).toUpperCase()} SNAPSHOT`}
+                variant={error || severe ? "warning" : activeSnapshot.freshness === "fresh" ? "live" : "neutral"}
               />
               {activeSnapshot.completeness !== "complete" && (
                 <StatusPill label={activeSnapshot.completeness.toUpperCase()} variant="warning" />
@@ -406,7 +384,7 @@ export function CandleChartPanel({
               <StatusMetric label="Provider" value={activeSnapshot.provider} />
               <StatusMetric label="Snapshot retrieved" value={formatUtc(activeSnapshot.retrieved_at)} />
               <StatusMetric
-                label="Freshness age"
+                label="Freshness at retrieval"
                 value={`${activeSnapshot.freshness} · ${formatAge(snapshotAge)}`}
               />
               <StatusMetric label="Last bar" value={lastBarLabel(activeSnapshot)} />

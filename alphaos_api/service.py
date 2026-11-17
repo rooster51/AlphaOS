@@ -205,9 +205,11 @@ class ResearchService:
         day=self.today()
         key=('snapshot',symbol,horizon,digest(dict(quote=q['quote'],retrieved_at=q['retrieved_at'])),str(day))
         def create():
-            dataset=self.data.load(('history',symbol,str(day)),300,lambda:self.provider_call(self.provider.history,symbol,day))
+            with stage('snapshot_history_load'):
+                dataset=self.data.load(('history',symbol,str(day)),300,lambda:self.provider_call(self.provider.history,symbol,day))
             try:
-                s=context_from_dataset(dataset,q['quote']['last'],horizon,q['quote']['updated_at'],q['retrieved_at'])
+                with stage('snapshot_preparation'):
+                    s=context_from_dataset(dataset,q['quote']['last'],horizon,q['quote']['updated_at'],q['retrieved_at'])
             except (ValueError,KeyError,TypeError):raise APIError('insufficient_historical_data',503) from None
             bundle=dict(prepared=s,quote=q,source='Public' if spot is None else 'Explicit trade input + Public completed history')
             self.snapshots.put(s['snapshot_id'],bundle,120)

@@ -129,7 +129,7 @@ async def api_error(request,exc):
     request.state.research_error = exc.code if exc.code in {
         'archive_stale','archive_missing','archive_not_configured','archive_unavailable',
         'archive_research_unavailable','archive_expiration_unavailable','api_not_configured',
-        'authentication_required','forbidden','internal_error'} else 'other_api_error'
+        'authentication_required','forbidden','internal_error','trade_intelligence_timeout','trade_intelligence_busy'} else 'other_api_error'
     return error_response(exc.code,exc.status)
 
 
@@ -146,6 +146,8 @@ async def http_error(request,exc):return error_response('not_found' if exc.statu
 @app.middleware('http')
 async def safe_boundary(request,call_next):
     research = request.url.path in ('/v1/research/market','/v1/research/market/candidate','/v1/research/observation') and request.method == 'POST'
+    research = research or (request.method == 'GET' and re.fullmatch(
+        r'/v1/research/trade-intelligence/(SPY|QQQ)', request.url.path, re.IGNORECASE))
     correlation = request.headers.get('X-AlphaOS-Request-ID','')
     correlation = correlation if re.fullmatch('[0-9a-f]{32}',correlation) else secrets.token_hex(16)
     started = perf_counter()

@@ -1,6 +1,7 @@
 """Deterministic trade-intelligence fixtures; no market or execution claims."""
 from __future__ import annotations
 
+from dataclasses import replace
 from datetime import datetime, timedelta, timezone
 
 import pytest
@@ -153,15 +154,15 @@ def test_unverified_final_bar_is_excluded_and_does_not_create_a_signal():
     assert "last_bar_excluded_unconfirmed" in result["data"]["reasons"]
     assert result["levels"]["opening_range"]["status"] == "complete"
     assert breakout["state"] == "WAIT"
-    assert "later confirmed close" in breakout["wait_reason"]
-    assert breakout["entry_trigger"]["price"] == pytest.approx(100.7)
+    assert "unverified finality" in breakout["wait_reason"]
+    assert breakout["entry_trigger"] is None
 
 
-def test_unverified_tail_still_allows_an_earlier_confirmed_breakout():
+def test_unverified_tail_blocks_direction_even_with_an_earlier_confirmed_breakout():
     result = contract([100.0, 100.2, 100.1, 101.2, 101.4], complete=False)
     breakout = setup(result, "opening_range_breakout")
     assert result["data"]["confirmed_bars"] == 4
-    assert breakout["state"] == "BUY"
+    assert breakout["state"] == result["state"] == "WAIT"
 
 
 def test_false_breakout_returns_inside_and_stays_wait():
@@ -379,3 +380,18 @@ def test_excluded_public_rows_keep_setups_waiting(warning):
     assert all(setup["state"] == "WAIT" for setup in result["setups"])
     assert result["state"] == "WAIT"
     assert warning in result["data"]["reasons"]
+
+@pytest.mark.parametrize("overrides", [
+    {"freshness": "unknown"},
+    {"completeness": "incomplete"},
+    {"entitlement": {"allowed": False, "provider": "Public"}},
+])
+def test_directional_setup_waits_for_verified_candle_evidence(overrides):
+    closes = [100.0, 100.2, 100.1, 101.2, 101.4]
+    at = OPEN + len(closes) * STEP
+    result = build_trade_intelligence(
+        symbol="SPY", now=at, daily_bars=daily_bars(),
+        intraday_snapshot=replace(snapshot(closes), **overrides), atr=1.0,
+    )
+    assert result["state"] == "WAIT"
+    assert all(item["state"] == "WAIT" for item in result["setups"])

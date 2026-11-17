@@ -58,6 +58,7 @@ function tradeIntelligence(overrides = {}) {
       freshness: "fresh",
       latest_confirmed_candle_at: "2026-11-13T15:45:00+00:00",
       confirmed_bars: 15,
+      last_bar_status: "complete",
       warnings: [],
       reasons: [],
     },
@@ -250,7 +251,7 @@ test("workspace assessment reports the validated WAIT and its missing setup cond
   assert.deepEqual(assessment.resistance.map((level) => level.price), [504.75, 505, 507]);
   assert.ok(assessment.evidenceGaps.includes("A confirmed five-minute close above the opening-range high."));
   const unavailable = buildWorkspaceAssessment(null);
-  assert.equal(unavailable.stance, "UNAVAILABLE");
+  assert.equal(unavailable.stance, "WAIT");
   assert.equal(unavailable.bias, "unknown");
   assert.match(unavailable.reason, /No BUY, SELL/);
 });
@@ -349,6 +350,21 @@ test("a confirmed setup produces a BUY research state with entry and invalidatio
   assert.equal(assessment.bias, "bullish");
   assert.equal(assessment.closestSetup?.state, "BUY");
   assert.match(assessment.reason, /Opening-range breakout is confirmed as BUY/);
+  for (const data of [
+    { last_bar_status: "unknown" }, { last_bar_status: "partial" },
+    { freshness: "unknown" }, { freshness: "stale" }, { freshness: "latest_available" },
+    { completeness: "incomplete" },
+  ]) {
+    const unsafe = normalizeMarketResponse({
+      ...confirmed,
+      trade_intelligence: {
+        ...confirmed.trade_intelligence,
+        data: { ...confirmed.trade_intelligence.data, ...data },
+      },
+    });
+    assert.ok(unsafe);
+    assert.equal(buildWorkspaceAssessment(unsafe).stance, "WAIT");
+  }
 });
 
 test("assistant answers setup, invalidation, WAIT, closest, and change questions from the contract", () => {

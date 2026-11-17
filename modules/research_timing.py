@@ -95,6 +95,9 @@ class ResearchTimingMiddleware:
     async def __call__(self, scope, receive, send):
         method, path = scope.get('method'), scope.get('path')
         quote_symbol = path.rsplit('/', 1)[-1] if method == 'GET' and path in ('/v1/quote/SPY', '/v1/quote/QQQ') else None
+        trade_route = re.fullmatch(r'/v1/research/trade-intelligence/(SPY|QQQ)', path or '', re.IGNORECASE)
+        if method == 'GET' and trade_route:
+            quote_symbol = trade_route[1].upper()
         option_route = re.fullmatch(r'/v1/options/(SPY|QQQ)/(?:expirations|chain/[0-9-]+)', path or '')
         if method in ('GET', 'POST') and option_route:
             quote_symbol = option_route[1]
