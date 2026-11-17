@@ -439,6 +439,6 @@ test("traditional S pivots above spot are retained as references and excluded fr
   const assessment = buildWorkspaceAssessment(snap);
   assert.deepEqual(assessment.support, []);
   assert.deepEqual(assessment.resistance, []);
-  assert.match(answerWorkspaceQuestion(snap, "Where is support?"), /No verified support/);
+  assert.match(answerWorkspaceQuestion(snap, "Where is support?"), /Verified support levels: \$498\.20/);
   assert.doesNotMatch(answerWorkspaceQuestion(snap, "Where is support?"), /700|690/);
 });
