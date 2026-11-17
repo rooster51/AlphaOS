@@ -52,3 +52,32 @@ def test_revisions_fail_closed():
     result = time_closed_research(a, b, now=now, enabled=True)
     assert result.reason == "bar_revised_on_refetch"
     assert result.bars == ()
+
+
+def test_provisional_indicators_are_not_verified_signals():
+    bars = [
+        CandleBar(
+            f"2026-11-17T{14 + (30 + i * 5) // 60:02d}:{(30 + i * 5) % 60:02d}:00+00:00",
+            100 + i, 101 + i, 99 + i, 100 + i, 1000,
+        )
+        for i in range(10)
+    ]
+    first = _snapshot("2026-11-17T15:20:01+00:00", bars)
+    second = _snapshot("2026-11-17T15:20:06+00:00", bars)
+    now = datetime(2026, 11, 17, 15, 20, 6, tzinfo=timezone.utc)
+    result = time_closed_research(first, second, now=now, enabled=True)
+    assert len(result.bars) == 10
+    assert result.opening_range["high"] == 103
+    assert result.vwap is not None
+    assert result.ema9 is not None
+    assert result.actionable is False
+    assert result.evidence == "closed_by_time"
+
+
+def test_fetch_entrypoint_does_not_call_provider_when_disabled():
+    from modules.time_closed_candles import fetch_time_closed_research
+    def should_not_fetch():
+        raise AssertionError("Disabled mode must not fetch")
+    now = datetime(2026, 11, 17, 15, 20, 6, tzinfo=timezone.utc)
+    result = fetch_time_closed_research(should_not_fetch, now=now)
+    assert result.reason == "time_closed_mode_disabled"
