@@ -49,9 +49,12 @@ class CandleBar:
     low: float
     close: float
     volume: float
+    # Internal provider evidence. None means the provider did not attest finality.
+    provider_complete: bool | None = None
 
     def as_dict(self) -> dict:
-        return asdict(self)
+        return {key: getattr(self, key) for key in
+                ("time", "open", "high", "low", "close", "volume")}
 
 
 @dataclass(frozen=True)
@@ -67,6 +70,7 @@ class CandleBatch:
     last_bar_complete: bool | None
     warnings: tuple[str, ...]
     capabilities: ProviderCapabilities
+    provider_received_bars: int | None = None
 
 
 @dataclass(frozen=True)
@@ -114,6 +118,7 @@ class CandleSnapshot:
     candles: tuple[CandleBar, ...]
     provider_capabilities: dict
     entitlement: dict
+    provider_received_bars: int | None = None
 
     def as_dict(self) -> dict:
         return {

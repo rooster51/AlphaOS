@@ -34,6 +34,7 @@ def candles(*closes, complete=True):
             time=(OPEN + index * timedelta(minutes=5)).isoformat(),
             open=close - 0.05, high=close + 0.5, low=close - 0.5,
             close=close, volume=1000.0,
+            provider_complete=True if index < len(closes) - 1 else None,
         ))
     batch = CandleBatch(
         provider="Public", symbol="SPY", interval="5m", session="regular",

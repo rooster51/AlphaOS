@@ -603,12 +603,12 @@ export function TradingWorkspace({ initialSymbol }: { initialSymbol: WorkspaceSy
                 <>
                   <div className="mt-3 grid gap-3 sm:grid-cols-2">
                     <LevelList
-                      title="Support"
+                      title="Support below spot"
                       levels={assessment.support}
                       empty="No verified support level is present in this snapshot."
                     />
                     <LevelList
-                      title="Resistance"
+                      title="Resistance above spot"
                       levels={assessment.resistance}
                       empty="No verified resistance level is present in this snapshot."
                     />
@@ -650,6 +650,11 @@ export function TradingWorkspace({ initialSymbol }: { initialSymbol: WorkspaceSy
                             variant={snapshot.tradeIntelligence.dataStatus === "verified" ? "archive" : "warning"}
                           />
                         </div>
+                        {snapshot.tradeIntelligence.acceptedBars !== null && (
+                          <p className="mt-2 text-[10px] text-terminal-400">
+                            {snapshot.tradeIntelligence.providerReceivedBars === null ? "Provider count unavailable" : `Provider returned ${snapshot.tradeIntelligence.providerReceivedBars}`} &middot; accepted {snapshot.tradeIntelligence.acceptedBars} &middot; confirmed {snapshot.tradeIntelligence.confirmedBars}
+                          </p>
+                        )}
                         <dl className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
                           <Metric
                             label="Prior session"
@@ -686,7 +691,10 @@ export function TradingWorkspace({ initialSymbol }: { initialSymbol: WorkspaceSy
                           ] as const).map(([label, value]) => (
                             <div key={label} className="min-w-0 rounded border border-terminal-800 bg-terminal-900/60 p-2 text-center">
                               <dt className="text-[9px] uppercase tracking-[0.1em] text-terminal-500">{label}</dt>
-                              <dd className="mt-1 font-mono text-xs tabular-nums text-terminal-200">${formatPrice(value)}</dd>
+                              <dd className="mt-1 font-mono text-xs tabular-nums text-terminal-200">
+                                ${formatPrice(value)}
+                                <span className="mt-1 block text-[9px] text-terminal-400">{value > snapshot.spot ? "Above spot" : value < snapshot.spot ? "Below spot" : "At spot"}</span>
+                              </dd>
                             </div>
                           ))}
                         </dl>
