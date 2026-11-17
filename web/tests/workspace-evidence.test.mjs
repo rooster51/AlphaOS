@@ -424,3 +424,21 @@ test("assistant answers setup, invalidation, WAIT, closest, and change questions
   assert.match(unknown, /cannot verify that question/);
   assert.match(unknown, /will not invent/);
 });
+
+test("traditional S pivots above spot are retained as references and excluded from downside support", () => {
+  const raw = response();
+  raw.trade_intelligence = tradeIntelligence();
+  raw.trade_intelligence.levels.references = [
+    { id: "s1", label: "S1", price: 700, kind: "support", source: "previous_session_ohlc" },
+    { id: "s2", label: "S2", price: 690, kind: "support", source: "previous_session_ohlc" },
+    { id: "r1", label: "R1", price: 400, kind: "resistance", source: "previous_session_ohlc" },
+  ];
+  const snap = normalizeMarketResponse(raw);
+  assert.ok(snap);
+  assert.equal(snap.tradeIntelligence.references.length, 3);
+  const assessment = buildWorkspaceAssessment(snap);
+  assert.deepEqual(assessment.support, []);
+  assert.deepEqual(assessment.resistance, []);
+  assert.match(answerWorkspaceQuestion(snap, "Where is support?"), /Verified support levels: \$498\.20/);
+  assert.doesNotMatch(answerWorkspaceQuestion(snap, "Where is support?"), /700|690/);
+});

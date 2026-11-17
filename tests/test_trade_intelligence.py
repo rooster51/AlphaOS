@@ -58,6 +58,7 @@ def snapshot(
             low=low,
             close=close,
             volume=(volumes[index] if volumes is not None else 1000.0),
+            provider_complete=True if index < len(closes) - 1 else None,
         ))
     at = retrieved or (start + len(bars) * STEP)
     batch = CandleBatch(
@@ -376,10 +377,10 @@ def test_exit_early_is_unavailable_without_a_modeled_position_or_exit_quote():
 @pytest.mark.parametrize("warning", ["provider_live_tail_excluded", "provider_incomplete_bars_skipped"])
 def test_excluded_public_rows_keep_setups_waiting(warning):
     result = contract([100.0, 100.2, 100.1, 101.0, 102.0, 103.0],
-                      warnings=(warning,))
+                      complete=False, warnings=(warning,))
     assert all(setup["state"] == "WAIT" for setup in result["setups"])
     assert result["state"] == "WAIT"
-    assert warning in result["data"]["reasons"]
+    assert (warning if warning == "provider_incomplete_bars_skipped" else "last_bar_excluded_unconfirmed") in result["data"]["reasons"]
 
 @pytest.mark.parametrize("overrides", [
     {"freshness": "unknown"},
@@ -395,3 +396,55 @@ def test_directional_setup_waits_for_verified_candle_evidence(overrides):
     )
     assert result["state"] == "WAIT"
     assert all(item["state"] == "WAIT" for item in result["setups"])
+
+@pytest.mark.parametrize("symbol", ["SPY", "QQQ"])
+def test_explicitly_confirmed_history_survives_an_open_public_tail(symbol):
+    closes = [100 + index / 10 for index in range(11)]
+    at = OPEN + 10 * STEP + timedelta(seconds=30)
+    snap = snapshot(closes, complete=False, retrieved=at,
+                    warnings=("provider_live_tail_excluded",))
+    snap = replace(snap, symbol=symbol, provider_received_bars=12)
+    result = build_trade_intelligence(
+        symbol=symbol, now=at, daily_bars=daily_bars(), intraday_snapshot=snap, atr=1,
+    )
+    assert result["data"]["provider_received_bars"] == 12
+    assert result["data"]["accepted_bars"] == 11
+    assert result["data"]["confirmed_bars"] == 10
+    assert result["levels"]["opening_range"]["bar_count"] == 3
+    assert result["levels"]["vwap"]["price"] is not None
+    assert result["levels"]["ema9"]["price"] is not None
+    assert all(item["state"] == "WAIT" for item in result["setups"])
+
+
+def test_elapsed_timestamp_grid_without_provider_finality_stays_unverified():
+    snap = snapshot([100 + index / 10 for index in range(12)], complete=False)
+    snap = replace(snap, candles=tuple(replace(bar, provider_complete=None) for bar in snap.candles))
+    result = build_trade_intelligence(
+        symbol="SPY", now=OPEN + 12 * STEP, daily_bars=daily_bars(),
+        intraday_snapshot=snap, atr=1,
+    )
+    assert result["data"]["accepted_bars"] == 12
+    assert result["data"]["regular_session_bars"] == 12
+    assert result["data"]["elapsed_interval_bars"] == 12
+    assert result["data"]["confirmed_bars"] == 0
+    assert result["data"]["confirmation_basis"] == "unverified"
+    assert "provider_bar_finality_unverified" in result["data"]["reasons"]
+    assert any("Historical interval bars are present" in warning for warning in result["warnings"])
+    assert result["levels"]["vwap"]["price"] is None
+    assert result["state"] == "WAIT"
+
+
+@pytest.mark.parametrize("day,opening", [
+    ("2026-11-13", datetime(2026, 11, 13, 14, 30, tzinfo=timezone.utc)),
+    ("2026-07-02", datetime(2026, 7, 2, 13, 30, tzinfo=timezone.utc)),
+])
+def test_finality_does_not_override_regular_session_boundaries(day, opening):
+    from modules.trade_intelligence import confirmed_session
+    closes = [100 + index / 10 for index in range(11)]
+    at = opening + 10 * STEP + timedelta(seconds=30)
+    snap = snapshot(closes, start=opening, retrieved=at, complete=False)
+    earlier = replace(snap.candles[0], time=(opening - STEP).isoformat(), provider_complete=True)
+    snap = replace(snap, candles=(earlier, *snap.candles))
+    session = confirmed_session(snap, now=at)
+    assert len(session.bars) == 10
+    assert session.bars[0].time == opening.isoformat()

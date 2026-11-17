@@ -324,6 +324,8 @@ def build_snapshot(batch: CandleBatch, *, now: datetime | None = None,
         "expected_bars": batch.expected_bars,
         "received_bars": batch.received_bars,
         "bars": [bar.as_dict() for bar in batch.bars],
+        "provider_bar_completion": [bar.provider_complete for bar in batch.bars],
+        "provider_received_bars": batch.provider_received_bars,
     }
     snapshot_id = hashlib.sha256(json.dumps(canonical, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
     return CandleSnapshot(
@@ -345,6 +347,7 @@ def build_snapshot(batch: CandleBatch, *, now: datetime | None = None,
         candles=batch.bars,
         provider_capabilities=batch.capabilities.as_dict(),
         entitlement=decision.as_dict(),
+        provider_received_bars=batch.provider_received_bars,
     )
 
 
@@ -477,6 +480,7 @@ class PublicMarketDataProvider:
             bars=bars,
             expected_bars=expected,
             received_bars=total_received,
+            provider_received_bars=_count(diagnostics.get("provider_received_bars")),
             last_bar_complete=None,
             warnings=tuple(dict.fromkeys(warnings)),
             capabilities=self.capabilities,

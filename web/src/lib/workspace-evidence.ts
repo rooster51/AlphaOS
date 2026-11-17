@@ -63,6 +63,8 @@ export type WorkspaceTradeIntelligence = {
   freshness: string;
   latestConfirmedAt: string | null;
   confirmedBars: number;
+  acceptedBars: number | null;
+  providerReceivedBars: number | null;
   previousSession: {
     date: string;
     open: number;
@@ -362,6 +364,8 @@ function normalizeTradeIntelligence(
     freshness: stringValue(data.freshness) ?? "unknown",
     latestConfirmedAt: stringValue(data.latest_confirmed_candle_at),
     confirmedBars: finiteNumber(data.confirmed_bars) ?? 0,
+    acceptedBars: finiteNumber(data.accepted_bars),
+    providerReceivedBars: finiteNumber(data.provider_received_bars),
     previousSession: {
       date: previousSession.date,
       open: previousSession.open,
@@ -510,8 +514,8 @@ export function buildWorkspaceAssessment(
 
   const trade = snapshot.tradeIntelligence;
   const sourceLevels = trade?.references.length ? trade.references : snapshot.levels;
-  const support = nearest(sourceLevels.filter((level) => level.kind === "support"));
-  const resistance = nearest(sourceLevels.filter((level) => level.kind === "resistance"));
+  const support = nearest(sourceLevels.filter((level) => level.kind === "support" && level.price < snapshot.spot));
+  const resistance = nearest(sourceLevels.filter((level) => level.kind === "resistance" && level.price > snapshot.spot));
 
   // A non-live snapshot is historical context. Its levels and setup observations
   // remain useful, but the current trading state is always WAIT.
@@ -737,8 +741,8 @@ function invalidationAnswer(snapshot: WorkspaceSnapshot): string {
       return `${setup.name} invalidation: ${referenceLine(setup.invalidation)}.${stop}`;
     }
   }
-  const support = nearest(snapshot.levels.filter((level) => level.kind === "support"))[0];
-  const resistance = nearest(snapshot.levels.filter((level) => level.kind === "resistance"))[0];
+  const support = nearest(snapshot.levels.filter((level) => level.kind === "support" && level.price < snapshot.spot))[0];
+  const resistance = nearest(snapshot.levels.filter((level) => level.kind === "resistance" && level.price > snapshot.spot))[0];
   if (support || resistance) {
     return `No setup-specific invalidation is available. The nearest verified support is ${support ? price(support.price) : "not supplied"}; nearest resistance is ${resistance ? price(resistance.price) : "not supplied"}. These are references, not an inferred stop.`;
   }
@@ -832,11 +836,11 @@ export function answerWorkspaceQuestion(
 
   if (/support/.test(text) || /resistance/.test(text)) {
     const wanted = /support/.test(text)
-      ? snapshot.tradeIntelligence?.references.filter((level) => level.kind === "support") ?? []
-      : snapshot.tradeIntelligence?.references.filter((level) => level.kind === "resistance") ?? [];
+      ? snapshot.tradeIntelligence?.references.filter((level) => level.kind === "support" && level.price < snapshot.spot) ?? []
+      : snapshot.tradeIntelligence?.references.filter((level) => level.kind === "resistance" && level.price > snapshot.spot) ?? [];
     const fallback = /support/.test(text)
-      ? snapshot.levels.filter((level) => level.kind === "support")
-      : snapshot.levels.filter((level) => level.kind === "resistance");
+      ? snapshot.levels.filter((level) => level.kind === "support" && level.price < snapshot.spot)
+      : snapshot.levels.filter((level) => level.kind === "resistance" && level.price > snapshot.spot);
     const levels = wanted.length ? wanted : fallback;
     const label = /support/.test(text) ? "support" : "resistance";
     if (!levels.length) return `No verified ${label} level is present in the current ${snapshot.symbol} snapshot.`;

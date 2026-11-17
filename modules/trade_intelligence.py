@@ -4,10 +4,9 @@ This is a projection over AlphaOS's existing market snapshot and candle
 gateway. It does not fetch data, create a second research engine, infer missing
 bars, or turn an underlying state into an options recommendation.
 
-The final candle is excluded whenever provider completion is unverified. Earlier
-bars are still usable because a later regular-session bar proves the provider
-has moved past their interval. Opening-range, VWAP and EMA calculations fail
-closed when the session grid is incomplete.
+Bar finality requires explicit provider evidence. Later timestamps and elapsed
+intervals do not establish finality. Opening-range, VWAP and EMA calculations
+require a contiguous confirmed prefix of the regular session.
 """
 from __future__ import annotations
 
@@ -28,9 +27,11 @@ NY = ZoneInfo("America/New_York")
 
 _WARNING_MESSAGES = {
     "last_bar_completion_unverified": (
-        "The provider did not confirm the newest candle. It was excluded from "
-        "all calculations; only earlier bars were used."
+        "The provider did not confirm the newest candle. Only bars with explicit "
+        "provider completion evidence can enter intraday calculations."
     ),
+    "provider_live_tail_excluded": "The extra provider live observation was excluded; retained interval bars are evaluated separately.",
+    "provider_bar_finality_unverified": "Historical interval bars are present, but provider completion evidence is unavailable.",
     "last_bar_window_open": "The newest candle interval is still open and was excluded.",
     "stale_candles": "The intraday candle snapshot is stale for the current session.",
     "latest_available_session": "The snapshot is the latest completed regular session.",
@@ -95,6 +96,23 @@ class ConfirmedSession:
     last_change: dict | None
 
 
+def _session_bar_counts(snapshot: CandleSnapshot | None, session: ConfirmedSession, now: datetime) -> dict:
+    counts = {"regular_session_bars": 0, "elapsed_interval_bars": 0}
+    if snapshot is None or session.open_time is None or session.close_time is None:
+        return counts
+    try:
+        cutoff = min(now, _utc(snapshot.retrieved_at))
+        starts = [_utc(bar.time) for bar in snapshot.candles]
+    except (TypeError, ValueError, OverflowError):
+        return counts
+    for start in starts:
+        if session.open_time <= start < session.close_time:
+            counts["regular_session_bars"] += 1
+            if start + BAR_STEP <= cutoff:
+                counts["elapsed_interval_bars"] += 1
+    return counts
+
+
 def _ema9(closes: list[float]) -> float | None:
     if len(closes) < EMA_PERIOD:
         return None
@@ -143,7 +161,7 @@ def confirmed_session(
             state, "unsupported_candle_contract",
             session_date=session_date, open_time=session_open, close_time=session_close,
         )
-    for warning in ("provider_live_tail_excluded", "provider_incomplete_bars_skipped"):
+    for warning in ("provider_incomplete_bars_skipped",):
         if warning in snapshot.warnings:
             return _empty_session(
                 state, warning,
@@ -181,15 +199,21 @@ def confirmed_session(
 
     reasons = []
     raw_status = snapshot.last_bar_status
-    # Only the final row can be a forming or unverified tail. If finality is
-    # unknown, drop that row rather than treating a possibly changing close as
-    # confirmed. A later bar proves earlier intervals have elapsed.
+    confirmed = []
+    for index, bar in enumerate(current):
+        final = index == len(current) - 1
+        explicitly_complete = bar.provider_complete is True or (
+            raw_status == "complete" and bar.provider_complete is not False)
+        if not explicitly_complete or (final and raw_status == "partial"):
+            reasons.append("provider_bar_finality_unverified")
+            break
+        if _utc(bar.time) + BAR_STEP > min(now, retrieved):
+            reasons.append("last_bar_window_open")
+            break
+        confirmed.append(bar)
     if raw_status != "complete":
         reasons.append("last_bar_excluded_unconfirmed")
-        current = current[:-1]
-    elif _utc(current[-1].time) + BAR_STEP > min(now, retrieved) + timedelta(seconds=1):
-        reasons.append("last_bar_window_open")
-        current = current[:-1]
+    current = confirmed
     if not current:
         return ConfirmedSession(
             bars=(), status="unavailable", reasons=tuple(_dedupe(reasons + ["no_confirmed_bars"])),
@@ -1025,6 +1049,9 @@ def build_trade_intelligence(
         warnings.append("Confirmed bars are missing from the regular-session grid; intraday setups are not evaluated.")
     if "session_prefix_missing" in session.reasons:
         warnings.append("The snapshot does not begin at the regular-session open.")
+    for reason in session.reasons:
+        if reason == "provider_bar_finality_unverified":
+            warnings.append(_WARNING_MESSAGES[reason])
     if session.status == "stale":
         warnings.append("Intraday evidence is stale; no live setup is asserted.")
     if session.session_state == "closed":
@@ -1058,7 +1085,12 @@ def build_trade_intelligence(
             "freshness": intraday_snapshot.freshness if intraday_snapshot else "unavailable",
             "completeness": intraday_snapshot.completeness if intraday_snapshot else "unavailable",
             "last_bar_status": intraday_snapshot.last_bar_status if intraday_snapshot else "unknown",
+            "interval": intraday_snapshot.interval if intraday_snapshot else "5m",
+            "provider_received_bars": intraday_snapshot.provider_received_bars if intraday_snapshot else None,
+            "accepted_bars": intraday_snapshot.received_bars if intraday_snapshot else 0,
             "returned_bars": intraday_snapshot.returned_bars if intraday_snapshot else 0,
+            "confirmation_basis": "explicit_provider_evidence" if session.bars else "unverified",
+            **_session_bar_counts(intraday_snapshot, session, now),
             "confirmed_bars": len(session.bars),
             "warnings": list(intraday_snapshot.warnings) if intraday_snapshot else [],
             "reasons": list(session.reasons),
