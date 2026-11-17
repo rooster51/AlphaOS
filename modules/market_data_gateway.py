@@ -13,6 +13,8 @@ from math import isfinite
 from types import SimpleNamespace
 from typing import Protocol
 
+from pandas import Timestamp
+
 from modules.data_entitlements import (
     PRIVATE_RESEARCH,
     DataUseDenied,
@@ -87,7 +89,7 @@ def _timestamp(value):
     normalized = normalize_timestamp(value)
     if normalized is None:
         raise MarketDataError("candle_timestamp_invalid")
-    return datetime.fromisoformat(normalized)
+    return Timestamp(normalized)
 
 
 def _number(value) -> float | None:
@@ -154,7 +156,7 @@ def _session_in_progress(latest: datetime, now: datetime) -> bool:
 
 def _aligned(timestamp: datetime, interval: str) -> bool:
     step = INTERVAL_SECONDS[interval]
-    return (timestamp.second == 0 and timestamp.microsecond == 0 and
+    return (timestamp.second == 0 and timestamp.microsecond == 0 and timestamp.nanosecond == 0 and
             timestamp.minute % (step // 60) == 0)
 
 
@@ -346,6 +348,33 @@ def build_snapshot(batch: CandleBatch, *, now: datetime | None = None,
     )
 
 
+def _public_live_tail_is_extra(rows, symbol: str, interval: str, *, now: datetime) -> bool:
+    """Recognize Public's extra live observation by its position on the session grid."""
+    if len(rows) < 2 or not isinstance(rows[-1], dict):
+        return False
+    tail = rows[-1]
+    if tail.get("symbol") != symbol or tail.get("aggregation") != AGGREGATION_BY_INTERVAL[interval]:
+        return False
+    stamp = _timestamp(tail.get("timestamp"))
+    if stamp > now or stamp.microsecond or stamp.nanosecond or _aligned(stamp, interval):
+        return False
+
+    bounds = regular_session_bounds(now)
+    if bounds is None:
+        return False
+    opening, closing = bounds
+    step = timedelta(seconds=INTERVAL_SECONDS[interval])
+    # All native bucket starts, including the active bucket, must already be
+    # present. The extra observation must sit strictly inside that active bucket.
+    active_start = opening + (len(rows) - 2) * step
+    if not active_start < stamp <= now < min(active_start + step, closing):
+        return False
+    return all(
+        isinstance(row, dict) and _timestamp(row.get("timestamp")) == opening + index * step
+        for index, row in enumerate(rows[:-1])
+    )
+
+
 class PublicMarketDataProvider:
     """Public implementation of the provider-neutral contract."""
 
@@ -405,7 +434,6 @@ class PublicMarketDataProvider:
     def candles(self, symbol: str, interval: str, session: str = "regular",
                 limit: int = 390) -> CandleBatch:
         symbol = validate_candle_request(symbol, interval, session, limit)
-        now = _clock(self.clock())
         try:
             client, _ = self._context()
             rows, diagnostics = fetch_intraday_bars(
@@ -421,7 +449,18 @@ class PublicMarketDataProvider:
             raise
         except Exception:
             raise MarketDataError("invalid_provider_response") from None
+        # The provider can emit observations while the request is in flight.
+        # Check the future bound against the clock after receipt.
+        now = _clock(self.clock())
+        extra_live_tail = (
+            not diagnostics.get("provider_skipped_incomplete_bars")
+            and _public_live_tail_is_extra(rows, symbol, interval, now=now)
+        )
+        if extra_live_tail:
+            rows = rows[:-1]
         bars, expected, warnings = _validate_bars(symbol, interval, rows, now=now)
+        if extra_live_tail:
+            warnings += ("provider_live_tail_excluded",)
         total_received = len(bars)
         if limit < len(bars):
             bars = bars[-limit:]

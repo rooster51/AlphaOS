@@ -143,6 +143,12 @@ def confirmed_session(
             state, "unsupported_candle_contract",
             session_date=session_date, open_time=session_open, close_time=session_close,
         )
+    for warning in ("provider_live_tail_excluded", "provider_incomplete_bars_skipped"):
+        if warning in snapshot.warnings:
+            return _empty_session(
+                state, warning,
+                session_date=session_date, open_time=session_open, close_time=session_close,
+            )
     if not snapshot.candles:
         return _empty_session(
             state, "no_candles",

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
+from types import SimpleNamespace
 
 import pytest
 from fastapi.testclient import TestClient
@@ -15,13 +16,14 @@ from modules.data_entitlements import (
     DataUseDenied,
 )
 from modules.market_data_contracts import (
+    AGGREGATION_BY_INTERVAL,
     INTERVAL_SECONDS,
     SUPPORTED_INTERVALS,
     SUPPORTED_SYMBOLS,
     CandleBar,
     CandleBatch,
 )
-from modules.market_data_gateway import PUBLIC_CAPABILITIES, MarketDataError
+from modules.market_data_gateway import PUBLIC_CAPABILITIES, MarketDataError, PublicMarketDataProvider
 
 NOW = datetime(2026, 10, 2, 14, 0, tzinfo=timezone.utc)
 SESSION_CLOSE = datetime(2026, 10, 2, 20, 0, tzinfo=timezone.utc)
@@ -303,3 +305,91 @@ def test_cache_rejects_ttl_outside_the_bounded_window():
         CandleSnapshotCache(lambda: NOW, ttl_seconds=14)
     with pytest.raises(ValueError):
         CandleSnapshotCache(lambda: NOW, ttl_seconds=31)
+
+@pytest.mark.parametrize("symbol", SUPPORTED_SYMBOLS)
+@pytest.mark.parametrize("interval", SUPPORTED_INTERVALS)
+@pytest.mark.parametrize("case", [
+    "open", "intraday", "live_tail", "close", "fractional", "naive", "future",
+    "off_grid_interior", "off_grid_previous_window", "missing_grid_start",
+    "duplicate", "out_of_order",
+])
+def test_authenticated_public_day_bar_conventions(client, monkeypatch, symbol, interval, case):
+    opening = datetime(2026, 11, 16, 14, 30, tzinfo=timezone.utc)
+    step = timedelta(seconds=INTERVAL_SECONDS[interval])
+    session_count = int(timedelta(hours=6, minutes=30) / step)
+    count = 1 if case == "open" else session_count if case == "close" else 4
+    starts = [opening + index * step for index in range(count)]
+    timestamps = [start.isoformat() for start in starts]
+    requested = starts[-1]
+    received = requested + timedelta(seconds=20)
+    expected_error = None
+    if case in ("open", "live_tail"):
+        # Public's extra as-of row can be emitted after the request began.
+        timestamps.append((requested + timedelta(seconds=17)).isoformat())
+    elif case == "close":
+        received = opening + session_count * step
+        timestamps.append(received.isoformat())
+    elif case == "fractional":
+        timestamps[-1] = timestamps[-1].replace("+00:00", ".000000001+00:00")
+        expected_error = "candle_interval_misaligned"
+    elif case == "naive":
+        timestamps = [requested.replace(tzinfo=None).isoformat()]
+        expected_error = "provider_bars_timestamp_naive"
+    elif case == "future":
+        timestamps.append((received + timedelta(seconds=1)).isoformat())
+        expected_error = "candle_timestamp_future"
+    elif case == "off_grid_interior":
+        timestamps[1] = (starts[1] + timedelta(seconds=17)).isoformat()
+        timestamps.append((requested + timedelta(seconds=17)).isoformat())
+        expected_error = "candle_interval_misaligned"
+    elif case == "off_grid_previous_window":
+        received = requested + step
+        timestamps.append((requested + timedelta(seconds=17)).isoformat())
+        expected_error = "candle_interval_misaligned"
+    elif case == "missing_grid_start":
+        timestamps.pop(0)
+        timestamps.append((requested + timedelta(seconds=17)).isoformat())
+        expected_error = "candle_interval_misaligned"
+    elif case == "duplicate":
+        timestamps.append(timestamps[-1])
+        expected_error = "duplicate_candle_timestamp"
+    elif case == "out_of_order":
+        timestamps.append(timestamps[-2])
+        expected_error = "candle_timestamp_out_of_order"
+
+    current = requested
+
+    def get_bars(requested_symbol, period, *, aggregation):
+        nonlocal current
+        assert (requested_symbol, period.name, aggregation.name) == (
+            symbol, "DAY", AGGREGATION_BY_INTERVAL[interval])
+        current = received
+        bars = [dict(timestamp=stamp, open=100, high=102, low=99, close=101, volume=123)
+                for stamp in timestamps]
+        return SimpleNamespace(symbol=symbol, regular_market=SimpleNamespace(
+            bars=bars, expected_bars=session_count + 1))
+
+    clock = lambda: current
+    provider = PublicMarketDataProvider(
+        context=lambda: (SimpleNamespace(get_bars=get_bars), None), clock=clock)
+    install(monkeypatch, CandleService(provider=provider, clock=clock))
+    response = get(client, f"/v1/candles/{symbol}?interval={interval}&session=regular&limit=30")
+    result = response.json()
+    if expected_error:
+        assert response.status_code == 503
+        assert result["error"]["code"] == expected_error
+        assert set(result["error"]) == {"code", "message"}
+        return
+
+    assert response.status_code == 200
+    assert result["schema_version"] == "alphaos-candles-v1"
+    assert result["symbol"] == symbol and result["interval"] == interval
+    assert [bar["time"] for bar in result["candles"]] == [start.isoformat() for start in starts[-30:]]
+    assert result["received_bars"] == len(starts)
+    assert result["returned_bars"] == min(len(starts), 30)
+    assert result["last_bar_status"] == "unknown"
+    assert result["freshness"] == "fresh"
+    assert result["completeness"] == ("complete" if case == "close" else "unknown")
+    assert ("last_bar_window_open" in result["warnings"]) == (case != "close")
+    assert ("provider_live_tail_excluded" in result["warnings"]) == (case in ("open", "live_tail"))
+    assert ("provider_closing_bar_excluded" in result["warnings"]) == (case == "close")
