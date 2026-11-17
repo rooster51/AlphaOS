@@ -105,7 +105,7 @@ production market data:
 The local Playwright runner could not launch Chromium because the VM lacks
 `libnspr4.so` and other browser system libraries; `sudo` is blocked. The full
 `npm run test:e2e` suite was therefore not executed in this environment. The
-new spec and existing browser specs still compile.
+new browser spec was listed and compiled successfully with Playwright.
 
 ### Real production responses
 
