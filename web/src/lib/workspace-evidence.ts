@@ -330,9 +330,16 @@ function normalizeTradeIntelligence(
   const setups = Array.isArray(row.setups) ? row.setups.map(normalizeSetup) : [];
   if (setups.length < 3 || setups.some((setup) => setup === null)) return null;
   const directional = state !== "WAIT" || setups.some((setup) => setup?.state !== "WAIT");
-  if (directional && (sessionState !== "open" || dataStatus !== "verified" ||
-      data.freshness !== "fresh" || data.last_bar_status !== "complete" ||
-      data.completeness === "incomplete")) return null;
+  if (directional) {
+    if (isHistorical) {
+      // A completed session may retain a verified directional observation, but
+      // only as historical evidence. It is never promoted to a current signal.
+      if (sessionState !== "closed" || dataStatus !== "verified" ||
+          data.completeness === "incomplete") return null;
+    } else if (sessionState !== "open" || dataStatus !== "verified" ||
+        data.freshness !== "fresh" || data.last_bar_status !== "complete" ||
+        data.completeness === "incomplete") return null;
+  }
   const last = record(row.last_change);
   const lastChange = finitePositive(last.previous_close) && finitePositive(last.current_close)
     && stringValue(last.previous_at) && stringValue(last.current_at)

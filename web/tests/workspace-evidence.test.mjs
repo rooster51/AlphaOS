@@ -281,7 +281,7 @@ test("a last verified session snapshot is historical and never produces a curren
   historical.isLive = false;
   historical.warning = "Market closed. Last verified session only.";
   historical.data = { ...response().data, source: "last_verified_session" };
-  historical.trade_intelligence = tradeIntelligence({
+  const historicalTrade = tradeIntelligence({
     state: "BUY",
     active_setup_id: "opening_range_breakout",
     closest_setup_id: "opening_range_breakout",
@@ -292,6 +292,13 @@ test("a last verified session snapshot is historical and never produces a curren
       setup({ id: "support_resistance_reversal", name: "Support/resistance reversal" }),
     ],
   });
+  historicalTrade.session.state = "closed";
+  historicalTrade.session.date = "2026-11-14";
+  historicalTrade.session.open = "2026-11-14T14:30:00+00:00";
+  historicalTrade.session.close = "2026-11-14T21:00:00+00:00";
+  historicalTrade.data.freshness = "latest_available";
+  historicalTrade.data.last_bar_status = "complete";
+  historical.trade_intelligence = historicalTrade;
   const snapshot = normalizeMarketResponse(historical);
   assert.ok(snapshot);
   assert.equal(snapshot.isLive, false);

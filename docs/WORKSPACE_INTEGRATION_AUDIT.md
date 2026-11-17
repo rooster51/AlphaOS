@@ -1,8 +1,8 @@
 # Unified Trading Workspace integration audit
 
 Date: 2026-11-17
-Base: `origin/main` at `73a5624` (merge of PR #109)
-Focused branch: `fix/after-hours-workspace-research` (PR #110)
+Base: `origin/main` at `53278420` (includes PR #109, PR #111 and PR #113)
+Focused branch: `fix/after-hours-workspace-research` (PR #110), merged with that base
 
 This audit covers the production workspace, native chart, options/strategy
 research, after-hours research, and the evidence assistant. It does not
@@ -57,6 +57,14 @@ Those remain configuration and deployment checks, not code conclusions.
    but no browser-level live/closed workflow test. Added
    `web/tests/browser/workspace.spec.ts` covering SPY/QQQ switching, historical
    labelling, WAIT, assistant grounding, and options-link symbol propagation.
+3. **Merged live gate nullified verified historical setups.** PR #113 requires a
+   directional trade-intelligence state to be open, fresh, and complete. That is
+   correct for live evidence but also rejected a verified closed-session
+   `latest_available` observation, leaving the workspace with no historical setup
+   cards. The guard now keeps the live checks unchanged and allows a directional
+   historical observation only when the session is closed, data is verified, and
+   completeness is not incomplete. The workspace still forces the actionable
+   stance to WAIT and labels the observation historical.
 
 No other runtime integration defect was found in the audited paths.
 
@@ -81,12 +89,12 @@ enabled by default or exposed to anonymous/viewer sessions.
 - `npm ci`: 0 vulnerabilities.
 - `npm audit --omit=dev --audit-level=moderate`: 0 vulnerabilities.
 - `npm audit --audit-level=moderate`: 0 vulnerabilities.
-- Web unit/integration suite: 302 passed.
+- Web unit/integration suite: 303 passed.
 - TypeScript typecheck: passed.
 - Production build: passed.
-- Playwright Chromium suite: 66 passed.
-- Deployment-boundary check: passed (493 tracked files).
-- Full Python suite: 1,685 passed, 1 skipped, 64 subtests passed.
+- Playwright Chromium suite: 70 passed.
+- Deployment-boundary check: passed (494 tracked files).
+- Full Python suite: 1,693 passed, 1 skipped, 64 subtests passed.
 
 ### Browser verification (mocked bridge)
 
@@ -108,7 +116,7 @@ production market data:
 
 The Playwright suite was also run locally against the production build using an
 isolated Chromium library prefix because this VM has no writable system package
-manager. All 66 Chromium tests passed, including the workspace live/closed
+manager. All 70 Chromium tests passed, including the workspace live/closed
 symbol-switch regression.
 
 ### Real production responses
