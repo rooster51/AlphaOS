@@ -19,7 +19,14 @@ Authenticated production SPY and QQQ candle requests returned HTTP 200 with
 completeness and last-bar status `unknown`, and `provider_live_tail_excluded`.
 Authorized independent Public probe [44130814843](https://github.com/rooster51/AlphaOS/actions/runs/44130814843)
 at 16:53:29-30 UTC likewise retained 29 bars each. The exclusion rule implies
-one extra raw observation; the revised probe reports raw count directly.
+one extra raw observation. Revised authorized probe
+[44132258498](https://github.com/rooster51/AlphaOS/actions/runs/44132258498)
+at 17:01:18-19 UTC directly measured 32 raw 5m observations and 31 accepted
+interval bars for each symbol. Independent production requests at 17:01:51-52
+UTC returned the same 31 bars (14:30-17:00 UTC), HTTP 200 in 1.33s each.
+All six provider symbol/interval combinations passed alignment validation.
+Repeat concurrent production trade requests returned HTTP 504 in 3.64s each;
+the request timeout is recorded separately from candle acceptance.
 
 SPY trade intelligence returned HTTP 200 in 2.623s, zero confirmed bars, reason
 `provider_live_tail_excluded`. The concurrent QQQ direct request returned HTTP
