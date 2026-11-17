@@ -9,6 +9,7 @@ from modules.phase6_research import vertical_context
 from modules.daily_archive import digest
 from modules.options_payoff import validate_trade
 from modules.research_session import save_research_session
+from modules.research_timing import stage
 
 VERSION='selector-quant-workflow-v1'
 
@@ -24,7 +25,8 @@ def context_from_dataset(dataset,spot,horizon,quote_time,retrieved_at):
     cutoff=pd.Timestamp(dataset['metadata']['audit']['completed_before'])
     if bars.empty or bars.date.max()>=cutoff:
         raise ValueError('Research snapshot includes an uncompleted session.')
-    structure=price_structure(bars,completed_before=cutoff,anchor_spot=spot)
+    with stage('snapshot_market_structure'):
+        structure=price_structure(bars,completed_before=cutoff,anchor_spot=spot)
     analog=analog_research(dataset['features'],dataset['outcomes'],horizon=horizon,method='tolerance')
     snapshot=dict(version=VERSION,dataset=dataset,structure=structure,analog=analog,horizon=horizon,
         research_date=str(pd.Timestamp(analog['target']['date']).date()),research_close=float(analog['target']['close']),

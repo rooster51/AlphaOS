@@ -1,13 +1,18 @@
 """Synthetic endpoint tests for the read-only trade-intelligence projection."""
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
+import json
+from threading import Barrier, Event
+from time import perf_counter
 
 import pandas as pd
 import pytest
 from fastapi.testclient import TestClient
 
 import alphaos_api.app as api
+import alphaos_api.trade_intelligence as route
 from modules.data_entitlements import PRIVATE_RESEARCH, check_data_use
 from modules.market_data_contracts import CandleBar, CandleBatch
 from modules.market_data_gateway import (
@@ -219,3 +224,80 @@ def test_openapi_exposes_the_trade_intelligence_route(token):
     assert "/v1/research/trade-intelligence/{symbol}" in paths
     assert "get_trade_intelligence" == paths[
         "/v1/research/trade-intelligence/{symbol}"]["get"]["operationId"]
+
+def test_stage_timings_are_correlated_and_sanitized(token, caplog):
+    request_id = "a" * 32
+    response = token.get("/v1/research/trade-intelligence/SPY", headers={
+        "Authorization": f"Bearer {TOKEN}", "X-AlphaOS-Request-ID": request_id,
+    })
+    assert response.status_code == 200
+    assert response.headers["x-alphaos-request-id"] == request_id
+    events = [json.loads(record.message) for record in caplog.records
+              if record.name == "alphaos_api.research.timing"]
+    assert events and all(event["request_id"] == request_id for event in events)
+    durations = {event["stage"]: event["duration_ms"] for event in events
+                 if event["phase"] == "end" and "duration_ms" in event}
+    assert {
+        "trade_research_snapshot", "trade_structure_projection", "trade_5m_candles",
+        "trade_intelligence_calculation", "trade_response_envelope", "response_serialization",
+    } <= durations.keys()
+    assert all(value >= 0 for value in durations.values())
+    assert TOKEN not in caplog.text
+    assert "current_spot" not in caplog.text and "candles" not in response.json()["evidence"]["data"]
+
+
+@pytest.mark.parametrize("slow_stage", ["snapshot", "candles"])
+def test_slow_dependency_returns_bounded_failure(token, monkeypatch, slow_stage):
+    started = Event()
+    release = Event()
+    finished = Event()
+
+    def slow(*args, **kwargs):
+        started.set()
+        try:
+            release.wait(5)
+        finally:
+            finished.set()
+
+    target = api.app.state.service if slow_stage == "snapshot" else api.app.state.candles
+    monkeypatch.setattr(target, "snapshot" if slow_stage == "snapshot" else "get", slow)
+    monkeypatch.setattr(route, "TRADE_INTELLIGENCE_BUDGET_SECONDS", 0.2)
+    began = perf_counter()
+    try:
+        response = get(token)
+        assert started.is_set()
+        assert not finished.is_set()
+        assert perf_counter() - began < 2
+        assert response.status_code == 504
+        assert response.json()["error"]["code"] == "trade_intelligence_timeout"
+        assert "evidence" not in response.json()
+    finally:
+        release.set()
+        assert finished.wait(2)
+
+
+def test_timed_out_workers_hold_capacity_until_they_exit(token, monkeypatch):
+    entered = Barrier(3)
+    release = Event()
+    finished = Barrier(3)
+
+    def slow_snapshot(*args, **kwargs):
+        entered.wait(5)
+        release.wait(5)
+        finished.wait(5)
+
+    monkeypatch.setattr(api.app.state.service, "snapshot", slow_snapshot)
+    monkeypatch.setattr(route, "TRADE_INTELLIGENCE_BUDGET_SECONDS", 0.5)
+    with ThreadPoolExecutor(max_workers=2) as callers:
+        try:
+            spy = callers.submit(get, token)
+            qqq = callers.submit(get, token, "/v1/research/trade-intelligence/QQQ")
+            entered.wait(2)
+            assert spy.result(2).status_code == qqq.result(2).status_code == 504
+            rejected = get(token)
+            assert rejected.status_code == 503
+            assert rejected.json()["error"]["code"] == "trade_intelligence_busy"
+            assert token.get("/health").status_code == 200
+        finally:
+            release.set()
+            finished.wait(2)
