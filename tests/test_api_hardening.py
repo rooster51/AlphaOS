@@ -298,3 +298,30 @@ def test_chain_timing_and_vertical_economics_fields(env):
     assert e['max_loss']==pytest.approx(65)
     assert e['short_strike']==99 and e['long_strike']==98
     assert e['quotes']['chain_quality']['incomplete_quote_count']==0
+
+
+def test_trade_intelligence_reuses_market_snapshot_without_reloading_history(env, monkeypatch, caplog):
+    c, provider, _, _ = env
+    candle_service = Mock()
+    candle_service.get.return_value = None
+    monkeypatch.setitem(api.app.state._state, "candles", candle_service)
+    path = "/v1/research/trade-intelligence/SPY"
+    first = c.get(path)
+    assert first.status_code == 200
+    snapshot_id = first.json()["meta"]["snapshot_id"]
+    first_stages = [json.loads(record.message)["stage"] for record in caplog.records
+                    if record.name == "alphaos_api.research.timing"]
+    assert {"snapshot_history_load", "snapshot_preparation", "snapshot_market_structure"} <= set(first_stages)
+    caplog.clear()
+
+    reused = c.get(path, params={"snapshot_id": snapshot_id})
+    assert reused.status_code == 200
+    assert reused.json()["meta"]["snapshot_id"] == snapshot_id
+    assert reused.json()["evidence"]["state"] == "WAIT"
+    provider.quote.assert_called_once_with("SPY")
+    provider.history.assert_called_once()
+    candle_service.get.assert_called_with("SPY", "5m", "regular", 78)
+    reused_stages = [json.loads(record.message)["stage"] for record in caplog.records
+                     if record.name == "alphaos_api.research.timing"]
+    assert "trade_research_snapshot" in reused_stages
+    assert "snapshot_preparation" not in reused_stages

@@ -107,6 +107,47 @@ already consumes 730–744 h.
   proves process health only — never market data, authenticated research routes
   or archive freshness (see `docs/DEPLOYMENT.md`).
 
+## Issue #112 verification
+
+On November 17, 2026, the production Free service returned no HTTP response
+within 30 seconds for the first health request and both initial authenticated
+trade-intelligence probes. Render logged 17.6 seconds of application runtime
+preparation at 09:33 ET. The next health request returned 200 in 0.35 seconds.
+Warm authenticated trade intelligence returned 200 in 0.37 seconds for SPY and
+0.42 seconds for QQQ. Both returned `WAIT` and warned that the extra Public
+live observation was excluded and the most recent bar was unconfirmed.
+
+The endpoint budget is three seconds once the authenticated handler begins.
+Two worker slots bound in-flight work. A processing deadline returns 504
+`trade_intelligence_timeout`. Exhausted capacity returns 503
+`trade_intelligence_busy`. Operations already inside the SDK retain their
+slot until they unwind. The website's 3.5-second request timeout is unchanged.
+
+For post-deploy verification, send each authenticated request with a fresh
+32-character lowercase hexadecimal `X-AlphaOS-Request-ID`. Compare client
+latency with the correlated `research_timing` records in Render. Check
+`trade_research_snapshot`, `snapshot_history_load`,
+`snapshot_preparation`, `snapshot_market_structure`,
+`trade_structure_projection`, `trade_5m_candles`,
+`trade_intelligence_calculation`, and `response_serialization`. The snapshot
+preparation stages are absent when an existing snapshot is reused. Capture
+HTTP status, elapsed time, research state and sanitized warnings. Record
+pre-readiness time separately using the public health endpoint.
+
+For a 30-second first-request requirement after idle, use non-sleeping Render
+compute. If retaining Free for the pilot, check the existing scheduler's
+health request history and confirm coverage during the intended hours.
+
+The Netlify production deploy on November 17 was
+`6afb352c3d12883f15298eaa` at `c38ef3ae0727be38b23c1355d37d4191405ef0b7`.
+It predates PR #111. After an authorized site release containing that PR,
+an operator must sign in to Netlify with a team account granted access to
+the production site and then sign in to AlphaOS for a signed owner session.
+Use the published deploy's commit from Netlify's Deploys page. From the
+TradingView fallback select each symbol, open Trade Research, continue to
+Options Chain, and return to Chart. Confirm symbol identity throughout and
+verify the production runtime retains `ALPHAOS_CANDLE_CHART_ENABLED=false`.
+
 ## Limitations
 
 - Render does not document keep-warm pings as a supported mechanism; the
