@@ -27,7 +27,7 @@ export interface MarketSnapshot {
   symbol: string;
   current_spot: number;
   as_of: string;
-  source: "verified_archive" | "live_public" | "mock_fixture";
+  source: "verified_archive" | "last_verified_session" | "live_public" | "mock_fixture";
   opportunity_state: OpportunityState;
   levels: PriceStructureLevel[];
   atr_14: number;

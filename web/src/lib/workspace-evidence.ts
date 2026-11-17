@@ -55,6 +55,7 @@ export type WorkspaceSetup = {
 
 export type WorkspaceTradeIntelligence = {
   schemaVersion: string;
+  isHistorical: boolean;
   symbol: WorkspaceSymbol;
   sessionState: WorkspaceSessionState;
   sessionDate: string | null;
@@ -97,7 +98,7 @@ export type WorkspaceSnapshot = {
   symbol: WorkspaceSymbol;
   spot: number;
   asOf: string;
-  source: "verified_archive" | "live_public";
+  source: "verified_archive" | "last_verified_session" | "live_public";
   isLive: boolean;
   direction: WorkspaceDirection;
   atr: number;
@@ -269,6 +270,7 @@ function normalizeTradeIntelligence(
   value: unknown,
   symbol: WorkspaceSymbol,
   spot: number,
+  isHistorical: boolean,
 ): WorkspaceTradeIntelligence | null {
   const row = record(value);
   if (row.schema_version !== "alphaos-trade-intelligence-v1" || row.symbol !== symbol) return null;
@@ -328,9 +330,16 @@ function normalizeTradeIntelligence(
   const setups = Array.isArray(row.setups) ? row.setups.map(normalizeSetup) : [];
   if (setups.length < 3 || setups.some((setup) => setup === null)) return null;
   const directional = state !== "WAIT" || setups.some((setup) => setup?.state !== "WAIT");
-  if (directional && (sessionState !== "open" || dataStatus !== "verified" ||
-      data.freshness !== "fresh" || data.last_bar_status !== "complete" ||
-      data.completeness === "incomplete")) return null;
+  if (directional) {
+    if (isHistorical) {
+      // A completed session may retain a verified directional observation, but
+      // only as historical evidence. It is never promoted to a current signal.
+      if (sessionState !== "closed" || dataStatus !== "verified" ||
+          data.completeness === "incomplete") return null;
+    } else if (sessionState !== "open" || dataStatus !== "verified" ||
+        data.freshness !== "fresh" || data.last_bar_status !== "complete" ||
+        data.completeness === "incomplete") return null;
+  }
   const last = record(row.last_change);
   const lastChange = finitePositive(last.previous_close) && finitePositive(last.current_close)
     && stringValue(last.previous_at) && stringValue(last.current_at)
@@ -345,6 +354,7 @@ function normalizeTradeIntelligence(
     : null;
   return {
     schemaVersion: String(row.schema_version),
+    isHistorical,
     symbol,
     sessionState,
     sessionDate: stringValue(session.date),
@@ -405,15 +415,17 @@ export function normalizeMarketResponse(value: unknown): WorkspaceSnapshot | nul
     !finitePositive(spot) ||
     typeof asOf !== "string" ||
     !Number.isFinite(Date.parse(asOf)) ||
-    (source !== "verified_archive" && source !== "live_public") ||
+    (source !== "verified_archive" && source !== "last_verified_session" && source !== "live_public") ||
     !finitePositive(atr)
   ) {
     return null;
   }
 
-  // Synthetic demo fixtures must never enter the trading workspace.
-  if (source === "live_public" && response.isLive !== true) return null;
-  if (source === "verified_archive" && response.isLive !== false) return null;
+  const isLive = source === "live_public";
+  // Synthetic demo fixtures must never enter the trading workspace, and a
+  // historical observation must never be labeled live (or vice versa).
+  if (isLive && response.isLive !== true) return null;
+  if (!isLive && response.isLive !== false) return null;
 
   const opportunity = record(data.opportunity_state);
   const rawLevels = Array.isArray(data.levels) ? data.levels : [];
@@ -442,7 +454,9 @@ export function normalizeMarketResponse(value: unknown): WorkspaceSnapshot | nul
     ? response.warning.trim()
     : null;
   const expectedMove = finitePositive(data.expected_move) ? data.expected_move : null;
-  const tradeIntelligence = normalizeTradeIntelligence(response.trade_intelligence, symbol, spot);
+  const tradeIntelligence = normalizeTradeIntelligence(
+    response.trade_intelligence, symbol, spot, !isLive,
+  );
   const tradeIntelligenceWarning = stringValue(response.trade_intelligence_warning);
 
   return {
@@ -450,7 +464,7 @@ export function normalizeMarketResponse(value: unknown): WorkspaceSnapshot | nul
     spot,
     asOf,
     source,
-    isLive: source === "live_public",
+    isLive,
     direction: directionValue(opportunity.direction),
     atr,
     expectedMove,
@@ -498,6 +512,39 @@ export function buildWorkspaceAssessment(
   const sourceLevels = trade?.references.length ? trade.references : snapshot.levels;
   const support = nearest(sourceLevels.filter((level) => level.kind === "support"));
   const resistance = nearest(sourceLevels.filter((level) => level.kind === "resistance"));
+
+  // A non-live snapshot is historical context. Its levels and setup observations
+  // remain useful, but the current trading state is always WAIT.
+  if (!snapshot.isLive) {
+    const closest = trade?.setups.find((setup) => setup.id === trade.closestSetupId)
+      ?? trade?.setups.find((setup) => setup.state !== "WAIT")
+      ?? trade?.setups[0]
+      ?? null;
+    const historicalState = trade && trade.state !== "WAIT"
+      ? ` The backend's historical observation is ${trade.state}; it is not a current signal.`
+      : "";
+    return {
+      stance: "WAIT",
+      bias: trade?.bias ?? snapshot.direction,
+      biasLabel: directionLabel(trade?.bias ?? snapshot.direction),
+      reason:
+        `WAIT. The market is closed, so no current BUY or SELL is actionable. ` +
+        `Showing the last verified session at ${snapshot.asOf}.${historicalState} ` +
+        (trade?.reason ?? snapshot.tradeIntelligenceWarning
+          ?? "Only verified historical market and structure evidence is displayed."),
+      evidenceGaps: [
+        "Live market evidence from the current regular session",
+        ...(closest?.missingConditions ?? []),
+        ...(trade?.dataStatus === "verified" ? [] : [`Historical intraday data is ${trade?.dataStatus ?? "unavailable"}.`]),
+      ],
+      support,
+      resistance,
+      setups: trade?.setups ?? [],
+      closestSetup: closest,
+      exitEarly: trade?.exitEarly ?? null,
+      sessionState: trade?.sessionState ?? "closed",
+    };
+  }
 
   if (!trade) {
     return {
@@ -559,7 +606,9 @@ export function buildWorkspaceAssessment(
 function dataLine(snapshot: WorkspaceSnapshot): string {
   const observation = snapshot.isLive
     ? "marked live by the AlphaOS bridge"
-    : "a verified archive observation, not a live executable quote";
+    : snapshot.source === "last_verified_session"
+      ? "the last verified regular-session observation, not a live executable quote"
+      : "a verified archive observation, not a live executable quote";
   return `${snapshot.symbol} is ${price(snapshot.spot)} as of ${snapshot.asOf} (${snapshot.source}; ${observation}).`;
 }
 
@@ -592,6 +641,13 @@ function findSetup(trade: WorkspaceTradeIntelligence, id: string): WorkspaceSetu
 
 function waitAnswer(snapshot: WorkspaceSnapshot): string {
   const trade = snapshot.tradeIntelligence;
+  if (!snapshot.isLive) {
+    const historical = trade && trade.state !== "WAIT"
+      ? ` The historical observation was ${trade.state}, which is not a current signal.`
+      : "";
+    return `WAIT. The market is closed, so the current trading state is WAIT.${historical} ` +
+      (trade?.reason ?? "Only verified historical evidence is available.");
+  }
   if (!trade) {
     return "WAIT because the verified trade-intelligence contract is unavailable. No BUY or SELL state is inferred from price alone.";
   }
@@ -608,6 +664,15 @@ function waitAnswer(snapshot: WorkspaceSnapshot): string {
 
 function bullishEntryAnswer(snapshot: WorkspaceSnapshot): string {
   const trade = snapshot.tradeIntelligence;
+  if (!snapshot.isLive) {
+    if (!trade) return "The market is closed and the verified setup contract is unavailable. No current bullish entry is actionable, and no generic BUY threshold is invented.";
+    const candidates = [
+      findSetup(trade, "opening_range_breakout"),
+      findSetup(trade, "vwap_ema9_continuation"),
+      findSetup(trade, "support_resistance_reversal"),
+    ].filter((setup): setup is WorkspaceSetup => setup !== null);
+    return `The market is closed. This is historical evidence only, so no current bullish entry is actionable. ${candidates.map((setup) => setupLine(setup)).join(" ")}`;
+  }
   if (!trade) {
     return "The verified setup contract is unavailable, so I cannot state the exact bullish confirmation rule. No generic BUY threshold is invented.";
   }
@@ -625,6 +690,15 @@ function bullishEntryAnswer(snapshot: WorkspaceSnapshot): string {
 
 function bearishEntryAnswer(snapshot: WorkspaceSnapshot): string {
   const trade = snapshot.tradeIntelligence;
+  if (!snapshot.isLive) {
+    if (!trade) return "The market is closed and the verified setup contract is unavailable. No current bearish entry is actionable, and no generic SELL threshold is invented.";
+    const candidates = [
+      findSetup(trade, "opening_range_breakout"),
+      findSetup(trade, "vwap_ema9_continuation"),
+      findSetup(trade, "support_resistance_reversal"),
+    ].filter((setup): setup is WorkspaceSetup => setup !== null);
+    return `The market is closed. This is historical evidence only, so no current bearish entry is actionable. ${candidates.map((setup) => setupLine(setup)).join(" ")}`;
+  }
   if (!trade) {
     return "The verified setup contract is unavailable, so I cannot state the exact bearish confirmation rule. No generic SELL threshold is invented.";
   }
@@ -647,7 +721,8 @@ function breakoutReversalAnswer(snapshot: WorkspaceSnapshot): string {
   }
   const breakout = findSetup(trade, "opening_range_breakout");
   const reversal = findSetup(trade, "support_resistance_reversal");
-  return [
+  const prefix = snapshot.isLive ? "" : "Historical evidence only; the market is closed, so no current entry is actionable. ";
+  return prefix + [
     breakout ? setupLine(breakout) : "Opening-range breakout evidence is unavailable.",
     reversal ? setupLine(reversal) : "Support/resistance reversal evidence is unavailable.",
   ].join(" ");
@@ -677,7 +752,8 @@ function changedAnswer(snapshot: WorkspaceSnapshot): string {
   }
   const change = trade.lastChange;
   const pct = change.changePct === null ? "percentage unavailable" : `${change.changePct > 0 ? "+" : ""}${change.changePct.toFixed(2)}%`;
-  return `The latest confirmed five-minute close changed from ${price(change.previousClose)} at ${change.previousAt} to ${price(change.currentClose)} at ${change.currentAt}: ${change.change > 0 ? "+" : ""}${change.change.toFixed(2)} (${pct}). The unconfirmed tail is excluded.`;
+  const prefix = snapshot.isLive ? "" : "Historical session evidence only. ";
+  return `${prefix}The latest confirmed five-minute close changed from ${price(change.previousClose)} at ${change.previousAt} to ${price(change.currentClose)} at ${change.currentAt}: ${change.change > 0 ? "+" : ""}${change.change.toFixed(2)} (${pct}). The unconfirmed tail is excluded.`;
 }
 
 export function answerWorkspaceQuestion(
@@ -740,6 +816,7 @@ export function answerWorkspaceQuestion(
 
   const tradeQuestion = /\bbuy\b|\bsell\b|\bwait\b|signal|recommend|entry|invalidation|\bstop\b|target|early exit|\btrade\b|should i/.test(text);
   if (tradeQuestion) {
+    if (!snapshot.isLive) return waitAnswer(snapshot);
     if (!trade) {
       return "WAIT — the verified setup contract is unavailable. No BUY, SELL, entry, stop, target, or confidence value is generated from bias alone.";
     }
@@ -768,7 +845,8 @@ export function answerWorkspaceQuestion(
 
   if (/trend|direction|bias|bull|bear|chop/.test(text)) {
     const bias = trade?.bias ?? snapshot.direction;
-    return `AlphaOS classifies the current ${snapshot.symbol} descriptive bias as ${directionLabel(bias)}. ${trade ? `The research state is ${trade.state}: ${trade.reason}` : "This is a descriptive classifier output, not a BUY signal."}`;
+    const scope = snapshot.isLive ? "current" : "last verified session historical";
+    return `AlphaOS classifies the ${scope} ${snapshot.symbol} descriptive bias as ${directionLabel(bias)}. ${snapshot.isLive && trade ? `The research state is ${trade.state}: ${trade.reason}` : "This is descriptive historical context, not a current BUY signal."}`;
   }
 
   if (/price|quote|spot|where.*trading|current/.test(text)) {

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { afterEach, test } from "node:test";
 import { getMarketSnapshotServer } from "../src/lib/alphaos-server.ts";
-import { formatDistancePct, normalizeMarketResponse } from "../src/lib/workspace-evidence.ts";
+import { buildWorkspaceAssessment, formatDistancePct, normalizeMarketResponse } from "../src/lib/workspace-evidence.ts";
 
 const originalFetch = globalThis.fetch;
 const originalUrl = process.env.ALPHAOS_API_URL;
@@ -72,6 +72,7 @@ function mockBackend({
   structureFailure = null,
   tradeFailure = null,
   closed = false,
+  missingUnderlyingQuote = false,
 } = {}) {
   requested = [];
   globalThis.fetch = async (input, options) => {
@@ -80,15 +81,21 @@ function mockBackend({
     if (url.pathname === `/v1/market/${symbol}`) {
       if (marketFailure) return failureResponse(marketFailure);
       return Response.json(envelope(symbol, {
-        market_state: { direction: "bullish" },
+        market_state: { direction: "bullish", target: { close: spot } },
+        ...(missingUnderlyingQuote ? {} : {
+          underlying_quote: { quote: { symbol, last: spot, updated_at: "2026-11-13T15:45:00+00:00" } },
+        }),
         timing: {},
       }, {
-        snapshot_id: "snapshot-1", source: "Public", current_spot: spot,
+        snapshot_id: "snapshot-1", source: "Public",
+        current_spot: closed ? null : spot,
         quote_as_of: "2026-11-13T15:45:00+00:00",
         quote_freshness: {
           freshness: closed ? "latest_available" : "fresh",
           data_status: closed ? "latest_available" : "fresh",
+          freshness_reason: closed ? "latest_completed_session_observation" : "within_active_age_limit",
           market_state: closed ? "closed" : "regular_open",
+          observation_context: closed ? "dated_closed_market_observation" : "active_session_observation",
           usable_for_live_research: !closed,
           usable_for_contextual_research: true,
           quote_as_of: "2026-11-13T15:45:00+00:00",
@@ -267,19 +274,62 @@ test("an unexpected optional trade exception cannot discard a valid market snaps
   assert.match(result.trade_intelligence_warning, /failed unexpectedly/);
 });
 
-test("a closed market is diagnosed explicitly and fails independently of trade intelligence", async () => {
+for (const symbol of ["SPY", "QQQ"]) {
+  test(`closed ${symbol} markets return the last verified session pair as explicitly non-live`, async () => {
+    configure();
+    mockBackend({ symbol, closed: true });
+    const result = await getMarketSnapshotServer(symbol);
+    assert.equal(result.isLive, false);
+    assert.equal(result.data.source, "last_verified_session");
+    assert.equal(result.data.symbol, symbol);
+    assert.equal(result.data.current_spot, 505.1);
+    assert.equal(result.data.atr_14, 4.5);
+    assert.equal(result.data.levels.length, 1);
+    assert.equal(result.data.opportunity_state.time_state, "after_hours");
+    assert.equal(result.trade_intelligence_status, "available");
+    assert.equal(result.trade_intelligence.historical_only, true);
+    assert.match(result.warning, /Market closed/);
+    assert.match(result.warning, /not live evidence/);
+
+    const snapshot = normalizeMarketResponse({
+      ...result,
+      data: { ...result.data, opportunity_state: { ...result.data.opportunity_state, direction: "bullish" } },
+    });
+    assert.ok(snapshot);
+    assert.equal(snapshot.isLive, false);
+    assert.equal(snapshot.source, "last_verified_session");
+    assert.equal(snapshot.tradeIntelligence?.isHistorical, true);
+    assert.equal(buildWorkspaceAssessment(snapshot).stance, "WAIT");
+  });
+}
+
+for (const symbol of ["SPY", "QQQ"]) {
+  test(`closed ${symbol} sessions without a verified underlying observation remain unavailable`, async () => {
+    configure();
+    mockBackend({ symbol, closed: true, missingUnderlyingQuote: true });
+    await assert.rejects(
+      () => getMarketSnapshotServer(symbol),
+      (error) => {
+        assert.equal(error.name, "ResearchUnavailableError");
+        assert.equal(error.status, 503);
+        assert.equal(error.code, "market_closed");
+        assert.equal(error.stage, "market_validation");
+        return true;
+      },
+    );
+  });
+}
+
+test("a closed market keeps valid structure when optional trade intelligence fails", async () => {
   configure();
-  mockBackend({ closed: true });
-  await assert.rejects(
-    () => getMarketSnapshotServer("SPY"),
-    (error) => {
-      assert.equal(error.name, "ResearchUnavailableError");
-      assert.equal(error.status, 503);
-      assert.equal(error.code, "market_closed");
-      assert.equal(error.stage, "market_validation");
-      return true;
-    },
-  );
+  mockBackend({ closed: true, tradeFailure: { status: 503, code: "provider_unavailable" } });
+  const result = await getMarketSnapshotServer("SPY");
+  assert.equal(result.isLive, false);
+  assert.equal(result.data.source, "last_verified_session");
+  assert.equal(result.data.atr_14, 4.5);
+  assert.equal(result.data.levels.length, 1);
+  assert.equal(result.trade_intelligence, null);
+  assert.equal(result.trade_intelligence_status, "provider_unavailable");
 });
 
 test("an upstream market_closed_quote 503 keeps the market-closed code and source", async () => {

@@ -68,7 +68,20 @@ function formatAsOf(value: string | null): string {
 }
 
 function sourceLabel(snapshot: WorkspaceSnapshot): string {
-  return snapshot.source === "live_public" ? "Public live observation" : "Verified archive";
+  if (snapshot.source === "live_public") return "Public live observation";
+  if (snapshot.source === "last_verified_session") return "Last verified session (Public)";
+  return "Verified archive";
+}
+
+function newYorkSessionDate(value: string): string {
+  const timestamp = Date.parse(value);
+  if (!Number.isFinite(timestamp)) return "Unavailable";
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/New_York",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date(timestamp));
 }
 
 function directionStyle(direction: WorkspaceDirection): string {
@@ -88,7 +101,7 @@ function priceOrUnavailable(value: number | null): string {
   return value === null ? "Unavailable" : `$${formatPrice(value)}`;
 }
 
-function SetupCard({ setup }: { setup: WorkspaceSetup }) {
+function SetupCard({ setup, historical = false }: { setup: WorkspaceSetup; historical?: boolean }) {
   return (
     <article className={`min-w-0 rounded-lg border p-3 ${
       setup.state === "BUY"
@@ -104,7 +117,10 @@ function SetupCard({ setup }: { setup: WorkspaceSetup }) {
             {setup.direction} · {setup.freshness}
           </p>
         </div>
-        <StatusPill label={setup.state} variant={setupVariant(setup.state)} />
+        <StatusPill
+          label={historical && setup.state !== "WAIT" ? `HISTORICAL ${setup.state}` : setup.state}
+          variant={setupVariant(setup.state)}
+        />
       </div>
       {setup.waitReason && (
         <p className="mt-2 break-words text-[11px] leading-relaxed text-terminal-300">
@@ -234,7 +250,7 @@ function EvidenceAssistant({
   snapshot: WorkspaceSnapshot | null;
 }) {
   const opening = snapshot
-    ? `I’m grounded in the ${snapshot.isLive ? "live" : "archive"} ${symbol} snapshot observed ${formatAsOf(snapshot.asOf)}. Ask why the state is WAIT, what would confirm a bullish or bearish entry, where the nearest invalidation is, which setup is closest, what changed since the previous confirmed candle, or about pivots, opening range, VWAP, EMA 9, and freshness. I will not invent missing fields or a confidence score.`
+    ? `I’m grounded in the ${snapshot.isLive ? "live" : snapshot.source === "last_verified_session" ? "last verified session" : "archive"} ${symbol} evidence observed ${formatAsOf(snapshot.asOf)}. Ask why the state is WAIT, what would confirm a bullish or bearish entry, where the nearest invalidation is, which setup is closest, what changed since the previous confirmed candle, or about pivots, opening range, VWAP, EMA 9, and freshness. Historical observations are never presented as current signals, and I will not invent missing fields or a confidence score.`
     : `No verified ${symbol} market snapshot is loaded. I can explain market concepts, but I cannot provide symbol-specific price, trend, or setup analysis. No quote, signal, or setup state is substituted.`;
   const [messages, setMessages] = useState<Message[]>([{ role: "assistant", text: opening }]);
   const [question, setQuestion] = useState("");
@@ -453,13 +469,17 @@ export function TradingWorkspace({ initialSymbol }: { initialSymbol: WorkspaceSy
           <div className="relative mt-5 flex flex-col gap-4 border-t border-terminal-800/80 pt-4 sm:flex-row sm:items-end sm:justify-between">
             <div className="min-w-0">
               <p className="text-[10px] uppercase tracking-[0.12em] text-terminal-500">
-                {symbol} verified spot
+                {snapshot && !snapshot.isLive ? `${symbol} last verified session price` : `${symbol} verified spot`}
               </p>
               <p className="mt-1 break-words font-mono text-3xl font-semibold tabular-nums text-terminal-50 sm:text-4xl">
                 {snapshot ? `$${formatPrice(snapshot.spot)}` : state.kind === "loading" ? "Loading…" : "Unavailable"}
               </p>
               <p className="mt-1 break-words text-xs text-terminal-400">
-                {snapshot ? `${sourceLabel(snapshot)} · ${formatAsOf(snapshot.asOf)}` : "No verified observation is displayed."}
+                {snapshot
+                  ? snapshot.isLive
+                    ? `${sourceLabel(snapshot)} · ${formatAsOf(snapshot.asOf)}`
+                    : `Last verified session ${newYorkSessionDate(snapshot.asOf)} · observed ${formatAsOf(snapshot.asOf)}`
+                  : "No verified observation is displayed."}
               </p>
               {snapshot?.tradeIntelligence && (
                 <p className="mt-1 break-words text-[10px] text-terminal-500">
@@ -472,7 +492,11 @@ export function TradingWorkspace({ initialSymbol }: { initialSymbol: WorkspaceSy
               {snapshot ? (
                 <>
                   <StatusPill
-                    label={snapshot.isLive ? "LIVE OBSERVATION" : "ARCHIVE OBSERVATION"}
+                    label={snapshot.isLive
+                      ? "LIVE OBSERVATION"
+                      : snapshot.source === "last_verified_session"
+                        ? "LAST VERIFIED SESSION"
+                        : "ARCHIVE OBSERVATION"}
                     variant={snapshot.isLive ? "live" : "archive"}
                   />
                   <span className={`inline-flex items-center gap-1.5 rounded-full border border-terminal-700 bg-terminal-950 px-2.5 py-1 font-mono text-xs ${directionStyle(snapshot.direction)}`}>
@@ -496,6 +520,26 @@ export function TradingWorkspace({ initialSymbol }: { initialSymbol: WorkspaceSy
             </div>
           </div>
         </section>
+
+        {snapshot && !snapshot.isLive && (
+          <section role="status" className="rounded-xl border border-warning/30 bg-warning-bg/10 p-4">
+            <div className="flex items-start gap-3">
+              <CircleAlert className="mt-0.5 h-5 w-5 shrink-0 text-warning" aria-hidden="true" />
+              <div>
+                <h2 className="font-semibold text-terminal-100">Historical evidence only</h2>
+                <p className="mt-1 text-sm leading-relaxed text-terminal-300">
+                  The market is closed. This is{" "}
+                  {snapshot.source === "verified_archive"
+                    ? "a verified archive observation"
+                    : "the last verified regular-session observation"}{" "}
+                  observed {formatAsOf(snapshot.asOf)} (session {newYorkSessionDate(snapshot.asOf)}, New York),
+                  not a live quote or current trading opportunity. Current trading state remains WAIT;
+                  historical BUY or SELL observations are never actionable signals.
+                </p>
+              </div>
+            </div>
+          </section>
+        )}
 
         {state.kind === "error" && (
           <section role="alert" className="flex flex-col gap-3 rounded-xl border border-warning/30 bg-terminal-900 p-4 sm:flex-row sm:items-center sm:justify-between">
@@ -734,7 +778,11 @@ export function TradingWorkspace({ initialSymbol }: { initialSymbol: WorkspaceSy
 
               <dl className="mt-3 grid grid-cols-2 gap-2">
                 <Metric label="Directional bias" value={assessment.biasLabel} detail="Descriptive, not a signal." />
-                <Metric label="Data state" value={snapshot ? (snapshot.isLive ? "Live observation" : "Archive") : "Unavailable"} detail={snapshot ? formatAsOf(snapshot.asOf) : "No verified snapshot."} />
+                <Metric
+                  label="Data state"
+                  value={snapshot ? (snapshot.isLive ? "Live observation" : "Last verified session") : "Unavailable"}
+                  detail={snapshot ? formatAsOf(snapshot.asOf) : "No verified snapshot."}
+                />
               </dl>
 
               <div className="mt-3 space-y-2">
@@ -747,7 +795,13 @@ export function TradingWorkspace({ initialSymbol }: { initialSymbol: WorkspaceSy
                   </span>
                 </div>
                 {assessment.setups.length ? (
-                  assessment.setups.map((setup) => <SetupCard key={setup.id} setup={setup} />)
+                  assessment.setups.map((setup) => (
+                    <SetupCard
+                      key={setup.id}
+                      setup={setup}
+                      historical={snapshot?.tradeIntelligence?.isHistorical ?? false}
+                    />
+                  ))
                 ) : (
                   <div className="rounded-lg border border-warning/20 bg-terminal-950/60 p-3">
                     <p className="text-xs leading-relaxed text-terminal-300">
