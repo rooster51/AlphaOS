@@ -65,3 +65,9 @@ against it, merge/deploy through owner review, and repeat authenticated SPY/QQQ
 requests. Check raw/accepted/confirmed counts, session date, features and WAIT
 reasons. First-party candle display remains disabled. No archive backfill,
 entitlement, timestamp rounding or trading permission changes are included.
+
+Using authenticated market snapshots to pin the existing request contract,
+SPY and QQQ trade intelligence both returned HTTP 200 at 17:02:32-36 UTC
+in 1.134s and 1.127s respectively. Both reported 31 returned / zero confirmed
+bars, reason `provider_live_tail_excluded`, state WAIT, freshness fresh and
+completion unknown. This confirms the failing processing stage for both symbols.
