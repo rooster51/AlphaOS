@@ -251,7 +251,7 @@ test("workspace assessment reports the validated WAIT and its missing setup cond
   assert.deepEqual(assessment.resistance.map((level) => level.price), [504.75, 505, 507]);
   assert.ok(assessment.evidenceGaps.includes("A confirmed five-minute close above the opening-range high."));
   const unavailable = buildWorkspaceAssessment(null);
-  assert.equal(unavailable.stance, "UNAVAILABLE");
+  assert.equal(unavailable.stance, "WAIT");
   assert.equal(unavailable.bias, "unknown");
   assert.match(unavailable.reason, /No BUY, SELL/);
 });

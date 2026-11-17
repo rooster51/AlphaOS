@@ -110,7 +110,7 @@ export type WorkspaceSnapshot = {
 };
 
 export type WorkspaceAssessment = {
-  stance: WorkspaceTradeState | "UNAVAILABLE";
+  stance: WorkspaceTradeState;
   bias: WorkspaceDirection;
   biasLabel: string;
   reason: string;
@@ -475,7 +475,7 @@ export function buildWorkspaceAssessment(
 ): WorkspaceAssessment {
   if (!snapshot) {
     return {
-      stance: "UNAVAILABLE",
+      stance: "WAIT",
       bias: "unknown",
       biasLabel: "UNKNOWN",
       reason:

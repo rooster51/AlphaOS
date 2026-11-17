@@ -173,7 +173,7 @@ test("chart opens same-symbol trade research and options when market evidence is
   await expect(page.getByRole("button", { name: "SPY", exact: true })).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByRole("region", { name: "Trading research" }).getByText("WAIT", { exact: true }).first())
     .toBeVisible();
-  await page.getByRole("link", { name: /Options Chain · contracts/ }).click();
+  await page.getByRole("region", { name: "Trading research" }).getByRole("link", { name: /^Options Chain/ }).click();
   await expect(page.getByRole("combobox", { name: "Symbol" })).toHaveValue("SPY");
 });
 
