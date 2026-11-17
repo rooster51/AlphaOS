@@ -15,7 +15,7 @@ authorize a production deploy, a candle-display switch, or trading execution.
 | PR #101 closing-auction normalization | Merged before the audited base | Merged |
 | PR #108 trade-intelligence diagnostics | `c38ef3a` | Merged |
 | PR #109 candle timestamp handling | `73a5624`; PR merged 2026-11-17 02:00:57Z | Merged |
-| PR #110 after-hours workspace research | `4e3fa08`; branch `fix/after-hours-workspace-research` | Open, not merged |
+| PR #110 after-hours workspace research | Branch `fix/after-hours-workspace-research`; first fix `4e3fa08`, plus audit and Next.js security update | Open, not merged |
 | Render production process | `GET https://alphaos.onrender.com/health` returned `200` with `authentication_configured:true` | Reachable |
 | Render market route | `GET /v1/market/SPY?horizon=3` returned `401 authentication_required` | Route registered |
 | Render trade-intelligence route | `GET /v1/research/trade-intelligence/SPY` returned `401 authentication_required` | Route registered, not a 404 |
@@ -77,12 +77,16 @@ enabled by default or exposed to anonymous/viewer sessions.
 
 ### Automated and static checks
 
+- Next.js installed and locked at `16.4.6`.
+- `npm ci`: 0 vulnerabilities.
+- `npm audit --omit=dev --audit-level=moderate`: 0 vulnerabilities.
+- `npm audit --audit-level=moderate`: 0 vulnerabilities.
 - Web unit/integration suite: 302 passed.
 - TypeScript typecheck: passed.
 - Production build: passed.
-- Deployment-boundary check: passed (490 tracked files).
+- Playwright Chromium suite: 66 passed.
+- Deployment-boundary check: passed (493 tracked files).
 - Full Python suite: 1,685 passed, 1 skipped, 64 subtests passed.
-- New browser spec lists successfully with Playwright.
 
 ### Browser verification (mocked bridge)
 
@@ -102,10 +106,10 @@ production market data:
 - Historical archive research showed the historical banner and stale-archive
   message with a mocked archive response.
 
-The local Playwright runner could not launch Chromium because the VM lacks
-`libnspr4.so` and other browser system libraries; `sudo` is blocked. The full
-`npm run test:e2e` suite was therefore not executed in this environment. The
-new browser spec was listed and compiled successfully with Playwright.
+The Playwright suite was also run locally against the production build using an
+isolated Chromium library prefix because this VM has no writable system package
+manager. All 66 Chromium tests passed, including the workspace live/closed
+symbol-switch regression.
 
 ### Real production responses
 
@@ -127,9 +131,6 @@ response was obtained.
    unresolved and the deployment switch must stay off.
 3. The candle API has no historical-session/date parameter, so a historical
    candle selector cannot be implemented without a backend contract change.
-4. The existing web CI job fails before tests because a newly published Next.js
-   advisory affects `16.3.0-16.4.4`; the same job failed on base `main`. Upgrading
-   Next.js is a separate dependency/security change, not part of this audit.
 
 ## Owner production checklist
 

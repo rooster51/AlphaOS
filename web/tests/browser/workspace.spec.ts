@@ -117,7 +117,7 @@ test("workspace switches symbols and keeps closed-session evidence historical", 
   await expect(page.getByText("WAIT / RESEARCH STATE", { exact: true })).toBeVisible();
   await expect(page.getByText("HISTORICAL BUY", { exact: true })).toBeVisible();
   await expect(page.getByText("$505.10", { exact: true })).toBeVisible();
-  await expect(page.getByRole("link", { name: /Options Chain/ })).toHaveAttribute("href", "/options?symbol=SPY");
+  await expect(page.getByRole("link", { name: "Options Chain · contracts", exact: true })).toHaveAttribute("href", "/options?symbol=SPY");
 
   await page.getByRole("button", { name: "Where is the nearest invalidation?" }).click();
   await expect(page.getByText(/Opening-range breakout invalidation: \$504\.75/)).toBeVisible();
@@ -127,6 +127,6 @@ test("workspace switches symbols and keeps closed-session evidence historical", 
   await expect(page.getByText("LIVE OBSERVATION", { exact: true })).toBeVisible();
   await expect(page.getByText("$500.25", { exact: true })).toBeVisible();
   await expect(page.getByText("Historical evidence only", { exact: true })).toHaveCount(0);
-  await expect(page.getByRole("link", { name: /Options Chain/ })).toHaveAttribute("href", "/options?symbol=QQQ");
+  await expect(page.getByRole("link", { name: "Options Chain · contracts", exact: true })).toHaveAttribute("href", "/options?symbol=QQQ");
   expect(requested).toEqual(["SPY", "QQQ"]);
 });
