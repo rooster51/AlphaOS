@@ -29,6 +29,10 @@ class TimeClosedResearch:
     evidence: str
     reason: str
     actionable: bool = False
+    opening_range: dict | None = None
+    vwap: float | None = None
+    ema9: float | None = None
+    directional_context: str = "unknown"
 
 
 def _valid(bar: CandleBar) -> bool:
@@ -120,4 +124,31 @@ def time_closed_research(
     # The latest accepted interval must have been retrieved after its close+grace.
     if second_at < _utc(result[-1].time) + STEP + timedelta(seconds=grace_seconds):
         return empty("refetch_before_close_grace")
-    return TimeClosedResearch(tuple(result), "closed_by_time", "provider_finality_not_attested")
+    opening_range = None
+    if len(result) >= 3:
+        opening_range = {
+            "high": max(b.high for b in result[:3]),
+            "low": min(b.low for b in result[:3]),
+            "bar_count": 3,
+            "status": "provisional_time_closed",
+        }
+    volume = sum(b.volume for b in result)
+    vwap = sum(((b.high + b.low + b.close) / 3) * b.volume for b in result) / volume
+    ema9 = None
+    if len(result) >= 9:
+        ema9 = sum(b.close for b in result[:9]) / 9
+        for bar in result[9:]:
+            ema9 = bar.close * 0.2 + ema9 * 0.8
+    context = "unknown"
+    if ema9 is not None:
+        if result[-1].close > vwap > ema9:
+            context = "bullish"
+        elif result[-1].close < vwap < ema9:
+            context = "bearish"
+        else:
+            context = "neutral"
+    return TimeClosedResearch(
+        tuple(result), "closed_by_time", "provider_finality_not_attested",
+        opening_range=opening_range, vwap=vwap, ema9=ema9,
+        directional_context=context,
+    )
