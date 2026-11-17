@@ -173,3 +173,11 @@ test("client distinguishes timeout, caller cancellation and transport failure", 
   assert.equal(unreachable.ok, false);
   assert.equal(unreachable.error.code, "backend_unreachable");
 });
+
+test("rejects off-grid candles including fractions that Date.parse truncates", () => {
+  const base = candleSnapshot({ interval: "5m" });
+  for (const time of ["2026-11-10T14:31:00Z", "2026-11-10T14:30:00.000000001Z"]) {
+    const value = candleSnapshot({ interval: "5m", candles: [{ ...base.candles[0], time }] });
+    assert.equal(parseCandleSnapshot(value, { symbol: "SPY", interval: "5m" }), null);
+  }
+});

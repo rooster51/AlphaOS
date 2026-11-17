@@ -203,7 +203,8 @@ def test_unconfirmed_final_bar_is_excluded_by_the_endpoint(token, monkeypatch):
         item for item in evidence["setups"] if item["id"] == "opening_range_breakout"
     )
     assert breakout["state"] == "WAIT"
-    assert "later confirmed close" in breakout["wait_reason"]
+    assert "unverified finality" in breakout["wait_reason"]
+    assert breakout["entry_trigger"] is None
     assert any("did not confirm" in warning for warning in evidence["warnings"])
 
 
