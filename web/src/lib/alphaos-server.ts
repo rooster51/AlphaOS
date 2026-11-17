@@ -1,4 +1,11 @@
-import { fetchResearchEnvelope, supportedMarketSymbol, verifiedMarketPair, ResearchUnavailableError } from "./research-evidence.ts";
+import {
+  fetchResearchEnvelope,
+  latestSessionSpot,
+  supportedMarketSymbol,
+  verifiedLatestSessionPair,
+  verifiedMarketPair,
+  ResearchUnavailableError,
+} from "./research-evidence.ts";
 import type { MarketSnapshot } from "../types/research.ts";
 import { MOCK_MARKET_SNAPSHOTS } from "./mock-data.ts";
 import { getServerConfig, type BackendTarget } from "./server-config.ts";
@@ -165,6 +172,7 @@ async function research(
 async function loadTradeIntelligence(
   symbol: "QQQ" | "SPY",
   snapshotId: string,
+  historicalOnly = false,
 ): Promise<OptionalTradeIntelligence> {
   try {
     const query = new URLSearchParams({ horizon: "3", snapshot_id: snapshotId });
@@ -174,7 +182,21 @@ async function loadTradeIntelligence(
       "trade_intelligence",
     );
     if (validTradeIntelligence(candidate, symbol)) {
-      return { data: record(candidate.evidence), status: "available" };
+      const evidence = record(candidate.evidence);
+      // A closed market can never produce an actionable current setup. The
+      // backend already returns WAIT for a closed session; retain any historical
+      // state as evidence but make its non-live scope explicit to the UI.
+      if (historicalOnly) {
+        const warnings = Array.isArray(evidence.warnings)
+          ? evidence.warnings.filter((item): item is string => typeof item === "string")
+          : [];
+        evidence.warnings = [
+          ...warnings,
+          "Historical session evidence only. BUY or SELL states, if present, are observations and are not current signals.",
+        ];
+        evidence.historical_only = true;
+      }
+      return { data: evidence, status: "available" };
     }
     return {
       data: null,
@@ -237,6 +259,9 @@ export async function getMarketSnapshotServer(symbol: string): Promise<{
       "market_validation",
     );
   }
+  const marketQuality = record(marketMeta.quote_freshness);
+  const historicalOnly = marketQuality.data_status === "latest_available"
+    || marketQuality.market_state === "closed";
   // Structure depends on the market snapshot; the optional trade contract does
   // not, so run it alongside structure rather than adding its latency afterward.
   const structurePromise = research(
@@ -244,7 +269,7 @@ export async function getMarketSnapshotServer(symbol: string): Promise<{
     MARKET_REQUEST_TIMEOUT_MS,
     "structure",
   );
-  const tradePromise = loadTradeIntelligence(normSymbol, snapshotId);
+  const tradePromise = loadTradeIntelligence(normSymbol, snapshotId, historicalOnly);
   const [structure, trade] = await Promise.all([structurePromise, tradePromise]);
   const {
     data: tradeIntelligence,
@@ -254,10 +279,12 @@ export async function getMarketSnapshotServer(symbol: string): Promise<{
   const meta = record(market.meta);
   const marketEvidence = record(market.evidence);
   const structureEvidence = record(structure.evidence);
-  const quotedSpot = meta.current_spot;
+  const live = verifiedMarketPair(market, structure, normSymbol);
+  const lastVerifiedSession = !live && verifiedLatestSessionPair(market, structure, normSymbol);
+  const quotedSpot = live ? meta.current_spot : latestSessionSpot(market, normSymbol);
   const atr = structureEvidence.atr;
   const observedAt = meta.quote_as_of;
-  if (!verifiedMarketPair(market, structure, normSymbol)) {
+  if (!live && !lastVerifiedSession) {
     const quality = record(meta.quote_freshness);
     const code = quality.market_state === "closed" || quality.data_status === "latest_available"
       ? "market_closed" : "market_evidence_unavailable";
@@ -274,7 +301,7 @@ export async function getMarketSnapshotServer(symbol: string): Promise<{
     throw new ResearchUnavailableError(
       "No verified, fresh, matching market/structure evidence available",
       503,
-      "market_evidence_unavailable",
+      live ? "market_evidence_unavailable" : "market_closed",
       null,
       "market_validation",
     );
@@ -304,19 +331,26 @@ export async function getMarketSnapshotServer(symbol: string): Promise<{
   return {
     data: {
       symbol: normSymbol, current_spot: quotedSpot, as_of: observedAt,
-      source: "live_public", atr_14: atr, levels,
+      source: live ? "live_public" : "last_verified_session",
+      atr_14: atr, levels,
       opportunity_state: {
         direction, premium_state: "unknown", movement_state: "unknown",
-        time_state: "unknown", volatility_state: "unknown",
-        evidence: {}, caveats: [
+        time_state: live ? "unknown" : "after_hours", volatility_state: "unknown",
+        evidence: {}, caveats: live ? [
           "Direction/volatility/premium classifications are unavailable unless independently validated.",
           "A fresh underlying quote is not an executable options quote.",
+        ] : [
+          "This is the last verified regular-session observation, not a live or executable quote.",
+          "The market is closed. No current BUY or SELL state is actionable.",
+          "Historical setups, if returned, are observations only, never current signals.",
         ],
         classified_at: observedAt,
       },
     },
-    isLive: true,
-    warning: "Live underlying observation only. Unverified regime dimensions remain unknown.",
+    isLive: live,
+    warning: live
+      ? "Live underlying observation only. Unverified regime dimensions remain unknown."
+      : "Market closed. Showing the last verified regular-session observation and historical structure. This is not live evidence and cannot produce a current BUY or SELL.",
     trade_intelligence: tradeIntelligence,
     trade_intelligence_status: tradeIntelligenceStatus,
     trade_intelligence_warning: tradeIntelligenceWarning,

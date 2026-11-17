@@ -203,6 +203,63 @@ export async function fetchResearchEnvelope(
   }
 }
 
+function latestSessionQuote(market: ResearchEnvelope, symbol: string): Record<string, unknown> | null {
+  const underlying = object(market.evidence.underlying_quote);
+  const quote = object(underlying?.quote) ?? underlying;
+  if (!quote || quote.symbol !== symbol) return null;
+  const last = quote.last;
+  return typeof last === "number" && Number.isFinite(last) && last > 0 ? quote : null;
+}
+
+/**
+ * The last verified regular-session observation is valid contextual evidence
+ * after close, but it is never live or executable evidence. The backend marks
+ * this explicitly as latest_available/closed; the bridge must not substitute it
+ * for a fresh quote or promote it to current trading state.
+ */
+export function verifiedLatestSessionPair(market: unknown, structure: unknown, symbol: string): boolean {
+  if (!validEnvelope(market) || !validEnvelope(structure)) return false;
+  let expectedSymbol: string;
+  try {
+    expectedSymbol = supportedMarketSymbol(symbol);
+  } catch {
+    return false;
+  }
+  const a = market.meta, b = structure.meta;
+  const quality = object(a.quote_freshness);
+  const qualityTimestamp = quality?.quote_as_of;
+  const observedAt = a.quote_as_of;
+  const atr = structure.evidence.atr;
+  return a.symbol === expectedSymbol && b.symbol === expectedSymbol && a.source === "Public"
+    && a.snapshot_id !== null && typeof a.snapshot_id === "string"
+    && a.snapshot_id.length > 0 && a.snapshot_id === b.snapshot_id
+    && a.schema_version === b.schema_version
+    && quality?.usable_for_live_research === false
+    && quality.usable_for_contextual_research === true
+    && quality.data_status === "latest_available"
+    && quality.freshness === "latest_available"
+    && quality.market_state === "closed"
+    && (a.current_spot === null || a.current_spot === undefined)
+    && latestSessionQuote(market, expectedSymbol) !== null
+    && typeof atr === "number" && Number.isFinite(atr) && atr > 0
+    && validTimestamp(observedAt) && validTimestamp(qualityTimestamp)
+    && Date.parse(observedAt) === Date.parse(qualityTimestamp)
+    && object(market.evidence.market_state) !== null;
+}
+
+/** Read the verified closing observation only after the pair passed validation. */
+export function latestSessionSpot(market: unknown, symbol: string): number | null {
+  if (!validEnvelope(market)) return null;
+  let expectedSymbol: string;
+  try {
+    expectedSymbol = supportedMarketSymbol(symbol);
+  } catch {
+    return null;
+  }
+  const quote = latestSessionQuote(market, expectedSymbol);
+  return quote && typeof quote.last === "number" ? quote.last : null;
+}
+
 export function verifiedMarketPair(market: unknown, structure: unknown, symbol: string): boolean {
   if (!validEnvelope(market) || !validEnvelope(structure)) return false;
   let expectedSymbol: string;

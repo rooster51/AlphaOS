@@ -275,6 +275,51 @@ test("six verified structure levels keep their order and normalized distances", 
   assert.ok(Math.abs(snapshot.levels[3].distancePct - -0.41) < 0.0001);
 });
 
+test("a last verified session snapshot is historical and never produces a current BUY", () => {
+  const historical = response();
+  historical.isLive = false;
+  historical.warning = "Market closed. Last verified session only.";
+  historical.data = { ...response().data, source: "last_verified_session" };
+  historical.trade_intelligence = tradeIntelligence({
+    state: "BUY",
+    active_setup_id: "opening_range_breakout",
+    closest_setup_id: "opening_range_breakout",
+    reason: "1 confirmed setup aligns with a bullish underlying state.",
+    setups: [
+      setup({ state: "BUY", direction: "bullish", missing_conditions: [], wait_reason: null }),
+      setup({ id: "vwap_ema9_continuation", name: "VWAP + EMA 9 continuation" }),
+      setup({ id: "support_resistance_reversal", name: "Support/resistance reversal" }),
+    ],
+  });
+  const snapshot = normalizeMarketResponse(historical);
+  assert.ok(snapshot);
+  assert.equal(snapshot.isLive, false);
+  assert.equal(snapshot.source, "last_verified_session");
+  assert.equal(snapshot.tradeIntelligence?.isHistorical, true);
+  assert.equal(snapshot.tradeIntelligence?.state, "BUY");
+
+  const assessment = buildWorkspaceAssessment(snapshot);
+  assert.equal(assessment.stance, "WAIT");
+  assert.match(assessment.reason, /market is closed/);
+  assert.match(assessment.reason, /historical observation is BUY/);
+  assert.equal(assessment.setups[0].state, "BUY");
+
+  const buy = answerWorkspaceQuestion(snapshot, "Is this a BUY?");
+  assert.match(buy, /^WAIT\./);
+  assert.match(buy, /market is closed/);
+  assert.doesNotMatch(buy, /^BUY\./);
+  const entry = answerWorkspaceQuestion(snapshot, "What would confirm a bullish entry?");
+  assert.match(entry, /historical evidence only/i);
+  assert.match(entry, /no current bullish entry is actionable/i);
+});
+
+test("a source/isLive mismatch fails closed for last verified session evidence", () => {
+  const historical = response();
+  historical.data = { ...response().data, source: "last_verified_session" };
+  historical.isLive = true;
+  assert.equal(normalizeMarketResponse(historical), null);
+});
+
 test("a confirmed setup produces a BUY research state with entry and invalidation", () => {
   const confirmed = response();
   confirmed.trade_intelligence = tradeIntelligence({

@@ -2,7 +2,9 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
   fetchResearchEnvelope,
+  latestSessionSpot,
   supportedMarketSymbol,
+  verifiedLatestSessionPair,
   verifiedMarketPair,
   validEnvelope,
 } from "../src/lib/research-evidence.ts";
@@ -34,6 +36,47 @@ test("missing or malformed API envelope fails closed", () => {
   assert.equal(validEnvelope({ meta: { schema_version: "unknown" }, evidence: {}, caveats: [] }), false);
   assert.equal(verifiedMarketPair({ error: { code: "provider_unavailable" } }, structure(), "QQQ"), false);
 });
+function latestMarket() {
+  const a = market();
+  a.meta.current_spot = null;
+  a.meta.quote_as_of = "2026-10-09T20:00:00Z";
+  a.meta.quote_freshness = {
+    quote_as_of: "2026-10-09T20:00:00+00:00",
+    data_status: "latest_available",
+    freshness: "latest_available",
+    market_state: "closed",
+    freshness_reason: "latest_completed_session_observation",
+    usable_for_live_research: false,
+    usable_for_contextual_research: true,
+  };
+  a.evidence.underlying_quote = { quote: { symbol: "QQQ", last: 600 } };
+  return a;
+}
+
+test("a closed market's last verified session pair is contextual but never live", () => {
+  const a = latestMarket();
+  assert.equal(verifiedLatestSessionPair(a, structure(), "QQQ"), true);
+  assert.equal(verifiedMarketPair(a, structure(), "QQQ"), false);
+  assert.equal(latestSessionSpot(a, "QQQ"), 600);
+  assert.equal(latestSessionSpot(a, "SPY"), null);
+
+  for (const defect of ["live", "stale", "missing_quote", "snapshot", "atr", "timestamp"]) {
+    const m = latestMarket();
+    const s = structure();
+    if (defect === "live") m.meta.current_spot = 600;
+    if (defect === "stale") {
+      m.meta.quote_freshness.data_status = "stale";
+      m.meta.quote_freshness.freshness = "stale";
+    }
+    if (defect === "missing_quote") delete m.evidence.underlying_quote;
+    if (defect === "snapshot") s.meta.snapshot_id = "different";
+    if (defect === "atr") s.evidence.atr = 0;
+    if (defect === "timestamp") m.meta.quote_freshness.quote_as_of = "2026-10-09T20:01:00Z";
+    assert.equal(verifiedLatestSessionPair(m, s, "QQQ"), false, defect);
+    if (defect === "missing_quote") assert.equal(latestSessionSpot(m, "QQQ"), null);
+  }
+});
+
 test("stale or untrusted provider observations fail closed", () => {
   const a = market();
   a.meta.quote_freshness.usable_for_live_research = false;
