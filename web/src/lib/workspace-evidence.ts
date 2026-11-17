@@ -110,7 +110,7 @@ export type WorkspaceSnapshot = {
 };
 
 export type WorkspaceAssessment = {
-  stance: WorkspaceTradeState | "UNAVAILABLE";
+  stance: WorkspaceTradeState;
   bias: WorkspaceDirection;
   biasLabel: string;
   reason: string;
@@ -327,6 +327,10 @@ function normalizeTradeIntelligence(
   if (references.length !== rawReferences.length) return null;
   const setups = Array.isArray(row.setups) ? row.setups.map(normalizeSetup) : [];
   if (setups.length < 3 || setups.some((setup) => setup === null)) return null;
+  const directional = state !== "WAIT" || setups.some((setup) => setup?.state !== "WAIT");
+  if (directional && (sessionState !== "open" || dataStatus !== "verified" ||
+      data.freshness !== "fresh" || data.last_bar_status !== "complete" ||
+      data.completeness === "incomplete")) return null;
   const last = record(row.last_change);
   const lastChange = finitePositive(last.previous_close) && finitePositive(last.current_close)
     && stringValue(last.previous_at) && stringValue(last.current_at)
@@ -471,7 +475,7 @@ export function buildWorkspaceAssessment(
 ): WorkspaceAssessment {
   if (!snapshot) {
     return {
-      stance: "UNAVAILABLE",
+      stance: "WAIT",
       bias: "unknown",
       biasLabel: "UNKNOWN",
       reason:

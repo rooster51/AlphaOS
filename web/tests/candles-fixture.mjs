@@ -1,8 +1,11 @@
 /** Test-only synthetic candle snapshots. Never live market observations. */
 export function candleSnapshot(overrides = {}) {
+  const interval = overrides.interval ?? "1m";
+  const step = Number.parseInt(interval, 10) * 60_000;
+  const nextBar = Date.parse("2026-11-10T14:30:00Z") + step;
   const candles = overrides.candles ?? [
     { time: "2026-11-10T14:30:00Z", open: 600.0, high: 601.0, low: 599.5, close: 600.5, volume: 12_500 },
-    { time: "2026-11-10T14:31:00Z", open: 600.5, high: 601.2, low: 600.1, close: 600.9, volume: 9_800 },
+    { time: new Date(nextBar).toISOString(), open: 600.5, high: 601.2, low: 600.1, close: 600.9, volume: 9_800 },
   ];
   return {
     schema_version: "alphaos-candles-v1",
@@ -10,7 +13,7 @@ export function candleSnapshot(overrides = {}) {
     interval: "1m",
     provider: "Public",
     session: "regular",
-    retrieved_at: "2026-11-10T14:33:00Z",
+    retrieved_at: new Date(Date.parse(candles.at(-1)?.time ?? "2026-11-10T14:30:00Z") + step).toISOString(),
     latest_candle_at: candles.at(-1)?.time ?? "2026-11-10T14:33:00Z",
     snapshot_id: "a".repeat(64),
     expected_bars: 390,

@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { Header } from "@/components/shell/Header";
 import Link from "next/link";
+import { ChartResearchNavigation } from "@/components/market/chart/ChartResearchNavigation";
 import { CandleChartPanel } from "@/components/market/chart/CandleChartPanel";
 import { TradingViewFallback } from "@/components/market/chart/TradingViewFallback";
 import { CANDLE_INTERVALS, type CandleInterval, type CandleSymbol } from "@/lib/candles";
@@ -56,11 +57,12 @@ export default async function CandleChartPage({
           badge={{ label: "FALLBACK", variant: "warning" }}
         />
         <div className="mx-auto w-full max-w-[1440px] space-y-4 px-4 py-5 sm:px-6 sm:py-7 lg:px-8">
+          <ChartResearchNavigation symbol={symbol} interval={interval} legacy />
           <TradingViewFallback symbol={symbol} />
         </div>
       </div>
     );
   }
 
-  return <CandleChartPanel symbol={symbol} initialInterval={interval} />;
+  return <CandleChartPanel key={`${symbol}:${interval}`} symbol={symbol} initialInterval={interval} />;
 }
