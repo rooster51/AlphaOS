@@ -152,3 +152,27 @@ def time_closed_research(
         opening_range=opening_range, vwap=vwap, ema9=ema9,
         directional_context=context,
     )
+
+
+def fetch_time_closed_research(
+    fetch_snapshot,
+    *,
+    now: datetime,
+    enabled: bool = False,
+    grace_seconds: int = 5,
+) -> TimeClosedResearch:
+    """Research-only caller for two independently fetched authorized snapshots.
+
+    fetch_snapshot must retrieve a fresh, validated CandleSnapshot on each call.
+    This function never changes the production trade-intelligence signal path.
+    """
+    if not enabled:
+        return TimeClosedResearch((), "time_closed_unverified_finality", "time_closed_mode_disabled")
+    try:
+        first = fetch_snapshot()
+        second = fetch_snapshot()
+    except Exception:
+        return TimeClosedResearch((), "time_closed_unverified_finality", "refetch_unavailable")
+    return time_closed_research(
+        first, second, now=now, enabled=True, grace_seconds=grace_seconds
+    )
