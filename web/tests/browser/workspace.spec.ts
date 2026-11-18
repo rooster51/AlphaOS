@@ -39,6 +39,7 @@ function marketResponse(symbol: "SPY" | "QQQ", closed: boolean) {
         actionable: false,
         bar_count: 14,
         latest_bar_at: "2026-11-13T15:40:00Z",
+        latest_bar_close: 506.5,
         observations_at: [lastAt, lastAt],
         opening_range: { high: 506.23, low: 499 },
         vwap: 503.67,
@@ -147,6 +148,8 @@ test("workspace switches symbols and keeps closed-session evidence historical", 
   }).last();
   await expect(provisional.getByText("bullish", { exact: true })).toBeVisible();
   await expect(provisional.getByText("$503.67", { exact: true })).toBeVisible();
+  await expect(provisional.getByText(/Long breakout .* WAIT .* Provisional close above level/)).toBeVisible();
+  await expect(provisional.getByText(/Short breakout .* WAIT .* Provisional close at or above level/)).toBeVisible();
   await expect(provisional.getByText(/Provider finality is unverified/)).toBeVisible();
   expect(requested).toEqual(["SPY", "QQQ"]);
 });

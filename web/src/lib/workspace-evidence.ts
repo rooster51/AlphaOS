@@ -101,6 +101,7 @@ type ProvisionalResearch = {
   barCount: number;
   provider: string | null;
   latestBarAt: string | null;
+  latestBarClose: number | null;
   refetchedAt: string | null;
   direction: WorkspaceDirection;
   openingRange: { high: number; low: number } | null;
@@ -502,7 +503,7 @@ function normalizeProvisionalResearch(value: unknown): ProvisionalResearch | nul
   if (row.actionable !== false || !reason) return null;
   if (row.evidence === "time_closed_unverified_finality" && row.bar_count === 0) {
     return {
-      reason, barCount: 0, provider: null, latestBarAt: null, refetchedAt: null,
+      reason, barCount: 0, provider: null, latestBarAt: null, latestBarClose: null, refetchedAt: null,
       direction: "unknown", openingRange: null, vwap: null, ema9: null,
     };
   }
@@ -515,11 +516,12 @@ function normalizeProvisionalResearch(value: unknown): ProvisionalResearch | nul
     || !latestBarAt || !Number.isFinite(Date.parse(latestBarAt))
     || observations?.length !== 2 || !refetchedAt
     || !observations.every((time) => Number.isFinite(Date.parse(time)))
-    || !finitePositive(row.vwap)) return null;
+    || !finitePositive(row.vwap) || !finitePositive(row.latest_bar_close)) return null;
 
   const range = record(row.opening_range);
   return {
     reason, barCount, provider: row.provider, latestBarAt, refetchedAt,
+    latestBarClose: row.latest_bar_close,
     direction: directionValue(row.directional_context),
     openingRange: finitePositive(range.high) && finitePositive(range.low) && range.high >= range.low
       ? { high: range.high, low: range.low }

@@ -229,6 +229,21 @@ function ProvisionalResearchCard({ research }: {
             <Metric label="VWAP" value={priceOrUnavailable(research.vwap)} />
             <Metric label="EMA 9" value={priceOrUnavailable(research.ema9)} />
           </dl>
+          {research.openingRange && research.latestBarClose !== null && research.barCount > 3 && (
+            <div className="mt-3 space-y-1 text-xs text-terminal-400">
+              <p>Last eligible close {priceOrUnavailable(research.latestBarClose)}</p>
+              <p>
+                Long breakout · WAIT · Needs a provider-confirmed close above{" "}
+                {priceOrUnavailable(research.openingRange.high)}. Provisional close{" "}
+                {research.latestBarClose > research.openingRange.high ? "above level" : "at or below level"}.
+              </p>
+              <p>
+                Short breakout · WAIT · Needs a provider-confirmed close below{" "}
+                {priceOrUnavailable(research.openingRange.low)}. Provisional close{" "}
+                {research.latestBarClose < research.openingRange.low ? "below level" : "at or above level"}.
+              </p>
+            </div>
+          )}
           <p className="mt-2 text-xs text-terminal-400">
             WAIT · Two observations agreed. Provider finality is unverified. Options require current contract quotes and risk validation.
           </p>

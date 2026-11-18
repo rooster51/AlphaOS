@@ -139,6 +139,7 @@ def register_trade_intelligence(router, service, candles, respond):
                     [candle_snapshot.retrieved_at, refreshed.retrieved_at] if provisional.bars else []
                 ),
                 "latest_bar_at": provisional.bars[-1].time if provisional.bars else None,
+                "latest_bar_close": provisional.bars[-1].close if provisional.bars else None,
                 "opening_range": provisional.opening_range,
                 "vwap": provisional.vwap,
                 "ema9": provisional.ema9,
