@@ -158,6 +158,7 @@ def fetch_time_closed_research(
     fetch_snapshot,
     *,
     now: datetime,
+    clock=None,
     enabled: bool = False,
     grace_seconds: int = 5,
 ) -> TimeClosedResearch:
@@ -174,5 +175,6 @@ def fetch_time_closed_research(
     except Exception:
         return TimeClosedResearch((), "time_closed_unverified_finality", "refetch_unavailable")
     return time_closed_research(
-        first, second, now=now, enabled=True, grace_seconds=grace_seconds
+        first, second, now=clock() if clock is not None else now,
+        enabled=True, grace_seconds=grace_seconds
     )
