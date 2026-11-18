@@ -2,7 +2,8 @@ import assert from "node:assert/strict";
 import { chromium } from "@playwright/test";
 import { issueSession, SESSION_COOKIE } from "../src/lib/website-auth.ts";
 
-const origin = "http://127.0.0.1:3000";
+// Next normalizes the loopback request origin to localhost.
+const origin = "http://localhost:3000";
 const cookie = await issueSession(process.env, origin);
 const browser = await chromium.launch();
 
