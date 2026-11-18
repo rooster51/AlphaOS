@@ -101,6 +101,7 @@ def register_trade_intelligence(router, service, candles, respond):
                     provisional = fetch_time_closed_research(
                         lambda: candles().get_fresh(normalized, "5m", "regular", 78),
                         now=research.clock(),
+                        clock=research.clock,
                         enabled=True,
                     )
             except Exception:
