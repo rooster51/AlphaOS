@@ -19,10 +19,10 @@ try {
 
   for (const symbol of ["SPY", "QQQ"]) {
     const path = `/api/market?symbol=${symbol}`;
-    const bridgeResponse = page.waitForResponse((response) =>
-      response.url() === origin + path && response.request().method() === "GET");
-    await page.goto(`/workspace?symbol=${symbol}`);
-    const response = await bridgeResponse;
+    const [response] = await Promise.all([
+      page.waitForResponse((result) => result.url() === origin + path && result.request().method() === "GET"),
+      page.goto(`${origin}/workspace?symbol=${symbol}`),
+    ]);
     assert.equal(response.status(), 200, `${symbol} website bridge status`);
     const result = await response.json();
     const evidence = result.trade_intelligence?.provisional_research;
