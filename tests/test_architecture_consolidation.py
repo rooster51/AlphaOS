@@ -28,7 +28,7 @@ def test_existing_rest_and_mcp_compatibility_surface_is_preserved():
                for operation in methods.values())
     tools = asyncio.run(app.state.mcp.list_tools())
     assert {tool.name for tool in tools} == {
-        'market_snapshot','price_structure','forward_distribution','live_quote','option_expirations',
+        'market_snapshot','intraday_trade_intelligence','price_structure','forward_distribution','live_quote','option_expirations',
         'scan_credit_spreads','research_candidate','research_vertical','research_explicit_trade','compare_trades',
         'run_symbol_research','unified_candidate_research','unified_vertical_research','unified_explicit_trade_research',
         'run_market','research_structure','compare_structures',

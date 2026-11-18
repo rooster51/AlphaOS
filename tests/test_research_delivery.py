@@ -76,7 +76,7 @@ def test_breakout_archive_header_change_without_checksum_update_is_rejected(boun
 def test_mcp_argument_properties_match_rest_including_historical_mode():
     app=importlib.import_module('alphaos_api.app').app
     tools=asyncio.run(app.state.mcp.list_tools())
-    assert len(tools)==17
+    assert len(tools)==18
     schema=next(t for t in tools if t.name=='run_market').model_dump(mode='json',by_alias=True)['inputSchema']
     model=MarketRequest.model_json_schema()
     assert schema['properties']==model['properties']
