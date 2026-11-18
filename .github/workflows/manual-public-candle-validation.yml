@@ -2,6 +2,11 @@ name: Manual Public candle validation
 
 on:
   workflow_dispatch:
+    inputs:
+      trade_intelligence:
+        description: Measure the authenticated SPY and QQQ intraday research endpoint
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -35,6 +40,11 @@ jobs:
             --intervals 1m 5m 15m \
             --samples 1 \
             --output candle-probe-result.json
+      - name: Measure authenticated trade intelligence
+        if: inputs.trade_intelligence
+        env:
+          PUBLIC_API_SECRET: ${{ secrets.PUBLIC_API_SECRET }}
+        run: python -m scripts.probe_intraday_trade_intelligence
       - name: Upload safe probe observations
         if: always()
         uses: actions/upload-artifact@v4
