@@ -1,11 +1,22 @@
-# Time-closed 5-minute research (draft PR #118)
+# SPY and QQQ time-closed research
 
-This feature is **disabled by default**. Set `ALPHAOS_TIME_CLOSED_RESEARCH=true` on the authenticated backend only to opt in. Do not enable in production until review and measured API latency tests.
+Set `ALPHAOS_TIME_CLOSED_RESEARCH=true` only on an approved authenticated test backend. The default is off.
 
-The authenticated `GET /research/trade-intelligence/{symbol}` route (SPY/QQQ) performs **two uncached authorized Public 5-minute candle fetches** when enabled. Both snapshots must agree on the eligible regular-session prefix and pass source, freshness, entitlement, ordering, OHLCV and time checks. A bar is eligible only after its interval end plus five seconds. An open tail is excluded. If any required bar is missing or revised, the projection fails closed.
+The trade-intelligence route uses two independent Public SDK DAY / FIVE_MINUTES reads with the process-local candle cache bypassed. The first read also feeds the existing strict signal calculation. The second request must start at least five seconds after the end of every included interval. Matching OHLCV, a contiguous NYSE regular-session prefix, acceptable freshness, and private-research entitlement are required. Two matched observations establish consistency at retrieval time. Provider finality remains unknown.
 
-The existing `data`, `levels`, `state`, `setups`, and `exit_early` fields are unchanged and remain gated on **explicit provider finality**. A separate `provisional_research` object contains `evidence`, `reason`, `actionable=false`, `bar_count`, `latest_bar_at`, `opening_range`, `vwap`, `ema9`, `directional_context`, and a warning. These are **not verified BUY/SELL signals** and cannot authorize trading. Public does not attest that time-closed bars are immutable; two matching fetches do not prove finality.
+`provisional_research` contains the two observation times, last eligible bar start, count, provider, opening range from the first three bars, OHLC-typical-price VWAP, and SMA-seeded EMA 9. The workspace renders these values for owner sessions when the provider allows owner-private display. Setups, position exits, and option execution decisions do not consume provisional evidence. The MCP tool shares the REST path when AI analysis is entitled. Under the current Public policy it returns `data_use_denied`.
 
-The route currently has a three-second total budget, including daily research. Two extra provider requests can exhaust that budget and cause a 504; the default-off flag avoids changing live behavior. Before enabling in production, benchmark latency, provider rate limits, owner-only display permissions, DST/holidays, partial sessions, gaps, revisions and concurrency. Do not publish these private Public-derived values in a public website. Netlify auto-build remains disabled.
+The API has a 3-second processing deadline and the website trade-intelligence request has a 3.5-second deadline. The website reuses the market snapshot ID and loads structure and trade intelligence concurrently. Provider calls that outlive the API deadline retain a bounded worker slot until they return. Admission and timeouts return controlled 503 and 504 responses. The optional trade-intelligence call can fail while market and structure evidence remain available.
 
-Security issue #119 separately tracks the unpatched picomatch development dependency. Full npm audit remains a blocking CI gate.
+## Live acceptance
+
+During an NYSE regular session after 10:15:05 a.m. Eastern, inject the authorized Public API secret into the local test environment using the existing secret store. Set the preferred account only if account selection requires it. Keep tokens and raw payloads out of the evidence record.
+
+1. Run `python -m scripts.market_data_probe --symbols SPY QQQ --intervals 5m --samples 2 --interval-seconds 0`.
+2. Start an isolated local API with a locally generated REST token and the feature flag on. Record HTTP timings and statuses for cold and warm bearer-authenticated requests to `/v1/research/trade-intelligence/SPY` and `/v1/research/trade-intelligence/QQQ`, including parallel requests. Record both provider observation timestamps, bar counts, freshness and result reasons. Compare derived values against the observed five-minute prefix.
+3. Use a local production website build pointed at that API. Sign in as owner and verify both symbols, provisional indicators, and WAIT behavior. Confirm a non-owner cannot receive the provisional payload. Leave the raw candle display flag off.
+4. Keep the full dependency audit blocking. Issue #119 tracks the unpublished picomatch fix.
+
+## Approval gates
+
+Request approval before merging the reviewed PR, deploying its exact merged commit to the Render AlphaOS API, or enabling the production feature flag. Deploy with the flag off first, verify health and authentication, then request approval for opt-in and repeat the authenticated smoke tests. Keep Netlify Git builds stopped. A separately approved frontend release can publish a single verified local build through Netlify's manual deployment path. Roll back by disabling the feature flag and restoring the preceding approved deployment if the smoke checks fail.

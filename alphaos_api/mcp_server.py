@@ -12,6 +12,7 @@ from mcp.server.mcpserver import MCPServer
 from mcp.server.auth.settings import AuthSettings
 from mcp.server.transport_security import TransportSecuritySettings, RequestBodyLimitMiddleware
 from mcp_types import CallToolResult, TextContent, ToolAnnotations
+from modules.data_entitlements import AI_ANALYSIS, check_data_use
 from .research2 import MarketRequest, StructureRequest, StructuresRequest
 from .contracts import TradeRequest, CompareRequest, SCHEMA_VERSION
 from .mcp_auth import OwnerOAuth, SCOPE
@@ -78,6 +79,20 @@ def build_mcp(app, sanitize):
     @tool('Use for current spot plus completed-session market state. Preserve both timestamps and analog sample size. Reuse snapshot_id in structure/distribution calls.')
     async def market_snapshot(symbol: Symbol, horizon: Horizon=3, snapshot_id: str|None=None) -> CallToolResult:
         return await invoke('/v1/market/'+quote(symbol,safe=''),dict(horizon=horizon,snapshot_id=snapshot_id))
+
+    @tool('Read SPY or QQQ intraday setup evidence and provisional five-minute indicators. Preserve WAIT states, provenance, and the distinction between provisional and provider-confirmed evidence.')
+    async def intraday_trade_intelligence(symbol: Literal['SPY', 'QQQ'], horizon: Horizon = 3,
+            snapshot_id: str | None = None) -> CallToolResult:
+        decision = check_data_use(AI_ANALYSIS, "Public")
+        if not decision.allowed:
+            data = {
+                "schema_version": SCHEMA_VERSION,
+                "error": {"code": decision.code, "message": decision.reason},
+            }
+            return CallToolResult(content=[TextContent(type="text", text=json.dumps(data))],
+                                  structured_content=data, is_error=True)
+        return await invoke('/v1/research/trade-intelligence/' + symbol,
+                            dict(horizon=horizon, snapshot_id=snapshot_id))
 
     @tool('Use for historical support/resistance zones, not guaranteed price barriers. Supply snapshot_id and matching horizon to reuse a market observation.')
     async def price_structure(symbol: Symbol, levels: Annotated[int,Field(ge=1,le=10)]=3,

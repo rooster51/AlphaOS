@@ -32,6 +32,19 @@ function marketResponse(symbol: "SPY" | "QQQ", closed: boolean) {
       schema_version: "alphaos-trade-intelligence-v1",
       symbol,
       generated_at: lastAt,
+      provisional_research: {
+        provider: "Public",
+        evidence: "closed_by_time",
+        reason: "provider_finality_not_attested",
+        actionable: false,
+        bar_count: 14,
+        latest_bar_at: "2026-11-13T15:40:00Z",
+        observations_at: [lastAt, lastAt],
+        opening_range: { high: 506.23, low: 499 },
+        vwap: 503.67,
+        ema9: 500.19,
+        directional_context: symbol === "SPY" ? "bearish" : "bullish",
+      },
       source: "Public",
       session: {
         state: closed ? "closed" : "open",
@@ -122,11 +135,18 @@ test("workspace switches symbols and keeps closed-session evidence historical", 
   await page.getByRole("button", { name: "Where is the nearest invalidation?" }).click();
   await expect(page.getByText(/Opening-range breakout invalidation: \$504\.75/)).toBeVisible();
 
+  await expect(page.getByText("bearish", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "QQQ", exact: true }).click();
   await expect(page).toHaveURL(/\/workspace\?symbol=QQQ$/);
   await expect(page.getByText("LIVE OBSERVATION", { exact: true })).toBeVisible();
   await expect(page.getByText("$500.25", { exact: true })).toBeVisible();
   await expect(page.getByText("Historical evidence only", { exact: true })).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Options Chain · contracts", exact: true })).toHaveAttribute("href", "/options?symbol=QQQ");
+  const provisional = page.locator("section").filter({
+    has: page.getByRole("heading", { name: "Provisional intraday research" }),
+  }).last();
+  await expect(provisional.getByText("bullish", { exact: true })).toBeVisible();
+  await expect(provisional.getByText("$503.67", { exact: true })).toBeVisible();
+  await expect(provisional.getByText(/Provider finality is unverified/)).toBeVisible();
   expect(requested).toEqual(["SPY", "QQQ"]);
 });

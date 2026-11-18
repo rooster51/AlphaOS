@@ -27,3 +27,12 @@ def test_quote_contract_rest_mcp_identical(env,symbol,state):
     assert rest['meta']['current_spot']==(745.4 if state=='fresh' else None)
     assert not rest['evidence']['cache']['hit'] and mcp['evidence']['cache']['hit']
     p.quote.assert_called_once_with(symbol)
+
+
+@pytest.mark.parametrize("symbol", ["SPY", "QQQ"])
+def test_intraday_mcp_denies_public_ai_use(env, symbol):
+    client, *_ = env
+    _, tokens = login(client)
+    result = call(client, tokens["access_token"], "intraday_trade_intelligence", {"symbol": symbol})
+    assert result["isError"]
+    assert result["structuredContent"]["error"]["code"] == "data_use_denied"

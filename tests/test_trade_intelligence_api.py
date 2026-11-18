@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
+from dataclasses import replace
 import json
 import logging
 from threading import Barrier, Event
@@ -14,6 +15,7 @@ from fastapi.testclient import TestClient
 
 import alphaos_api.app as api
 import alphaos_api.trade_intelligence as route
+from modules.candle_service import CandleService
 from modules.data_entitlements import PRIVATE_RESEARCH, check_data_use
 from modules.market_data_contracts import CandleBar, CandleBatch
 from modules.market_data_gateway import (
@@ -308,3 +310,48 @@ def test_timed_out_workers_hold_capacity_until_they_exit(token, monkeypatch):
         finally:
             release.set()
             finished.wait(2)
+
+
+def test_concurrent_provisional_reads_bypass_cache_and_preserve_wait(token, monkeypatch):
+    monkeypatch.setenv("ALPHAOS_TIME_CLOSED_RESEARCH", "true")
+    arrivals = Barrier(2)
+    calls = {"SPY": 0, "QQQ": 0}
+    snapshot = candles(100, 101, 102, complete=False)
+    bars = tuple(replace(bar, provider_complete=None) for bar in snapshot.candles)
+
+    class Provider:
+        name = "Public"
+
+        def candles(self, symbol, interval, session, limit):
+            calls[symbol] += 1
+            arrivals.wait(timeout=2)
+            return CandleBatch(
+                provider=self.name, symbol=symbol, interval=interval, session=session,
+                retrieved_at=NOW.isoformat(), bars=bars, expected_bars=78,
+                received_bars=len(bars), last_bar_complete=None, warnings=(),
+                capabilities=PUBLIC_CAPABILITIES,
+            )
+
+    service = CandleService(Provider(), clock=lambda: NOW)
+    # Deliberately poison the old TTL entry. The opt-in path must bypass it.
+    service.cache.put(("Public", "SPY", "5m", "regular", 78), snapshot)
+    monkeypatch.setitem(api.app.state._state, "candles", service)
+
+    def request(symbol):
+        return get(token, f"/v1/research/trade-intelligence/{symbol}")
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        responses = list(pool.map(request, ("SPY", "QQQ")))
+    assert calls == {"SPY": 2, "QQQ": 2}
+    for symbol, response in zip(("SPY", "QQQ"), responses):
+        assert response.status_code == 200
+        evidence = response.json()["evidence"]
+        provisional = evidence["provisional_research"]
+        assert evidence["symbol"] == symbol
+        assert evidence["state"] == "WAIT"
+        assert evidence["data"]["confirmed_bars"] == 0
+        assert provisional["bar_count"] == 3
+        assert provisional["evidence"] == "closed_by_time"
+        assert provisional["provider"] == "Public"
+        assert provisional["actionable"] is False
+        assert provisional["owner_private_display_allowed"] is True

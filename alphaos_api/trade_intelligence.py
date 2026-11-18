@@ -9,13 +9,13 @@ from threading import BoundedSemaphore
 
 from fastapi import Query
 
-from modules.data_entitlements import DataUseDenied
+from modules.data_entitlements import OWNER_PRIVATE_DISPLAY, DataUseDenied, check_data_use
 from modules.market_data_gateway import MarketDataError
 from modules.price_structure import nearest_levels
-from modules.research_control import cancellable_research
+from modules.research_control import cancellable_research, checkpoint
 from modules.research_timing import emit, execution, stage
 from modules.trade_intelligence import build_trade_intelligence
-from modules.time_closed_candles import fetch_time_closed_research
+from modules.time_closed_candles import TimeClosedResearch, time_closed_research
 from .contracts import APIError
 from .service import symbol_value
 
@@ -85,28 +85,32 @@ def register_trade_intelligence(router, service, candles, respond):
             structure_rows = nearest_levels(prepared["structure"], levels).to_dict("records")
 
         candle_snapshot = None
-        candle_error = None
-        try:
-            with stage("trade_5m_candles"):
-                candle_snapshot = candles().get(normalized, "5m", "regular", 78)
-        except (MarketDataError, DataUseDenied):
-            candle_error = "intraday_candles_unavailable"
-
         provisional = None
-        # Explicit opt-in only. A cached read cannot serve as an independent
-        # second observation; both checks use the provider-backed fresh path.
-        if os.getenv("ALPHAOS_TIME_CLOSED_RESEARCH", "").strip().lower() in ("1", "true", "yes"):
-            try:
+        candle_error = None
+        use_time_closed = os.getenv("ALPHAOS_TIME_CLOSED_RESEARCH", "").strip().lower() in ("1", "true", "yes")
+        candle_service = candles()
+        try:
+            checkpoint()
+            with stage("trade_5m_candles"):
+                first_fetch = candle_service.get_fresh if use_time_closed else candle_service.get
+                candle_snapshot = first_fetch(normalized, "5m", "regular", 78)
+            if use_time_closed:
+                checkpoint()
                 with stage("trade_time_closed_refetch"):
-                    provisional = fetch_time_closed_research(
-                        lambda: candles().get_fresh(normalized, "5m", "regular", 78),
-                        now=research.clock(),
-                        clock=research.clock,
-                        enabled=True,
+                    refetch_started_at = research.clock()
+                    refreshed = candle_service.get_fresh(normalized, "5m", "regular", 78)
+                    provisional = time_closed_research(
+                        candle_snapshot, refreshed, now=research.clock(), enabled=True,
+                        refetch_started_at=refetch_started_at,
                     )
-            except Exception:
-                provisional = None
+        except (MarketDataError, DataUseDenied) as error:
+            reason = error.code if isinstance(error, MarketDataError) else "data_use_denied"
+            if candle_snapshot is None:
+                candle_error = reason
+            if use_time_closed:
+                provisional = TimeClosedResearch((), "time_closed_unverified_finality", reason)
 
+        checkpoint()
         try:
             with stage("trade_intelligence_calculation"):
                 result = build_trade_intelligence(
@@ -127,6 +131,13 @@ def register_trade_intelligence(router, service, candles, respond):
                 "reason": provisional.reason,
                 "actionable": False,
                 "bar_count": len(provisional.bars),
+                "provider": refreshed.provider if provisional.bars else None,
+                "owner_private_display_allowed": not provisional.bars or check_data_use(
+                    OWNER_PRIVATE_DISPLAY, refreshed.provider,
+                ).allowed,
+                "observations_at": (
+                    [candle_snapshot.retrieved_at, refreshed.retrieved_at] if provisional.bars else []
+                ),
                 "latest_bar_at": provisional.bars[-1].time if provisional.bars else None,
                 "opening_range": provisional.opening_range,
                 "vwap": provisional.vwap,

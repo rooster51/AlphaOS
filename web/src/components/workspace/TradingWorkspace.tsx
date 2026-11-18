@@ -205,6 +205,39 @@ function Metric({
   );
 }
 
+function ProvisionalResearchCard({ research }: {
+  research: NonNullable<WorkspaceSnapshot["provisionalResearch"]>;
+}) {
+  return (
+    <section className="mt-3 rounded-lg border border-terminal-800 bg-terminal-950/60 p-3">
+      <h3 className="text-sm font-semibold">Provisional intraday research</h3>
+      {research.barCount === 0 ? (
+        <p className="mt-2 text-xs text-terminal-400">
+          WAIT · Intraday evidence unavailable ({research.reason.replaceAll("_", " ")}).
+        </p>
+      ) : (
+        <>
+          <p className="mt-2 text-xs text-terminal-400">
+            {research.provider} · {research.barCount} five-minute bars · Latest bar start{" "}
+            {formatAsOf(research.latestBarAt)} · Refetched {formatAsOf(research.refetchedAt)}
+          </p>
+          <dl className="mt-3 grid grid-cols-2 gap-2">
+            <Metric label="Directional context" value={research.direction === "unknown" ? "Unavailable" : research.direction} />
+            <Metric label="Opening range" value={research.openingRange
+              ? `H ${formatPrice(research.openingRange.high)} / L ${formatPrice(research.openingRange.low)}`
+              : "Unavailable"} />
+            <Metric label="VWAP" value={priceOrUnavailable(research.vwap)} />
+            <Metric label="EMA 9" value={priceOrUnavailable(research.ema9)} />
+          </dl>
+          <p className="mt-2 text-xs text-terminal-400">
+            WAIT · Two observations agreed. Provider finality is unverified. Options require current contract quotes and risk validation.
+          </p>
+        </>
+      )}
+    </section>
+  );
+}
+
 function LevelList({
   title,
   levels,
@@ -632,6 +665,10 @@ export function TradingWorkspace({ initialSymbol }: { initialSymbol: WorkspaceSy
                       detail={snapshot.expectedMove === null ? "No verified estimate supplied." : "Backend-supplied context, not a forecast."}
                     />
                   </dl>
+
+                  {snapshot.provisionalResearch && (
+                    <ProvisionalResearchCard research={snapshot.provisionalResearch} />
+                  )}
 
                   {snapshot.tradeIntelligence ? (
                     <>

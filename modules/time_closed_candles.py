@@ -13,7 +13,6 @@ from modules.market_data_contracts import CandleBar, CandleSnapshot
 from modules.market_session_gate import regular_session_bounds
 
 STEP = timedelta(minutes=5)
-DEFAULT_GRACE = timedelta(seconds=5)
 
 
 def _utc(value: str | datetime) -> datetime:
@@ -50,6 +49,7 @@ def time_closed_research(
     now: datetime,
     enabled: bool = False,
     grace_seconds: int = 5,
+    refetch_started_at: datetime | None = None,
 ) -> TimeClosedResearch:
     """Compare two independently retrieved snapshots; return provisional prefix.
 
@@ -71,10 +71,11 @@ def time_closed_research(
     if now < session_open:
         return empty("session_not_open")
     for snap in (initial, refreshed):
-        if (snap.symbol not in ("SPY", "QQQ") or snap.interval != "5m" or snap.session != "regular"
+        if (snap.symbol not in ("SPY", "QQQ") or snap.provider != "Public"
+            or snap.interval != "5m" or snap.session != "regular"
             or snap.entitlement.get("allowed") is not True
             or snap.entitlement.get("provider") != snap.provider
-            or snap.freshness not in ("fresh", "current")
+            or snap.freshness not in ("fresh", "latest_available")
             or snap.completeness == "incomplete"
             or "provider_incomplete_bars_skipped" in snap.warnings):
             return empty("invalid_snapshot_contract")
@@ -86,7 +87,11 @@ def time_closed_research(
         return empty("invalid_retrieval_time")
     if first_at > second_at or second_at > now or second_at < session_open:
         return empty("invalid_refetch_order")
-    cutoff = min(now, second_at) - timedelta(seconds=grace_seconds)
+    refetch_start = second_at if refetch_started_at is None else _utc(refetch_started_at)
+    if not first_at <= refetch_start <= second_at:
+        return empty("invalid_refetch_order")
+    # A response arriving after grace may have been generated before grace.
+    cutoff = refetch_start - timedelta(seconds=grace_seconds)
     a = {}
     b = {}
     for snap, dest in ((initial, a), (refreshed, b)):
@@ -121,9 +126,6 @@ def time_closed_research(
         start += STEP
     if not result:
         return empty("no_elapsed_refetched_bars")
-    # The latest accepted interval must have been retrieved after its close+grace.
-    if second_at < _utc(result[-1].time) + STEP + timedelta(seconds=grace_seconds):
-        return empty("refetch_before_close_grace")
     opening_range = None
     if len(result) >= 3:
         opening_range = {
@@ -151,30 +153,4 @@ def time_closed_research(
         tuple(result), "closed_by_time", "provider_finality_not_attested",
         opening_range=opening_range, vwap=vwap, ema9=ema9,
         directional_context=context,
-    )
-
-
-def fetch_time_closed_research(
-    fetch_snapshot,
-    *,
-    now: datetime,
-    clock=None,
-    enabled: bool = False,
-    grace_seconds: int = 5,
-) -> TimeClosedResearch:
-    """Research-only caller for two independently fetched authorized snapshots.
-
-    fetch_snapshot must retrieve a fresh, validated CandleSnapshot on each call.
-    This function never changes the production trade-intelligence signal path.
-    """
-    if not enabled:
-        return TimeClosedResearch((), "time_closed_unverified_finality", "time_closed_mode_disabled")
-    try:
-        first = fetch_snapshot()
-        second = fetch_snapshot()
-    except Exception:
-        return TimeClosedResearch((), "time_closed_unverified_finality", "refetch_unavailable")
-    return time_closed_research(
-        first, second, now=clock() if clock is not None else now,
-        enabled=True, grace_seconds=grace_seconds
     )

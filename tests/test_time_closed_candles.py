@@ -1,6 +1,8 @@
 """Regression checks for opt-in time-closed research; never authorizes signals."""
 from dataclasses import replace
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
+
+import pytest
 
 from modules.market_data_contracts import CandleBar, CandleSnapshot
 from modules.time_closed_candles import time_closed_research
@@ -68,41 +70,21 @@ def test_provisional_indicators_are_not_verified_signals():
     result = time_closed_research(first, second, now=now, enabled=True)
     assert len(result.bars) == 10
     assert result.opening_range["high"] == 103
-    assert result.vwap is not None
-    assert result.ema9 is not None
+    assert result.vwap == pytest.approx(104.5)
+    assert result.ema9 == pytest.approx(105)
     assert result.actionable is False
     assert result.evidence == "closed_by_time"
 
 
-def test_fetch_entrypoint_does_not_call_provider_when_disabled():
-    from modules.time_closed_candles import fetch_time_closed_research
-    def should_not_fetch():
-        raise AssertionError("Disabled mode must not fetch")
-    now = datetime(2026, 11, 17, 15, 20, 6, tzinfo=timezone.utc)
-    result = fetch_time_closed_research(should_not_fetch, now=now)
-    assert result.reason == "time_closed_mode_disabled"
-
-
-def test_uncached_refetch_uses_post_fetch_clock():
-    from modules.time_closed_candles import fetch_time_closed_research
+def test_refetch_arriving_after_grace_must_start_after_grace():
     bar = CandleBar("2026-11-17T14:30:00+00:00", 100, 101, 99, 100, 1000)
-    snapshots = iter((
-        _snapshot("2026-11-17T14:35:02+00:00", [bar]),
-        _snapshot("2026-11-17T14:35:06+00:00", [bar]),
-    ))
-    calls = []
-    def fetch():
-        calls.append(1)
-        return next(snapshots)
-    # A pre-fetch timestamp is intentionally earlier than the second receipt.
-    result = fetch_time_closed_research(
-        fetch, now=datetime(2026, 11, 17, 14, 35, 1, tzinfo=timezone.utc),
-        clock=lambda: datetime(2026, 11, 17, 14, 35, 7, tzinfo=timezone.utc),
-        enabled=True,
+    first = _snapshot("2026-11-17T14:35:02+00:00", [bar])
+    second = _snapshot("2026-11-17T14:35:06+00:00", [bar])
+    now = datetime(2026, 11, 17, 14, 35, 7, tzinfo=timezone.utc)
+    result = time_closed_research(
+        first, second, now=now, enabled=True, refetch_started_at=now.replace(second=4),
     )
-    assert len(calls) == 2
-    assert result.evidence == "closed_by_time"
-    assert result.actionable is False
+    assert result.reason == "no_elapsed_refetched_bars"
 
 
 def test_refetch_source_mismatch_fails_closed():
@@ -112,3 +94,39 @@ def test_refetch_source_mismatch_fails_closed():
                 symbol="QQQ")
     now = datetime(2026, 11, 17, 14, 35, 7, tzinfo=timezone.utc)
     assert time_closed_research(a, b, now=now, enabled=True).reason == "refetch_source_mismatch"
+
+
+@pytest.mark.parametrize(("change", "reason"), [
+    ({"freshness": "stale"}, "invalid_snapshot_contract"),
+    ({"completeness": "incomplete"}, "invalid_snapshot_contract"),
+    ({"warnings": ("provider_incomplete_bars_skipped",)}, "invalid_snapshot_contract"),
+])
+def test_invalid_snapshot_fails_closed(change, reason):
+    bar = CandleBar("2026-11-17T14:30:00+00:00", 100, 101, 99, 100, 1000)
+    first = _snapshot("2026-11-17T14:40:05+00:00", [bar])
+    second = replace(first, **change)
+    now = datetime.fromisoformat(first.retrieved_at)
+    assert time_closed_research(first, second, now=now, enabled=True).reason == reason
+
+
+@pytest.mark.parametrize(("day", "hour", "reason"), [
+    ("2026-11-17", 14, "missing_or_unmatched_interval"),
+    ("2026-07-06", 13, "missing_or_unmatched_interval"),
+    ("2026-07-03", 13, "no_authoritative_session"),
+])
+def test_missing_bar_uses_authoritative_session_grid(day, hour, reason):
+    bar = CandleBar(f"{day}T{hour}:30:00+00:00", 100, 101, 99, 100, 1000)
+    snap = _snapshot(f"{day}T{hour}:40:05+00:00", [bar])
+    now = datetime.fromisoformat(snap.retrieved_at)
+    assert time_closed_research(snap, snap, now=now, enabled=True).reason == reason
+
+
+def test_early_close_caps_eligible_intervals():
+    opening = datetime(2026, 11, 27, 14, 30, tzinfo=timezone.utc)
+    bars = [
+        CandleBar((opening + timedelta(minutes=5 * i)).isoformat(), 100, 101, 99, 100, 1000)
+        for i in range(42)
+    ]
+    now = datetime(2026, 11, 27, 18, 10, tzinfo=timezone.utc)
+    snap = replace(_snapshot(now.isoformat(), bars), freshness="latest_available")
+    assert len(time_closed_research(snap, snap, now=now, enabled=True).bars) == 42
