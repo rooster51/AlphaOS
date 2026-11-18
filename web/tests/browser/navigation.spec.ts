@@ -64,6 +64,77 @@ for (const symbol of ["SPY", "QQQ"] as const) {
   });
 }
 
+for (const symbol of ["SPY", "QQQ"] as const) {
+  test(`${symbol} stale current archive offers explicit historical recovery without substituting current evidence`, async ({page}) => {
+    const requests: Array<Record<string, unknown>> = [];
+    await page.route("**/api/research/market", async route => {
+      const request = route.request().postDataJSON(); requests.push(request);
+      if (request.research_mode !== "historical") {
+        await route.fulfill({status:502,json:{status:"unavailable",code:"archive_stale"}});
+        return;
+      }
+      const {readFileSync} = await import("node:fs");
+      const fixtures = JSON.parse(readFileSync("tests/fixtures/market-parity.json", "utf8"));
+      const data = structuredClone(fixtures.find((f: any) => f.request.symbol === symbol && f.request.available_capital === 150).response);
+      data.request.research_mode = "historical";
+      data.research.research_mode = "historical";
+      data.research.archive.freshness = {age_seconds:172800, max_age_seconds:null};
+      data.research.research_session.status = "no_candidate";
+      data.research.research_session.candidates = [];
+      data.research.research_session.excluded = [];
+      data.research.research_session.diagnostics.generated_count = 0;
+      await route.fulfill({json:{source:"alphaos_research_api",verified_for_trading:false,research:data}});
+    });
+    await page.goto(`/market?symbol=${symbol}`);
+    await expect(page.getByText("The latest verified options archive is stale. No older snapshot or live data was substituted.")).toBeVisible();
+    expect(requests).toHaveLength(1);
+    const recovery = page.getByRole("button",{name:"Use verified historical archive"});
+    await expect(recovery).toBeVisible();
+    await recovery.click();
+    await expect(page.getByText(/HISTORICAL ARCHIVE RESEARCH — candidates describe/)).toBeVisible();
+    await expect(page.getByText("2030-01-02T20:30:00+00:00").first()).toBeVisible();
+    await expect(page.getByText("172800 seconds at request time")).toBeVisible();
+    await expect(page.getByText(/Research completed, but this archive snapshot/)).toBeVisible();
+    await expect(page.getByText(/^CURRENT-MARKET RESEARCH —/)).toHaveCount(0);
+    expect(requests.at(-1)).toEqual({symbol,research_mode:"historical",available_capital:150});
+  });
+}
+
+test("stale current archive with missing historical evidence reports the archive failure and substitutes nothing", async ({page}) => {
+  const requests: Array<Record<string, unknown>> = [];
+  await page.route("**/api/research/market", async route => {
+    const request = route.request().postDataJSON(); requests.push(request);
+    await route.fulfill({status:502,json:{status:"unavailable",
+      code: request.research_mode === "historical" ? "archive_missing" : "archive_stale"}});
+  });
+  await page.goto("/market?symbol=QQQ");
+  await expect(page.getByText("The latest verified options archive is stale. No older snapshot or live data was substituted.")).toBeVisible();
+  await page.getByRole("button",{name:"Use verified historical archive"}).click();
+  await expect(page.getByText("No verified options archive is available for this symbol.")).toBeVisible();
+  await expect(page.getByText(/No price, probability, expected value, or/)).toBeVisible();
+  await expect(page.getByText(/HISTORICAL ARCHIVE RESEARCH/)).toHaveCount(0);
+  expect(requests).toEqual([
+    {symbol:"QQQ",available_capital:150},
+    {symbol:"QQQ",research_mode:"historical",available_capital:150},
+  ]);
+});
+
+test("fresh current options evidence renders without stale recovery", async ({page}) => {
+  const requests: Array<Record<string, unknown>> = [];
+  await page.route("**/api/research/market", async route => {
+    const request = route.request().postDataJSON(); requests.push(request);
+    const {readFileSync} = await import("node:fs");
+    const fixtures = JSON.parse(readFileSync("tests/fixtures/market-parity.json", "utf8"));
+    const fixture = fixtures.find((f: any) => f.request.symbol === "SPY" && f.request.available_capital === 150);
+    await route.fulfill({json:{source:"alphaos_research_api",verified_for_trading:false,research:structuredClone(fixture.response)}});
+  });
+  await page.goto("/market?symbol=SPY");
+  await expect(page.getByRole("heading",{name:"SPY archived research"})).toBeVisible();
+  await expect(page.getByText(/^CURRENT-MARKET RESEARCH —/)).toBeVisible();
+  await expect(page.getByRole("button",{name:"Use verified historical archive"})).toHaveCount(0);
+  expect(requests).toEqual([{symbol:"SPY",available_capital:150}]);
+});
+
 test("known backend service errors display specific safe messages", async ({page}) => {
   await page.route("**/api/research/market", route => route.fulfill({status:502,
     json:{status:"unavailable",code:"backend_service_unavailable"}}));
