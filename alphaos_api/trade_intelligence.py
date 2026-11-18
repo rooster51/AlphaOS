@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+import os
 from concurrent.futures import ThreadPoolExecutor
 from contextvars import copy_context
 from threading import BoundedSemaphore
@@ -14,6 +15,7 @@ from modules.price_structure import nearest_levels
 from modules.research_control import cancellable_research
 from modules.research_timing import emit, execution, stage
 from modules.trade_intelligence import build_trade_intelligence
+from modules.time_closed_candles import fetch_time_closed_research
 from .contracts import APIError
 from .service import symbol_value
 
@@ -90,6 +92,20 @@ def register_trade_intelligence(router, service, candles, respond):
         except (MarketDataError, DataUseDenied):
             candle_error = "intraday_candles_unavailable"
 
+        provisional = None
+        # Explicit opt-in only. A cached read cannot serve as an independent
+        # second observation; both checks use the provider-backed fresh path.
+        if os.getenv("ALPHAOS_TIME_CLOSED_RESEARCH", "").strip().lower() in ("1", "true", "yes"):
+            try:
+                with stage("trade_time_closed_refetch"):
+                    provisional = fetch_time_closed_research(
+                        lambda: candles().get_fresh(normalized, "5m", "regular", 78),
+                        now=research.clock(),
+                        enabled=True,
+                    )
+            except Exception:
+                provisional = None
+
         try:
             with stage("trade_intelligence_calculation"):
                 result = build_trade_intelligence(
@@ -102,6 +118,29 @@ def register_trade_intelligence(router, service, candles, respond):
                 )
         except (ValueError, KeyError, TypeError):
             raise APIError("insufficient_historical_data", 503) from None
+        if provisional is not None:
+            # Deliberately separate from verified levels, setup state, and
+            # options exits. This section is never an actionable signal.
+            result["provisional_research"] = {
+                "evidence": provisional.evidence,
+                "reason": provisional.reason,
+                "actionable": False,
+                "bar_count": len(provisional.bars),
+                "latest_bar_at": provisional.bars[-1].time if provisional.bars else None,
+                "opening_range": provisional.opening_range,
+                "vwap": provisional.vwap,
+                "ema9": provisional.ema9,
+                "directional_context": provisional.directional_context,
+                "warning": (
+                    "Time-closed candles have not been attested final by the provider. "
+                    "Provisional values are not verified BUY/SELL signals."
+                ),
+            }
+            if provisional.bars:
+                result["warnings"].append(
+                    "Provisional time-closed VWAP/EMA9/opening-range are research-only; "
+                    "verified signal state remains independently gated."
+                )
         if candle_error:
             result["warnings"].append(
                 "The validated intraday candle request failed; only completed daily "
