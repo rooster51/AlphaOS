@@ -74,7 +74,7 @@ def time_closed_research(
         if (snap.symbol not in ("SPY", "QQQ") or snap.interval != "5m" or snap.session != "regular"
             or snap.entitlement.get("allowed") is not True
             or snap.entitlement.get("provider") != snap.provider
-            or snap.freshness != "fresh"
+            or snap.freshness not in ("fresh", "current")
             or snap.completeness == "incomplete"
             or "provider_incomplete_bars_skipped" in snap.warnings):
             return empty("invalid_snapshot_contract")
@@ -84,7 +84,7 @@ def time_closed_research(
         first_at, second_at = _utc(initial.retrieved_at), _utc(refreshed.retrieved_at)
     except (ValueError, TypeError, OverflowError):
         return empty("invalid_retrieval_time")
-    if first_at > second_at or second_at > now:
+    if first_at > second_at or second_at > now or second_at < session_open:
         return empty("invalid_refetch_order")
     cutoff = min(now, second_at) - timedelta(seconds=grace_seconds)
     a = {}
