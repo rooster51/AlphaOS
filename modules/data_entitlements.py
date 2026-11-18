@@ -4,10 +4,10 @@ Market-data access is not the same thing as permission to display, redistribute
 or feed observations into another service. AlphaOS defaults to deny whenever a
 provider's permission for a use is unknown.
 
-The Public Individual API is documented for the account owner's personal,
-non-commercial use. Its current policy therefore permits private research only.
-A future licensed feed can register a broader entitlement with an explicit
-authorization reference without changing API or frontend contracts.
+Public's personal, non-commercial API terms and the owner's written confirmation
+permit narrowly defined private historical-data workflows, including AI-assisted
+development/debugging. They do not authorize live MCP AI analysis, public display,
+commercial use, or redistribution. A licensed feed may register broader rights.
 """
 from __future__ import annotations
 
@@ -102,8 +102,8 @@ PUBLIC_ENTITLEMENT = ProviderEntitlement(
     public_display=False,
     commercial_use=False,
     redistribution=False,
-    # Public does not document permission to send its observations to an AI
-    # processor. Keep this false until a documented authorization exists.
+    # The written confirmation is limited to AI-assisted development/testing
+    # of historical data, not live MCP AI analysis or trading recommendations.
     ai_analysis=False,
     # Owner-supplied written Public confirmation explicitly permits these four
     # historical-data uses only for personal, non-commercial, non-redistributed
