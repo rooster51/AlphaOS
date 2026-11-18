@@ -60,9 +60,9 @@ jobs:
           PUBLIC_API_SECRET: ${{ secrets.PUBLIC_API_SECRET }}
         shell: bash
         run: |
-          npm ci
-          npm run build
-          npx playwright install --with-deps chromium
+          env -u PUBLIC_API_SECRET npm ci
+          env -u PUBLIC_API_SECRET npm run build
+          env -u PUBLIC_API_SECRET npx playwright install --with-deps chromium
           export ALPHAOS_API_TOKEN="$(openssl rand -hex 24)"
           export ALPHAOS_SESSION_KEY="$(openssl rand -base64 32 | tr '/+' '_-' | tr -d '=')"
           export ALPHAOS_PASSWORD_HASH="$(node --input-type=module -e 'import bcrypt from "bcryptjs"; import {randomBytes} from "node:crypto"; console.log(bcrypt.hashSync(randomBytes(32).toString("hex"), 12));')"

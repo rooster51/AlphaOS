@@ -8,10 +8,12 @@ const browser = await chromium.launch();
 
 try {
   const owner = await browser.newContext();
-  // Send a signed owner session to the local Next bridge. Netlify's edge
-  // login flow is outside this isolated smoke test.
-  await owner.route(origin + "/api/market?*", (route) =>
-    route.continue({ headers: { ...route.request().headers(), cookie: `${SESSION_COOKIE}=${cookie}` } }));
+  // Chromium accepts Secure cookies on loopback. Use the HTTPS URL for
+  // cookie registration to satisfy the __Host- prefix requirement.
+  await owner.addCookies([{
+    name: SESSION_COOKIE, value: cookie, url: origin.replace("http:", "https:"),
+    httpOnly: true, secure: true,
+  }]);
   const page = await owner.newPage();
   await page.route("https://s.tradingview.com/**", (route) => route.abort());
 
