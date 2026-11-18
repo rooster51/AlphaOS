@@ -75,12 +75,12 @@ jobs:
           (cd .. && exec python -m uvicorn alphaos_api.app:app --host 127.0.0.1 --port 8443 \
             --ssl-keyfile "$RUNNER_TEMP/alphaos-local-key.pem" --ssl-certfile "$NODE_EXTRA_CA_CERTS") >/dev/null 2>&1 &
           api_pid=$!
-          npm run start -- --hostname 127.0.0.1 >/dev/null 2>&1 &
+          env -u PUBLIC_API_SECRET npm run start -- --hostname 127.0.0.1 >/dev/null 2>&1 &
           web_pid=$!
           trap 'kill "$api_pid" "$web_pid" 2>/dev/null || true' EXIT
           curl --fail --silent --retry 10 --retry-connrefused --cacert "$NODE_EXTRA_CA_CERTS" https://localhost:8443/health >/dev/null
           curl --fail --silent --retry 10 --retry-connrefused http://127.0.0.1:3000/api/health >/dev/null
-          node --experimental-strip-types tests/live-workspace-smoke.mjs
+          env -u PUBLIC_API_SECRET node --experimental-strip-types tests/live-workspace-smoke.mjs
       - name: Upload safe probe observations
         if: always()
         uses: actions/upload-artifact@v4

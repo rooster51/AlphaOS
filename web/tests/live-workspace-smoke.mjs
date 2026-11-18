@@ -8,7 +8,10 @@ const browser = await chromium.launch();
 
 try {
   const owner = await browser.newContext();
-  await owner.addCookies([{ name: SESSION_COOKIE, value: cookie, url: origin, httpOnly: true }]);
+  // Send a signed owner session to the local Next bridge. Netlify's edge
+  // login flow is outside this isolated smoke test.
+  await owner.route(origin + "/api/market?*", (route) =>
+    route.continue({ headers: { ...route.request().headers(), cookie: `${SESSION_COOKIE}=${cookie}` } }));
   const page = await owner.newPage();
   await page.route("https://s.tradingview.com/**", (route) => route.abort());
 
