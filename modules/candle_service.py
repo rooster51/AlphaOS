@@ -89,5 +89,18 @@ class CandleService:
         self.cache.put(key, snapshot, use_context)
         return snapshot
 
+    def get_fresh(self, symbol: str, interval: str = "5m",
+                  session: str = "regular", limit: int = 78,
+                  use_context: str = PRIVATE_RESEARCH):
+        """Explicit provider refetch for opt-in private research; bypass TTL cache.
+
+        Do not overwrite the shared cache or claim provider bar finality.
+        """
+        enforce_data_use(use_context, self.provider.name)
+        normalized = validate_candle_request(symbol, interval, session, limit)
+        batch = self.provider.candles(normalized, interval, session, limit)
+        decision = enforce_data_use(use_context, batch.provider)
+        return build_snapshot(batch, now=self.clock(), entitlement=decision)
+
     def capabilities(self) -> dict:
         return self.provider.capabilities.as_dict()
