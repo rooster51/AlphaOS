@@ -860,7 +860,7 @@ export function StrategyResearchDashboard({
         badge={{ label: "READ-ONLY RESEARCH", variant: "archive" }}
       />
       <div className="mx-auto w-full max-w-[1440px] space-y-5 px-4 py-5 sm:px-6 sm:py-7 lg:px-8">
-        <section className="relative overflow-hidden rounded-2xl border border-terminal-800 bg-gradient-to-br from-terminal-900 via-terminal-950 to-terminal-900 p-5 sm:p-7">
+        <section className="relative overflow-hidden rounded-2xl border border-terminal-800 bg-linear-to-br from-terminal-900 via-terminal-950 to-terminal-900 p-5 sm:p-7">
           <div className="pointer-events-none absolute -right-10 -top-20 h-56 w-56 rounded-full bg-profit/5 blur-3xl" />
           <div className="relative flex flex-wrap items-end justify-between gap-4">
             <div>

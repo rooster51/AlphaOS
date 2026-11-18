@@ -20,7 +20,7 @@ type ResearchBundle = {
 
 type LoadState =
   | { kind: "loading" }
-  | { kind: "error"; message: string }
+  | { kind: "error"; message: string; code: string }
   | { kind: "result"; bundle: ResearchBundle };
 
 const ERROR_MESSAGES: Record<string, string> = {
@@ -246,6 +246,7 @@ export function MarketResearchPanel({
                 kind: "error",
                 message:
                   ERROR_MESSAGES.response_schema_mismatch,
+                code: "response_schema_mismatch",
               });
             }
             return;
@@ -265,6 +266,7 @@ export function MarketResearchPanel({
               message:
                 ERROR_MESSAGES[code] ??
                 ERROR_MESSAGES.backend_http_error,
+              code: code || "backend_http_error",
             });
           }
 
@@ -279,6 +281,7 @@ export function MarketResearchPanel({
               kind: "error",
               message:
                 ERROR_MESSAGES.response_schema_mismatch,
+              code: "response_schema_mismatch",
             });
           }
           return;
@@ -297,7 +300,13 @@ export function MarketResearchPanel({
             ? "The research request was cancelled."
             : ERROR_MESSAGES.backend_unreachable;
 
-        setState({ kind: "error", message });
+        setState({
+          kind: "error",
+          message,
+          code: error instanceof DOMException && error.name === "AbortError"
+            ? "request_cancelled"
+            : "backend_unreachable",
+        });
       }
     })();
 
@@ -435,6 +444,34 @@ export function MarketResearchPanel({
               No price, probability, expected value, or
               candidate has been substituted.
             </p>
+
+            {state.code === "archive_stale" &&
+              (submitted.research_mode ?? "current") === "current" && (
+                <div className="space-y-2 rounded border border-warning/20 bg-terminal-950/60 p-3">
+                  <p className="font-mono text-xs text-terminal-300">
+                    Current-market mode accepts only an archive observation
+                    from the last 10 minutes. After a session closes, or when
+                    the latest refresh falls outside that window, the latest
+                    verified archive is still available only as explicitly
+                    requested historical research at its original observation
+                    time.
+                  </p>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMode("historical");
+                      setSubmitted((current) => ({
+                        ...current,
+                        research_mode: "historical",
+                      }));
+                    }}
+                    className="rounded border border-terminal-600 px-4 py-2 text-sm text-terminal-100 hover:bg-terminal-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-profit"
+                  >
+                    Use verified historical archive
+                  </button>
+                </div>
+              )}
 
             <button
               type="button"

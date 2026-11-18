@@ -153,3 +153,22 @@ test("workspace switches symbols and keeps closed-session evidence historical", 
   await expect(provisional.getByText(/Provider finality is unverified/)).toBeVisible();
   expect(requested).toEqual(["SPY", "QQQ"]);
 });
+
+test("stale options archive does not suppress verified historical market and structure evidence", async ({ page }) => {
+  await page.route("https://s.tradingview.com/**", (route) =>
+    route.fulfill({ contentType: "text/html", body: "<!doctype html><title>TradingView fixture</title>" }));
+  await page.route("**/api/market?*", (route) =>
+    route.fulfill({ json: marketResponse("SPY", true) }));
+  // The options archive is independent of the market/structure bridge.
+  await page.route("**/api/research/market", (route) =>
+    route.fulfill({ status: 502, json: { status: "unavailable", code: "archive_stale" } }));
+
+  await page.goto("/workspace?symbol=SPY");
+  await expect(page.getByText("LAST VERIFIED SESSION", { exact: true })).toBeVisible();
+  await expect(page.getByText("Historical evidence only", { exact: true })).toBeVisible();
+  await expect(page.getByText("$505.10", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Structure & levels" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Support below spot" })).toBeVisible();
+  await expect(page.getByText("$4.50", { exact: true })).toBeVisible();
+  await expect(page.getByText(/The latest verified options archive is stale/)).toHaveCount(0);
+});

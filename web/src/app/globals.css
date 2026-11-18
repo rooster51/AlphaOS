@@ -1,6 +1,58 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+/* Match the previous content globs: only files under src/ are scanned. */
+@source "../";
+
+/* Preserve the class-based dark variant from the Tailwind 3 configuration. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-terminal-950: #080b10;
+  --color-terminal-900: #0d1117;
+  --color-terminal-850: #131822;
+  --color-terminal-800: #18202d;
+  --color-terminal-700: #243042;
+  --color-terminal-600: #36465d;
+  --color-terminal-500: #4b5f7d;
+  --color-terminal-400: #768dae;
+  --color-terminal-300: #a2b4cc;
+  --color-terminal-200: #cdd9e8;
+  --color-terminal-100: #e9eff7;
+
+  --color-profit: #10b981;
+  --color-profit-dim: #065f46;
+  --color-profit-bg: #064e3b20;
+
+  --color-loss: #ef4444;
+  --color-loss-dim: #991b1b;
+  --color-loss-bg: #7f1d1d20;
+
+  --color-warning: #f59e0b;
+  --color-warning-dim: #92400e;
+  --color-warning-bg: #78350f20;
+
+  --color-accent: #38bdf8;
+  --color-accent-dim: #0369a1;
+  --color-accent-bg: #0c4a6e20;
+
+  --font-mono: "JetBrains Mono", SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+}
+
+/* Tailwind 4 defaults borders to currentColor and placeholders to the current
+   text color. Keep the Tailwind 3 defaults so existing surfaces are unchanged. */
+@layer base {
+  *,
+  ::before,
+  ::after {
+    border-color: #e5e7eb;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: #9ca3af;
+  }
+}
 
 :root {
   --background: #080b10;
