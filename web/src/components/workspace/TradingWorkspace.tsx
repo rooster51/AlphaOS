@@ -429,7 +429,7 @@ export function TradingWorkspace({ initialSymbol }: { initialSymbol: WorkspaceSy
       />
 
       <div className="mx-auto w-full max-w-[1440px] min-w-0 space-y-4 px-4 py-5 sm:px-6 sm:py-7 lg:px-8">
-        <section className="relative overflow-hidden rounded-2xl border border-terminal-800 bg-gradient-to-br from-terminal-900 via-terminal-950 to-terminal-900 p-4 sm:p-6">
+        <section className="relative overflow-hidden rounded-2xl border border-terminal-800 bg-linear-to-br from-terminal-900 via-terminal-950 to-terminal-900 p-4 sm:p-6">
           <div className="pointer-events-none absolute -right-12 -top-20 h-56 w-56 rounded-full bg-profit/5 blur-3xl" />
           <div className="relative flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div className="min-w-0">

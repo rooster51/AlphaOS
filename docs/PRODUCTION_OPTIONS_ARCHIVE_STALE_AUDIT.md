@@ -146,17 +146,14 @@ Run on 2026-11-18:
   historical evidence.
 - Full Python suite on this branch in two file groups - 933 + 765 = 1,698 passed,
   1 skipped, 64 subtests passed.
-- `python scripts/check_deployment_boundary.py` - passed (495 tracked files).
+- `python scripts/check_deployment_boundary.py` - passed (496 tracked files).
 - `npm audit --omit=dev --audit-level=moderate` - 0 vulnerabilities.
-- `npm audit --audit-level=moderate` - **fails on a newly disclosed dev-only
-  advisory**, `GHSA-fc5q-39xc-vjpf` / `CVE-2026-112366` (picomatch ReDoS,
-  `<= 4.0.7`, no patched version published as of 2026-11-18). It reaches the
-  project through `tailwindcss@3.4.19` build tooling (`chokidar`, `micromatch`,
-  `sucrase`/`tinyglobby`); installed versions are already the newest 2.x/4.x.
-  The only npm-proposed fix is a breaking `tailwindcss@4` migration, which is
-  outside this fix. This affects the CI full-audit step on `main` as well. The
-  threshold and workflow were not changed; the production-dependency audit is
-  clean.
+- `npm audit --audit-level=moderate` - 0 vulnerabilities under both npm 11.20.0
+  and npm 10.9.8 (the version used by CI). The earlier dev-only picomatch
+  advisory (`GHSA-fc5q-39xc-vjpf` / `CVE-2026-112366`) is resolved by migrating
+  the frontend from `tailwindcss@3.4.19` to `tailwindcss@4.3.5`, which removes
+  picomatch from the dependency tree. Audit thresholds and the CI workflow were
+  not changed.
 
 ## Owner-only production checks
 
