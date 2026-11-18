@@ -8,13 +8,13 @@ from modules.time_closed_candles import time_closed_research
 
 def _snapshot(at, bars):
     return CandleSnapshot(
-        schema_version="1", symbol="SPY", interval="5m", provider="public",
+        schema_version="1", symbol="SPY", interval="5m", provider="Public",
         session="regular", retrieved_at=at, latest_candle_at=None,
         snapshot_id="fixture", expected_bars=None, received_bars=len(bars),
         returned_bars=len(bars), completeness="unknown", last_bar_status="unknown",
         freshness="fresh", warnings=("provider_live_tail_excluded",),
         candles=tuple(bars), provider_capabilities={},
-        entitlement={"allowed": True, "provider": "public"},
+        entitlement={"allowed": True, "provider": "Public"},
     )
 
 
