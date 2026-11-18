@@ -81,3 +81,34 @@ def test_fetch_entrypoint_does_not_call_provider_when_disabled():
     now = datetime(2026, 11, 17, 15, 20, 6, tzinfo=timezone.utc)
     result = fetch_time_closed_research(should_not_fetch, now=now)
     assert result.reason == "time_closed_mode_disabled"
+
+
+def test_uncached_refetch_uses_post_fetch_clock():
+    from modules.time_closed_candles import fetch_time_closed_research
+    bar = CandleBar("2026-11-17T14:30:00+00:00", 100, 101, 99, 100, 1000)
+    snapshots = iter((
+        _snapshot("2026-11-17T14:35:02+00:00", [bar]),
+        _snapshot("2026-11-17T14:35:06+00:00", [bar]),
+    ))
+    calls = []
+    def fetch():
+        calls.append(1)
+        return next(snapshots)
+    # A pre-fetch timestamp is intentionally earlier than the second receipt.
+    result = fetch_time_closed_research(
+        fetch, now=datetime(2026, 11, 17, 14, 35, 1, tzinfo=timezone.utc),
+        clock=lambda: datetime(2026, 11, 17, 14, 35, 7, tzinfo=timezone.utc),
+        enabled=True,
+    )
+    assert len(calls) == 2
+    assert result.evidence == "closed_by_time"
+    assert result.actionable is False
+
+
+def test_refetch_source_mismatch_fails_closed():
+    bar = CandleBar("2026-11-17T14:30:00+00:00", 100, 101, 99, 100, 1000)
+    a = _snapshot("2026-11-17T14:35:02+00:00", [bar])
+    b = replace(_snapshot("2026-11-17T14:35:06+00:00", [bar]),
+                symbol="QQQ")
+    now = datetime(2026, 11, 17, 14, 35, 7, tzinfo=timezone.utc)
+    assert time_closed_research(a, b, now=now, enabled=True).reason == "refetch_source_mismatch"
