@@ -4,15 +4,9 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  LayoutDashboard,
   LayoutGrid,
-  LineChart,
-  CandlestickChart,
   Compass,
   Layers,
-  History,
-  BookOpen,
-  ShieldAlert,
   Settings,
   Terminal,
   Menu,
@@ -21,15 +15,9 @@ import {
 
 const NAV_ITEMS = [
   { href: "/workspace", label: "Trading Workspace", icon: LayoutGrid },
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/market", label: "Market Research", icon: LineChart },
-  { href: "/market/chart", label: "Candles", icon: CandlestickChart },
   { href: "/strategies", label: "Strategy Explorer", icon: Compass },
   { href: "/options", label: "Options Chain", icon: Compass },
   { href: "/structures", label: "Structure Lab", icon: Layers },
-  { href: "/session", label: "Session Review", icon: History },
-  { href: "/journal", label: "Trade Journal", icon: BookOpen, badge: "Foundation" },
-  { href: "/risk", label: "Portfolio Risk", icon: ShieldAlert },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
