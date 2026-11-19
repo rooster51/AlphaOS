@@ -1,5 +1,7 @@
 "use client";
 
+import { MarketPlaybook } from "./MarketPlaybook";
+
 import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import {
@@ -929,6 +931,8 @@ export function TradingWorkspace({ initialSymbol }: { initialSymbol: WorkspaceSy
             )}
           </div>
         </div>
+
+        <MarketPlaybook symbol={symbol} />
 
         <footer className="border-t border-terminal-800 pt-4 text-[10px] leading-relaxed text-terminal-500">
           <p>
