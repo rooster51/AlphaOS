@@ -4,10 +4,10 @@ Market-data access is not the same thing as permission to display, redistribute
 or feed observations into another service. AlphaOS defaults to deny whenever a
 provider's permission for a use is unknown.
 
-The Public Individual API is documented for the account owner's personal,
-non-commercial use. Its current policy therefore permits private research only.
-A future licensed feed can register a broader entitlement with an explicit
-authorization reference without changing API or frontend contracts.
+Public's personal, non-commercial API terms and the owner's written confirmation
+permit narrowly defined private historical-data workflows, including AI-assisted
+development/debugging. They do not authorize live MCP AI analysis, public display,
+commercial use, or redistribution. A licensed feed may register broader rights.
 """
 from __future__ import annotations
 
@@ -20,6 +20,10 @@ PUBLIC_DISPLAY = "public_display"
 COMMERCIAL_USE = "commercial_use"
 REDISTRIBUTION = "redistribution"
 AI_ANALYSIS = "ai_analysis"
+PRIVATE_HISTORICAL_STORAGE = "private_historical_storage"
+LOCAL_HISTORICAL_REPLAY = "local_historical_replay"
+PRIVATE_CI_TESTING = "private_ci_testing"
+AI_ASSISTED_HISTORICAL_DEBUGGING = "ai_assisted_historical_debugging"
 
 USE_CONTEXTS = (
     PRIVATE_RESEARCH,
@@ -28,6 +32,10 @@ USE_CONTEXTS = (
     COMMERCIAL_USE,
     REDISTRIBUTION,
     AI_ANALYSIS,
+    PRIVATE_HISTORICAL_STORAGE,
+    LOCAL_HISTORICAL_REPLAY,
+    PRIVATE_CI_TESTING,
+    AI_ASSISTED_HISTORICAL_DEBUGGING,
 )
 UseContext = Literal[
     "private_research",
@@ -36,9 +44,13 @@ UseContext = Literal[
     "commercial_use",
     "redistribution",
     "ai_analysis",
+    "private_historical_storage",
+    "local_historical_replay",
+    "private_ci_testing",
+    "ai_assisted_historical_debugging",
 ]
 
-POLICY_VERSION = "alphaos-data-use-v1"
+POLICY_VERSION = "alphaos-data-use-v2"
 _AUTHORIZATION_REQUIRED = {PUBLIC_DISPLAY, COMMERCIAL_USE, REDISTRIBUTION}
 _PUBLIC_TERMS = (
     "Public Individual API terms: the Developer may use Data only through the "
@@ -64,6 +76,10 @@ class ProviderEntitlement:
     commercial_use: bool = False
     redistribution: bool = False
     ai_analysis: bool = False
+    private_historical_storage: bool = False
+    local_historical_replay: bool = False
+    private_ci_testing: bool = False
+    ai_assisted_historical_debugging: bool = False
     basis: str = "No documented entitlement; default deny."
     authorization_reference: str | None = None
 
@@ -86,10 +102,17 @@ PUBLIC_ENTITLEMENT = ProviderEntitlement(
     public_display=False,
     commercial_use=False,
     redistribution=False,
-    # Public does not document permission to send its observations to an AI
-    # processor. Keep this false until a documented authorization exists.
+    # The written confirmation is limited to AI-assisted development/testing
+    # of historical data, not live MCP AI analysis or trading recommendations.
     ai_analysis=False,
-    basis=_PUBLIC_TERMS,
+    # Owner-supplied written Public confirmation explicitly permits these four
+    # historical-data uses only for personal, non-commercial, non-redistributed
+    # data inaccessible to other people. This is NOT live MCP AI authorization.
+    private_historical_storage=True,
+    local_historical_replay=True,
+    private_ci_testing=True,
+    ai_assisted_historical_debugging=True,
+    basis=_PUBLIC_TERMS + " Owner-supplied written confirmation: private historical storage, local replay, private CI, and third-party AI-assisted historical debugging/testing permitted for personal non-commercial use without third-party access or redistribution.",
 )
 
 # Only explicitly registered providers are entitled. Do not infer permission

@@ -65,7 +65,11 @@ jobs:
       - run: npm ci
       - name: Audit production dependencies
         run: npm audit --omit=dev --audit-level=moderate
+      # Keep the security gate blocking, but still execute the build and browser
+      # suite so unrelated regressions are visible while upstream is unpatched.
       - name: Audit all dependencies
+        id: full_dependency_audit
+        continue-on-error: true
         run: npm audit --audit-level=moderate
       - run: npx playwright install --with-deps chromium
       - run: npm run typecheck
@@ -75,6 +79,11 @@ jobs:
           ALPHAOS_DEMO_MODE: 'false'
           ALPHAOS_API_TOKEN: ''
       - run: npm run test:e2e
+      - name: Enforce full dependency audit gate
+        if: ${{ always() && steps.full_dependency_audit.outcome == 'failure' }}
+        run: |
+          echo "::error::The full npm security audit failed; vulnerabilities are NOT waived. See Audit all dependencies."
+          exit 1
 
   windows-password-input:
     runs-on: windows-latest
@@ -115,7 +124,8 @@ jobs:
           python-version-file: '.python-version'
       - name: Install PostgreSQL test driver
         run: python -m pip install 'psycopg[binary]>=3.2,<4' pytest
-      - name: Test shared limiter migration and concurrency
+      - name: Test shared limiter and playbook migrations and concurrency
         env:
           WEBSITE_LOGIN_LIMITER_TEST_DSN: postgresql://postgres:postgres@localhost:5432/postgres
-        run: python -m pytest -q tests/test_website_login_rate_limit_postgres.py
+          MARKET_PLAYBOOK_TEST_DSN: postgresql://postgres:postgres@localhost:5432/postgres
+        run: python -m pytest -q tests/test_website_login_rate_limit_postgres.py tests/test_market_playbook_postgres.py

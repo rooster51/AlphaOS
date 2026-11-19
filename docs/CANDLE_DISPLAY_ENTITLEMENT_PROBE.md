@@ -1,5 +1,6 @@
 # Owner-private candle display and private probe
 
+> **2026-11-18 permission update (owner-supplied Public written response):** Public confirmed four historical-data use cases are valid only for personal, non-commercial use, without redistribution or access by another person: (1) private access-restricted cloud retention of historical daily prices, (2) local historical replay, (3) private CI/integration testing, and (4) AI-assisted development/debugging/testing of historical data, including third-party infrastructure. The confirmation does **not** explicitly authorize live market-data AI analysis through MCP. The narrow use contexts in `modules/data_entitlements.py` reflect this distinction; `ai_analysis`, public display, commercial use, and redistribution remain denied. The original authorization should be retained privately, not committed with personal identifiers. This update supersedes only the older blanket statement that *all* AI processing is unauthorized; all other owner-display and deployment caveats below remain in effect.\n\n
 Status: **owner-private display implemented and fail-closed; deployment switch off
 by default.** Public display, commercial use, redistribution, AI processing and
 access by anyone other than the authenticated repository owner remain disabled.

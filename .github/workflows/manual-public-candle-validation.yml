@@ -2,6 +2,15 @@ name: Manual Public candle validation
 
 on:
   workflow_dispatch:
+    inputs:
+      trade_intelligence:
+        description: Measure the authenticated SPY and QQQ intraday research endpoint
+        type: boolean
+        default: false
+      website:
+        description: Check the local production website with authenticated Public evidence
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -35,6 +44,43 @@ jobs:
             --intervals 1m 5m 15m \
             --samples 1 \
             --output candle-probe-result.json
+      - name: Measure authenticated trade intelligence
+        if: inputs.trade_intelligence
+        env:
+          PUBLIC_API_SECRET: ${{ secrets.PUBLIC_API_SECRET }}
+        run: python -m scripts.probe_intraday_trade_intelligence
+      - uses: actions/setup-node@v4
+        if: inputs.website
+        with:
+          node-version: '22.23.0'
+      - name: Build and test the owner website locally
+        if: inputs.website
+        working-directory: web
+        env:
+          PUBLIC_API_SECRET: ${{ secrets.PUBLIC_API_SECRET }}
+        shell: bash
+        run: |
+          env -u PUBLIC_API_SECRET npm ci
+          env -u PUBLIC_API_SECRET npm run build
+          env -u PUBLIC_API_SECRET npx playwright install --with-deps chromium
+          export ALPHAOS_API_TOKEN="$(openssl rand -hex 24)"
+          export ALPHAOS_SESSION_KEY="$(openssl rand -base64 32 | tr '/+' '_-' | tr -d '=')"
+          export ALPHAOS_PASSWORD_HASH="$(node --input-type=module -e 'import bcrypt from "bcryptjs"; import {randomBytes} from "node:crypto"; console.log(bcrypt.hashSync(randomBytes(32).toString("hex"), 12));')"
+          export ALPHAOS_API_URL=https://localhost:8443
+          export ALPHAOS_TIME_CLOSED_RESEARCH=true
+          export NODE_EXTRA_CA_CERTS="$RUNNER_TEMP/alphaos-local-cert.pem"
+          openssl req -x509 -nodes -newkey rsa:2048 -days 1 -subj '/CN=localhost' \
+            -addext 'subjectAltName=DNS:localhost' \
+            -keyout "$RUNNER_TEMP/alphaos-local-key.pem" -out "$NODE_EXTRA_CA_CERTS" >/dev/null 2>&1
+          (cd .. && exec python -m uvicorn alphaos_api.app:app --host 127.0.0.1 --port 8443 \
+            --ssl-keyfile "$RUNNER_TEMP/alphaos-local-key.pem" --ssl-certfile "$NODE_EXTRA_CA_CERTS") >/dev/null 2>&1 &
+          api_pid=$!
+          env -u PUBLIC_API_SECRET npm run start -- --hostname 127.0.0.1 >/dev/null 2>&1 &
+          web_pid=$!
+          trap 'kill "$api_pid" "$web_pid" 2>/dev/null || true' EXIT
+          curl --fail --silent --retry 10 --retry-connrefused --cacert "$NODE_EXTRA_CA_CERTS" https://localhost:8443/health >/dev/null
+          curl --fail --silent --retry 10 --retry-connrefused http://127.0.0.1:3000/api/health >/dev/null
+          env -u PUBLIC_API_SECRET node --experimental-strip-types tests/live-workspace-smoke.mjs
       - name: Upload safe probe observations
         if: always()
         uses: actions/upload-artifact@v4

@@ -1,5 +1,7 @@
 "use client";
 
+import { MarketPlaybook } from "./MarketPlaybook";
+
 import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import {
@@ -202,6 +204,54 @@ function Metric({
       </p>
       {detail && <p className="mt-1 break-words text-[10px] leading-relaxed text-terminal-500">{detail}</p>}
     </div>
+  );
+}
+
+function ProvisionalResearchCard({ research }: {
+  research: NonNullable<WorkspaceSnapshot["provisionalResearch"]>;
+}) {
+  return (
+    <section className="mt-3 rounded-lg border border-terminal-800 bg-terminal-950/60 p-3">
+      <h3 className="text-sm font-semibold">Provisional intraday research</h3>
+      {research.barCount === 0 ? (
+        <p className="mt-2 text-xs text-terminal-400">
+          WAIT · Intraday evidence unavailable ({research.reason.replaceAll("_", " ")}).
+        </p>
+      ) : (
+        <>
+          <p className="mt-2 text-xs text-terminal-400">
+            {research.provider} · {research.barCount} five-minute bars · Latest bar start{" "}
+            {formatAsOf(research.latestBarAt)} · Refetched {formatAsOf(research.refetchedAt)}
+          </p>
+          <dl className="mt-3 grid grid-cols-2 gap-2">
+            <Metric label="Directional context" value={research.direction === "unknown" ? "Unavailable" : research.direction} />
+            <Metric label="Opening range" value={research.openingRange
+              ? `H ${formatPrice(research.openingRange.high)} / L ${formatPrice(research.openingRange.low)}`
+              : "Unavailable"} />
+            <Metric label="VWAP" value={priceOrUnavailable(research.vwap)} />
+            <Metric label="EMA 9" value={priceOrUnavailable(research.ema9)} />
+          </dl>
+          {research.openingRange && research.latestBarClose !== null && research.barCount > 3 && (
+            <div className="mt-3 space-y-1 text-xs text-terminal-400">
+              <p>Last eligible close {priceOrUnavailable(research.latestBarClose)}</p>
+              <p>
+                Long breakout · WAIT · Needs a provider-confirmed close above{" "}
+                {priceOrUnavailable(research.openingRange.high)}. Provisional close{" "}
+                {research.latestBarClose > research.openingRange.high ? "above level" : "at or below level"}.
+              </p>
+              <p>
+                Short breakout · WAIT · Needs a provider-confirmed close below{" "}
+                {priceOrUnavailable(research.openingRange.low)}. Provisional close{" "}
+                {research.latestBarClose < research.openingRange.low ? "below level" : "at or above level"}.
+              </p>
+            </div>
+          )}
+          <p className="mt-2 text-xs text-terminal-400">
+            WAIT · Two observations agreed. Provider finality is unverified. Options require current contract quotes and risk validation.
+          </p>
+        </>
+      )}
+    </section>
   );
 }
 
@@ -429,7 +479,7 @@ export function TradingWorkspace({ initialSymbol }: { initialSymbol: WorkspaceSy
       />
 
       <div className="mx-auto w-full max-w-[1440px] min-w-0 space-y-4 px-4 py-5 sm:px-6 sm:py-7 lg:px-8">
-        <section className="relative overflow-hidden rounded-2xl border border-terminal-800 bg-gradient-to-br from-terminal-900 via-terminal-950 to-terminal-900 p-4 sm:p-6">
+        <section className="relative overflow-hidden rounded-2xl border border-terminal-800 bg-linear-to-br from-terminal-900 via-terminal-950 to-terminal-900 p-4 sm:p-6">
           <div className="pointer-events-none absolute -right-12 -top-20 h-56 w-56 rounded-full bg-profit/5 blur-3xl" />
           <div className="relative flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div className="min-w-0">
@@ -520,6 +570,8 @@ export function TradingWorkspace({ initialSymbol }: { initialSymbol: WorkspaceSy
             </div>
           </div>
         </section>
+
+        <MarketPlaybook symbol={symbol} />
 
         {snapshot && !snapshot.isLive && (
           <section role="status" className="rounded-xl border border-warning/30 bg-warning-bg/10 p-4">
@@ -632,6 +684,10 @@ export function TradingWorkspace({ initialSymbol }: { initialSymbol: WorkspaceSy
                       detail={snapshot.expectedMove === null ? "No verified estimate supplied." : "Backend-supplied context, not a forecast."}
                     />
                   </dl>
+
+                  {snapshot.provisionalResearch && (
+                    <ProvisionalResearchCard research={snapshot.provisionalResearch} />
+                  )}
 
                   {snapshot.tradeIntelligence ? (
                     <>

@@ -2,7 +2,7 @@
 
 The cache stores complete normalized snapshots, not provider SDK objects. A hit
 therefore preserves the original snapshot ID and retrieval timestamp. TTL expiry
-is the only automatic invalidation; callers never bypass the cache.
+is the only automatic invalidation. Explicit fresh reads bypass the cache.
 """
 from __future__ import annotations
 
@@ -83,11 +83,22 @@ class CandleService:
         cached = self.cache.get(key, use_context)
         if cached is not None:
             return cached
-        batch = self.provider.candles(normalized_symbol, interval, session, limit)
-        decision = enforce_data_use(use_context, batch.provider)
-        snapshot = build_snapshot(batch, now=self.clock(), entitlement=decision)
+        snapshot = self.get_fresh(normalized_symbol, interval, session, limit, use_context)
         self.cache.put(key, snapshot, use_context)
         return snapshot
+
+    def get_fresh(self, symbol: str, interval: str = "5m",
+                  session: str = "regular", limit: int = 78,
+                  use_context: str = PRIVATE_RESEARCH):
+        """Explicit provider refetch for opt-in private research; bypass TTL cache.
+
+        Do not overwrite the shared cache or claim provider bar finality.
+        """
+        enforce_data_use(use_context, self.provider.name)
+        normalized = validate_candle_request(symbol, interval, session, limit)
+        batch = self.provider.candles(normalized, interval, session, limit)
+        decision = enforce_data_use(use_context, batch.provider)
+        return build_snapshot(batch, now=self.clock(), entitlement=decision)
 
     def capabilities(self) -> dict:
         return self.provider.capabilities.as_dict()

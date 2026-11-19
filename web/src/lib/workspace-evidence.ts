@@ -96,6 +96,19 @@ export type WorkspaceTradeIntelligence = {
   warnings: string[];
 };
 
+type ProvisionalResearch = {
+  reason: string;
+  barCount: number;
+  provider: string | null;
+  latestBarAt: string | null;
+  latestBarClose: number | null;
+  refetchedAt: string | null;
+  direction: WorkspaceDirection;
+  openingRange: { high: number; low: number } | null;
+  vwap: number | null;
+  ema9: number | null;
+};
+
 export type WorkspaceSnapshot = {
   symbol: WorkspaceSymbol;
   spot: number;
@@ -110,6 +123,7 @@ export type WorkspaceSnapshot = {
   warning: string | null;
   tradeIntelligence: WorkspaceTradeIntelligence | null;
   tradeIntelligenceWarning: string | null;
+  provisionalResearch: ProvisionalResearch | null;
 };
 
 export type WorkspaceAssessment = {
@@ -477,6 +491,43 @@ export function normalizeMarketResponse(value: unknown): WorkspaceSnapshot | nul
     warning,
     tradeIntelligence,
     tradeIntelligenceWarning,
+    provisionalResearch: tradeIntelligence
+      ? normalizeProvisionalResearch(record(response.trade_intelligence).provisional_research)
+      : null,
+  };
+}
+
+function normalizeProvisionalResearch(value: unknown): ProvisionalResearch | null {
+  const row = record(value);
+  const reason = stringValue(row.reason);
+  if (row.actionable !== false || !reason) return null;
+  if (row.evidence === "time_closed_unverified_finality" && row.bar_count === 0) {
+    return {
+      reason, barCount: 0, provider: null, latestBarAt: null, latestBarClose: null, refetchedAt: null,
+      direction: "unknown", openingRange: null, vwap: null, ema9: null,
+    };
+  }
+  const barCount = finiteNumber(row.bar_count);
+  const latestBarAt = stringValue(row.latest_bar_at);
+  const observations = stringList(row.observations_at);
+  const refetchedAt = observations?.[1] ?? null;
+  if (row.evidence !== "closed_by_time" || row.provider !== "Public"
+    || !barCount || !Number.isInteger(barCount) || barCount < 1 || barCount > 78
+    || !latestBarAt || !Number.isFinite(Date.parse(latestBarAt))
+    || observations?.length !== 2 || !refetchedAt
+    || !observations.every((time) => Number.isFinite(Date.parse(time)))
+    || !finitePositive(row.vwap) || !finitePositive(row.latest_bar_close)) return null;
+
+  const range = record(row.opening_range);
+  return {
+    reason, barCount, provider: row.provider, latestBarAt, refetchedAt,
+    latestBarClose: row.latest_bar_close,
+    direction: directionValue(row.directional_context),
+    openingRange: finitePositive(range.high) && finitePositive(range.low) && range.high >= range.low
+      ? { high: range.high, low: range.low }
+      : null,
+    vwap: row.vwap,
+    ema9: finitePositive(row.ema9) ? row.ema9 : null,
   };
 }
 
