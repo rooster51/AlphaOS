@@ -1,5 +1,7 @@
 "use client";
 
+import { MarketPlaybook } from "./MarketPlaybook";
+
 import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import {
@@ -568,6 +570,8 @@ export function TradingWorkspace({ initialSymbol }: { initialSymbol: WorkspaceSy
             </div>
           </div>
         </section>
+
+        <MarketPlaybook symbol={symbol} />
 
         {snapshot && !snapshot.isLive && (
           <section role="status" className="rounded-xl border border-warning/30 bg-warning-bg/10 p-4">

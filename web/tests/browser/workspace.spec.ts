@@ -172,3 +172,66 @@ test("stale options archive does not suppress verified historical market and str
   await expect(page.getByText("$4.50", { exact: true })).toBeVisible();
   await expect(page.getByText(/The latest verified options archive is stale/)).toHaveCount(0);
 });
+
+test("Market Playbook stays in the workspace and follows the shared selector on mobile", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.route("https://s.tradingview.com/**", (route) =>
+    route.fulfill({ contentType: "text/html", body: "<!doctype html><title>TradingView fixture</title>" }));
+  await page.route("**/api/market?*", (route) => {
+    const symbol = new URL(route.request().url()).searchParams.get("symbol") as "SPY" | "QQQ";
+    return route.fulfill({ json: marketResponse(symbol, false) });
+  });
+
+  const now = "2026-11-19T15:05:00+00:00";
+  const requested: string[] = [];
+  await page.route("**/api/market-playbook/*", (route) => {
+    const symbol = new URL(route.request().url()).pathname.split("/").at(-1);
+    if (!symbol) throw new Error("Missing symbol");
+    requested.push(symbol);
+    const provenance = { provider: "Fixture", snapshot_id: "fixture", retrieved_at: now, freshness: "fresh" };
+    const level = {
+      low: 505, high: 505, types: ["opening range high"], rank: 1, observations: 1,
+      reactions: 0, last_observed_at: now, provenance,
+      evidence: [{ price: 505, kind: "opening range high", source: "native five-minute candle",
+        observed_at: now, available_at: now }],
+    };
+    return route.fulfill({ json: {
+      version: "market-playbook-v1", symbol, session: "2026-11-19", as_of: now,
+      provider: "Fixture", levels: symbol === "SPY" ? [level] : [], vwap: null,
+      provisional_range: null, provenance, structure: "Fixture context.",
+      bias: "Mixed", quality: "Mixed",
+      status: symbol === "SPY" ? "WAIT" : "INSUFFICIENT DATA",
+      reason: symbol === "SPY" ? "Waiting for a confirmed close." : "QQQ final candles are missing.",
+      history: symbol === "SPY" ? [{
+        thesis: {
+          id: "spy", session: "2026-11-19", direction: "bullish", family: "breakout",
+          thesis: "A confirmed close through resistance opens the next zone.",
+          confirmation: "Five-minute close above 505.00.", expires_at: now,
+          invalidation_condition: "Close below 505.00.", target_condition: "Close at 512.00.",
+          supporting: [level], conflicting: [], provenance, quality: "Mixed", bias: "Mixed",
+          structure: "Fixture context.",
+        },
+        updated_at: now, state: "WAITING", events: [],
+      }] : [],
+    } });
+  });
+
+  await page.goto("/workspace?symbol=SPY");
+  await expect(page.getByRole("heading", { name: "Trading Workspace" })).toBeVisible();
+  // The Playbook belongs near the session overview, before the chart, not buried at page end.
+  expect(await page.locator("summary").filter({ hasText: "Market Playbook · SPY" }).evaluate((node) => {
+    const chart = document.getElementById("chart-heading");
+    return chart !== null && Boolean(node.compareDocumentPosition(chart) & Node.DOCUMENT_POSITION_FOLLOWING);
+  })).toBe(true);
+  expect(requested).toEqual([]);
+  await page.getByText("Market Playbook · SPY", { exact: true }).click();
+  await expect(page.getByRole("heading", { name: "bullish breakout" })).toBeVisible();
+  await expect(page.getByText("Five-minute close above 505.00.")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Ranked key levels" })).toBeVisible();
+  await page.getByRole("button", { name: "QQQ", exact: true }).click();
+  await expect(page.getByText("Market Playbook · QQQ")).toBeVisible();
+  await expect(page.getByText("QQQ final candles are missing.").first()).toBeVisible();
+  await expect(page.getByText("Five-minute close above 505.00.")).toHaveCount(0);
+  expect(requested).toEqual(["SPY", "QQQ"]);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+});
