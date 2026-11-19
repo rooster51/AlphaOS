@@ -152,8 +152,8 @@ def test_api_requires_bearer_owner_use_and_entitlement(monkeypatch, tmp_path):
         return fixture(symbol)
 
     service = SimpleNamespace(provider=SimpleNamespace(name="Public"), get=get)
-    monkeypatch.setattr(app.state, "candles", service)
-    monkeypatch.setattr(app.state, "service", SimpleNamespace(
+    monkeypatch.setitem(app.state._state, "candles", service)
+    monkeypatch.setitem(app.state._state, "service", SimpleNamespace(
         completed_history=lambda symbol: {"features": pd.DataFrame(
             [{"date": "2026-11-18", "high": 450, "low": 410, "close": 430}]
         )},
