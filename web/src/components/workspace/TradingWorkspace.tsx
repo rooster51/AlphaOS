@@ -571,6 +571,8 @@ export function TradingWorkspace({ initialSymbol }: { initialSymbol: WorkspaceSy
           </div>
         </section>
 
+        <MarketPlaybook symbol={symbol} />
+
         {snapshot && !snapshot.isLive && (
           <section role="status" className="rounded-xl border border-warning/30 bg-warning-bg/10 p-4">
             <div className="flex items-start gap-3">
@@ -931,8 +933,6 @@ export function TradingWorkspace({ initialSymbol }: { initialSymbol: WorkspaceSy
             )}
           </div>
         </div>
-
-        <MarketPlaybook symbol={symbol} />
 
         <footer className="border-t border-terminal-800 pt-4 text-[10px] leading-relaxed text-terminal-500">
           <p>
