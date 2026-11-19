@@ -189,6 +189,12 @@ class ResearchService:
             retrieved_at=bundle['retrieved_at'], underlying=quote, underlying_error=underlying_error,
             scenarios=results, comparison_basis='Common contract observations and evaluation time; descriptive ordering only.')
 
+    def completed_history(self, symbol, day=None):
+        symbol = symbol_value(symbol)
+        day = day if day is not None else self.today()
+        return self.data.load(('history', symbol, str(day)), 300,
+                              lambda: self.provider_call(self.provider.history, symbol, day))
+
     def snapshot(self,symbol,horizon=3,spot=None,snapshot_id=None,refresh=False,quote_bundle=None):
         symbol=symbol_value(symbol);horizon=horizon_value(horizon)
         if snapshot_id:
@@ -206,7 +212,7 @@ class ResearchService:
         key=('snapshot',symbol,horizon,digest(dict(quote=q['quote'],retrieved_at=q['retrieved_at'])),str(day))
         def create():
             with stage('snapshot_history_load'):
-                dataset=self.data.load(('history',symbol,str(day)),300,lambda:self.provider_call(self.provider.history,symbol,day))
+                dataset=self.completed_history(symbol,day)
             try:
                 with stage('snapshot_preparation'):
                     s=context_from_dataset(dataset,q['quote']['last'],horizon,q['quote']['updated_at'],q['retrieved_at'])

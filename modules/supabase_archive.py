@@ -82,6 +82,17 @@ class ResearchArchiveHTTP:
             raise ArchiveUnavailable('Invalid archive metadata response.')
         return rows
 
+    def market_playbook_journal(self, params, revision, updates):
+        if not self._base.startswith("https://"):
+            raise ArchiveUnavailable("The playbook journal requires HTTPS.")
+        response = self._http.post(
+            self._base + "/rest/v1/rpc/market_playbook_journal",
+            json={**params, "p_expected_revision": revision, "p_updates": updates},
+            timeout=4,
+        )
+        response.raise_for_status()
+        return response.json()
+
     def download_archive(self, path):
         response = self._http.get(self._base+'/storage/v1/object/market-archive/'+quote(path, safe='/'), timeout=20)
         response.raise_for_status()
