@@ -219,9 +219,10 @@ test("Market Playbook stays in the workspace and follows the shared selector on 
   await page.goto("/workspace?symbol=SPY");
   await expect(page.getByRole("heading", { name: "Trading Workspace" })).toBeVisible();
   // The Playbook belongs near the session overview, before the chart, not buried at page end.
-  expect(await page.locator("summary").filter({ hasText: "Market Playbook · SPY" }).evaluate((node) =>
-    Boolean(node.compareDocumentPosition(document.getElementById("chart-heading")) & Node.DOCUMENT_POSITION_FOLLOWING)
-  )).toBe(true);
+  expect(await page.locator("summary").filter({ hasText: "Market Playbook · SPY" }).evaluate((node) => {
+    const chart = document.getElementById("chart-heading");
+    return chart !== null && Boolean(node.compareDocumentPosition(chart) & Node.DOCUMENT_POSITION_FOLLOWING);
+  })).toBe(true);
   expect(requested).toEqual([]);
   await page.getByText("Market Playbook · SPY", { exact: true }).click();
   await expect(page.getByRole("heading", { name: "bullish breakout" })).toBeVisible();
