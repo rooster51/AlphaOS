@@ -1104,9 +1104,9 @@ function ResearchResults({
           Archive observations are not guaranteed executable quotes. Max-loss eligibility is not broker buying power or margin. AlphaOS does not place or execute orders.
         </p>
         <div className="flex flex-wrap gap-3">
-          <Link prefetch={false} href={`/market?symbol=${query.symbol}`} className="text-xs text-terminal-400 underline decoration-terminal-700 underline-offset-4 hover:text-terminal-100">Full market research</Link>
+          <Link prefetch={false} href={`/market?symbol=${query.symbol}`} className="text-xs text-terminal-400 underline decoration-terminal-700 underline-offset-4 hover:text-terminal-100">Detailed research diagnostics</Link>
           <Link prefetch={false} href="/structures" className="text-xs text-terminal-400 underline decoration-terminal-700 underline-offset-4 hover:text-terminal-100">Structure Lab</Link>
-          <Link prefetch={false} href="/dashboard" className="text-xs text-terminal-400 underline decoration-terminal-700 underline-offset-4 hover:text-terminal-100">Research dashboard</Link>
+          
         </div>
       </div>
     </section>
