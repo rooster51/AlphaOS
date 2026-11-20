@@ -58,11 +58,6 @@ export function Sidebar() {
               <Icon className={`w-4 h-4 ${isActive ? "text-profit" : "text-terminal-500"}`} />
               <span>{item.label}</span>
             </span>
-            {item.badge && (
-              <span className="text-[9px] px-1.5 py-0.5 rounded bg-terminal-800 border border-terminal-700 text-terminal-400">
-                {item.badge}
-              </span>
-            )}
           </Link>
         );
       })}
